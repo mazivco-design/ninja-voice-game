@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ninja Voice Test</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #1b1f2a;
+    color: #fff;
+    text-align: center;
+  }
+  #status {
+    padding: 12px;
+    font-size: 18px;
+  }
+  #heard {
+    font-size: 22px;
+    color: #ffd166;
+    min-height: 30px;
+  }
+  button {
+    font-size: 20px;
+    padding: 10px 24px;
+    margin: 8px;
+    border: none;
+    border-radius: 8px;
+    background: #ef476f;
+    color: #fff;
+    cursor: pointer;
+  }
+  #stage {
+    position: relative;
+    width: 600px;
+    height: 300px;
+    margin: 20px auto;
+    background: #2a3142;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  #ground {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: #4a5568;
+  }
+  #ninja {
+    position: absolute;
+    left: 60px;
+    bottom: 40px;
+    width: 40px;
+    height: 60px;
+    transition: bottom 0.4s ease-out;
+  }
+  #ninja .head   { position:absolute; left:10px; top:0;  width:20px; height:20px; background:#222; border-radius:50%; }
+  #ninja .body   { position:absolute; left:12px; top:20px; width:16px; height:22px; background:#2d7dd2; border-radius:4px; }
+  #ninja .arm    { position:absolute; top:22px; width:6px; height:18px; background:#222; }
+  #ninja .arm.l  { left:4px; }
+  #ninja .arm.r  { right:4px; }
+  #ninja .leg    { position:absolute; top:42px; width:7px; height:18px; background:#222; }
+  #ninja .leg.l  { left:12px; }
+  #ninja .leg.r  { right:12px; }
+</style>
+</head>
+<body>
+
+<h2>Ninja Voice Test</h2>
+<div id="status">לחץ על התחל ואמור JUMP</div>
+<div id="heard"></div>
+<button id="startBtn">התחל</button>
+
+<div id="stage">
+  <div id="ninja">
+    <div class="head"></div>
+    <div class="body"></div>
+    <div class="arm l"></div>
+    <div class="arm r"></div>
+    <div class="leg l"></div>
+    <div class="leg r"></div>
+  </div>
+  <div id="ground"></div>
+</div>
+
+<script>
+  const statusEl = document.getElementById('status');
+  const heardEl = document.getElementById('heard');
+  const startBtn = document.getElementById('startBtn');
+  const ninja = document.getElementById('ninja');
+
+  // וריאציות הגייה אפשריות למילה JUMP
+  const JUMP_WORDS = ['jump', 'jomp', 'jamp', 'jum', 'jumb'];
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    statusEl.textContent = 'הדפדפן הזה לא תומך בזיהוי קולי. השתמש ב-Chrome.';
+    startBtn.disabled = true;
+  } else {
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 3;
+
+    let listening = false;
+
+    function jump() {
+      ninja.style.bottom = '160px';
+      setTimeout(() => { ninja.style.bottom = '40px'; }, 500);
+    }
+
+    recognition.onresult = (event) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        // בודקים את כל החלופות שהזיהוי מציע
+        for (let j = 0; j < result.length; j++) {
+          const text = result[j].transcript.trim().toLowerCase();
+          heardEl.textContent = 'שמעתי: ' + text;
+          if (JUMP_WORDS.some(w => text.includes(w))) {
+            jump();
+            break;
+          }
+        }
+      }
+    };
+
+    recognition.onerror = (event) => {
+      statusEl.textContent = 'שגיאה: ' + event.error;
+      if (event.error === 'not-allowed') {
+        listening = false;
+        startBtn.textContent = 'התחל';
+      }
+    };
+
+    recognition.onend = () => {
+      // Chrome מפסיק להקשיב מדי פעם, מפעילים מחדש אם המשתמש עדיין במצב האזנה
+      if (listening) recognition.start();
+    };
+
+    startBtn.addEventListener('click', () => {
+      if (!listening) {
+        listening = true;
+        recognition.start();
+        statusEl.textContent = 'מקשיב... אמור JUMP';
+        startBtn.textContent = 'עצור';
+      } else {
+        listening = false;
+        recognition.stop();
+        statusEl.textContent = 'הזיהוי הופסק';
+        startBtn.textContent = 'התחל';
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
