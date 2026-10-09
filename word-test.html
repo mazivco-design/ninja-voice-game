@@ -1,234 +1,2203 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>בדיקת מילים</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Ninja Voice Game</title>
 <script src="https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js"></script>
 <style>
-:root{--bg:#0f172a;--card:#1e293b;--deep:#0b1222;--text:#f1f5f9;--muted:#94a3b8;--accent:#22c55e;--warn:#f59e0b;--bad:#ef4444;--blue:#3b82f6;--line:#334155}
-*{box-sizing:border-box}
-body{margin:0 auto;font-family:-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);padding:16px;max-width:760px}
-h1{font-size:22px;margin:0 0 4px}
-p.sub{color:var(--muted);margin:0 0 14px;font-size:14px;line-height:1.5}
-.card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px}
-.card h2{font-size:17px;margin:0 0 8px}
-.card p{font-size:14px;color:var(--muted);margin:0 0 8px;line-height:1.5}
-button{font-size:17px;padding:12px 18px;border-radius:10px;border:0;background:var(--blue);color:#fff;font-weight:600;margin:4px 0 4px 8px;-webkit-tap-highlight-color:transparent}
-button:disabled{opacity:.4}
-button.stop{background:var(--bad)}
-.status{font-size:14px;color:var(--muted);margin-top:6px;min-height:20px}
-#prompt{height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:64px;font-weight:800;border-radius:14px;background:var(--deep);transition:background .1s;direction:ltr}
-#prompt small{font-size:18px;font-weight:600;margin-top:4px}
-#prompt.go{background:var(--warn);color:#000}
-#prompt.hit{background:var(--accent);color:#000}
-#prompt.wrong{background:#a855f7;color:#fff}
-#prompt.miss{background:var(--bad)}
-.meter{height:10px;background:var(--deep);border-radius:5px;overflow:hidden;margin-top:10px}
-.meter div{height:100%;width:0;background:var(--accent)}
-#heard{font-family:ui-monospace,Menlo,monospace;font-size:15px;margin-top:10px;min-height:22px;direction:ltr;text-align:left;color:var(--muted)}
-table{width:100%;border-collapse:collapse;font-size:15px;margin-top:6px}
-th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line)}
-th{color:var(--muted);font-weight:500}
-td.w{direction:ltr;font-weight:800}
-.good{color:var(--accent)} .mid{color:var(--warn)} .badc{color:var(--bad)}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: #0f172a; font-family: -apple-system, system-ui, Arial, sans-serif; overscroll-behavior: none; touch-action: manipulation; }
+#app { position: fixed; inset: 0; }
+canvas { display: block; width: 100%; height: 100%; }
+
+/* פס עליון */
+#hud { position: absolute; top: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center; gap: 14px;
+       padding: max(10px, env(safe-area-inset-top)) 14px 10px; color: #fff; font-weight: 800;
+       font-size: clamp(15px, 2.3vw, 22px); pointer-events: none; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
+#hud .sp { flex: 1; }
+#hud button { pointer-events: auto; }
+.hbtn { background: rgba(15,23,42,.55); color: #fff; border: 0; border-radius: 10px; padding: 8px 14px;
+        font-size: clamp(13px, 1.9vw, 17px); font-weight: 800; }
+#mic { width: 18px; height: 18px; border-radius: 50%; background: #64748b; display: inline-block; vertical-align: middle;
+       transition: transform .08s, background .08s; flex: none; }
+#mic.on { background: #16a34a; }
+#mic.loud { background: #4ade80; transform: scale(1.5); box-shadow: 0 0 14px #4ade80; }
+#progress { width: clamp(110px, 26vw, 300px); height: 14px; background: rgba(15,23,42,.45); border-radius: 7px; overflow: hidden; }
+#progress div { height: 100%; width: 0; background: #fde047; border-radius: 7px; transition: width .25s; }
+#catchHud { background: rgba(15,23,42,.45); border-radius: 10px; padding: 2px 10px; }
+#catchHud.pop { animation: pop .35s; }
+@keyframes pop { 50% { transform: scale(1.35); } }
+.hide { display: none !important; }
+
+/* חלונות מעל המשחק */
+.overlay { position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+           background: rgba(15,23,42,.5); padding: 16px; }
+.overlay.show { display: flex; }
+.panel { background: #fff; color: #1e293b; border-radius: 22px; padding: clamp(12px, 2.6vh, 26px) clamp(14px, 3vw, 30px);
+         text-align: center; width: min(640px, 100%); max-height: 100%; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.panel h1 { font-size: clamp(22px, 4.2vh, 40px); margin-bottom: 2px; }
+.panel h2 { font-size: clamp(26px, 5vh, 42px); margin-bottom: 4px; }
+.panel p { font-size: clamp(13px, 2vh, 18px); color: #475569; margin-bottom: 4px; line-height: 1.35; }
+.label { font-size: clamp(11px, 1.7vh, 14px); font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: .06em; margin: clamp(6px, 1.3vh, 12px) 0 5px; }
+.status { font-size: clamp(12px, 1.8vh, 16px); color: #64748b; min-height: 1.4em; margin-top: 2px; }
+.status.err { color: #dc2626; }
+
+/* בחירת קושי */
+.diffs { display: flex; gap: 8px; justify-content: center; }
+.diff { flex: 1; max-width: 170px; border: 3px solid transparent; border-radius: 12px; padding: clamp(5px, 1vh, 9px) 6px;
+        font-size: clamp(15px, 2.3vh, 19px); font-weight: 900; color: #fff; opacity: .55; }
+.diff small { display: block; font-size: clamp(11px, 1.5vh, 13px); font-weight: 600; }
+.diff.sel { opacity: 1; border-color: #1e293b; }
+.easy { background: #16a34a; } .medium { background: #f59e0b; } .hard { background: #dc2626; }
+
+/* שלבים – שורה לכל זוג מילים */
+.stages { display: grid; grid-template-columns: repeat(6, 1fr); gap: clamp(5px, 0.8vh, 8px); }
+.stage { border: 0; border-radius: 11px; padding: clamp(4px, 0.8vh, 7px) 2px; background: #4f46e5; color: #fff;
+         display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 0; }
+.stage:nth-child(6n+4), .stage:nth-child(6n+5), .stage:nth-child(6n+6) { background: #6366f1; }   /* זוג שני בשורה – גוון אחר */
+.stage .num { font-size: clamp(15px, 2.6vh, 22px); font-weight: 900; line-height: 1; }
+.stage .info { text-align: center; min-width: 0; width: 100%; }
+.stage .name { font-size: clamp(9px, 1.4vh, 12px); font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stage .stars { font-size: clamp(10px, 1.6vh, 14px); color: #fde047; letter-spacing: 0; line-height: 1.1; }
+.stage.locked { background: #cbd5e1; color: #64748b; }
+.stage:disabled { opacity: .5; }
+.menuRow { display: flex; gap: 10px; justify-content: center; margin-top: clamp(7px, 1.4vh, 12px); }
+.free { border: 0; border-radius: 14px; padding: clamp(7px, 1.4vh, 12px) 22px;
+        font-size: clamp(15px, 2.3vh, 19px); font-weight: 900; background: #e2e8f0; color: #1e293b; }
+.free:disabled { opacity: .5; }
+.free.words { background: #dcfce7; color: #166534; }
+
+/* מילון מילים – פאנל עליון, הנינג'ה מדגים בחלק התחתון */
+#dict { position: absolute; top: 0; left: 0; right: 0; display: none; justify-content: center; padding: max(56px, calc(env(safe-area-inset-top) + 50px)) 12px 0; pointer-events: none; }
+#dict.show { display: flex; }
+#dict .panel { pointer-events: auto; width: min(760px, 100%); padding: clamp(10px, 2vh, 18px); }
+#dict .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+#dict h2 { font-size: clamp(20px, 3.4vh, 28px); margin: 0; }
+#dict .hint { font-size: clamp(12px, 1.8vh, 15px); color: #64748b; }
+.wordGrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; }
+@media (max-aspect-ratio: 1/1) { .wordGrid { grid-template-columns: repeat(5, 1fr); } }
+.word { border: 0; border-radius: 13px; background: #4f46e5; color: #fff; padding: clamp(6px, 1.2vh, 11px) 2px; font-weight: 900;
+        font-size: clamp(13px, 2vh, 18px); min-width: 0; }
+.word .ic { display: block; font-size: clamp(18px, 3.2vh, 28px); line-height: 1.1; margin-bottom: 1px; }
+.word.active { background: #16a34a; transform: scale(1.05); }
+.closeBtn { border: 0; border-radius: 10px; background: #e2e8f0; color: #1e293b; font-weight: 900; font-size: clamp(14px, 2vh, 17px); padding: 8px 14px; }
+
+/* מסך סיום */
+.big { font-size: clamp(44px, 10vh, 80px); font-weight: 900; color: #4f46e5; line-height: 1.1; }
+.big.starsBig { color: #f59e0b; letter-spacing: 6px; }
+.row { display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+.btn { border: 0; border-radius: 14px; padding: clamp(10px, 2vh, 16px) 24px; font-size: clamp(17px, 2.8vh, 22px);
+       font-weight: 900; background: #4f46e5; color: #fff; }
+.btn.sec { background: #e2e8f0; color: #1e293b; }
+
+/* שחקנים */
+.mtop { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.pchip { border: 0; border-radius: 999px; background: #f1f5f9; color: #1e293b; font-weight: 800; font-size: clamp(14px, 2.1vh, 17px);
+         padding: 6px 14px 6px 8px; display: inline-flex; align-items: center; gap: 8px; }
+.dot { width: 22px; height: 22px; border-radius: 50%; display: inline-block; flex: none; }
+.playerGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin: 10px 0 4px;
+              max-height: 52vh; overflow-y: auto; }
+.pcard { position: relative; border: 0; border-radius: 16px; background: #f1f5f9; color: #1e293b; padding: 12px 8px; }
+.pcard .face { width: 54px; height: 54px; border-radius: 50%; background: #1e293b; margin: 0 auto 6px; position: relative; overflow: hidden; }
+.pcard .face::before { content: ''; position: absolute; left: 7px; right: 7px; top: 20px; height: 13px; background: #fcd9b6; border-radius: 4px; }
+.pcard .face::after { content: '• •'; position: absolute; left: 0; right: 0; top: 17px; text-align: center; font-size: 16px; letter-spacing: 4px; color: #000; }
+.pcard .band { position: absolute; left: 0; right: 0; top: 10px; height: 6px; }
+.pcard .pname { font-weight: 900; font-size: clamp(16px, 2.4vh, 20px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pcard .pstats { font-size: 13px; color: #64748b; margin-top: 2px; }
+.pcard .edit { position: absolute; top: 6px; right: 8px; font-size: 18px; display: none; }
+.managing .pcard .edit { display: block; }
+.managing .pcard { outline: 2px dashed #94a3b8; }
+.pcard.add { background: #eef2ff; color: #4f46e5; font-weight: 900; font-size: clamp(16px, 2.4vh, 20px); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 120px; }
+.pcard.add span { font-size: 34px; line-height: 1; }
+#pName { -webkit-user-select: text !important; width: 100%; font-size: 22px; font-weight: 800; padding: 12px 14px; border-radius: 12px; border: 2px solid #cbd5e1; margin: 10px 0;
+         -webkit-user-select: text; user-select: text; text-align: center; }
+.swatches { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 4px 0 6px; }
+.sw { width: 40px; height: 40px; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 0 0 2px #cbd5e1; }
+.sw.sel { box-shadow: 0 0 0 3px #1e293b; }
+.del { margin-top: 12px; border: 0; background: none; color: #dc2626; font-weight: 800; font-size: 15px; padding: 6px; }
+.err { color: #dc2626; font-size: 14px; min-height: 1.2em; }
+
+/* כפתור עצירה בולט */
+#pauseBtn { background: #f59e0b; color: #1e293b; font-size: clamp(15px, 2.2vw, 20px); padding: 9px 16px; }
+#skipBtn { background: #16a34a; color: #fff; }
+
+/* בחירת מילים ל-Free Play */
+.word.off { background: #e2e8f0; color: #64748b; }
+.word.locked { background: #f1f5f9; color: #cbd5e1; }
+.word .lock { display: block; font-size: 12px; font-weight: 700; margin-top: 2px; }
+
+/* מעבדת אנימציות */
+#lab { position: absolute; left: 0; right: 0; bottom: 0; display: none; justify-content: center; padding: 0 10px max(10px, env(safe-area-inset-bottom)); }
+#lab.show { display: flex; }
+#lab .panel { width: min(900px, 100%); padding: 10px 12px; text-align: start; }
+.labRow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0; }
+.labRow .lbl { font-size: 13px; font-weight: 800; color: #64748b; min-width: 56px; }
+.lb { border: 0; border-radius: 10px; background: #e2e8f0; color: #1e293b; font-weight: 800; font-size: 15px; padding: 8px 11px; }
+.lb.on { background: #4f46e5; color: #fff; }
+#labInfo { font: 13px ui-monospace, Menlo, monospace; color: #475569; }
+
+/* חלונית דיבאג */
+#debug { position: absolute; left: 10px; bottom: 10px; max-width: min(440px, calc(100% - 20px)); background: rgba(15,23,42,.88);
+         color: #e2e8f0; font: 12px/1.55 ui-monospace, Menlo, monospace; padding: 10px 12px; border-radius: 10px;
+         display: none; pointer-events: none; white-space: pre-wrap; }
+#debug.show { display: block; }
 </style>
 </head>
 <body>
+<div id="app">
+  <canvas id="c"></canvas>
 
-<h1>בדיקת מילים חדשות</h1>
-<p class="sub">בכל סבב מופיעה מילה אחת. אומרים אותה בקול כשהיא מופיעה. בסוף רואים לכל מילה כמה פעמים זוהתה נכון, ועם אילו מילים היא התבלבלה. כדאי שגם הילד יעשה את הבדיקה.</p>
+  <div id="hud">
+    <span id="hudFree"><span>Score: <span id="score">0</span></span>&nbsp;&nbsp;<span>Best: <span id="best">0</span></span></span>
+    <span id="hudStage" class="hide"><span id="stageName">Stage 1</span></span>
+    <div id="progress" class="hide"><div id="progressBar"></div></div>
+    <span id="catchHud" class="hide">🪙 <span id="caught">0</span></span>
+    <span id="lives"></span>
+    <span class="sp"></span>
+    <span id="mic"></span>
+    <button class="hbtn hide" id="skipBtn">Skip ▶</button>
+    <button class="hbtn hide" id="pauseBtn">⏸ Pause</button>
+    <button class="hbtn hide" id="endBtn">End</button>
+    <button class="hbtn" id="labBtn">🎬</button>
+    <button class="hbtn" id="dbgBtn">🐞</button>
+  </div>
 
-<div class="card">
-  <button id="loadBtn">טען מודל</button>
-  <button id="startBtn" disabled>מילים חדשות (8 × 3 = 24 סבבים)</button>
-  <button id="startAllBtn" disabled>כל המילים (14 × 2 = 28 סבבים)</button>
-  <button id="stopBtn" class="stop" disabled>עצור</button>
-  <div class="status" id="status"></div>
-</div>
+  <!-- מסך פתיחה -->
+  <div class="overlay" id="menu">
+    <div class="panel">
+      <div class="mtop">
+        <h1>🥷 Ninja Voice</h1>
+        <button class="pchip" id="pchip"><span class="dot" id="pchipDot"></span><span id="pchipName" dir="auto"></span> ▾</button>
+      </div>
+      <p>Read the word on each obstacle and say it out loud!</p>
+      <div class="status" id="status">Loading…</div>
 
-<div class="card">
-  <div id="prompt">מוכן</div>
-  <div class="meter"><div id="meterBar"></div></div>
-  <div id="heard"></div>
-</div>
+      <div class="label">Difficulty</div>
+      <div class="diffs">
+        <button class="diff easy" data-diff="easy">Easy<small>Slow · no fail</small></button>
+        <button class="diff medium" data-diff="medium">Medium<small>3 lives</small></button>
+        <button class="diff hard" data-diff="hard">Hard<small>Fast · 1 life</small></button>
+      </div>
 
-<div class="card">
-  <h2>תוצאות לפי מילה</h2>
-  <p><b>זוהתה נכון</b> – כמה פעמים המשחק הבין את המילה הנכונה. <b>בלבול</b> – מה הוא שמע במקום. <b>זמן</b> – מתחילת הדיבור ועד הזיהוי.</p>
-  <table>
-    <thead><tr><th>מילה</th><th>זוהתה נכון</th><th>בלבול</th><th>זמן (חציון)</th></tr></thead>
-    <tbody id="rows"></tbody>
-  </table>
+      <div class="label">Stages</div>
+      <div class="stages" id="stages"></div>
+
+      <div class="menuRow">
+        <button class="free" id="freeBtn" disabled>∞ Free Play</button>
+        <button class="free words" id="dictBtn">📖 Words</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- בחירת מילים ל-Free Play -->
+  <div class="overlay" id="freePick">
+    <div class="panel">
+      <h2>∞ Free Play</h2>
+      <p>Choose the words to practice. Locked words open when you finish their stages.</p>
+      <div class="wordGrid" id="freeGrid" style="margin-top:10px"></div>
+      <div class="err" id="freeErr"></div>
+      <div class="row">
+        <button class="btn" id="freeStart">Start ▶</button>
+        <button class="btn sec" id="freeBack">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- עצירה -->
+  <div class="overlay" id="pause">
+    <div class="panel">
+      <h2>⏸ Paused</h2>
+      <div class="row">
+        <button class="btn" id="resumeBtn">▶ Resume</button>
+        <button class="btn sec" id="pauseMenuBtn">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- בחירת שחקן -->
+  <div class="overlay show" id="players">
+    <div class="panel">
+      <h1>🥷 Ninja Voice</h1>
+      <p>Who is playing?</p>
+      <div class="playerGrid" id="playerGrid"></div>
+      <button class="free" id="manageBtn">✏️ Manage players</button>
+    </div>
+  </div>
+
+  <!-- הוספה / עריכה של שחקן -->
+  <div class="overlay" id="editP">
+    <div class="panel">
+      <h2 id="editTitle">New player</h2>
+      <input id="pName" maxlength="12" dir="auto" placeholder="Name" autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="err" id="pErr"></div>
+      <div class="swatches" id="swatches"></div>
+      <div class="row">
+        <button class="btn" id="pSave">Save</button>
+        <button class="btn sec" id="pCancel">Cancel</button>
+      </div>
+      <button class="del" id="pDelete">🗑 Delete player</button>
+    </div>
+  </div>
+
+  <!-- מילון מילים -->
+  <div id="dict">
+    <div class="panel">
+      <div class="top">
+        <h2>📖 Words</h2>
+        <span class="hint">Tap a word to hear it and see it</span>
+        <button class="closeBtn" id="dictClose">✕ Back</button>
+      </div>
+      <div class="wordGrid" id="wordGrid"></div>
+    </div>
+  </div>
+
+  <!-- מסך סיום -->
+  <div class="overlay" id="over">
+    <div class="panel">
+      <h2 id="overTitle">Game Over</h2>
+      <div class="big" id="overBig">0</div>
+      <p id="overSub"></p>
+      <div class="row">
+        <button class="btn" id="primaryBtn">Play again</button>
+        <button class="btn sec" id="menuBtn">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- מעבדת אנימציות – לבדיקת כל תנועה בנפרד -->
+  <div id="lab">
+    <div class="panel">
+      <div class="labRow"><span class="lbl">Move</span><span id="labPoses"></span></div>
+      <div class="labRow"><span class="lbl">Speed</span><span id="labSpeeds"></span>
+        <button class="lb" id="labPlay">⏸</button><button class="lb" id="labStep">Step ▶|</button>
+        <button class="lb" id="labSkel">Skeleton</button><button class="lb" id="labEnemy">Enemy</button>
+        <button class="lb" id="labClose">✕ Close</button></div>
+      <div id="labInfo"></div>
+    </div>
+  </div>
+
+  <div id="debug"></div>
 </div>
 
 <script>
-// כל המילים שהמשחק יכיר – הזיהוי תמיד מקשיב לכולן, כדי לגלות בלבולים ביניהן
-const OLD_WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly'];
-const NEW_WORDS = ['stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block'];
-const WORDS = [...OLD_WORDS, ...NEW_WORDS];
-const WINDOW = 3500;
-let testWords = NEW_WORDS, PER_WORD = 3;
+/* ============================================================
+   הגדרות
+   ============================================================ */
 const MODEL_URL = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz';
-const $ = id => document.getElementById(id);
 
-let model = null, audio = null, running = false;
-let queue = [], round = 0, target = null, promptTime = null, onsetTime = null, timer = null;
-let seenWords = [], noise = 0.01;
-const results = [];   // { target, heard, ms }
+// כל המילים שהמשחק מכיר
+const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block'];
+const WORD_ICON = { jump: '⬆️', down: '⬇️', kick: '🦶', throw: '✴️', catch: '🪙', fly: '🪁',
+                    stop: '✋', run: '💨', swim: '🌊', climb: '🧗', push: '🪨', pull: '⛓️', hide: '🌿', block: '🛡️' };
 
-function setPrompt(main, sub, cls) {
-  $('prompt').innerHTML = main + (sub ? '<small>' + sub + '</small>' : '');
-  $('prompt').className = cls || '';
-}
-
-/* ---------- טעינה ---------- */
-$('loadBtn').onclick = async () => {
-  if (typeof Vosk === 'undefined') { $('status').textContent = 'הספרייה לא נטענה – בדוק חיבור לאינטרנט'; return; }
-  $('loadBtn').disabled = true;
-  $('status').textContent = 'טוען מודל…';
-  try {
-    model = await Vosk.createModel(MODEL_URL);
-    $('status').textContent = 'המודל מוכן ✓';
-    $('startBtn').disabled = false; $('startAllBtn').disabled = false;
-  } catch (e) {
-    $('status').textContent = 'שגיאה: ' + (e.message || e);
-    $('loadBtn').disabled = false;
-  }
+// רמות קושי – קובעות מהירות, לבבות וקפיצה.
+// gapT = הזמן (בשניות) בין מכשול למכשול. מוגדר בזמן ולא במרחק,
+// כדי שתמיד יהיה מספיק זמן להגיב – גם כשהמהירות עולה.
+// gravity / jumpV = הקפיצה. ברמה הקלה היא "מרחפת" יותר.
+const LEVELS = {
+  easy:   { speed: 35, accel: 0,   maxSpeed: 35, gapT: [2.6, 3.6], lives: Infinity, penalty: 1, gravity: 100, jumpV: 63, forgive: 1.5 },
+  medium: { speed: 50, accel: 0,   maxSpeed: 50, gapT: [1.8, 2.6], lives: 3,        penalty: 0, gravity: 160, jumpV: 80, forgive: 0 },
+  hard:   { speed: 60, accel: 1.2, maxSpeed: 95, gapT: [1.5, 2.2], lives: 1,        penalty: 0, gravity: 160, jumpV: 80, forgive: 0 }
 };
 
-/* ---------- מיקרופון ---------- */
+// שלבים. כל זוג מילים מקבל 3 שלבים: מילה אחת, מילה שנייה, ומעורבב.
+// מילים חדשות בעתיד = מוסיפים כאן שלבים.
+const STAGES = [
+  { name: 'JUMP',         words: ['jump'],           count: 8,  hint: 'Say JUMP to jump over boxes' },
+  { name: 'DOWN',         words: ['down'],           count: 8,  hint: 'Say DOWN to duck under beams' },
+  { name: 'JUMP + DOWN',  words: ['jump', 'down'],   count: 10, hint: 'Read the word!' },
+  { name: 'KICK',         words: ['kick'],           count: 8,  hint: 'Say KICK to break walls' },
+  { name: 'THROW',        words: ['throw'],          count: 8,  hint: 'Say THROW to stop enemies' },
+  { name: 'KICK + THROW', words: ['kick', 'throw'],  count: 10, hint: 'Read the word!' },
+  { name: 'CATCH',        words: ['catch'],          count: 8,  hint: 'Say CATCH to grab coins' },
+  { name: 'JUMP + FLY',   words: ['fly'],            count: 8,  hint: 'Say JUMP, then FLY in the air' },
+  { name: 'CATCH + FLY',  words: ['catch', 'fly'],   count: 10, hint: 'Read the word!' },
+  { name: 'STOP',         words: ['stop'],           count: 8,  hint: 'Say STOP before the rock falls' },
+  { name: 'RUN',          words: ['run'],            count: 8,  hint: 'Say RUN to cross the bridge' },
+  { name: 'STOP + RUN',   words: ['stop', 'run'],    count: 10, hint: 'Read the word!' },
+  { name: 'SWIM',         words: ['swim'],           count: 8,  hint: 'Say SWIM to cross the lake' },
+  { name: 'CLIMB',        words: ['climb'],          count: 8,  hint: 'Say CLIMB to go up the cliff' },
+  { name: 'SWIM + CLIMB', words: ['swim', 'climb'],  count: 10, hint: 'Read the word!' },
+  { name: 'PUSH',         words: ['push'],           count: 8,  hint: 'Say PUSH to move the rock' },
+  { name: 'PULL',         words: ['pull'],           count: 8,  hint: 'Say PULL to open the gate' },
+  { name: 'PUSH + PULL',  words: ['push', 'pull'],   count: 10, hint: 'Read the word!' },
+  { name: 'HIDE',         words: ['hide'],           count: 8,  hint: 'Say HIDE when the guard comes' },
+  { name: 'BLOCK',        words: ['block'],          count: 8,  hint: 'Say BLOCK to stop the arrows' },
+  { name: 'HIDE + BLOCK', words: ['hide', 'block'],  count: 10, hint: 'Read the word!' }
+];
+// איזה עולם לכל זוג מילים (0 במבוק, 1 כפר בלילה, 2 שלג, 3 קניון, 4 מקדש)
+const PAIR_WORLD = [0, 1, 2, 3, 0, 4, 1];
+
+// איזה מכשול מתאים לכל מילה
+const WORD_OBSTACLE = { jump: 'box', down: 'beam', kick: 'wall', throw: 'enemy', catch: 'coin', fly: 'river',
+                        stop: 'rock', run: 'bridge', swim: 'lake', climb: 'cliff', push: 'boulder', pull: 'gate', hide: 'guard', block: 'arrows' };
+const HIT_WORD = { box: 'JUMP!', beam: 'DOWN!', wall: 'KICK!', enemy: 'THROW!', river: 'JUMP + FLY!',
+                   rock: 'STOP!', bridge: 'RUN!', lake: 'SWIM!', cliff: 'CLIMB!', boulder: 'PUSH!', gate: 'PULL!', guard: 'HIDE!', arrows: 'BLOCK!' };
+
+// "העולם" של המשחק: 160 על 100 יחידות, מוגדל לגודל המסך
+const W = 160, H = 100, GROUND = 85;
+const PLAYER = { x: 25, w: 8, h: 14, duckW: 10, duckH: 8 };
+const DUCK_TIME = 1.0;                 // כמה זמן הנינג'ה נשאר כפוף אחרי כל "down"
+const INVULN_TIME = 1.2;               // זמן חסינות אחרי פגיעה
+const BOX = { w: 6, h: 9 };            // JUMP – קופצים מעליו
+const BEAM = { w: 8, clear: 11, thick: 5 }; // DOWN – מתכופפים מתחתיו
+const WALL = { w: 5, h: 30 };          // KICK – גבוה מדי לקפיצה
+const KICK = { time: 0.5, range: 14 }; // בעיטה פעילה חצי שנייה, מגיעה 14 יחידות קדימה
+const ENEMY = { w: 9, h: 22, extra: 0.3 }; // THROW – אויב גבוה, רץ מהר יותר מהמסך
+const SHURIKEN = { speed: 110, cooldown: 0.35 };
+const COIN = { y: GROUND - 24, reachBack: 4, reachFwd: 34 }; // CATCH – מטבע זהב באוויר
+const FLY = { time: 2.5, sink: 3 };    // FLY – גלישה 2.5 שניות, יורד לאט
+const RIVER_FACTOR = 1.5;              // הנהר רחב פי 1.5 ממה שקפיצה רגילה עוברת
+// מילים חדשות
+const ROCK = { size: 8, hangY: GROUND - 40, fall: 0.9, warn: 0.75 };   // STOP – סלע נופל כשמגיעים אליו
+const STOP_TIME = 1.6;                                               // העולם עוצר לשנייה וחצי
+const RUN_BOOST = { mult: 2.2, time: 1.5 };                          // RUN – מהירות כפולה לשנייה וחצי
+const BRIDGE = { factor: 1.4, collapse: 0.85 };                      // גשר שמתמוטט אחרי 0.85 שניות
+const LAKE = { factor: 1.4 }, SWIM_TIME = 2.3;                       // SWIM – אגם עמוק
+const CLIFF = { w: 12, h: 28, range: 10, time: 0.8 };               // CLIMB – צוק גבוה מדי לקפיצה
+const BOULDER = { r: 10, range: 10 };                                // PUSH – סלע עגול גדול
+const GATE = { w: 5, range: 30 };                                    // PULL – שער (חלון רחב – המילה מזוהה לאט יותר)
+const GUARD = { w: 9, h: 18, walk: 14 }, HIDE_TIME = 1.8;            // HIDE – שומר עם פנס
+const ARROWS = { w: 7, speed: 30 }, BLOCK_TIME = 0.8;                 // BLOCK – מטח חיצים בכל הגבהים
+const ARROW_HEIGHTS = [GROUND - 3, GROUND - 8, GROUND - 13, GROUND - 18, GROUND - 22];   // גבוה מדי לקפוץ מעליו, נמוך מדי להתכופף
+
+/* ============================================================
+   מצב המשחק
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const canvas = $('c'), ctx = canvas.getContext('2d');
+
+let state = 'menu';           // menu | play | over
+let mode = 'free';            // free | stage
+let diffKey = 'easy', cfg = LEVELS[diffKey];
+let stageIdx = 0, playWords = ['jump', 'down'];
+let speed = 0, score = 0, lives = 0, hits = 0, done = 0, spawned = 0, caught = 0, coins = 0;
+let obstacles = [], shurikens = [], particles = [];
+let distSinceSpawn = 0, nextGap = 0, nextType = null, flag = null;
+let py = 0, vy = 0, duckT = 0, invulnT = 0, kickT = 0, flyT = 0, catchT = 0, throwT = 0, throwCd = 0;
+let flash = null, heard = null, banner = null;
+// טיימרים של הפעולות החדשות
+const act = { stop: 0, run: 0, swim: 0, climb: 0, climbWant: 0, push: 0, pull: 0, hide: 0, block: 0 };
+function resetAct() { for (const k in act) act[k] = 0; }
+// מהירות העולם בפועל: STOP ו-CLIMB עוצרים אותו, RUN מאיץ
+function curSpeed() { return (act.stop > 0 || act.climb > 0) ? 0 : speed * (act.run > 0 ? RUN_BOOST.mult : 1); }
+let bgX = 0, lastT = 0;
+let world = 0, shakeT = 0;   // world: 0 יער במבוק, 1 כפר בלילה, 2 הרים מושלגים
+
+/* ============================================================
+   דיבאג
+   ============================================================ */
+const dbgLines = {};
+function dbg(key, val) {
+  dbgLines[key] = val;
+  if ($('debug').classList.contains('show')) renderDebug();
+}
+function renderDebug() {
+  $('debug').textContent = Object.entries(dbgLines).map(([k, v]) => k + ': ' + v).join('\n');
+}
+$('dbgBtn').onclick = () => { $('debug').classList.toggle('show'); renderDebug(); };
+
+/* ============================================================
+   שמירה ב-iPad: שחקנים, ולכל שחקן – קושי, כוכבים, שיא, מטבעות
+   ============================================================ */
+function store(key, val) { try { localStorage.setItem('ninjaVoice_' + key, JSON.stringify(val)); } catch (e) {} }
+function load(key, def) {
+  try { const v = localStorage.getItem('ninjaVoice_' + key); return v === null ? def : JSON.parse(v); } catch (e) { return def; }
+}
+
+const COLORS = ['#dc2626', '#2563eb', '#16a34a', '#ea580c', '#9333ea', '#db2777', '#ca8a04', '#0d9488'];
+let players = load('players', []);   // [{ id, name, color }]
+let player = null;                    // השחקן שמשחק עכשיו
+
+// כל מה ששייך לשחקן נשמר עם התחילית שלו
+function pStore(k, v) { if (player) store('p' + player.id + '_' + k, v); }
+function pLoad(k, def) { return player ? load('p' + player.id + '_' + k, def) : def; }
+function loadDiff() { const d = pLoad('difficulty', 'easy'); return LEVELS[d] ? d : 'easy'; }
+function getStars() { return pLoad('stars', {}); }               // { "0": 3, "1": 2, ... }
+function getBest(d) { return pLoad('best_' + d, 0); }
+function playerColor() { return player ? player.color : '#dc2626'; }
+function savePlayers() { store('players', players); }
+
+function createPlayer(name, color) {
+  const p = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name, color };
+  const first = players.length === 0;
+  players.push(p); savePlayers();
+  if (first) migrateOld(p);
+  return p;
+}
+
+// הכוכבים והשיאים מהגרסאות הקודמות עוברים לשחקן הראשון
+function migrateOld(p) {
+  const pre = 'p' + p.id + '_';
+  const st = load('stars', null); if (st) store(pre + 'stars', st);
+  const d = load('difficulty', null); if (d) store(pre + 'difficulty', d);
+  for (const k of Object.keys(LEVELS)) {
+    let old = 0;
+    try { old = parseInt(localStorage.getItem('ninjaVoiceBest_' + k)) || 0; } catch (e) {}
+    const b = Math.max(old, load('best_' + k, 0));
+    if (b) store(pre + 'best_' + k, b);
+  }
+}
+
+function deletePlayer(id) {
+  const pre = 'ninjaVoice_p' + id + '_';
+  try { Object.keys(localStorage).filter(k => k.startsWith(pre)).forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  players = players.filter(p => p.id !== id); savePlayers();
+  if (player && player.id === id) { player = null; store('current', null); }
+}
+
+function totalStars(p) {
+  const st = load('p' + p.id + '_stars', {});
+  return Object.values(st).reduce((a, b) => a + b, 0);
+}
+
+// מטבעות שנאספו נכנסים לקופה של השחקן (פעם אחת לכל משחק)
+let banked = false;
+function bankCoins() {
+  if (banked || !caught) return;
+  banked = true;
+  pStore('coins', pLoad('coins', 0) + caught);
+}
+
+function isUnlocked(i, stars) { return i === 0 || (stars[i - 1] || 0) > 0; }
+
+// ב-Free Play משתמשים בכל המילים מהשלבים שכבר נפתחו
+// מילה נפתחת כשהשלב הראשון שמלמד אותה נפתח
+function unlockedWords() {
+  const stars = getStars(), set = new Set();
+  STAGES.forEach((s, i) => { if (isUnlocked(i, stars)) s.words.forEach(w => set.add(w)); });
+  return WORDS.filter(w => set.has(w));
+}
+// המילים שהשחקן בחר ל-Free Play (נשמר לכל שחקן). ברירת מחדל: כל המילים הפתוחות
+function freeWords() {
+  const open = unlockedWords();
+  const sel = (pLoad('freeSel', null) || open).filter(w => open.includes(w));
+  return sel.length ? sel : open;
+}
+
+let freeSel = [];
+function openFreePick() {
+  hideAllOverlays();
+  freeSel = freeWords();
+  renderFreePick();
+  $('freePick').classList.add('show');
+}
+function renderFreePick() {
+  const open = unlockedWords(), grid = $('freeGrid');
+  grid.innerHTML = '';
+  WORDS.forEach(w => {
+    const b = document.createElement('button');
+    const isOpen = open.includes(w), on = freeSel.includes(w);
+    b.className = 'word' + (!isOpen ? ' locked' : on ? '' : ' off');
+    b.disabled = !isOpen;
+    b.innerHTML = '<span class="ic">' + (isOpen ? WORD_ICON[w] : '🔒') + '</span>' + w.toUpperCase() +
+                  (isOpen ? '' : '<span class="lock">locked</span>');
+    b.onclick = () => {
+      if (on && freeSel.length === 1) { $('freeErr').textContent = 'Choose at least one word'; return; }
+      freeSel = on ? freeSel.filter(x => x !== w) : [...freeSel, w];
+      $('freeErr').textContent = '';
+      renderFreePick();
+    };
+    grid.appendChild(b);
+  });
+}
+$('freeStart').onclick = () => { pStore('freeSel', freeSel); play('free'); };
+$('freeBack').onclick = () => { hideAllOverlays(); $('menu').classList.add('show'); };
+
+/* ============================================================
+   מסך פתיחה
+   ============================================================ */
+function renderMenu() {
+  if (player) { $('pchipName').textContent = player.name; $('pchipDot').style.background = player.color; }
+  document.querySelectorAll('.diff').forEach(b => b.classList.toggle('sel', b.dataset.diff === diffKey));
+  const stars = getStars();
+  const box = $('stages');
+  box.innerHTML = '';
+  STAGES.forEach((s, i) => {
+    const unlocked = isUnlocked(i, stars);
+    const got = stars[i] || 0;
+    const b = document.createElement('button');
+    b.className = 'stage' + (unlocked ? '' : ' locked');
+    b.disabled = !model || !unlocked;
+    b.innerHTML = '<div class="num">' + (unlocked ? (i + 1) : '🔒') + '</div>' +
+                  '<div class="info"><div class="name">' + s.name + '</div>' +
+                  '<div class="stars">' + (unlocked ? '★'.repeat(got) + '☆'.repeat(3 - got) : '&nbsp;') + '</div></div>';
+    b.onclick = () => play('stage', i);
+    box.appendChild(b);
+  });
+  $('freeBtn').disabled = !model;
+}
+
+document.querySelectorAll('.diff').forEach(b => {
+  b.onclick = () => { diffKey = b.dataset.diff; cfg = LEVELS[diffKey]; pStore('difficulty', diffKey); renderMenu(); };
+});
+$('freeBtn').onclick = openFreePick;
+
+/* ============================================================
+   זיהוי דיבור – Vosk
+   ============================================================ */
+let model = null, audio = null, noise = 0.01;
+let seenWords = [];   // המילים שכבר הפעלנו במשפט הנוכחי
+
+function setStatus(text, isErr) {
+  const s = $('status');
+  s.textContent = text;
+  s.classList.toggle('err', !!isErr);
+}
+
+async function loadModel() {
+  if (typeof Vosk === 'undefined') {
+    setStatus('Voice library did not load. Check the internet and reload.', true);
+    dbg('model', 'Vosk library missing');
+    return;
+  }
+  setStatus('Loading voice engine… (first time can take a minute)');
+  dbg('model', 'loading…');
+  const t0 = performance.now();
+  try {
+    model = await Vosk.createModel(MODEL_URL);
+    const secs = ((performance.now() - t0) / 1000).toFixed(1);
+    setStatus('Ready! Choose a stage');
+    dbg('model', 'ready (' + secs + 's)');
+    renderMenu();
+  } catch (e) {
+    setStatus('Voice engine failed to load: ' + (e.message || e), true);
+    dbg('model', 'ERROR ' + (e.message || e));
+  }
+}
+
+// מפעיל את המיקרופון בפעם הראשונה (חייב לקרות בתוך לחיצה)
 async function ensureAudio() {
   if (audio) { audio.ctx.resume(); return true; }
   const ac = new (window.AudioContext || window.webkitAudioContext)();
   ac.resume();
+  dbg('mic', 'requesting…');
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }
+    });
+    // רשימת מילים סגורה – רק המילים של המשחק. כל השאר "לא מוכר"
     const rec = new model.KaldiRecognizer(ac.sampleRate, JSON.stringify([...WORDS, '[unk]']));
     rec.on('partialresult', m => handleText(m.result.partial, false));
     rec.on('result', m => handleText(m.result.text, true));
+
     const src = ac.createMediaStreamSource(stream);
     const node = ac.createScriptProcessor(2048, 1, 1);
     node.onaudioprocess = e => { try { rec.acceptWaveform(e.inputBuffer); } catch (err) {} };
-    const an = ac.createAnalyser(); an.fftSize = 1024;
+    const an = ac.createAnalyser();
+    an.fftSize = 1024;
     src.connect(an); src.connect(node); node.connect(ac.destination);
+
     audio = { ctx: ac, stream, node, rec, an, buf: new Float32Array(1024) };
+    $('mic').className = 'on';
+    dbg('mic', 'on (' + ac.sampleRate + ' Hz)');
     return true;
   } catch (e) {
     try { ac.close(); } catch (_) {}
-    $('status').textContent = 'בעיה במיקרופון: ' + (e.message || e);
+    setStatus('Microphone problem: ' + (e.message || e), true);
+    dbg('mic', 'ERROR ' + (e.message || e));
     return false;
   }
 }
 
-/* ---------- זיהוי ---------- */
+// עוקבים אחרי רצף המילים ששמענו (למשל "down down jump").
+// כל מילה חדשה בסוף הרצף מפעילה פקודה מיד.
+// אם Vosk "מתקן" את המילה האחרונה (שמע down ואז הבין שזה jump) – מפעילים את המילה המתוקנת.
 function handleText(text, isFinal) {
   const words = (text || '').toLowerCase().split(/\s+/).filter(w => WORDS.includes(w));
   for (let i = 0; i < words.length; i++) {
-    if (i >= seenWords.length) { seenWords.push(words[i]); onWord(words[i]); }
-    else if (i === words.length - 1 && words[i] !== seenWords[i]) { seenWords[i] = words[i]; onWord(words[i]); }
+    if (i >= seenWords.length) {
+      seenWords.push(words[i]);
+      voiceCommand(words[i]);
+    } else if (i === words.length - 1 && words[i] !== seenWords[i]) {
+      seenWords[i] = words[i];
+      voiceCommand(words[i]);
+    }
   }
-  if (text) $('heard').textContent = 'שמעתי: ' + text;
+  if (text) dbg('heard', '"' + text + '"' + (isFinal ? ' (final)' : ''));
   if (isFinal) seenWords = [];
 }
 
-function onWord(w) {
-  if (!running || !promptTime) return;
-  clearTimeout(timer);
-  const t = performance.now();
-  const ms = onsetTime !== null ? t - onsetTime : null;
-  results.push({ target, heard: w, ms });
-  if (w === target) setPrompt('✓ ' + w.toUpperCase(), ms !== null ? Math.round(ms) + 'ms' : '', 'hit');
-  else setPrompt('✗ ' + w.toUpperCase(), 'ביקשנו ' + target.toUpperCase(), 'wrong');
-  promptTime = null;
-  render();
-  timer = setTimeout(next, 1100);
+// בזמן שהמילון מקריא מילה, המיקרופון שומע אותה – לא מפעילים אותה פעמיים
+let ignoreVoiceUntil = 0;
+function voiceCommand(w) {
+  if (performance.now() < ignoreVoiceUntil) { dbg('heard', w + ' (ignored – speaker)'); return; }
+  command(w, 'voice');
 }
 
-/* ---------- מד עוצמה ---------- */
-function meterLoop() {
-  if (audio) {
-    audio.an.getFloatTimeDomainData(audio.buf);
-    let s = 0; for (let i = 0; i < audio.buf.length; i++) s += audio.buf[i] * audio.buf[i];
-    const rms = Math.sqrt(s / audio.buf.length);
-    $('meterBar').style.width = Math.min(100, rms * 400) + '%';
-    if (!promptTime) noise = noise * 0.97 + rms * 0.03;
-    if (promptTime && onsetTime === null && rms > Math.max(0.02, noise * 4)) onsetTime = performance.now();
+// מד עוצמה – הנורית נדלקת ברגע שמתחילים לדבר
+function updateMic() {
+  if (!audio) return;
+  audio.an.getFloatTimeDomainData(audio.buf);
+  let s = 0;
+  for (let i = 0; i < audio.buf.length; i++) s += audio.buf[i] * audio.buf[i];
+  const rms = Math.sqrt(s / audio.buf.length);
+  const loud = rms > Math.max(0.02, noise * 4);
+  if (!loud) noise = noise * 0.97 + rms * 0.03;
+  $('mic').className = loud ? 'loud' : 'on';
+}
+
+/* ============================================================
+   פקודות – פועלות מיד, גם אם זו לא המילה הנכונה למכשול
+   ============================================================ */
+function command(word, source) {
+  dbg('command', word + ' (' + source + ')');
+  if (state !== 'play' && !((state === 'demo' || state === 'intro') && source === 'demo')) return;   // במילון ובהדגמה – רק ההדגמה מזיזה את הנינג'ה
+  heard = { text: word.toUpperCase(), t: 0.8 };
+
+  if (word === 'jump') {
+    if (py === 0) { vy = cfg.jumpV; py = 0.001; duckT = 0; }   // קופץ גם מתוך התכופפות
+  } else if (word === 'down') {
+    duckT = DUCK_TIME;                     // כל "down" נוסף מאריך את ההתכופפות
+    flyT = 0;
+    if (py > 0) vy = Math.min(vy, -60);    // באוויר – נוחת מהר
+  } else if (word === 'kick') {
+    kickT = KICK.time;                     // בעיטה – שוברת קיר שקרוב מספיק
+    duckT = 0;
+  } else if (word === 'throw') {
+    if (throwCd <= 0) {                    // זורק שוריקן קדימה
+      const pb = playerBox();
+      shurikens.push({ x: pb.r, y: pb.t + 5, rot: 0 });
+      throwCd = SHURIKEN.cooldown; throwT = 0.25;
+    }
+  } else if (word === 'catch') {
+    catchT = 0.4;                          // תופס מטבע שקרוב מספיק
+    const s = obstacles.find(o => o.type === 'coin' && !o.caught && !o.passed &&
+                                  o.x + 3 >= PLAYER.x - COIN.reachBack && o.x <= PLAYER.x + COIN.reachFwd);
+    if (s) catchCoin(s);
+  } else if (word === 'fly') {
+    if (py > 0 && flyT <= 0) {             // FLY עובד רק באוויר – אחרי קפיצה
+      flyT = FLY.time; duckT = 0;
+      burst(PLAYER.x + 4, GROUND - py - 16, '#f8fafc', 6);
+    }
+  } else if (word === 'stop') { act.stop = STOP_TIME; act.run = 0; }       // העולם עוצר
+  else if (word === 'run')   { act.run = RUN_BOOST.time; act.stop = 0; }   // דוהר מהר
+  else if (word === 'swim')  { act.swim = SWIM_TIME; duckT = 0; }
+  else if (word === 'climb') { act.climbWant = 0.6; }                     // מטפס אם צוק קרוב (או מתקרב בחצי השנייה הקרובה)
+  else if (word === 'push')  { act.push = 0.6; duckT = 0; }
+  else if (word === 'pull')  { act.pull = 0.6; duckT = 0; }
+  else if (word === 'hide')  { act.hide = HIDE_TIME; duckT = 0; }
+  else if (word === 'block') { act.block = BLOCK_TIME; }
+}
+
+// מקלדת – לבדיקה במחשב
+const KEYS = { Space: 'jump', ArrowUp: 'jump', ArrowDown: 'down', KeyK: 'kick', KeyT: 'throw', KeyC: 'catch', KeyF: 'fly',
+               KeyS: 'stop', KeyR: 'run', KeyW: 'swim', KeyL: 'climb', KeyO: 'push', KeyU: 'pull', KeyH: 'hide', KeyB: 'block' };
+window.addEventListener('keydown', e => {
+  const tag = e.target && e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;      // כותבים שם – לא מפעילים פקודות
+  if (e.code === 'Escape' || e.code === 'KeyP') { state === 'paused' ? resumeGame() : pauseGame(); return; }
+  if (KEYS[e.code]) { command(KEYS[e.code], 'key'); e.preventDefault(); }
+});
+
+/* ============================================================
+   מהלך המשחק
+   ============================================================ */
+// עוצרים את המיקרופון כשלא משחקים – כדי שסימן ההאזנה בדפדפן ייעלם
+function stopAudio() {
+  if (!audio) return;
+  try { audio.stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+  try { audio.node.disconnect(); } catch (e) {}
+  try { audio.ctx.close(); } catch (e) {}
+  try { audio.rec.remove(); } catch (e) {}
+  audio = null; seenWords = [];
+  $('mic').className = '';
+  dbg('mic', 'off');
+}
+
+async function play(m, idx) {
+  if (!model) return;
+  const ok = await ensureAudio();   // נקרא ישירות מהלחיצה
+  if (ok) startGame(m, idx);
+}
+
+function startGame(m, idx) {
+  mode = m; stageIdx = idx || 0; cfg = LEVELS[diffKey];
+  playWords = mode === 'stage' ? STAGES[stageIdx].words : freeWords();
+  banked = false; resetAct();
+  world = m === 'stage' ? PAIR_WORLD[Math.floor((idx || 0) / 3)] : 0;
+  speed = cfg.speed; score = 0; lives = cfg.lives; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0;
+  obstacles = []; shurikens = []; particles = []; flag = null;
+  distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
+  py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
+  flash = null; heard = null; seenWords = [];
+  banner = mode === 'stage'
+    ? { text: 'Stage ' + (stageIdx + 1) + ': ' + STAGES[stageIdx].name, sub: STAGES[stageIdx].hint, t: 3 }
+    : { text: 'Free Play', sub: 'Words: ' + playWords.map(w => w.toUpperCase()).join(' · '), t: 3 };
+
+  hideAllOverlays();
+  $('endBtn').classList.remove('hide');
+  $('pauseBtn').classList.remove('hide');
+  $('hudFree').classList.toggle('hide', mode !== 'free');
+  $('hudStage').classList.toggle('hide', mode !== 'stage');
+  $('progress').classList.toggle('hide', mode !== 'stage');
+  $('catchHud').classList.toggle('hide', !playWords.includes('catch'));
+  if (mode === 'stage') $('stageName').textContent = 'Stage ' + (stageIdx + 1);
+  else $('best').textContent = getBest(diffKey);
+  renderHud();
+  dbg('game', mode + (mode === 'stage' ? ' ' + (stageIdx + 1) : '') + ' / ' + diffKey);
+  $('labBtn').classList.add('hide');
+  if (mode === 'stage') startIntro();
+  else state = 'play';
+}
+
+function renderHud() {
+  $('score').textContent = score;
+  $('caught').textContent = caught;
+  if (mode === 'stage') $('progressBar').style.width = (100 * done / STAGES[stageIdx].count) + '%';
+  if (!isFinite(lives)) $('lives').textContent = '';
+  else $('lives').textContent = '❤️'.repeat(Math.max(0, lives)) + '🤍'.repeat(Math.max(0, cfg.lives - lives));
+}
+
+// חלון סיום – משותף לכל המצבים
+function showOver(title, big, sub, primaryLabel, primaryAction, starsStyle) {
+  state = 'over';
+  stopAudio();
+  $('skipBtn').classList.add('hide');
+  bankCoins();
+  $('endBtn').classList.add('hide');
+  $('pauseBtn').classList.add('hide');
+  $('overTitle').textContent = title;
+  $('overBig').textContent = big;
+  $('overBig').classList.toggle('starsBig', !!starsStyle);
+  $('overSub').textContent = sub;
+  $('primaryBtn').textContent = primaryLabel;
+  $('primaryBtn').onclick = primaryAction;
+  $('over').classList.add('show');
+}
+
+function catchText() { return coins ? '  ·  🪙 ' + caught + ' / ' + coins : ''; }
+
+function endFree(byButton) {
+  const prev = getBest(diffKey);
+  const isNew = score > prev;
+  if (isNew) pStore('best_' + diffKey, score);
+  $('best').textContent = Math.max(prev, score);
+  showOver(byButton ? 'Well done!' : 'Game Over', String(score),
+           (isNew && score > 0 ? '🏆 New best!' : 'Best: ' + prev) + catchText(),
+           'Play again', () => play('free'));
+}
+
+function stageComplete() {
+  confetti();
+  const misses = hits + (coins - caught);   // מטבע שלא נתפס מוריד כוכבים (אבל לא לבבות)
+  const got = misses === 0 ? 3 : misses <= 2 ? 2 : 1;
+  const stars = getStars();
+  if (got > (stars[stageIdx] || 0)) { stars[stageIdx] = got; pStore('stars', stars); }
+  const hasNext = stageIdx + 1 < STAGES.length;
+  showOver('Stage ' + (stageIdx + 1) + ' complete!', '★'.repeat(got) + '☆'.repeat(3 - got),
+           (hits === 0 ? 'Perfect – no hits!' : hits === 1 ? '1 hit' : hits + ' hits') + catchText(),
+           hasNext ? 'Next stage ▶' : 'Play again',
+           hasNext ? () => play('stage', stageIdx + 1) : () => play('stage', stageIdx), true);
+}
+
+function stageFailed() {
+  showOver('Try again!', '💥', 'Stage ' + (stageIdx + 1) + ': ' + STAGES[stageIdx].name, 'Retry', () => play('stage', stageIdx));
+}
+
+function rand(a, b) { return a + Math.random() * (b - a); }
+
+// בוחר את המכשול הבא. לא יותר מ-3 מאותו סוג ברצף
+function pickType() {
+  let w = playWords[Math.floor(Math.random() * playWords.length)];
+  const last = obstacles.slice(-3).map(o => o.type);
+  if (playWords.length > 1 && last.length === 3 && last.every(t => t === WORD_OBSTACLE[w])) {
+    const others = playWords.filter(x => WORD_OBSTACLE[x] !== WORD_OBSTACLE[w]);
+    w = others[Math.floor(Math.random() * others.length)];
   }
-  requestAnimationFrame(meterLoop);
-}
-requestAnimationFrame(meterLoop);
-
-/* ---------- מהלך הבדיקה ---------- */
-function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-
-$('startBtn').onclick = () => startTest(NEW_WORDS, 3);
-$('startAllBtn').onclick = () => startTest(WORDS, 2);
-
-async function startTest(list, per) {
-  if (!(await ensureAudio())) return;
-  testWords = list; PER_WORD = per;
-  queue = shuffle(testWords.flatMap(w => Array(PER_WORD).fill(w)));
-  results.length = 0; round = 0; seenWords = [];
-  running = true;
-  $('startBtn').disabled = true; $('startAllBtn').disabled = true; $('stopBtn').disabled = false;
-  $('status').textContent = 'מקשיב ✓';
-  render();
-  next();
+  return WORD_OBSTACLE[w];
 }
 
-function next() {
-  if (!running) return;
-  if (round >= queue.length) { finish(); return; }
-  setPrompt('…', '', '');
-  promptTime = null;
-  timer = setTimeout(() => {
-    if (!running) return;
-    target = queue[round++];
-    promptTime = performance.now(); onsetTime = null;
-    setPrompt(target.toUpperCase(), round + ' / ' + queue.length, 'go');
-    timer = setTimeout(() => {
-      if (!promptTime) return;
-      results.push({ target, heard: null, ms: null });
-      setPrompt('פספוס', target.toUpperCase(), 'miss');
-      promptTime = null;
-      render();
-      timer = setTimeout(next, 1100);
-    }, WINDOW);
-  }, 1200 + Math.random() * 1200);
+function riverWidth() {
+  const airtime = 2 * cfg.jumpV / cfg.gravity;   // כמה זמן קפיצה רגילה באוויר
+  return speed * airtime * RIVER_FACTOR;         // רחב מדי לקפיצה בלבד
 }
 
-function finish() {
-  running = false;
-  $('startBtn').disabled = false; $('startAllBtn').disabled = false; $('stopBtn').disabled = true;
-  setPrompt('סיום ✓', 'צלם את התוצאות ושלח לי', 'hit');
+function spawn() {
+  if (mode === 'free') world = Math.floor(spawned / 12) % WORLDS.length;   // ב-Free Play העולם מתחלף כל 12 מכשולים
+  const type = nextType;
+  const o = { type, x: W + 2, passed: false, hit: false };
+  if (type === 'river') o.w = riverWidth();
+  if (type === 'lake') o.w = speed * LAKE.factor;        // רחב מדי לקפיצה
+  if (type === 'bridge') o.w = speed * BRIDGE.factor;    // רחב מדי לקפיצה, ארוך מדי להליכה
+  if (type === 'coin') coins++;
+  obstacles.push(o);
+  spawned++;
+  distSinceSpawn = 0;
+
+  // הרווח עד המכשול הבא – בשניות, ועוד אורך הנהר אם יש
+  nextType = pickType();
+  nextGap = speed * rand(cfg.gapT[0], cfg.gapT[1]) + (o.w || 0);
+  if (type === 'river') nextGap += speed * FLY.time * 0.8;   // זמן לנחות מהגלישה לפני המכשול הבא
+  if (type === 'bridge') nextGap += speed * 1.0;             // אחרי RUN העולם מהיר – עוד מרווח
+  if (type === 'cliff') nextGap += speed * 0.8;              // זמן לרדת מהצוק
+  if (nextType === 'enemy') nextGap *= 1.35;   // אויב רץ מהר יותר – נותנים לו יותר מרווח
+  if (nextType === 'arrows') nextGap *= 1.4;   // חיצים מהירים
+  if (nextType === 'guard') nextGap *= 1.15;
 }
 
-$('stopBtn').onclick = () => {
-  running = false; clearTimeout(timer); promptTime = null;
-  $('startBtn').disabled = false; $('startAllBtn').disabled = false; $('stopBtn').disabled = true;
-  setPrompt('נעצר', '', '');
+function playerBox() {
+  const ducking = duckT > 0;
+  const w = ducking ? PLAYER.duckW : PLAYER.w;
+  const h = ducking ? PLAYER.duckH : PLAYER.h;
+  const bottom = GROUND - py;
+  return { l: PLAYER.x, r: PLAYER.x + w, t: bottom - h, b: bottom };
+}
+
+function obstacleBox(o) {
+  switch (o.type) {
+    case 'box':   return { l: o.x, r: o.x + BOX.w, t: GROUND - BOX.h, b: GROUND };
+    case 'beam':  return { l: o.x, r: o.x + BEAM.w, t: -1e6, b: GROUND - BEAM.clear };
+    case 'wall':  return { l: o.x, r: o.x + WALL.w, t: GROUND - WALL.h, b: GROUND };
+    case 'enemy': return { l: o.x, r: o.x + ENEMY.w, t: GROUND - ENEMY.h, b: GROUND };
+    case 'river': return { l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 20 };
+    case 'coin':return { l: o.x, r: o.x + 6, t: COIN.y - 3, b: COIN.y + 3 };
+    case 'rock': {
+      if (o.fallK === undefined) return { l: o.x, r: o.x + ROCK.size, t: ROCK.hangY, b: ROCK.hangY + ROCK.size };
+      return { l: o.x, r: o.x + ROCK.size, t: rockY(o), b: rockY(o) + ROCK.size };
+    }
+    case 'bridge': case 'lake': return { l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 20 };
+    case 'cliff':   return { l: o.x, r: o.x + CLIFF.w, t: GROUND - CLIFF.h, b: GROUND };
+    case 'boulder': return { l: o.x + 1, r: o.x + BOULDER.r * 2 - 1, t: GROUND - BOULDER.r * 2 + 1, b: GROUND };
+    case 'gate':    return { l: o.x, r: o.x + GATE.w, t: -1e6, b: GROUND };
+    case 'guard':   return { l: o.x, r: o.x + GUARD.w, t: GROUND - GUARD.h, b: GROUND };
+    case 'arrows':  return { l: o.x, r: o.x + ARROWS.w, t: GROUND - 23, b: GROUND - 2 };
+  }
+}
+function rockY(o) {   // הסלע נופל בתאוצה מהחבל עד הקרקע
+  const k = Math.min(1, o.fallK || 0);
+  return ROCK.hangY + (GROUND - ROCK.size - ROCK.hangY) * k * k;
+}
+
+// האם הנינג'ה נפגע מהמכשול הזה עכשיו
+// ברמה הקלה (forgive) מכווצים את אזור הפגיעה – נגיעה בקצה לא נחשבת
+function collides(o, pb) {
+  if (o.demo || o.type === 'coin' || o.broken || o.defeated) return false;
+  if (o.climbed || o.pushed || o.open || o.deflected || o.landed) return false;
+  if (o.type === 'rock' && o.fallK === undefined) return false;
+  if (o.type === 'guard' && act.hide > 0) return false;                  // מתחבא – השומר לא רואה
+  const m = cfg.forgive || 0;
+  const cx = (pb.l + pb.r) / 2;
+  if (o.type === 'lake')   return py === 0 && act.swim <= 0 && cx > o.x + 2 + m * 2 && cx < o.x + o.w - 2 - m * 2;
+  if (o.type === 'bridge') return o.collapsed && py === 0 && act.climb <= 0 && cx > o.x + 1 && cx < o.x + o.w - 1;
+  if (o.type === 'river') {
+    const cx = (pb.l + pb.r) / 2;
+    return py === 0 && cx > o.x + 2 + m * 2 && cx < o.x + o.w - 2 - m * 2;   // עומד על הקרקע מעל המים
+  }
+  const b = obstacleBox(o);
+  return pb.l < b.r - m && pb.r > b.l + m && pb.t < b.b - m && pb.b > b.t + m;
+}
+
+function onHit(o) {
+  o.hit = true;
+  shakeT = 0.3;
+  if (state === 'demo' || state === 'intro') {   // בהדגמה – בלי עונש
+    flash = { text: HIT_WORD[o.type], t: 1.2 }; invulnT = INVULN_TIME; return;
+  }
+  hits++; done++;
+  flash = { text: HIT_WORD[o.type], t: 1.2 };   // מראה את המילה הנכונה
+  invulnT = INVULN_TIME;
+  if (isFinite(lives)) {
+    lives--;
+    renderHud();
+    if (lives <= 0) { mode === 'stage' ? stageFailed() : endFree(false); return; }
+  } else if (cfg.penalty && mode === 'free') {
+    score = Math.max(0, score - cfg.penalty);
+  }
+  renderHud();
+}
+
+// הצלחה במכשול (בעיטה, שוריקן, תפיסה, או מעבר)
+function cleared(o) {
+  if (o.passed) return;
+  o.passed = true; done++; score++;
+  renderHud();
+}
+
+function catchCoin(s) {
+  s.caught = true; s.ct = 0; caught++;
+  cleared(s);
+  burst(s.x + 3, COIN.y, '#fde047', 10);
+  const el = $('catchHud'); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+}
+
+/* ---------- חלקיקים (ניצוצות, שברי לבנים) ---------- */
+function burst(x, y, color, n, power) {
+  power = power || 30;
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, v = power * (0.4 + Math.random() * 0.8);
+    particles.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 15, life: 0.6 + Math.random() * 0.4, color, size: 0.8 + Math.random() * 1.2 });
+  }
+}
+
+function overWide(type, pb) {           // הנינג'ה מעל אגם / גשר / נהר?
+  const cx = (pb.l + pb.r) / 2;
+  return obstacles.find(o => o.type === type && cx > o.x + 1 && cx < o.x + o.w - 1);
+}
+function swimmingNow() { return act.swim > 0 && py <= 0 && !!overWide('lake', playerBox()); }
+
+function update(dt) {
+  if (cfg.accel) speed = Math.min(cfg.maxSpeed, speed + cfg.accel * dt);
+
+  // הנינג'ה
+  const wasAir = py > 0;
+  if (act.climb > 0) {                     // מטפס – עולה לאט לגובה הצוק
+    act.climb -= dt;
+    py = CLIFF.h * Math.min(1, 1 - act.climb / CLIFF.time); vy = 0;
+    if (act.climb <= 0) { act.climb = 0; py = CLIFF.h + 0.5; vy = 12; }   // למעלה – קופץ ממשיך הלאה
+  } else if (flyT > 0) {
+    flyT -= dt;
+    vy = -FLY.sink;                 // גולש – יורד לאט
+    py += vy * dt;
+    if (py <= 0) { py = 0; vy = 0; flyT = 0; }
+  } else if (py > 0 || vy > 0) {
+    vy -= cfg.gravity * dt;
+    py += vy * dt;
+    if (py <= 0) { py = 0; vy = 0; }
+  }
+  if (wasAir && py === 0) burst(PLAYER.x + 4, GROUND - 0.5, WORLDS[world].dust, 7, 14);   // אבק בנחיתה
+  if (duckT > 0) duckT -= dt;
+  if (invulnT > 0) invulnT -= dt;
+  if (kickT > 0) kickT -= dt;
+  if (catchT > 0) catchT -= dt;
+  if (throwT > 0) throwT -= dt;
+  if (throwCd > 0) throwCd -= dt;
+  for (const k of ['stop', 'run', 'swim', 'climbWant', 'push', 'pull', 'hide', 'block']) if (act[k] > 0) act[k] = Math.max(0, act[k] - dt);
+  if (flash && (flash.t -= dt) <= 0) flash = null;
+  if (heard && (heard.t -= dt) <= 0) heard = null;
+  if (banner && (banner.t -= dt) <= 0) banner = null;
+
+  // מכשולים חדשים / דגל סיום
+  const v = curSpeed(), dx = v * dt;
+  bgX += dx;
+  distSinceSpawn += dx;
+  if (state === 'play' && distSinceSpawn >= nextGap) {
+    if (mode === 'free' || spawned < STAGES[stageIdx].count) spawn();
+    else if (!flag) flag = { x: W + 2 };
+  }
+
+  const pb = playerBox();
+  if (state === 'demo' || state === 'intro') demoAuto(pb, dt);
+  if (state === 'intro' && (introT -= dt) <= 0) introNext();
+
+  // שוריקנים
+  for (const s of shurikens) {
+    s.x += SHURIKEN.speed * dt; s.rot += dt * 18;
+    for (const o of obstacles) {
+      if (o.type !== 'enemy' || o.defeated) continue;
+      const b = obstacleBox(o);
+      if (s.x > b.l && s.x < b.r && s.y > b.t && s.y < b.b) {
+        o.defeated = true; o.ft = 0; s.dead = true;
+        burst(o.x + ENEMY.w / 2, GROUND - ENEMY.h / 2, '#ef4444', 10);
+        cleared(o);
+        break;
+      }
+    }
+  }
+  shurikens = shurikens.filter(s => !s.dead && s.x < W + 10);
+
+  const cx = (pb.l + pb.r) / 2;
+  for (const o of obstacles) {
+    o.x -= dx;
+    if (o.type === 'enemy' && !o.defeated) o.x -= speed * ENEMY.extra * dt;   // אויב רץ לקראתך
+    if (o.type === 'guard') o.x -= GUARD.walk * dt;                          // שומר הולך לקראתך
+    if (o.type === 'arrows' && !o.deflected) o.x -= ARROWS.speed * dt;       // חיצים עפים
+    if (o.pushed) { o.x += (v + 60) * dt; o.rot = (o.rot || 0) + dt * 6; }   // סלע שנדחף מתגלגל קדימה
+    if (o.defeated) o.ft += dt;
+    if (o.caught) o.ct += dt;
+    if (o.deflected) o.dt2 = (o.dt2 || 0) + dt;
+    if (o.open) o.oT = (o.oT || 0) + dt;
+
+    // בעיטה שוברת קיר שקרוב מספיק
+    if (o.type === 'wall' && !o.broken && kickT > 0 && o.x - pb.r <= KICK.range && o.x + WALL.w > pb.l) {
+      o.broken = true;
+      for (let i = 0; i < 14; i++) burst(o.x + 2.5, GROUND - Math.random() * WALL.h, '#94a3b8', 1, 45);
+      cleared(o);
+    }
+    // STOP: הסלע נופל כשמגיעים אליו – או מיד, אם עצרו לידו
+    if (o.type === 'rock') {
+      if (o.fallK === undefined) {
+        const d = o.x - pb.r;
+        const nearStopped = act.stop > 0 && d > -ROCK.size && d <= Math.max(60, speed * 2.5);
+        const arriving = v > 0 && d > -ROCK.size && d / v <= ROCK.warn;
+        if (nearStopped || arriving) {
+          o.fallK = 0;
+          if (nearStopped) { o.fallDur = ROCK.fall; o.vTrig = 0; }          // עצרו – נופל לפניהם ומתנפץ
+          else {                                                              // ממשיכים – מתוזמן ליפול בדיוק עליהם
+            const tArr = Math.max(0.05, d / v), tc = (ROCK.size + PLAYER.w) / v;
+            o.fallDur = Math.max(0.2, (tArr + tc * 0.5) / 0.75); o.vTrig = v;
+          }
+        }
+      } else if (!o.landed) {
+        // אם העולם מאיץ (RUN) – גם הנפילה מאיצה באותו יחס, ולכן אי אפשר "לברוח" מהסלע
+        o.fallK += dt / o.fallDur * (v > 0 && o.vTrig > 0 ? v / o.vTrig : 1);
+        if (o.fallK >= 1) {
+          o.landed = true;
+          burst(o.x + ROCK.size / 2, GROUND - 2, '#78716c', 14, 35);
+          if (!o.hit) cleared(o);
+        }
+      }
+    }
+    // RUN: הגשר מתמוטט זמן קצר אחרי שעולים עליו
+    if (o.type === 'bridge') {
+      if (o.stepT === undefined && cx > o.x && cx < o.x + o.w) o.stepT = 0;
+      if (o.stepT !== undefined && !o.collapsed && (o.stepT += dt) >= BRIDGE.collapse) o.collapsed = true;
+      if (o.collapsed) o.cT = (o.cT || 0) + dt;
+    }
+    // CLIMB: מתחיל לטפס כשהצוק בטווח
+    if (o.type === 'cliff' && !o.climbed && act.climbWant > 0 && act.climb <= 0 && o.x - pb.r <= CLIFF.range && o.x + CLIFF.w > pb.l) {
+      o.climbed = true; act.climb = CLIFF.time; act.climbWant = 0; duckT = 0; flyT = 0; py = 0; vy = 0;
+      cleared(o);
+    }
+    // PUSH: דוחף סלע שקרוב מספיק
+    if (o.type === 'boulder' && !o.pushed && act.push > 0 && o.x - pb.r <= BOULDER.range && o.x + BOULDER.r * 2 > pb.l) {
+      o.pushed = true; burst(o.x, GROUND - 2, WORLDS[world].dust, 10, 20); cleared(o);
+    }
+    // PULL: מושך בחבל ופותח שער שקרוב מספיק
+    if (o.type === 'gate' && !o.open && act.pull > 0 && o.x - pb.r <= GATE.range && o.x + GATE.w > pb.l) {
+      o.open = true; cleared(o);
+    }
+    // BLOCK: המגן הודף את החיצים
+    if (o.type === 'arrows' && !o.deflected && act.block > 0) {
+      const b = obstacleBox(o);
+      if (b.l < pb.r + 4 && b.r > pb.l) { o.deflected = true; burst(o.x, GROUND - 12, '#e5e7eb', 10, 30); cleared(o); }
+    }
+
+    if (!o.hit && !o.passed && invulnT <= 0 && collides(o, pb)) { onHit(o); if (state === 'over') return; }
+    const ob = obstacleBox(o);
+    if (!o.passed && !o.hit && ob.r < pb.l) {
+      if (o.type === 'coin') { o.passed = true; done++; renderHud(); }   // מטבע שהוחמץ – בלי נקודה, בלי עונש
+      else cleared(o);                                                     // עבר את המכשול בשלום
+    }
+  }
+  obstacles = obstacles.filter(o => {
+    const r = o.w ? o.x + o.w : o.x + 25;
+    return r > -10 && o.x < W + 40 && !(o.caught && o.ct > 0.35);
+  });
+
+  if (flag) {
+    flag.x -= dx;
+    if (flag.x <= PLAYER.x + PLAYER.w) { stageComplete(); return; }
+  }
+  dbg('speed', v.toFixed(1));
+}
+
+/* ============================================================
+   ציור
+   ============================================================ */
+let cw = 0, ch = 0, scale = 1, ox = 0, oy = 0;
+
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  cw = window.innerWidth; ch = window.innerHeight;
+  canvas.width = Math.round(cw * dpr); canvas.height = Math.round(ch * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  scale = Math.min(cw / W, ch / H);
+  ox = (cw - W * scale) / 2;
+  oy = (ch - H * scale) * 0.75;   // במצב לאורך – יותר שמיים, פחות אדמה
+}
+window.addEventListener('resize', resize);
+resize();
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function label(text, cx, cy, size, bg, fg) {
+  ctx.font = '900 ' + size + 'px -apple-system, system-ui, Arial, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const tw = ctx.measureText(text).width;
+  roundRect(cx - tw / 2 - size * 0.4, cy - size * 0.65, tw + size * 0.8, size * 1.3, size * 0.35);
+  ctx.fillStyle = bg; ctx.fill();
+  ctx.fillStyle = fg; ctx.fillText(text, cx, cy + size * 0.05);
+}
+
+function bigText(text, y, size, color) {
+  ctx.font = '900 ' + size + 'px -apple-system, system-ui, Arial, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.lineWidth = size * 0.16; ctx.strokeStyle = '#fff'; ctx.lineJoin = 'round';
+  ctx.strokeText(text, W / 2, y);
+  ctx.fillStyle = color; ctx.fillText(text, W / 2, y);
+}
+
+function star4(x, y, r, rot, color) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.fillStyle = color;
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) {
+    const a = i * Math.PI / 4, rr = i % 2 ? r * 0.35 : r;
+    ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+  }
+  ctx.closePath(); ctx.fill(); ctx.restore();
+}
+
+/* ---------- עולמות: יער במבוק, כפר בלילה, הרים מושלגים ---------- */
+const WORLDS = [
+  { sky: ['#a5f3fc', '#ecfeff'], ground: '#92400e', top: '#4ade80', mark: '#78350f', dust: '#d6d3d1' },
+  { sky: ['#1e1b4b', '#4338ca'], ground: '#44403c', top: '#78716c', mark: '#292524', dust: '#a8a29e' },
+  { sky: ['#bae6fd', '#f0f9ff'], ground: '#cbd5e1', top: '#f8fafc', mark: '#94a3b8', dust: '#ffffff' },
+  { sky: ['#fdba74', '#fff7ed'], ground: '#c2410c', top: '#fbbf24', mark: '#9a3412', dust: '#fde68a' },   // קניון במדבר
+  { sky: ['#6d28d9', '#fda4af'], ground: '#57534e', top: '#a8a29e', mark: '#44403c', dust: '#d6d3d1' }    // מקדש בשקיעה
+];
+function hash(n) { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+function circle(x, y, r) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
+
+// מצייר אלמנט שחוזר על עצמו ברקע, זז לאט יותר מהקרקע (parallax)
+function repeat(left, right, par, spacing, fn) {
+  const off = bgX * par;
+  for (let i = Math.floor((left + off) / spacing) - 1; i * spacing - off < right + spacing; i++) fn(i * spacing - off, i);
+}
+
+function hills(left, right, par, amp, color, seed) {
+  ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(left, GROUND);
+  for (let x = left; x <= right + 4; x += 4) {
+    const u = (x + bgX * par) * 0.045 + seed;
+    ctx.lineTo(x, GROUND - amp * (0.55 + 0.25 * Math.sin(u) + 0.2 * Math.sin(u * 2.3 + 1)));
+  }
+  ctx.lineTo(right + 4, GROUND); ctx.closePath(); ctx.fill();
+}
+
+function bamboo(x, h, seed) {
+  const top = GROUND - h, w = 2.2;
+  ctx.fillStyle = seed > 0.5 ? '#65a30d' : '#4d7c0f'; ctx.fillRect(x, top, w, h);
+  ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(x + 0.3, top, 0.5, h);
+  ctx.fillStyle = '#365314';
+  for (let y = GROUND - 6; y > top; y -= 7) ctx.fillRect(x - 0.2, y, w + 0.4, 0.6);
+  ctx.fillStyle = '#4d7c0f';
+  for (let k = 0; k < 3; k++) {
+    const ly = top + 4 + k * 6, dir = (k + Math.floor(seed * 10)) % 2 ? 1 : -1;
+    ctx.beginPath(); ctx.ellipse(x + w / 2 + dir * 3, ly, 3.2, 0.9, dir * 0.4, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function house(x, i) {
+  const w = 16 + hash(i) * 10, h = 10 + hash(i + 1) * 12, base = GROUND;
+  ctx.fillStyle = '#1e1b4b'; ctx.fillRect(x, base - h, w, h);
+  ctx.fillStyle = '#0f0d2e';                                   // גג עם קצוות מעוקלים
+  ctx.beginPath(); ctx.moveTo(x - 3, base - h); ctx.quadraticCurveTo(x + w / 2, base - h - 9, x + w + 3, base - h);
+  ctx.lineTo(x + w + 4, base - h - 1.2); ctx.lineTo(x - 4, base - h - 1.2); ctx.closePath(); ctx.fill();
+  for (let k = 0; k < 2; k++) {                                // חלונות מוארים
+    if (hash(i * 3 + k) < 0.35) continue;
+    const wx = x + 3 + k * (w / 2), wy = base - h + 3;
+    ctx.fillStyle = 'rgba(253,230,138,.25)'; circle(wx + 1.5, wy + 2, 3.5);
+    ctx.fillStyle = '#fde68a'; ctx.fillRect(wx, wy, 3, 4);
+  }
+  if (hash(i + 7) > 0.45) {                                    // פנס אדום
+    const lx = x + w + 1, ly = base - h + 4 + Math.sin(performance.now() / 600 + i) * 0.4;
+    ctx.strokeStyle = '#0f0d2e'; ctx.lineWidth = 0.3; ctx.beginPath(); ctx.moveTo(lx, base - h); ctx.lineTo(lx, ly - 1.6); ctx.stroke();
+    ctx.fillStyle = 'rgba(248,113,113,.35)'; circle(lx, ly, 3.4);
+    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.ellipse(lx, ly, 1.3, 1.7, 0, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function peak(x, i, par) {
+  const w = 40 + hash(i) * 30, h = 26 + hash(i + 2) * 24;
+  ctx.fillStyle = '#94a3b8';
+  ctx.beginPath(); ctx.moveTo(x, GROUND); ctx.lineTo(x + w / 2, GROUND - h); ctx.lineTo(x + w, GROUND); ctx.fill();
+  ctx.fillStyle = '#f8fafc';                                   // כיפת שלג
+  ctx.beginPath(); ctx.moveTo(x + w / 2, GROUND - h);
+  ctx.lineTo(x + w / 2 + w * 0.16, GROUND - h * 0.68); ctx.lineTo(x + w / 2 + w * 0.05, GROUND - h * 0.74);
+  ctx.lineTo(x + w / 2 - w * 0.04, GROUND - h * 0.66); ctx.lineTo(x + w / 2 - w * 0.16, GROUND - h * 0.7); ctx.closePath(); ctx.fill();
+}
+
+function pine(x, i) {
+  const h = 16 + hash(i) * 14, w = h * 0.5;
+  ctx.fillStyle = '#7c2d12'; ctx.fillRect(x - 0.7, GROUND - 3, 1.4, 3);
+  for (let k = 0; k < 3; k++) {
+    const ty = GROUND - 3 - k * h * 0.28, tw = w * (1 - k * 0.25);
+    ctx.fillStyle = '#166534';
+    ctx.beginPath(); ctx.moveTo(x - tw / 2, ty); ctx.lineTo(x, ty - h * 0.42); ctx.lineTo(x + tw / 2, ty); ctx.fill();
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath(); ctx.moveTo(x - tw * 0.18, ty - h * 0.3); ctx.lineTo(x, ty - h * 0.42); ctx.lineTo(x + tw * 0.18, ty - h * 0.3); ctx.fill();
+  }
+}
+
+function drawWorld(left, right, top, bottom) {
+  const wd = WORLDS[world], now = performance.now() / 1000;
+  if (world === 0) {
+    ctx.fillStyle = 'rgba(254,240,138,.35)'; circle(W * 0.82, 16, 11);
+    ctx.fillStyle = 'rgba(254,240,138,.9)'; circle(W * 0.82, 16, 6);
+    hills(left, right, 0.05, 30, '#bbf7d0', 0);
+    hills(left, right, 0.12, 20, '#86efac', 2);
+    repeat(left, right, 0.35, 15, (x, i) => { if (hash(i) > 0.25) bamboo(x + hash(i + 5) * 5, 34 + hash(i + 9) * 40, hash(i + 3)); });
+  } else if (world === 1) {
+    for (let i = 0; i < 45; i++) {                              // כוכבים מנצנצים
+      const sx = left + hash(i) * (right - left), sy = top + hash(i + 50) * (GROUND - 35 - top);
+      ctx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(now * (0.8 + hash(i + 9)) + i));
+      ctx.fillStyle = '#fff'; ctx.fillRect(sx, sy, 0.6, 0.6);
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = 'rgba(254,249,195,.15)'; circle(W * 0.8, 18, 13);
+    ctx.fillStyle = '#fef9c3'; circle(W * 0.8, 18, 7);
+    ctx.fillStyle = '#4338ca'; circle(W * 0.8 + 2.5, 16.5, 6);   // ירח חרמש
+    hills(left, right, 0.05, 28, '#312e81', 1);
+    repeat(left, right, 0.3, 30, (x, i) => { if (hash(i + 4) > 0.2) house(x, i); });
+  } else if (world === 2) {
+    repeat(left, right, 0.05, 45, (x, i) => peak(x, i));
+    hills(left, right, 0.12, 12, '#e2e8f0', 3);
+    repeat(left, right, 0.32, 14, (x, i) => { if (hash(i + 1) > 0.3) pine(x + hash(i) * 6, i); });
+  } else if (world === 3) {                                       // קניון: שמש גדולה, מסות שטוחות, קקטוסים
+    ctx.fillStyle = 'rgba(254,215,170,.6)'; circle(W * 0.78, 20, 14);
+    ctx.fillStyle = '#fff7ed'; circle(W * 0.78, 20, 8);
+    repeat(left, right, 0.05, 55, (x, i) => mesa(x, i, '#fb923c', 24));
+    repeat(left, right, 0.14, 38, (x, i) => mesa(x + 10, i + 20, '#ea580c', 14));
+    repeat(left, right, 0.35, 26, (x, i) => { if (hash(i + 2) > 0.4) cactus(x + hash(i) * 8, i); });
+  } else {                                                        // מקדש: שקיעה סגולה, מקדשים מדורגים, עמודים עם לפידים
+    ctx.fillStyle = 'rgba(254,205,211,.5)'; circle(W * 0.2, 30, 12);
+    repeat(left, right, 0.06, 70, (x, i) => ziggurat(x, i));
+    repeat(left, right, 0.32, 24, (x, i) => { if (hash(i + 6) > 0.35) pillar(x, i); });
+  }
+
+  // קרקע
+  ctx.fillStyle = wd.ground; ctx.fillRect(left, GROUND, right - left, bottom - GROUND);
+  ctx.fillStyle = wd.top; ctx.fillRect(left, GROUND, right - left, 2);
+  ctx.fillStyle = wd.mark;
+  if (world === 1 || world === 4) repeat(left, right, 1, 10, x => { ctx.fillRect(x, GROUND + 2, 0.5, 6); ctx.fillRect(x + 5, GROUND + 8, 0.5, 6); });
+  else repeat(left, right, 1, 12, (x, i) => { ctx.fillRect(x, GROUND + 5 + hash(i) * 4, 3 + hash(i + 1) * 2, 1); });
+}
+
+function mesa(x, i, color, h0) {
+  const w = 26 + hash(i) * 22, h = h0 + hash(i + 1) * 14;
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.moveTo(x, GROUND); ctx.lineTo(x + 4, GROUND - h); ctx.lineTo(x + w - 4, GROUND - h); ctx.lineTo(x + w, GROUND); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.08)'; ctx.fillRect(x + 4, GROUND - h * 0.6, w - 8, 1.2);
+}
+function cactus(x, i) {
+  const h = 9 + hash(i) * 7;
+  ctx.fillStyle = '#15803d';
+  roundRect(x, GROUND - h, 2.4, h, 1.2); ctx.fill();
+  roundRect(x - 2.6, GROUND - h * 0.7, 1.8, 4, 0.9); ctx.fill(); ctx.fillRect(x - 2.6, GROUND - h * 0.7 + 2.6, 2.8, 1.4);
+  roundRect(x + 3.2, GROUND - h * 0.55, 1.8, 3.5, 0.9); ctx.fill(); ctx.fillRect(x + 2, GROUND - h * 0.55 + 2.2, 2.8, 1.4);
+}
+function ziggurat(x, i) {
+  const w = 40 + hash(i) * 20, steps = 4;
+  ctx.fillStyle = '#4c1d95';
+  for (let k = 0; k < steps; k++) { const sw = w * (1 - k * 0.2); ctx.fillRect(x + (w - sw) / 2, GROUND - 7 * (k + 1), sw, 7.2); }
+  ctx.fillStyle = 'rgba(253,224,71,.5)'; ctx.fillRect(x + w / 2 - 1.2, GROUND - 26, 2.4, 3);
+}
+function pillar(x, i) {
+  const h = 22 + hash(i) * 10;
+  ctx.fillStyle = '#78716c'; ctx.fillRect(x, GROUND - h, 4, h);
+  ctx.fillStyle = '#a8a29e'; ctx.fillRect(x - 1, GROUND - h - 1.5, 6, 1.6); ctx.fillRect(x - 1, GROUND - 1.6, 6, 1.6);
+  const fl = Math.sin(performance.now() / 90 + i * 3) * 0.6;                       // לפיד מהבהב
+  ctx.fillStyle = 'rgba(251,146,60,.35)'; circle(x + 2, GROUND - h - 4, 3.5 + fl * 0.5);
+  ctx.fillStyle = '#f97316'; ctx.beginPath(); ctx.ellipse(x + 2, GROUND - h - 4, 1.1, 2 + fl, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.ellipse(x + 2, GROUND - h - 3.5, 0.5, 1 + fl * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+}
+
+function drawSnow(left, right, top, bottom) {
+  if (world !== 2) return;
+  const now = performance.now() / 1000, hgt = bottom - top;
+  ctx.fillStyle = 'rgba(255,255,255,.9)';
+  for (let i = 0; i < 50; i++) {
+    const sp = 6 + hash(i + 3) * 8;
+    const y = top + (((hash(i + 2) * hgt + now * sp) % hgt) + hgt) % hgt;
+    const x = left + ((((hash(i) * 200 - now * (3 + hash(i + 1) * 4) - bgX * 0.4) % 200) + 200) % 200) * ((right - left) / 200);
+    circle(x + Math.sin(now + i) * 1.2, y, 0.35 + hash(i + 7) * 0.4);
+  }
+}
+
+/* ---------- דמות נינג'ה עם ידיים ורגליים ---------- */
+// זוויות נמדדות מ"ישר למטה"; זווית חיובית = קדימה (לכיוון שאליו הדמות פונה)
+const THIGH = 2.5, SHIN = 2.4, UPPER = 2.7, FORE = 2.5;
+function lerp(a, b, k) { return a + (b - a) * k; }
+function endOf(x, y, a, len) { return [x + Math.sin(a) * len, y + Math.cos(a) * len]; }
+
+function poseIdle(now) {
+  const br = Math.sin(now * 2.5);
+  return { hipY: -4.6, torso: 3.4, lean: 0.05, bob: br * 0.15, legs: [[-0.15, -0.1], [0.18, 0.12]], arms: [[-0.2, 0.25], [0.25, 0.7]] };
+}
+function poseRun(p) {
+  const leg = q => { const s = Math.sin(q), t = 0.85 * s; return [t, t - 1.0 * Math.max(0, Math.sin(q - 1.3))]; };
+  const arm = q => { const u = -1.15 * Math.sin(q); return [u, u + 1.55]; };   // מרפק כפוף, אמה קדימה
+  return { hipY: -4.6, torso: 3.4, lean: 0.18, bob: -Math.abs(Math.cos(p)) * 0.6, legs: [leg(p + Math.PI), leg(p)], arms: [arm(p), arm(p + Math.PI)] };
+}
+function poseAir(rising) {
+  return { hipY: -4.6, torso: 3.4, lean: 0.12, bob: 0, legs: [[0.5, -0.8], [1.35, 0.15]],
+           arms: rising ? [[-2.0, -2.4], [1.9, 2.4]] : [[-1.5, -1.9], [1.4, 1.9]] };   // ידיים פרושות קדימה ואחורה
+}
+function poseDuck() {   // גלישה על הקרקע, רגליים קדימה, גוף נוטה אחורה
+  return { hipY: -1.7, torso: 3.2, lean: -0.95, bob: 0, legs: [[1.0, -0.5], [1.48, 1.55]], arms: [[-0.55, -0.25], [1.25, 1.7]], headTilt: 0.5 };
+}
+function poseFly(now) {
+  const sw = Math.sin(now * 3) * 0.15;
+  return { hipY: -4.6, torso: 3.4, lean: 0.05, bob: 0, legs: [[-0.3 + sw, -0.15 + sw], [0.05 + sw, 0.2 + sw]], arms: [[2.3, 2.6], [2.55, 2.8]] };
+}
+function applyKick(P, k) {
+  // 0–0.2: מקפלים ברך למעלה · 0.2–0.75: רגל נשלחת ישר קדימה · אחר כך חוזרת
+  let thigh, shin;
+  if (k < 0.2) { const e = k / 0.2; thigh = lerp(0.2, 1.65, e); shin = lerp(0.1, -0.2, e); }
+  else if (k < 0.75) { const e = Math.min(1, (k - 0.2) / 0.12); thigh = lerp(1.65, 1.8, e); shin = lerp(-0.2, 1.8, e); }
+  else { const e = (k - 0.75) / 0.25; thigh = lerp(1.8, 0.3, e); shin = lerp(1.8, 0.1, e); }
+  const lean = k < 0.75 ? -0.5 : lerp(-0.5, 0, (k - 0.75) / 0.25);
+  P.legs[1] = [thigh, shin]; P.legs[0] = [-0.3, 0.05];
+  P.lean = lean; P.bob = 0;
+  P.arms = [[-1.9, -1.5], [1.2, 2.9]];      // יד אחורית לאיזון, יד קדמית שומרת מול החזה
+  P.kickFoot = k >= 0.2 && k < 0.75;
+}
+function applyThrow(P, k) {
+  const u = Math.min(1.6, -2.4 + k * 5);                    // יד מאחור-למעלה → קדימה
+  P.arms = [[-0.6, -0.2], [u, u - 0.15]]; P.lean = 0.25;
+}
+function applyCatch(P) { P.arms = [[1.75, 1.55], [2.15, 1.9]]; P.openHand = true; P.lean = 0.2; }   // שתי הידיים נשלחות קדימה-למעלה
+function poseSwim(t) {          // שוחה: גוף אופקי, ידיים בתנועה סיבובית, רגליים מנפנפות
+  const a = t * 7, f = Math.sin(t * 12) * 0.35;
+  return { hipY: -2.4, torso: 3.4, lean: 1.45, bob: Math.sin(t * 7) * 0.3, headTilt: -1.1,
+           legs: [[-1.55 + f, -1.6 + f], [-1.55 - f, -1.6 - f]], arms: [[a, a + 0.4], [a + Math.PI, a + Math.PI + 0.4]] };
+}
+function poseClimb(t) {         // מטפס: ידיים למעלה לסירוגין, ברכיים מתכופפות
+  const s = Math.sin(t * 10);
+  return { hipY: -4.6, torso: 3.4, lean: 0.15, bob: 0, legs: [[0.9 + 0.45 * s, -0.3], [0.9 - 0.45 * s, -0.3]], arms: [[2.7 + 0.35 * s, 2.95], [2.7 - 0.35 * s, 2.95]] };
+}
+function posePush() {           // דוחף: נוטה קדימה, שתי ידיים ישרות, רגל אחורית נמתחת
+  return { hipY: -4.2, torso: 3.4, lean: 0.75, bob: 0, legs: [[-0.7, -0.5], [0.55, 0.1]], arms: [[1.45, 1.55], [1.55, 1.6]], openHand: true };
+}
+function posePull(t) {          // מושך: נוטה אחורה, ידיים קדימה על החבל
+  const tug = Math.sin(t * 14) * 0.1;
+  return { hipY: -4.4, torso: 3.4, lean: -0.5 + tug, bob: 0, legs: [[-0.15, 0.05], [0.6, 0.35]], arms: [[1.35, 1.5], [1.25, 1.45]] };
+}
+function applyBlock(P) { P.arms = [[-0.4, 0.2], [1.25, 2.3]]; P.shield = true; P.lean = 0.1; }
+function applyStop(P)  { P.arms = [P.arms[0], [1.55, 1.85]]; P.openHand = true; }   // יד מורמת: "עצור!"
+
+function playerPose() {
+  const now = performance.now() / 1000;
+  let P;
+  if (act.climb > 0) P = poseClimb(now);
+  else if (swimmingNow()) P = poseSwim(now);
+  else if (duckT > 0) P = poseDuck();
+  else if (flyT > 0) P = poseFly(now);
+  else if (py > 0) P = poseAir(vy > 0);
+  else if (act.push > 0) P = posePush();
+  else if (act.pull > 0) P = posePull(now);
+  else if (state === 'play' && curSpeed() > 0) P = poseRun(bgX * 0.42);
+  else if (act.run > 0) P = poseRun(now * 24);       // בהדגמה – רץ במקום
+  else P = poseIdle(now);
+  if (act.run > 0 && py <= 0 && duckT <= 0) P.lean = 0.38;
+  if (kickT > 0) applyKick(P, 1 - kickT / KICK.time);
+  if (throwT > 0) applyThrow(P, 1 - throwT / 0.25);
+  if (catchT > 0) applyCatch(P);
+  if (act.block > 0) applyBlock(P);
+  if (act.stop > STOP_TIME - 0.8) applyStop(P);
+  return P;
+}
+
+// F = { fx, fy, facing, scale, body, back, front, edge, accent, outline, pose, skeleton }
+// שלד: ירך → צוואר (גוף). הכתף נמצאת על הגוף מתחת לצוואר, והראש מעל הצוואר.
+const NECK = 3.4, SHOULDER_AT = 0.8, HEAD_UP = 2.6, HEAD_R = 3.0;
+function figureJoints(P) {
+  const along = (o, d) => [o[0] + Math.sin(P.lean) * d, o[1] - Math.cos(P.lean) * d];
+  const hip = [0, P.hipY];
+  const torso = P.torso || NECK;
+  const neck = along(hip, torso);
+  const sh = along(hip, torso * SHOULDER_AT);
+  const head = along(neck, HEAD_UP);
+  return { hip, neck, sh, head };
+}
+
+function drawFigure(F) {
+  const P = F.pose, now = performance.now() / 1000;
+  ctx.save();
+  ctx.translate(F.fx, F.fy + (P.bob || 0) * F.scale);
+  ctx.scale(F.facing * F.scale, F.scale);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const { hip, neck, sh, head } = figureJoints(P);
+  const pts = {};
+
+  const limb = (o, a, l1, l2, lw, col, name) => {
+    const k = endOf(o[0], o[1], a[0], l1), e = endOf(k[0], k[1], a[1], l2);
+    ctx.strokeStyle = col; ctx.lineWidth = lw;
+    ctx.beginPath(); ctx.moveTo(o[0], o[1]); ctx.lineTo(k[0], k[1]); ctx.lineTo(e[0], e[1]); ctx.stroke();
+    if (name) pts[name] = [o, k, e];
+    return e;
+  };
+  const paint = (outline) => {
+    const ex = outline ? 0.9 : 0;
+    const col = c => outline ? F.outline : c;
+    // שכבה אחורית: רגל ויד רחוקות
+    limb(hip, P.legs[0], THIGH, SHIN, 2.1 + ex, col(F.back), 'legB');
+    const handB = limb(sh, P.arms[0], UPPER, FORE, 1.7 + ex, col(F.back), 'armB');
+    if (!outline) { ctx.fillStyle = F.accent; circle(handB[0], handB[1], 0.95); }
+    // גוף וראש
+    ctx.strokeStyle = col(F.body); ctx.lineWidth = 4.2 + ex;
+    ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.lineTo(neck[0], neck[1]); ctx.stroke();
+    ctx.fillStyle = col(F.body); circle(head[0], head[1], HEAD_R + ex / 2);
+    // שכבה קדמית: קו כהה מפריד ואז הרגל והיד הקרובות – מעל הגוף
+    if (!outline) {
+      limb(hip, P.legs[1], THIGH, SHIN, 2.9, F.edge);
+      limb(sh, P.arms[1], UPPER, FORE, 2.6, F.edge);
+    }
+    const foot = limb(hip, P.legs[1], THIGH, SHIN, 2.1 + ex, col(F.front), 'legF');
+    const hand = limb(sh, P.arms[1], UPPER, FORE, 1.7 + ex, col(F.front), 'armF');
+    if (!outline) {
+      if (P.kickFoot) { ctx.fillStyle = F.accent; circle(foot[0], foot[1], 1.35); }
+      // כפפה בצבע השחקן – רואים בדיוק איפה היד נגמרת (גדולה ופתוחה בתפיסה)
+      ctx.fillStyle = F.edge; circle(hand[0], hand[1], P.openHand ? 1.6 : 1.25);
+      ctx.fillStyle = F.accent; circle(hand[0], hand[1], P.openHand ? 1.25 : 0.95);
+      if (P.shield) {                                     // מגן עגול ביד הקדמית
+        ctx.fillStyle = F.accent; circle(hand[0] + 0.8, hand[1], 4.4);
+        ctx.fillStyle = '#92400e'; circle(hand[0] + 0.8, hand[1], 3.7);
+        ctx.fillStyle = '#d6d3d1'; circle(hand[0] + 0.8, hand[1], 1.2);
+      }
+    }
+  };
+  paint(true); paint(false);
+
+  // חגורה
+  ctx.save(); ctx.translate(hip[0], hip[1]); ctx.rotate(P.lean);
+  ctx.fillStyle = F.accent; ctx.fillRect(-2.2, -1.3, 4.4, 1.1);
+  ctx.restore();
+  // פנים, עיניים, סרט ראש עם זנבות מתנופפים
+  ctx.save(); ctx.translate(head[0], head[1]); ctx.rotate(P.lean + (P.headTilt || 0));
+  ctx.fillStyle = '#fcd9b6'; roundRect(-1.7, -0.85, 4.6, 1.8, 0.6); ctx.fill();
+  ctx.fillStyle = '#000'; ctx.fillRect(0.4, -0.45, 0.8, 0.9); ctx.fillRect(1.9, -0.45, 0.8, 0.9);
+  ctx.fillStyle = F.accent; ctx.fillRect(-2.9, -2.3, 5.7, 0.95);
+  const wv = Math.sin(now * 11 + F.fx) * 0.9;
+  ctx.strokeStyle = F.accent; ctx.lineWidth = 0.8;
+  ctx.beginPath(); ctx.moveTo(-2.8, -1.8); ctx.quadraticCurveTo(-4.8, -2.1 + wv, -6.8, -1.3 - wv); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-2.8, -1.8); ctx.quadraticCurveTo(-4.4, -0.9 + wv, -6.1, 0.3 + wv * 0.6); ctx.stroke();
+  ctx.restore();
+
+  // מצב בדיקה: מציגים את השלד והמפרקים
+  if (F.skeleton) {
+    ctx.lineWidth = 0.25; ctx.strokeStyle = '#ef4444';
+    ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.lineTo(neck[0], neck[1]); ctx.lineTo(head[0], head[1]); ctx.stroke();
+    for (const [n, [a, k, e]] of Object.entries(pts)) {
+      ctx.strokeStyle = n.endsWith('F') ? '#22c55e' : '#f59e0b';
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(k[0], k[1]); ctx.lineTo(e[0], e[1]); ctx.stroke();
+      ctx.fillStyle = ctx.strokeStyle; [a, k, e].forEach(q => circle(q[0], q[1], 0.35));
+    }
+    ctx.fillStyle = '#ef4444'; [hip, neck, sh, head].forEach(q => circle(q[0], q[1], 0.4));
+  }
+  ctx.restore();
+}
+
+function draw() {
+  const wd = WORLDS[world];
+  // שמיים על כל המסך
+  const g = ctx.createLinearGradient(0, 0, 0, ch);
+  g.addColorStop(0, wd.sky[0]); g.addColorStop(1, wd.sky[1]);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
+
+  ctx.save();
+  ctx.translate(ox, oy); ctx.scale(scale, scale);
+  if (shakeT > 0) ctx.translate((Math.random() - 0.5) * 2.4 * shakeT * 3, (Math.random() - 0.5) * 2.4 * shakeT * 3);
+  const left = -ox / scale - 3, right = (cw - ox) / scale + 3, top = -oy / scale - 3, bottom = (ch - oy) / scale + 3;
+
+  drawWorld(left, right, top, bottom);
+
+  // מכאן – רק בתוך שטח העולם
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, top, W, bottom - top); ctx.clip();
+
+  const WIDE = { river: drawRiver, lake: drawLake, bridge: drawBridge };
+  for (const o of obstacles) if (WIDE[o.type]) WIDE[o.type](o, bottom);
+  for (const o of obstacles) if (!WIDE[o.type]) drawObstacle(o, top);
+
+  // דגל סיום
+  if (flag) {
+    ctx.fillStyle = '#475569'; ctx.fillRect(flag.x, GROUND - 26, 1.2, 26);
+    const wv = Math.sin(performance.now() / 150) * 1;
+    ctx.fillStyle = '#16a34a';
+    ctx.beginPath(); ctx.moveTo(flag.x + 1.2, GROUND - 26); ctx.quadraticCurveTo(flag.x + 7, GROUND - 25 + wv, flag.x + 12, GROUND - 22);
+    ctx.quadraticCurveTo(flag.x + 7, GROUND - 19 - wv, flag.x + 1.2, GROUND - 18); ctx.fill();
+  }
+
+  drawNinja();
+  for (const o of obstacles) if (o.type === 'lake') {                     // מים מעל השחיין – נראה חצי שקוע
+    ctx.fillStyle = 'rgba(20,184,166,.55)'; ctx.fillRect(o.x, GROUND + 0.3, o.w, bottom - GROUND);
+  }
+  for (const s of shurikens) star4(s.x, s.y, 2, s.rot, '#475569');
+  for (const p of particles) {
+    ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 2)); ctx.fillStyle = p.color;
+    if (p.rot !== undefined) { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2); ctx.restore(); }
+    else ctx.fillRect(p.x, p.y, p.size, p.size);
+  }
+  ctx.globalAlpha = 1;
+  drawSnow(left, right, top, bottom);
+
+  // מה הנינג'ה שמע
+  if (heard && (state === 'play' || state === 'demo' || state === 'intro')) {
+    const pb = playerBox();
+    label(heard.text, PLAYER.x + 4, pb.t - (flyT > 0 ? 16 : 7), 4, '#16a34a', '#fff');
+  }
+  ctx.restore();
+
+  // המילה הנכונה אחרי פגיעה / כותרת פתיחה
+  if (state === 'play' || state === 'demo' || state === 'intro') {
+    if (flash) bigText(flash.text, 40, 14, '#dc2626');
+    else if (banner) {
+      bigText(banner.text, 32, 9, '#4f46e5');
+      if (banner.sub) bigText(banner.sub, 43, 5, '#1e293b');
+    }
+  }
+  ctx.restore();
+
+  // הבזק אדום בפגיעה
+  if (shakeT > 0) { ctx.fillStyle = 'rgba(220,38,38,' + (shakeT * 0.6) + ')'; ctx.fillRect(0, 0, cw, ch); }
+}
+
+function drawObstacle(o, top) {
+  const x = o.x;
+  if (o.type === 'box') {                       // ארגז עץ
+    const y = GROUND - BOX.h;
+    ctx.fillStyle = '#c2410c'; ctx.fillRect(x, y, BOX.w, BOX.h);
+    ctx.fillStyle = '#ea580c'; ctx.fillRect(x, y, BOX.w, 1.2);
+    ctx.strokeStyle = '#7c2d12'; ctx.lineWidth = 0.6;
+    ctx.strokeRect(x + 0.3, y + 0.3, BOX.w - 0.6, BOX.h - 0.6);
+    ctx.beginPath(); ctx.moveTo(x + 0.6, y + 0.6); ctx.lineTo(x + BOX.w - 0.6, GROUND - 0.6); ctx.moveTo(x + BOX.w - 0.6, y + 0.6); ctx.lineTo(x + 0.6, GROUND - 0.6); ctx.stroke();
+    label('JUMP', x + BOX.w / 2, y - 5, 4, '#fde047', '#1e293b');
+  } else if (o.type === 'beam') {               // מוט במבוק תלוי
+    const by = GROUND - BEAM.clear - BEAM.thick;
+    ctx.strokeStyle = '#78716c'; ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(x + 1.5, top); ctx.lineTo(x + 1.5, by);
+    ctx.moveTo(x + BEAM.w - 1.5, top); ctx.lineTo(x + BEAM.w - 1.5, by);
+    ctx.stroke();
+    const bg = ctx.createLinearGradient(0, by, 0, by + BEAM.thick);
+    bg.addColorStop(0, '#bef264'); bg.addColorStop(1, '#4d7c0f');
+    ctx.fillStyle = bg; roundRect(x - 4, by, BEAM.w + 8, BEAM.thick, 2); ctx.fill();
+    ctx.fillStyle = '#365314';
+    for (let k = 0; k <= 3; k++) ctx.fillRect(x - 3 + k * ((BEAM.w + 6) / 3), by, 0.6, BEAM.thick);
+    label('DOWN', x + BEAM.w / 2, by + BEAM.thick / 2, 3.4, '#fde047', '#1e293b');
+  } else if (o.type === 'wall') {               // חומת אבנים
+    if (o.broken) return;
+    const y = GROUND - WALL.h;
+    ctx.fillStyle = '#57534e'; ctx.fillRect(x - 0.3, y, WALL.w + 0.6, WALL.h);
+    for (let r = 0; r < 10; r++) {
+      const yy = y + r * 3 + 0.3, half = r % 2;
+      ctx.fillStyle = r % 3 === 0 ? '#a8a29e' : '#d6d3d1';
+      if (half) { ctx.fillRect(x + 0.2, yy, 1.9, 2.4); ctx.fillRect(x + 2.4, yy, 2.4, 2.4); }
+      else { ctx.fillRect(x + 0.2, yy, 2.4, 2.4); ctx.fillRect(x + 2.9, yy, 1.9, 2.4); }
+    }
+    ctx.fillStyle = '#44403c'; ctx.fillRect(x - 0.8, y - 1, WALL.w + 1.6, 1.4);
+    label('KICK', x + WALL.w / 2, y - 5.5, 4, '#fde047', '#1e293b');
+  } else if (o.type === 'enemy') {
+    drawEnemy(o);
+  } else if (o.type === 'rock') {                // STOP: סלע תלוי בחבל, נופל כשמגיעים
+    const s = ROCK.size, ry = o.fallK === undefined ? ROCK.hangY : rockY(o);
+    if (o.landed) {                               // שברים על הקרקע
+      ctx.fillStyle = '#78716c'; ctx.fillRect(x, GROUND - 1.5, 2.5, 1.5); ctx.fillRect(x + 3.5, GROUND - 1, 2, 1); ctx.fillRect(x + 6, GROUND - 1.8, 2.2, 1.8);
+      return;
+    }
+    if (o.fallK === undefined) { ctx.strokeStyle = '#78716c'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(x + s / 2, top); ctx.lineTo(x + s / 2, ry); ctx.stroke(); }
+    const k = o.fallK === undefined ? 0 : Math.min(1, o.fallK);                   // צל שגדל על הקרקע
+    ctx.fillStyle = 'rgba(0,0,0,' + (0.12 + k * 0.25) + ')'; ctx.beginPath(); ctx.ellipse(x + s / 2, GROUND + 0.5, 2 + k * 3, 0.8, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#57534e';
+    ctx.beginPath(); ctx.moveTo(x + 1, ry + 1.5); ctx.lineTo(x + 4.5, ry); ctx.lineTo(x + s, ry + 2.5); ctx.lineTo(x + s - 0.5, ry + s - 1); ctx.lineTo(x + 3, ry + s); ctx.lineTo(x, ry + s - 2.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#a8a29e'; ctx.fillRect(x + 2, ry + 2, 2.2, 1.2);
+    if (o.fallK === undefined) label('STOP', x + s / 2, ry + s + 5, 4, '#fde047', '#1e293b');
+  } else if (o.type === 'cliff') {               // CLIMB: צוק עם שכבות וגפנים
+    if (o.climbed && x + CLIFF.w < PLAYER.x - 30) return;
+    const y = GROUND - CLIFF.h;
+    ctx.fillStyle = '#78716c'; roundRect(x, y, CLIFF.w, CLIFF.h + 1, 1.5); ctx.fill();
+    ctx.fillStyle = '#57534e'; for (let k = 1; k < 6; k++) ctx.fillRect(x, y + k * 5, CLIFF.w, 0.8);
+    ctx.fillStyle = '#a8a29e'; ctx.fillRect(x, y, CLIFF.w, 1.5);
+    ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 0.6;
+    ctx.beginPath(); ctx.moveTo(x + 2, y + 1); ctx.quadraticCurveTo(x + 4, y + 12, x + 2.5, y + 24); ctx.moveTo(x + 8, y + 1); ctx.quadraticCurveTo(x + 6, y + 10, x + 8.5, y + 18); ctx.stroke();
+    if (!o.climbed) label('CLIMB', x + CLIFF.w / 2, y - 5, 4, '#fde047', '#1e293b');
+  } else if (o.type === 'boulder') {             // PUSH: סלע עגול גדול
+    const r = BOULDER.r;
+    ctx.save(); ctx.translate(x + r, GROUND - r); ctx.rotate(o.rot || 0);
+    ctx.fillStyle = '#6b7280'; circle(0, 0, r);
+    ctx.fillStyle = '#9ca3af'; circle(-3, -3.5, 3.5);
+    ctx.strokeStyle = '#4b5563'; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(-2, 2); ctx.lineTo(3, 4); ctx.lineTo(5, 1); ctx.stroke();
+    ctx.restore();
+    if (!o.pushed) label('PUSH', x + r, GROUND - 2 * r - 5, 4, '#fde047', '#1e293b');
+  } else if (o.type === 'gate') {                // PULL: שער סורג עם חבל
+    const lift = o.open ? Math.min(40, (o.oT || 0) * 70) : 0;
+    ctx.fillStyle = '#44403c'; ctx.fillRect(x - 1, top, GATE.w + 2, 3);
+    ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 0.8;
+    for (let k = 0; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(x + k * 2.5, top); ctx.lineTo(x + k * 2.5, GROUND - lift); ctx.stroke(); }
+    for (let yy = GROUND - lift - 3; yy > top; yy -= 6) { ctx.beginPath(); ctx.moveTo(x - 0.5, yy); ctx.lineTo(x + GATE.w + 0.5, yy); ctx.stroke(); }
+    const hy = o.open ? GROUND - 18 : GROUND - 12;           // חבל עם ידית
+    ctx.strokeStyle = '#a16207'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(x - 6, top); ctx.lineTo(x - 6, hy); ctx.stroke();
+    ctx.fillStyle = '#92400e'; roundRect(x - 8, hy, 4, 1.6, 0.6); ctx.fill();
+    if (!o.open) label('PULL', x - 6, hy - 5, 4, '#fde047', '#1e293b');
+  } else if (o.type === 'guard') {               // HIDE: שומר עם פנס
+    const now = performance.now() / 1000, fx = x + GUARD.w / 2;
+    const lx = fx - 6, ly = GROUND - 9.5;
+    ctx.fillStyle = 'rgba(253,224,71,.22)';                    // אלומת אור קדימה
+    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx - 26, GROUND); ctx.lineTo(lx - 6, GROUND); ctx.closePath(); ctx.fill();
+    drawFigure({ fx, fy: GROUND, facing: -1, scale: GUARD.h / 14, body: '#334155', back: '#1e293b', front: '#475569', edge: '#0f172a',
+                 accent: '#94a3b8', outline: 'rgba(255,255,255,.45)', pose: poseRun(now * 5 + x) });
+    ctx.fillStyle = 'rgba(253,224,71,.5)'; circle(lx, ly, 2.4);
+    ctx.fillStyle = '#facc15'; roundRect(lx - 1, ly - 1.4, 2, 2.8, 0.5); ctx.fill();
+    if (!o.passed) label('HIDE', fx, GROUND - GUARD.h - 5, 4, '#fde047', '#1e293b');
+  } else if (o.type === 'arrows') {              // BLOCK: שלושה חיצים
+    const d = o.dt2 || 0;
+    ctx.save();
+    if (o.deflected) { ctx.globalAlpha = Math.max(0, 1 - d * 2); ctx.translate(x + 3, GROUND - 7); ctx.rotate(-d * 6); ctx.translate(-(x + 3), -(GROUND - 7) + d * -20); }
+    for (const hy of ARROW_HEIGHTS) {
+      ctx.strokeStyle = '#78350f'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(x, hy); ctx.lineTo(x + ARROWS.w, hy); ctx.stroke();
+      ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.moveTo(x - 1.6, hy); ctx.lineTo(x + 0.4, hy - 0.9); ctx.lineTo(x + 0.4, hy + 0.9); ctx.fill();
+      ctx.fillStyle = '#ef4444'; ctx.fillRect(x + ARROWS.w - 1.6, hy - 0.9, 1.6, 0.6); ctx.fillRect(x + ARROWS.w - 1.6, hy + 0.3, 1.6, 0.6);
+    }
+    ctx.restore();
+    if (!o.deflected) label('BLOCK', x + ARROWS.w / 2, GROUND - 28, 4, '#fde047', '#1e293b');
+  } else if (o.type === 'coin') {
+    const now = performance.now() / 1000;
+    let cx = x + 3, cy = COIN.y + Math.sin(now * 4 + x) * 1.6;
+    if (o.caught) {
+      const k = Math.min(1, o.ct / 0.35), pb = playerBox();
+      cx = cx + (PLAYER.x + 4 - cx) * k; cy = cy + (pb.t - cy) * k;
+      ctx.globalAlpha = 1 - k * 0.7;
+    }
+    const glow = ctx.createRadialGradient(cx, cy, 1, cx, cy, 7);
+    glow.addColorStop(0, 'rgba(253,224,71,.65)'); glow.addColorStop(1, 'rgba(253,224,71,0)');
+    ctx.fillStyle = glow; circle(cx, cy, 7);
+    const sx = Math.max(0.15, Math.abs(Math.cos(now * 3 + x)));
+    ctx.save(); ctx.translate(cx, cy); ctx.scale(sx, 1);
+    ctx.fillStyle = '#b45309'; circle(0, 0, 3.4);
+    ctx.fillStyle = '#facc15'; circle(0, 0, 2.9);
+    ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 0.4; ctx.beginPath(); ctx.arc(0, 0, 2.1, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#fef9c3'; ctx.fillRect(-1.6, -1.8, 0.9, 1.6);
+    ctx.restore();
+    for (let i = 0; i < 3; i++) {
+      const a = now * 2 + i * 2.1, tw = (Math.sin(now * 6 + i * 3) + 1) / 2;
+      if (tw > 0.4) star4(cx + Math.cos(a) * 5.5, cy + Math.sin(a) * 4.5, 0.9 * tw + 0.3, 0, '#fff7ae');
+    }
+    ctx.globalAlpha = 1;
+    if (!o.caught && !o.passed) label('CATCH', cx, cy - 8, 3.6, '#16a34a', '#fff');
+  }
+}
+
+function drawLake(o, bottom) {
+  const x = o.x, w = o.w, t = performance.now() / 400;
+  const g = ctx.createLinearGradient(0, GROUND, 0, bottom);
+  g.addColorStop(0, '#2dd4bf'); g.addColorStop(1, '#134e4a');
+  ctx.fillStyle = g; ctx.fillRect(x, GROUND + 0.5, w, bottom - GROUND);
+  ctx.fillStyle = '#15803d';                                                     // עלי לוטוס
+  for (let i = 6; i < w - 6; i += 14) { ctx.beginPath(); ctx.ellipse(x + i + Math.sin(t + i) * 0.8, GROUND + 1.2, 2.6, 0.9, 0, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = '#f9a8d4'; circle(x + w * 0.62, GROUND + 0.4, 0.9);
+  label('SWIM', x + w / 2, GROUND - 6, 4, '#fde047', '#1e293b');
+}
+
+function drawBridge(o, bottom) {
+  const x = o.x, w = o.w;
+  const g = ctx.createLinearGradient(0, GROUND, 0, bottom);
+  g.addColorStop(0, '#292524'); g.addColorStop(1, '#0c0a09');
+  ctx.fillStyle = g; ctx.fillRect(x, GROUND, w, bottom - GROUND);               // תהום
+  ctx.fillStyle = '#57534e'; ctx.fillRect(x - 1.5, GROUND - 7, 1.5, 7.5); ctx.fillRect(x + w, GROUND - 7, 1.5, 7.5);   // עמודים
+  const cT = o.cT || 0;
+  if (cT < 1.2) {
+    ctx.strokeStyle = '#a16207'; ctx.lineWidth = 0.4;                          // חבלים
+    if (!o.collapsed) { ctx.beginPath(); ctx.moveTo(x - 0.8, GROUND - 6.5); ctx.quadraticCurveTo(x + w / 2, GROUND - 2.5, x + w + 0.8, GROUND - 6.5); ctx.stroke(); }
+    for (let i = 0, k = 0; i < w; i += 3.6, k++) {                               // קרשים (נופלים כשמתמוטט)
+      const drop = o.collapsed ? Math.max(0, cT - k * 0.03) : 0;
+      ctx.save(); ctx.translate(x + i + 1.6, GROUND + 0.7 + drop * drop * 70); ctx.rotate(drop * (k % 2 ? 3 : -3));
+      ctx.fillStyle = k % 2 ? '#a16207' : '#92400e'; ctx.fillRect(-1.5, -0.7, 3, 1.4);
+      ctx.restore();
+    }
+  }
+  if (!o.collapsed) label('RUN', x + w / 2, GROUND - 11, 4, '#fde047', '#1e293b');
+}
+
+function drawRiver(o, bottom) {
+  const x = o.x, w = o.w, t = performance.now() / 300;
+  const wg = ctx.createLinearGradient(0, GROUND, 0, bottom);
+  wg.addColorStop(0, '#38bdf8'); wg.addColorStop(1, '#075985');
+  ctx.fillStyle = wg; ctx.fillRect(x, GROUND + 1, w, bottom - GROUND);
+  ctx.fillStyle = WORLDS[world].mark; ctx.fillRect(x - 1, GROUND, 1.2, bottom - GROUND); ctx.fillRect(x + w - 0.2, GROUND, 1.2, bottom - GROUND);
+  ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 0.6;
+  for (let i = 2; i < w - 4; i += 7) {
+    const yy = GROUND + 4 + (i % 3) * 2;
+    ctx.beginPath(); ctx.moveTo(x + i, yy + Math.sin(t + i) * 0.7); ctx.quadraticCurveTo(x + i + 2, yy - 0.8, x + i + 4, yy + Math.sin(t + i + 1) * 0.7); ctx.stroke();
+  }
+  label('JUMP + FLY', x + w / 2, GROUND - 6, 4, '#fde047', '#1e293b');
+}
+
+function drawEnemy(o) {
+  const w = ENEMY.w, fx = o.x + w / 2;
+  ctx.save();
+  if (o.defeated) {                              // נופל ונעלם
+    ctx.globalAlpha = Math.max(0, 1 - o.ft * 1.5);
+    ctx.translate(fx, GROUND); ctx.rotate(-Math.min(1.5, o.ft * 4)); ctx.translate(-fx, -GROUND);
+  }
+  const now = performance.now() / 1000;
+  const pose = o.defeated ? poseIdle(now) : (speed > 0 ? poseRun(now * 10 + o.x) : poseIdle(now));
+  drawFigure({ fx, fy: GROUND, facing: -1, scale: ENEMY.h / 14, body: '#7f1d1d', back: '#5b1313', front: '#a52a2a', edge: '#3b0a0a', accent: '#facc15',
+               outline: 'rgba(255,255,255,.45)', pose });
+  ctx.restore();
+  if (!o.defeated) label('THROW', fx, GROUND - ENEMY.h - 5, 4, '#fde047', '#1e293b');
+}
+
+function drawNinja() {
+  const pb = playerBox();
+  const swim = swimmingNow();
+  const duck = duckT > 0, fx = pb.l + (duck ? 5.5 : swim ? 3 : 4), fy = swim ? GROUND + 1.5 : pb.b;
+  const now = performance.now() / 1000;
+  if (act.hide > 0 && !(invulnT > 0 && Math.floor(invulnT * 10) % 2 === 0)) {   // מתחבא – שיח עם עיניים
+    const sh = Math.sin(now * 9) * 0.3;
+    ctx.fillStyle = '#166534'; circle(fx - 3 + sh, GROUND - 4, 4.6); circle(fx + 3.5 - sh, GROUND - 4.3, 4.8); circle(fx + 0.5, GROUND - 8, 5);
+    ctx.fillStyle = '#22c55e'; circle(fx - 2, GROUND - 6, 2.4); circle(fx + 3, GROUND - 9, 2.2);
+    ctx.fillStyle = '#fff'; circle(fx + 0.2, GROUND - 7.5, 0.9); circle(fx + 2.6, GROUND - 7.5, 0.9);
+    ctx.fillStyle = '#000'; circle(fx + 0.5, GROUND - 7.5, 0.45); circle(fx + 2.9, GROUND - 7.5, 0.45);
+    return;
+  }
+  if (act.run > 0) {                                                              // קווי מהירות
+    ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 0.5;
+    for (let k = 0; k < 3; k++) { const yy = fy - 4 - k * 3.5, o2 = ((now * 60 + k * 7) % 10); ctx.beginPath(); ctx.moveTo(fx - 6 - o2, yy); ctx.lineTo(fx - 13 - o2, yy); ctx.stroke(); }
+  }
+  // צל על הקרקע
+  if (!swim) ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';
+  else ctx.fillStyle = 'rgba(0,0,0,0)';
+  ctx.beginPath(); ctx.ellipse(fx + 0.5, GROUND + 0.6, Math.max(1.5, 4.5 - py * 0.08), 0.9, 0, 0, Math.PI * 2); ctx.fill();
+  if (invulnT > 0 && Math.floor(invulnT * 10) % 2 === 0) return;   // הבהוב אחרי פגיעה
+
+  // גלשן מעל הראש בזמן FLY
+  if (flyT > 0) {
+    const gy = fy - 15.5, gx = fx + 0.5;
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 0.35;
+    ctx.beginPath(); ctx.moveTo(gx - 0.5, gy + 3); ctx.lineTo(gx - 9, gy - 2.5); ctx.moveTo(gx + 0.5, gy + 3); ctx.lineTo(gx + 9, gy - 2.5); ctx.stroke();
+    ctx.fillStyle = playerColor();
+    ctx.beginPath(); ctx.moveTo(gx - 12, gy - 1.5); ctx.lineTo(gx, gy - 7.5); ctx.lineTo(gx + 12, gy - 1.5); ctx.lineTo(gx, gy - 3.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.beginPath(); ctx.moveTo(gx - 6, gy - 4.5); ctx.lineTo(gx, gy - 7.5); ctx.lineTo(gx, gy - 3.5); ctx.closePath(); ctx.fill();
+  }
+
+  const P = playerPose();
+  drawFigure({ fx, fy, facing: 1, scale: 1, body: '#1e293b', back: '#0b1220', front: '#3b4a63', edge: '#05080f', accent: playerColor(),
+               outline: 'rgba(255,255,255,.6)', pose: P });
+
+  // קו תנועה בבעיטה
+  if (kickT > 0) {
+    ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 0.6;
+    ctx.beginPath(); ctx.arc(fx, fy - 4.6, 6.5, -1.5, -0.1); ctx.stroke();
+  }
+}
+
+/* ============================================================
+   בחירת שחקן וניהול שחקנים
+   ============================================================ */
+let managing = false, editing = null, editColor = COLORS[0], delArmed = false, delTimer = null;
+
+function hideAllOverlays() { ['menu', 'over', 'editP', 'dict', 'players', 'pause', 'lab', 'freePick'].forEach(id => $(id).classList.remove('show')); }
+
+function showPlayers() {
+  state = 'menu';
+  stopAudio();
+  $('labBtn').classList.remove('hide');
+  $('lab').classList.remove('show');
+  hideAllOverlays();
+  try { speechSynthesis.cancel(); } catch (e) {}
+  if (!players.length) { openEdit(null); return; }
+  renderPlayers();
+  $('players').classList.add('show');
+}
+
+function renderPlayers() {
+  const g = $('playerGrid');
+  g.innerHTML = '';
+  g.classList.toggle('managing', managing);
+  players.forEach(p => {
+    const b = document.createElement('button');
+    b.className = 'pcard';
+    b.innerHTML = '<div class="face"><div class="band" style="background:' + p.color + '"></div></div>' +
+                  '<div class="pname" dir="auto"></div>' +
+                  '<div class="pstats">★ ' + totalStars(p) + ' · 🪙 ' + load('p' + p.id + '_coins', 0) + '</div>' +
+                  '<span class="edit">✏️</span>';
+    b.querySelector('.pname').textContent = p.name;
+    b.onclick = () => managing ? openEdit(p) : selectPlayer(p);
+    g.appendChild(b);
+  });
+  const add = document.createElement('button');
+  add.className = 'pcard add';
+  add.innerHTML = '<span>+</span>New player';
+  add.onclick = () => openEdit(null);
+  g.appendChild(add);
+  $('manageBtn').textContent = managing ? '✓ Done' : '✏️ Manage players';
+}
+
+function selectPlayer(p) {
+  player = p; store('current', p.id);
+  diffKey = loadDiff(); cfg = LEVELS[diffKey];
+  managing = false;
+  hideAllOverlays();
+  renderMenu();
+  if (model) setStatus('Ready! Choose a stage');
+  $('menu').classList.add('show');
+}
+
+function openEdit(p) {
+  editing = p;
+  const used = players.map(x => x.color);
+  editColor = p ? p.color : (COLORS.find(c => !used.includes(c)) || COLORS[0]);
+  $('editTitle').textContent = p ? 'Edit player' : (players.length ? 'New player' : 'Welcome! What is your name?');
+  $('pName').value = p ? p.name : '';
+  $('pErr').textContent = '';
+  $('pDelete').classList.toggle('hide', !p);
+  $('pCancel').classList.toggle('hide', !players.length);
+  disarmDelete();
+  renderSwatches();
+  hideAllOverlays();
+  $('editP').classList.add('show');
+  setTimeout(() => { try { $('pName').focus(); } catch (e) {} }, 50);
+}
+
+function renderSwatches() {
+  const box = $('swatches');
+  box.innerHTML = '';
+  COLORS.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'sw' + (c === editColor ? ' sel' : '');
+    b.style.background = c;
+    b.onclick = () => { editColor = c; renderSwatches(); };
+    box.appendChild(b);
+  });
+}
+
+function disarmDelete() {
+  delArmed = false; clearTimeout(delTimer);
+  $('pDelete').textContent = '🗑 Delete player';
+}
+
+$('pSave').onclick = () => {
+  const name = $('pName').value.trim();
+  if (!name) { $('pErr').textContent = 'Please type a name'; return; }
+  if (editing) {
+    editing.name = name; editing.color = editColor; savePlayers();
+    showPlayers();
+  } else {
+    selectPlayer(createPlayer(name, editColor));   // שחקן חדש – מתחיל לשחק מיד
+  }
+};
+$('pCancel').onclick = showPlayers;
+$('pDelete').onclick = () => {
+  if (!editing) return;
+  if (!delArmed) {   // לחיצה ראשונה – מבקשים אישור
+    delArmed = true;
+    $('pDelete').textContent = '⚠️ Tap again to delete "' + editing.name + '"';
+    delTimer = setTimeout(disarmDelete, 3000);
+    return;
+  }
+  deletePlayer(editing.id);
+  managing = players.length > 0 && managing;
+  showPlayers();
+};
+$('manageBtn').onclick = () => { managing = !managing; renderPlayers(); };
+$('pchip').onclick = () => { managing = false; showPlayers(); };
+
+/* ============================================================
+   מילון מילים – לוחצים על מילה, שומעים אותה ורואים מה היא עושה
+   ============================================================ */
+// במילון אין משחק: הנינג'ה עומד במקום, העולם לא זז, ואין זיהוי קולי.
+// לוחצים על מילה → שומעים אותה → הנינג'ה מבצע את הפעולה מול חפץ קטן לידו.
+let demoSteps = [], demoClock = 0;
+
+function renderDict() {
+  const grid = $('wordGrid');
+  grid.innerHTML = '';
+  WORDS.forEach(w => {
+    const b = document.createElement('button');
+    b.className = 'word'; b.dataset.w = w;
+    b.innerHTML = '<span class="ic">' + WORD_ICON[w] + '</span>' + w.toUpperCase();
+    b.onclick = () => showWord(w);
+    grid.appendChild(b);
+  });
+}
+
+function resetDemo() {
+  obstacles = []; shurikens = []; particles = []; flag = null; banner = null; flash = null; heard = null;
+  py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
+  demoSteps = []; demoClock = 0;
+}
+
+function openDict() {
+  stopAudio();
+  state = 'demo'; mode = 'demo'; world = 0;
+  cfg = LEVELS.medium; speed = 0; lives = Infinity;   // speed 0 = העולם עומד
+  resetDemo();
+  $('menu').classList.remove('show');
+  ['hudFree', 'hudStage', 'progress', 'catchHud', 'endBtn', 'pauseBtn'].forEach(id => $(id).classList.add('hide'));
+  $('lives').textContent = '';
+  renderDict();
+  $('dict').classList.add('show');
+}
+
+function speak(w) {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(w);
+    u.lang = 'en-US'; u.rate = 0.85;
+    const voices = speechSynthesis.getVoices();
+    const v = voices.find(x => /^en[-_]US/i.test(x.lang)) || voices.find(x => /^en/i.test(x.lang));
+    if (v) u.voice = v;
+    ignoreVoiceUntil = performance.now() + 1600;
+    u.onend = () => { ignoreVoiceUntil = performance.now() + 400; };
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+// חפץ קטן ליד הנינג'ה (אם צריך), ורשימת פעולות לפי זמן
+function showWord(w) {
+  speak(w);
+  document.querySelectorAll('.word').forEach(b => b.classList.toggle('active', b.dataset.w === w));
+  resetDemo();
+  setupDemo(w);
+  demoSteps.forEach(st => st.at -= 0.45);   // במילון – הפעולה מגיעה מהר יותר
+}
+
+function demoAuto(pb, dt) {
+  demoClock += dt;
+  while (demoSteps.length && demoClock >= demoSteps[0].at) command(demoSteps.shift().w, 'demo');
+}
+
+$('dictBtn').onclick = openDict;
+$('dictClose').onclick = toMenu;
+
+// חלקיקים ורעידה – ממשיכים לזוז גם במסך הסיום (קונפטי)
+function updateEffects(dt) {
+  if (shakeT > 0) shakeT = Math.max(0, shakeT - dt);
+  for (const p of particles) {
+    p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.g === undefined ? 60 : p.g) * dt; p.life -= dt;
+    if (p.rot !== undefined) p.rot += p.vr * dt;
+  }
+  particles = particles.filter(p => p.life > 0);
+}
+
+function confetti() {
+  const cols = ['#f43f5e', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#facc15'];
+  for (let i = 0; i < 80; i++) {
+    particles.push({ x: 10 + Math.random() * (W - 20), y: -5 - Math.random() * 25, vx: (Math.random() - 0.5) * 12, vy: 8 + Math.random() * 10,
+                     g: 6, life: 3 + Math.random() * 1.5, color: cols[i % cols.length], size: 1.6 + Math.random(), rot: Math.random() * 6, vr: (Math.random() - 0.5) * 10 });
+  }
+}
+
+/* ============================================================
+   הדגמה בתחילת שלב – רואים ושומעים כל מילה לפני שמשחקים
+   ============================================================ */
+let introWords = [], introT = 0, runSpeed = 0;
+
+// מציב חפץ קטן ליד הנינג'ה ומתזמן את הפעולה (משותף למילון ולהדגמה)
+function setupDemo(w) {
+  obstacles = []; shurikens = []; flash = null; invulnT = 0;
+  py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0; resetAct();
+  demoSteps = []; demoClock = 0;
+  const near = PLAYER.x + PLAYER.w;
+  if (w === 'kick')  obstacles.push({ type: 'wall',  x: near + 6 });
+  if (w === 'throw') obstacles.push({ type: 'enemy', x: near + 55 });
+  if (w === 'catch') obstacles.push({ type: 'coin',  x: near + 12 });
+  if (w === 'stop')  obstacles.push({ type: 'rock',  x: near + 18 });
+  if (w === 'swim')  obstacles.push({ type: 'lake',  x: PLAYER.x - 12, w: 34 });
+  if (w === 'climb') obstacles.push({ type: 'cliff', x: near + 3 });
+  if (w === 'push')  obstacles.push({ type: 'boulder', x: near + 3 });
+  if (w === 'pull')  obstacles.push({ type: 'gate',  x: near + 12 });
+  if (w === 'hide')  obstacles.push({ type: 'guard', x: near + 14 });
+  if (w === 'block') obstacles.push({ type: 'arrows', x: near + 28 });
+  obstacles.forEach(o => { o.passed = false; o.hit = false; o.demo = true; });   // בהדגמה – בלי פגיעות
+  demoSteps = w === 'fly' ? [{ at: 0.9, w: 'jump' }, { at: 1.3, w: 'fly' }]
+            : w === 'swim' ? [{ at: 0.5, w }]
+            : [{ at: 0.9, w }];
+}
+
+function startIntro() {
+  runSpeed = speed; speed = 0;            // העולם עומד בזמן ההדגמה
+  introWords = [...STAGES[stageIdx].words];
+  state = 'intro';
+  $('pauseBtn').classList.add('hide');
+  $('skipBtn').classList.remove('hide');
+  introNext();
+}
+
+function introNext() {
+  if (!introWords.length) { finishIntro(); return; }
+  const w = introWords.shift();
+  setupDemo(w);
+  speak(w);
+  banner = { text: 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
+  introT = w === 'fly' ? 4.6 : 2.8;
+}
+
+function finishIntro() {
+  if (state !== 'intro') return;
+  obstacles = []; shurikens = []; demoSteps = []; flash = null; invulnT = 0;
+  py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0; resetAct();
+  speed = runSpeed; distSinceSpawn = 0; nextGap = speed * 2.4;
+  seenWords = [];
+  banner = { text: 'Go!', sub: '', t: 1.2 };
+  $('skipBtn').classList.add('hide');
+  $('pauseBtn').classList.remove('hide');
+  state = 'play';
+}
+$('skipBtn').onclick = () => { try { speechSynthesis.cancel(); } catch (e) {} finishIntro(); };
+
+/* ============================================================
+   מעבדת אנימציות – בודקים כל תנועה לבד, לאט, עם שלד
+   ============================================================ */
+const LAB_POSES = ['run', 'idle', 'jump', 'duck', 'kick', 'throw', 'catch', 'fly'];
+const LAB_SPEEDS = [0.1, 0.25, 0.5, 1];
+let lab = { pose: 'run', speed: 0.25, playing: true, skeleton: true, enemy: false, t: 0 };
+
+function openLab() {
+  stopAudio();
+  hideAllOverlays();
+  state = 'lab';
+  ['hudFree', 'hudStage', 'progress', 'catchHud', 'endBtn', 'pauseBtn', 'skipBtn', 'labBtn'].forEach(id => $(id).classList.add('hide'));
+  $('lives').textContent = '';
+  renderLab();
+  $('lab').classList.add('show');
+}
+function closeLab() {
+  $('lab').classList.remove('show');
+  if (player) toMenu(); else showPlayers();
+}
+function renderLab() {
+  const mk = (box, items, cur, fmt, set) => {
+    box.innerHTML = '';
+    items.forEach(v => {
+      const b = document.createElement('button');
+      b.className = 'lb' + (v === cur ? ' on' : ''); b.textContent = fmt(v);
+      b.onclick = () => { set(v); renderLab(); };
+      box.appendChild(b);
+    });
+  };
+  mk($('labPoses'), LAB_POSES, lab.pose, v => v.toUpperCase(), v => { lab.pose = v; lab.t = 0; });
+  mk($('labSpeeds'), LAB_SPEEDS, lab.speed, v => v + '×', v => { lab.speed = v; });
+  $('labPlay').textContent = lab.playing ? '⏸' : '▶';
+  $('labSkel').classList.toggle('on', lab.skeleton);
+  $('labEnemy').classList.toggle('on', lab.enemy);
+}
+$('labBtn').onclick = openLab;
+$('labClose').onclick = closeLab;
+$('labPlay').onclick = () => { lab.playing = !lab.playing; renderLab(); };
+$('labStep').onclick = () => { lab.playing = false; lab.t += 1 / 30; renderLab(); };
+$('labSkel').onclick = () => { lab.skeleton = !lab.skeleton; renderLab(); };
+$('labEnemy').onclick = () => { lab.enemy = !lab.enemy; renderLab(); };
+
+// התנוחה לפי הזמן במעבדה – אותן פונקציות בדיוק כמו במשחק
+function labPose(t) {
+  const L = LEVELS.medium, air = 2 * L.jumpV / L.gravity;
+  let P, lift = 0, info = '';
+  switch (lab.pose) {
+    case 'run':  P = poseRun(t * 50 * 0.42); info = 'phase ' + ((t * 21) % (Math.PI * 2)).toFixed(2); break;
+    case 'idle': P = poseIdle(t); break;
+    case 'jump': {
+      const c = t % (air + 0.6);
+      if (c < air) { lift = L.jumpV * c - L.gravity * c * c / 2; P = poseAir(L.jumpV - L.gravity * c > 0); }
+      else P = poseIdle(t);
+      info = 'height ' + lift.toFixed(1); break;
+    }
+    case 'duck': P = poseDuck(); break;
+    case 'kick':  { const c = t % 1.2; P = poseIdle(t); if (c < KICK.time) applyKick(P, c / KICK.time); info = 'k ' + Math.min(1, c / KICK.time).toFixed(2); break; }
+    case 'throw': { const c = t % 1.0; P = poseIdle(t); if (c < 0.25) applyThrow(P, c / 0.25); info = 'k ' + Math.min(1, c / 0.25).toFixed(2); break; }
+    case 'catch': { const c = t % 1.2; P = poseIdle(t); if (c < 0.4) applyCatch(P); break; }
+    case 'fly':  P = poseFly(t); lift = 12; break;
+  }
+  return { P, lift, info };
+}
+
+function drawLab(dt) {
+  if (lab.playing) lab.t += dt * lab.speed;
+  ctx.fillStyle = '#e0f2fe'; ctx.fillRect(0, 0, cw, ch);
+  const u = Math.min(cw / 60, ch / 34);                   // יחידה גדולה – הדמות ענקית
+  const fx = cw / 2 - (lab.enemy ? 9 * u : 0), fy = ch * 0.6;
+  // רשת עזר
+  ctx.strokeStyle = 'rgba(15,23,42,.08)'; ctx.lineWidth = 1;
+  for (let y = fy; y > 0; y -= u * 2) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cw, y); ctx.stroke(); }
+  for (let x = fx % (u * 2); x < cw; x += u * 2) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, fy); ctx.stroke(); }
+  ctx.fillStyle = '#a16207'; ctx.fillRect(0, fy, cw, ch - fy);
+  ctx.fillStyle = '#4ade80'; ctx.fillRect(0, fy, cw, u * 0.5);
+
+  const { P, lift, info } = labPose(lab.t);
+  ctx.save(); ctx.translate(fx, fy); ctx.scale(u, u);
+  if (lab.pose === 'fly') {                               // גלשן
+    ctx.fillStyle = playerColor();
+    ctx.beginPath(); ctx.moveTo(-12, -lift - 15); ctx.lineTo(0.5, -lift - 21); ctx.lineTo(13, -lift - 15); ctx.lineTo(0.5, -lift - 17); ctx.closePath(); ctx.fill();
+  }
+  drawFigure({ fx: 0, fy: -lift, facing: 1, scale: 1, body: '#1e293b', back: '#0b1220', front: '#3b4a63', edge: '#05080f',
+               accent: playerColor(), outline: 'rgba(255,255,255,.6)', pose: P, skeleton: lab.skeleton });
+  if (lab.enemy) {
+    const E = lab.pose === 'run' ? poseRun(lab.t * 10) : labPose(lab.t).P;
+    drawFigure({ fx: 18, fy: 0, facing: -1, scale: ENEMY.h / 14, body: '#7f1d1d', back: '#5b1313', front: '#a52a2a', edge: '#3b0a0a',
+                 accent: '#facc15', outline: 'rgba(255,255,255,.45)', pose: E, skeleton: lab.skeleton });
+  }
+  ctx.restore();
+  $('labInfo').textContent = lab.pose.toUpperCase() + ' · t=' + lab.t.toFixed(2) + 's · ' + lab.speed + '×' + (info ? ' · ' + info : '') +
+                             (lab.skeleton ? '   (red = body · green = front limbs · orange = back limbs)' : '');
+}
+
+/* ============================================================
+   לולאה ראשית
+   ============================================================ */
+function loop(t) {
+  const now = t / 1000;
+  const dt = Math.min(0.05, lastT ? now - lastT : 0);
+  lastT = now;
+  if (state === 'play' || state === 'demo' || state === 'intro') update(dt);
+  updateEffects(dt);
+  updateMic();
+  if (state === 'lab') drawLab(dt); else draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ============================================================
+   כפתורים
+   ============================================================ */
+function toMenu() {
+  state = 'menu';
+  stopAudio();
+  $('skipBtn').classList.add('hide');
+  $('labBtn').classList.remove('hide');
+  $('pause').classList.remove('show');
+  $('pauseBtn').classList.add('hide');
+  $('dict').classList.remove('show');
+  try { speechSynthesis.cancel(); } catch (e) {}
+  $('over').classList.remove('show');
+  $('endBtn').classList.add('hide');
+  $('hudFree').classList.remove('hide');
+  $('hudStage').classList.add('hide');
+  $('progress').classList.add('hide');
+  $('catchHud').classList.add('hide');
+  $('lives').textContent = '';
+  obstacles = []; shurikens = []; particles = []; flag = null;
+  py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; resetAct();
+  renderMenu();
+  if (model) setStatus('Ready! Choose a stage');
+  $('menu').classList.add('show');
+}
+$('menuBtn').onclick = toMenu;
+$('endBtn').onclick = () => {
+  if (state === 'intro') { try { speechSynthesis.cancel(); } catch (e) {} toMenu(); return; }
+  if (state !== 'play') return;
+  if (mode === 'free') endFree(true); else { bankCoins(); toMenu(); }
 };
 
-/* ---------- טבלה ---------- */
-function median(a) { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
-
-function render() {
-  $('rows').innerHTML = testWords.map(w => {
-    const r = results.filter(x => x.target === w);
-    if (!r.length) return '<tr><td class="w">' + w.toUpperCase() + '</td><td>—</td><td>—</td><td>—</td></tr>';
-    const ok = r.filter(x => x.heard === w);
-    const conf = r.filter(x => x.heard !== w).map(x => x.heard ? x.heard.toUpperCase() : 'לא נשמע');
-    const pct = ok.length / r.length;
-    const cls = pct >= 0.8 ? 'good' : pct >= 0.5 ? 'mid' : 'badc';
-    const med = median(ok.map(x => x.ms).filter(v => v !== null));
-    return '<tr><td class="w">' + w.toUpperCase() + '</td>' +
-           '<td class="' + cls + '">' + ok.length + '/' + r.length + '</td>' +
-           '<td>' + (conf.length ? conf.join(', ') : '—') + '</td>' +
-           '<td>' + (med === null ? '—' : Math.round(med) + 'ms') + '</td></tr>';
-  }).join('');
+// עצירה: המשחק קופא במקום, ופקודות קוליות לא פועלות עד שממשיכים
+function pauseGame() {
+  if (state !== 'play') return;
+  state = 'paused';
+  stopAudio();                                     // בזמן עצירה המיקרופון כבוי
+  $('pause').classList.add('show');
 }
-render();
+async function resumeGame() {
+  if (state !== 'paused') return;
+  if (!(await ensureAudio())) return;              // מדליקים מחדש את המיקרופון (בתוך הלחיצה)
+  $('pause').classList.remove('show');
+  seenWords = []; lastT = 0;
+  state = 'play';
+}
+$('pauseBtn').onclick = pauseGame;
+$('resumeBtn').onclick = resumeGame;
+$('pauseMenuBtn').onclick = () => { bankCoins(); toMenu(); };
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { pauseGame(); if (state !== 'play' && state !== 'intro') stopAudio(); }   // יצאו מהאפליקציה – עוצרים
+  else if (audio) audio.ctx.resume();
+});
+
+dbg('model', '—'); dbg('mic', 'off'); dbg('heard', '—'); dbg('command', '—');
+renderMenu();
+showPlayers();
+loadModel();
 </script>
 </body>
 </html>
