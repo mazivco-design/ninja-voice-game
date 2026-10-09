@@ -91,6 +91,33 @@ canvas { display: block; width: 100%; height: 100%; }
        font-weight: 900; background: #4f46e5; color: #fff; }
 .btn.sec { background: #e2e8f0; color: #1e293b; }
 
+/* שחקנים */
+.mtop { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.pchip { border: 0; border-radius: 999px; background: #f1f5f9; color: #1e293b; font-weight: 800; font-size: clamp(14px, 2.1vh, 17px);
+         padding: 6px 14px 6px 8px; display: inline-flex; align-items: center; gap: 8px; }
+.dot { width: 22px; height: 22px; border-radius: 50%; display: inline-block; flex: none; }
+.playerGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin: 10px 0 4px;
+              max-height: 52vh; overflow-y: auto; }
+.pcard { position: relative; border: 0; border-radius: 16px; background: #f1f5f9; color: #1e293b; padding: 12px 8px; }
+.pcard .face { width: 54px; height: 54px; border-radius: 50%; background: #1e293b; margin: 0 auto 6px; position: relative; overflow: hidden; }
+.pcard .face::before { content: ''; position: absolute; left: 7px; right: 7px; top: 20px; height: 13px; background: #fcd9b6; border-radius: 4px; }
+.pcard .face::after { content: '• •'; position: absolute; left: 0; right: 0; top: 17px; text-align: center; font-size: 16px; letter-spacing: 4px; color: #000; }
+.pcard .band { position: absolute; left: 0; right: 0; top: 10px; height: 6px; }
+.pcard .pname { font-weight: 900; font-size: clamp(16px, 2.4vh, 20px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pcard .pstats { font-size: 13px; color: #64748b; margin-top: 2px; }
+.pcard .edit { position: absolute; top: 6px; right: 8px; font-size: 18px; display: none; }
+.managing .pcard .edit { display: block; }
+.managing .pcard { outline: 2px dashed #94a3b8; }
+.pcard.add { background: #eef2ff; color: #4f46e5; font-weight: 900; font-size: clamp(16px, 2.4vh, 20px); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 120px; }
+.pcard.add span { font-size: 34px; line-height: 1; }
+#pName { width: 100%; font-size: 22px; font-weight: 800; padding: 12px 14px; border-radius: 12px; border: 2px solid #cbd5e1; margin: 10px 0;
+         -webkit-user-select: text; user-select: text; text-align: center; }
+.swatches { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 4px 0 6px; }
+.sw { width: 40px; height: 40px; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 0 0 2px #cbd5e1; }
+.sw.sel { box-shadow: 0 0 0 3px #1e293b; }
+.del { margin-top: 12px; border: 0; background: none; color: #dc2626; font-weight: 800; font-size: 15px; padding: 6px; }
+.err { color: #dc2626; font-size: 14px; min-height: 1.2em; }
+
 /* חלונית דיבאג */
 #debug { position: absolute; left: 10px; bottom: 10px; max-width: min(440px, calc(100% - 20px)); background: rgba(15,23,42,.88);
          color: #e2e8f0; font: 12px/1.55 ui-monospace, Menlo, monospace; padding: 10px 12px; border-radius: 10px;
@@ -115,9 +142,12 @@ canvas { display: block; width: 100%; height: 100%; }
   </div>
 
   <!-- מסך פתיחה -->
-  <div class="overlay show" id="menu">
+  <div class="overlay" id="menu">
     <div class="panel">
-      <h1>🥷 Ninja Voice</h1>
+      <div class="mtop">
+        <h1>🥷 Ninja Voice</h1>
+        <button class="pchip" id="pchip"><span class="dot" id="pchipDot"></span><span id="pchipName" dir="auto"></span> ▾</button>
+      </div>
       <p>Read the word on each obstacle and say it out loud!</p>
       <div class="status" id="status">Loading…</div>
 
@@ -135,6 +165,31 @@ canvas { display: block; width: 100%; height: 100%; }
         <button class="free" id="freeBtn" disabled>∞ Free Play</button>
         <button class="free words" id="dictBtn">📖 Words</button>
       </div>
+    </div>
+  </div>
+
+  <!-- בחירת שחקן -->
+  <div class="overlay show" id="players">
+    <div class="panel">
+      <h1>🥷 Ninja Voice</h1>
+      <p>Who is playing?</p>
+      <div class="playerGrid" id="playerGrid"></div>
+      <button class="free" id="manageBtn">✏️ Manage players</button>
+    </div>
+  </div>
+
+  <!-- הוספה / עריכה של שחקן -->
+  <div class="overlay" id="editP">
+    <div class="panel">
+      <h2 id="editTitle">New player</h2>
+      <input id="pName" maxlength="12" dir="auto" placeholder="Name" autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="err" id="pErr"></div>
+      <div class="swatches" id="swatches"></div>
+      <div class="row">
+        <button class="btn" id="pSave">Save</button>
+        <button class="btn sec" id="pCancel">Cancel</button>
+      </div>
+      <button class="del" id="pDelete">🗑 Delete player</button>
     </div>
   </div>
 
@@ -227,7 +282,7 @@ const canvas = $('c'), ctx = canvas.getContext('2d');
 
 let state = 'menu';           // menu | play | over
 let mode = 'free';            // free | stage
-let diffKey = loadDiff(), cfg = LEVELS[diffKey];
+let diffKey = 'easy', cfg = LEVELS[diffKey];
 let stageIdx = 0, playWords = ['jump', 'down'];
 let speed = 0, score = 0, lives = 0, hits = 0, done = 0, spawned = 0, caught = 0, coins = 0;
 let obstacles = [], shurikens = [], particles = [];
@@ -250,19 +305,67 @@ function renderDebug() {
 $('dbgBtn').onclick = () => { $('debug').classList.toggle('show'); renderDebug(); };
 
 /* ============================================================
-   שמירה ב-iPad: קושי, כוכבים, שיא
+   שמירה ב-iPad: שחקנים, ולכל שחקן – קושי, כוכבים, שיא, מטבעות
    ============================================================ */
 function store(key, val) { try { localStorage.setItem('ninjaVoice_' + key, JSON.stringify(val)); } catch (e) {} }
 function load(key, def) {
   try { const v = localStorage.getItem('ninjaVoice_' + key); return v === null ? def : JSON.parse(v); } catch (e) { return def; }
 }
-function loadDiff() { const d = load('difficulty', 'easy'); return LEVELS[d] ? d : 'easy'; }
-function getStars() { return load('stars', {}); }               // { "0": 3, "1": 2, ... }
-function getBest(d) {
-  let old = 0;   // תמיכה גם בשיא שנשמר בגרסה הראשונה
-  try { old = parseInt(localStorage.getItem('ninjaVoiceBest_' + d)) || 0; } catch (e) {}
-  return Math.max(old, load('best_' + d, 0));
+
+const COLORS = ['#dc2626', '#2563eb', '#16a34a', '#ea580c', '#9333ea', '#db2777', '#ca8a04', '#0d9488'];
+let players = load('players', []);   // [{ id, name, color }]
+let player = null;                    // השחקן שמשחק עכשיו
+
+// כל מה ששייך לשחקן נשמר עם התחילית שלו
+function pStore(k, v) { if (player) store('p' + player.id + '_' + k, v); }
+function pLoad(k, def) { return player ? load('p' + player.id + '_' + k, def) : def; }
+function loadDiff() { const d = pLoad('difficulty', 'easy'); return LEVELS[d] ? d : 'easy'; }
+function getStars() { return pLoad('stars', {}); }               // { "0": 3, "1": 2, ... }
+function getBest(d) { return pLoad('best_' + d, 0); }
+function playerColor() { return player ? player.color : '#dc2626'; }
+function savePlayers() { store('players', players); }
+
+function createPlayer(name, color) {
+  const p = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name, color };
+  const first = players.length === 0;
+  players.push(p); savePlayers();
+  if (first) migrateOld(p);
+  return p;
 }
+
+// הכוכבים והשיאים מהגרסאות הקודמות עוברים לשחקן הראשון
+function migrateOld(p) {
+  const pre = 'p' + p.id + '_';
+  const st = load('stars', null); if (st) store(pre + 'stars', st);
+  const d = load('difficulty', null); if (d) store(pre + 'difficulty', d);
+  for (const k of Object.keys(LEVELS)) {
+    let old = 0;
+    try { old = parseInt(localStorage.getItem('ninjaVoiceBest_' + k)) || 0; } catch (e) {}
+    const b = Math.max(old, load('best_' + k, 0));
+    if (b) store(pre + 'best_' + k, b);
+  }
+}
+
+function deletePlayer(id) {
+  const pre = 'ninjaVoice_p' + id + '_';
+  try { Object.keys(localStorage).filter(k => k.startsWith(pre)).forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  players = players.filter(p => p.id !== id); savePlayers();
+  if (player && player.id === id) { player = null; store('current', null); }
+}
+
+function totalStars(p) {
+  const st = load('p' + p.id + '_stars', {});
+  return Object.values(st).reduce((a, b) => a + b, 0);
+}
+
+// מטבעות שנאספו נכנסים לקופה של השחקן (פעם אחת לכל משחק)
+let banked = false;
+function bankCoins() {
+  if (banked || !caught) return;
+  banked = true;
+  pStore('coins', pLoad('coins', 0) + caught);
+}
+
 function isUnlocked(i, stars) { return i === 0 || (stars[i - 1] || 0) > 0; }
 
 // ב-Free Play משתמשים בכל המילים מהשלבים שכבר נפתחו
@@ -276,6 +379,7 @@ function freeWords() {
    מסך פתיחה
    ============================================================ */
 function renderMenu() {
+  if (player) { $('pchipName').textContent = player.name; $('pchipDot').style.background = player.color; }
   document.querySelectorAll('.diff').forEach(b => b.classList.toggle('sel', b.dataset.diff === diffKey));
   const stars = getStars();
   const box = $('stages');
@@ -296,7 +400,7 @@ function renderMenu() {
 }
 
 document.querySelectorAll('.diff').forEach(b => {
-  b.onclick = () => { diffKey = b.dataset.diff; cfg = LEVELS[diffKey]; store('difficulty', diffKey); renderMenu(); };
+  b.onclick = () => { diffKey = b.dataset.diff; cfg = LEVELS[diffKey]; pStore('difficulty', diffKey); renderMenu(); };
 });
 $('freeBtn').onclick = () => play('free');
 
@@ -458,6 +562,7 @@ async function play(m, idx) {
 function startGame(m, idx) {
   mode = m; stageIdx = idx || 0; cfg = LEVELS[diffKey];
   playWords = mode === 'stage' ? STAGES[stageIdx].words : freeWords();
+  banked = false;
   speed = cfg.speed; score = 0; lives = cfg.lives; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0;
   obstacles = []; shurikens = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
@@ -492,6 +597,7 @@ function renderHud() {
 // חלון סיום – משותף לכל המצבים
 function showOver(title, big, sub, primaryLabel, primaryAction, starsStyle) {
   state = 'over';
+  bankCoins();
   $('endBtn').classList.add('hide');
   $('overTitle').textContent = title;
   $('overBig').textContent = big;
@@ -507,7 +613,7 @@ function catchText() { return coins ? '  ·  🪙 ' + caught + ' / ' + coins : '
 function endFree(byButton) {
   const prev = getBest(diffKey);
   const isNew = score > prev;
-  if (isNew) store('best_' + diffKey, score);
+  if (isNew) pStore('best_' + diffKey, score);
   $('best').textContent = Math.max(prev, score);
   showOver(byButton ? 'Well done!' : 'Game Over', String(score),
            (isNew && score > 0 ? '🏆 New best!' : 'Best: ' + prev) + catchText(),
@@ -518,7 +624,7 @@ function stageComplete() {
   const misses = hits + (coins - caught);   // מטבע שלא נתפס מוריד כוכבים (אבל לא לבבות)
   const got = misses === 0 ? 3 : misses <= 2 ? 2 : 1;
   const stars = getStars();
-  if (got > (stars[stageIdx] || 0)) { stars[stageIdx] = got; store('stars', stars); }
+  if (got > (stars[stageIdx] || 0)) { stars[stageIdx] = got; pStore('stars', stars); }
   const hasNext = stageIdx + 1 < STAGES.length;
   showOver('Stage ' + (stageIdx + 1) + ' complete!', '★'.repeat(got) + '☆'.repeat(3 - got),
            (hits === 0 ? 'Perfect – no hits!' : hits === 1 ? '1 hit' : hits + ' hits') + catchText(),
@@ -945,12 +1051,12 @@ function drawNinja() {
   if (flyT > 0) {
     ctx.strokeStyle = '#334155'; ctx.lineWidth = 0.4;
     ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx - 8, t - 8); ctx.moveTo(hx, hy); ctx.lineTo(hx + 8, t - 8); ctx.stroke();
-    ctx.fillStyle = '#dc2626';
+    ctx.fillStyle = playerColor();
     ctx.beginPath(); ctx.moveTo(hx - 11, t - 7); ctx.lineTo(hx, t - 13); ctx.lineTo(hx + 11, t - 7); ctx.lineTo(hx, t - 9); ctx.closePath(); ctx.fill();
   }
 
   // סרט אדום מתנופף
-  ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 1;
+  ctx.strokeStyle = playerColor(); ctx.lineWidth = 1;
   const wave = Math.sin(performance.now() / 90) * 1.2;
   ctx.beginPath(); ctx.moveTo(hx - headR, hy - 1); ctx.lineTo(hx - headR - 4, hy - 2 + wave); ctx.stroke();
 
@@ -962,7 +1068,7 @@ function drawNinja() {
     ctx.translate(x + w - 1.5, b - 4.5);              // מפרק הירך
     ctx.rotate(ang);
     ctx.fillStyle = '#1e293b'; roundRect(0, -1.3, 9, 2.6, 1.2); ctx.fill();
-    ctx.fillStyle = '#dc2626'; roundRect(7.4, -1.4, 2.2, 2.8, 0.8); ctx.fill();   // כף רגל
+    ctx.fillStyle = playerColor(); roundRect(7.4, -1.4, 2.2, 2.8, 0.8); ctx.fill();   // כף רגל
     ctx.restore();
     ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 0.6;
     ctx.beginPath(); ctx.arc(x + w - 1.5, b - 4.5, 11, -1.3, -0.15); ctx.stroke();
@@ -972,7 +1078,7 @@ function drawNinja() {
   ctx.fillStyle = '#1e293b';
   roundRect(x, t + headR * 1.3, w, b - t - headR * 1.3, 1.5); ctx.fill();
   // חגורה
-  ctx.fillStyle = '#dc2626'; ctx.fillRect(x, b - (b - t) * 0.42, w, 1);
+  ctx.fillStyle = playerColor(); ctx.fillRect(x, b - (b - t) * 0.42, w, 1);
   // יד – מורמת בזמן תפיסה, קדימה בזמן זריקה
   if (catchT > 0) { ctx.fillStyle = '#1e293b'; roundRect(x + w - 2, t - 2, 2, 7, 1); ctx.fill(); }
   if (throwT > 0) { ctx.fillStyle = '#1e293b'; roundRect(x + w - 1, t + 5, 5, 2, 1); ctx.fill(); }
@@ -985,6 +1091,114 @@ function drawNinja() {
   ctx.fillRect(hx + 0.2, hy - 0.4, 0.8, 0.8);
   ctx.fillRect(hx + 1.8, hy - 0.4, 0.8, 0.8);
 }
+
+/* ============================================================
+   בחירת שחקן וניהול שחקנים
+   ============================================================ */
+let managing = false, editing = null, editColor = COLORS[0], delArmed = false, delTimer = null;
+
+function hideAllOverlays() { ['menu', 'over', 'editP', 'dict', 'players'].forEach(id => $(id).classList.remove('show')); }
+
+function showPlayers() {
+  state = 'menu';
+  hideAllOverlays();
+  try { speechSynthesis.cancel(); } catch (e) {}
+  if (!players.length) { openEdit(null); return; }
+  renderPlayers();
+  $('players').classList.add('show');
+}
+
+function renderPlayers() {
+  const g = $('playerGrid');
+  g.innerHTML = '';
+  g.classList.toggle('managing', managing);
+  players.forEach(p => {
+    const b = document.createElement('button');
+    b.className = 'pcard';
+    b.innerHTML = '<div class="face"><div class="band" style="background:' + p.color + '"></div></div>' +
+                  '<div class="pname" dir="auto"></div>' +
+                  '<div class="pstats">★ ' + totalStars(p) + ' · 🪙 ' + load('p' + p.id + '_coins', 0) + '</div>' +
+                  '<span class="edit">✏️</span>';
+    b.querySelector('.pname').textContent = p.name;
+    b.onclick = () => managing ? openEdit(p) : selectPlayer(p);
+    g.appendChild(b);
+  });
+  const add = document.createElement('button');
+  add.className = 'pcard add';
+  add.innerHTML = '<span>+</span>New player';
+  add.onclick = () => openEdit(null);
+  g.appendChild(add);
+  $('manageBtn').textContent = managing ? '✓ Done' : '✏️ Manage players';
+}
+
+function selectPlayer(p) {
+  player = p; store('current', p.id);
+  diffKey = loadDiff(); cfg = LEVELS[diffKey];
+  managing = false;
+  hideAllOverlays();
+  renderMenu();
+  if (model) setStatus('Ready! Choose a stage');
+  $('menu').classList.add('show');
+}
+
+function openEdit(p) {
+  editing = p;
+  const used = players.map(x => x.color);
+  editColor = p ? p.color : (COLORS.find(c => !used.includes(c)) || COLORS[0]);
+  $('editTitle').textContent = p ? 'Edit player' : (players.length ? 'New player' : 'Welcome! What is your name?');
+  $('pName').value = p ? p.name : '';
+  $('pErr').textContent = '';
+  $('pDelete').classList.toggle('hide', !p);
+  $('pCancel').classList.toggle('hide', !players.length);
+  disarmDelete();
+  renderSwatches();
+  hideAllOverlays();
+  $('editP').classList.add('show');
+  setTimeout(() => { try { $('pName').focus(); } catch (e) {} }, 50);
+}
+
+function renderSwatches() {
+  const box = $('swatches');
+  box.innerHTML = '';
+  COLORS.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'sw' + (c === editColor ? ' sel' : '');
+    b.style.background = c;
+    b.onclick = () => { editColor = c; renderSwatches(); };
+    box.appendChild(b);
+  });
+}
+
+function disarmDelete() {
+  delArmed = false; clearTimeout(delTimer);
+  $('pDelete').textContent = '🗑 Delete player';
+}
+
+$('pSave').onclick = () => {
+  const name = $('pName').value.trim();
+  if (!name) { $('pErr').textContent = 'Please type a name'; return; }
+  if (editing) {
+    editing.name = name; editing.color = editColor; savePlayers();
+    showPlayers();
+  } else {
+    selectPlayer(createPlayer(name, editColor));   // שחקן חדש – מתחיל לשחק מיד
+  }
+};
+$('pCancel').onclick = showPlayers;
+$('pDelete').onclick = () => {
+  if (!editing) return;
+  if (!delArmed) {   // לחיצה ראשונה – מבקשים אישור
+    delArmed = true;
+    $('pDelete').textContent = '⚠️ Tap again to delete "' + editing.name + '"';
+    delTimer = setTimeout(disarmDelete, 3000);
+    return;
+  }
+  deletePlayer(editing.id);
+  managing = players.length > 0 && managing;
+  showPlayers();
+};
+$('manageBtn').onclick = () => { managing = !managing; renderPlayers(); };
+$('pchip').onclick = () => { managing = false; showPlayers(); };
 
 /* ============================================================
    מילון מילים – לוחצים על מילה, שומעים אותה ורואים מה היא עושה
@@ -1095,7 +1309,7 @@ function toMenu() {
 $('menuBtn').onclick = toMenu;
 $('endBtn').onclick = () => {
   if (state !== 'play') return;
-  if (mode === 'free') endFree(true); else toMenu();
+  if (mode === 'free') endFree(true); else { bankCoins(); toMenu(); }
 };
 
 document.addEventListener('visibilitychange', () => {
@@ -1104,6 +1318,7 @@ document.addEventListener('visibilitychange', () => {
 
 dbg('model', '—'); dbg('mic', 'off'); dbg('heard', '—'); dbg('command', '—');
 renderMenu();
+showPlayers();
 loadModel();
 </script>
 </body>
