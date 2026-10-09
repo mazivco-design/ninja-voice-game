@@ -62,9 +62,26 @@ canvas { display: block; width: 100%; height: 100%; }
 .stage .stars { font-size: clamp(12px, 2vh, 17px); color: #fde047; letter-spacing: 1px; }
 .stage.locked { background: #cbd5e1; color: #64748b; }
 .stage:disabled { opacity: .5; }
-.free { margin-top: clamp(7px, 1.4vh, 12px); border: 0; border-radius: 14px; padding: clamp(7px, 1.4vh, 12px) 26px;
+.menuRow { display: flex; gap: 10px; justify-content: center; margin-top: clamp(7px, 1.4vh, 12px); }
+.free { border: 0; border-radius: 14px; padding: clamp(7px, 1.4vh, 12px) 22px;
         font-size: clamp(15px, 2.3vh, 19px); font-weight: 900; background: #e2e8f0; color: #1e293b; }
 .free:disabled { opacity: .5; }
+.free.words { background: #dcfce7; color: #166534; }
+
+/* מילון מילים – פאנל עליון, הנינג'ה מדגים בחלק התחתון */
+#dict { position: absolute; top: 0; left: 0; right: 0; display: none; justify-content: center; padding: max(56px, calc(env(safe-area-inset-top) + 50px)) 12px 0; pointer-events: none; }
+#dict.show { display: flex; }
+#dict .panel { pointer-events: auto; width: min(760px, 100%); padding: clamp(10px, 2vh, 18px); }
+#dict .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+#dict h2 { font-size: clamp(20px, 3.4vh, 28px); margin: 0; }
+#dict .hint { font-size: clamp(12px, 1.8vh, 15px); color: #64748b; }
+.wordGrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+@media (max-aspect-ratio: 1/1) { .wordGrid { grid-template-columns: repeat(3, 1fr); } }
+.word { border: 0; border-radius: 14px; background: #4f46e5; color: #fff; padding: clamp(8px, 1.6vh, 14px) 4px; font-weight: 900;
+        font-size: clamp(15px, 2.4vh, 20px); }
+.word .ic { display: block; font-size: clamp(22px, 4vh, 34px); line-height: 1.1; margin-bottom: 2px; }
+.word.active { background: #16a34a; transform: scale(1.05); }
+.closeBtn { border: 0; border-radius: 10px; background: #e2e8f0; color: #1e293b; font-weight: 900; font-size: clamp(14px, 2vh, 17px); padding: 8px 14px; }
 
 /* מסך סיום */
 .big { font-size: clamp(44px, 10vh, 80px); font-weight: 900; color: #4f46e5; line-height: 1.1; }
@@ -89,7 +106,7 @@ canvas { display: block; width: 100%; height: 100%; }
     <span id="hudFree"><span>Score: <span id="score">0</span></span>&nbsp;&nbsp;<span>Best: <span id="best">0</span></span></span>
     <span id="hudStage" class="hide"><span id="stageName">Stage 1</span></span>
     <div id="progress" class="hide"><div id="progressBar"></div></div>
-    <span id="catchHud" class="hide">📜 <span id="caught">0</span></span>
+    <span id="catchHud" class="hide">🪙 <span id="caught">0</span></span>
     <span id="lives"></span>
     <span class="sp"></span>
     <span id="mic"></span>
@@ -114,7 +131,22 @@ canvas { display: block; width: 100%; height: 100%; }
       <div class="label">Stages</div>
       <div class="stages" id="stages"></div>
 
-      <button class="free" id="freeBtn" disabled>∞ Free Play</button>
+      <div class="menuRow">
+        <button class="free" id="freeBtn" disabled>∞ Free Play</button>
+        <button class="free words" id="dictBtn">📖 Words</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- מילון מילים -->
+  <div id="dict">
+    <div class="panel">
+      <div class="top">
+        <h2>📖 Words</h2>
+        <span class="hint">Tap a word to hear it and see it</span>
+        <button class="closeBtn" id="dictClose">✕ Back</button>
+      </div>
+      <div class="wordGrid" id="wordGrid"></div>
     </div>
   </div>
 
@@ -142,15 +174,16 @@ const MODEL_URL = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-sm
 
 // כל המילים שהמשחק מכיר
 const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly'];
+const WORD_ICON = { jump: '⬆️', down: '⬇️', kick: '🦶', throw: '✴️', catch: '🪙', fly: '🪁' };
 
 // רמות קושי – קובעות מהירות, לבבות וקפיצה.
 // gapT = הזמן (בשניות) בין מכשול למכשול. מוגדר בזמן ולא במרחק,
 // כדי שתמיד יהיה מספיק זמן להגיב – גם כשהמהירות עולה.
 // gravity / jumpV = הקפיצה. ברמה הקלה היא "מרחפת" יותר.
 const LEVELS = {
-  easy:   { speed: 35, accel: 0,   maxSpeed: 35, gapT: [2.6, 3.6], lives: Infinity, penalty: 1, gravity: 100, jumpV: 63 },
-  medium: { speed: 50, accel: 0,   maxSpeed: 50, gapT: [1.8, 2.6], lives: 3,        penalty: 0, gravity: 160, jumpV: 80 },
-  hard:   { speed: 60, accel: 1.2, maxSpeed: 95, gapT: [1.5, 2.2], lives: 1,        penalty: 0, gravity: 160, jumpV: 80 }
+  easy:   { speed: 35, accel: 0,   maxSpeed: 35, gapT: [2.6, 3.6], lives: Infinity, penalty: 1, gravity: 100, jumpV: 63, forgive: 1.5 },
+  medium: { speed: 50, accel: 0,   maxSpeed: 50, gapT: [1.8, 2.6], lives: 3,        penalty: 0, gravity: 160, jumpV: 80, forgive: 0 },
+  hard:   { speed: 60, accel: 1.2, maxSpeed: 95, gapT: [1.5, 2.2], lives: 1,        penalty: 0, gravity: 160, jumpV: 80, forgive: 0 }
 };
 
 // שלבים. כל זוג מילים מקבל 3 שלבים: מילה אחת, מילה שנייה, ומעורבב.
@@ -162,13 +195,13 @@ const STAGES = [
   { name: 'KICK',         words: ['kick'],           count: 8,  hint: 'Say KICK to break walls' },
   { name: 'THROW',        words: ['throw'],          count: 8,  hint: 'Say THROW to stop enemies' },
   { name: 'KICK + THROW', words: ['kick', 'throw'],  count: 10, hint: 'Read the word!' },
-  { name: 'CATCH',        words: ['catch'],          count: 8,  hint: 'Say CATCH to grab scrolls' },
+  { name: 'CATCH',        words: ['catch'],          count: 8,  hint: 'Say CATCH to grab coins' },
   { name: 'JUMP + FLY',   words: ['fly'],            count: 8,  hint: 'Say JUMP, then FLY in the air' },
   { name: 'CATCH + FLY',  words: ['catch', 'fly'],   count: 10, hint: 'Read the word!' }
 ];
 
 // איזה מכשול מתאים לכל מילה
-const WORD_OBSTACLE = { jump: 'box', down: 'beam', kick: 'wall', throw: 'enemy', catch: 'scroll', fly: 'river' };
+const WORD_OBSTACLE = { jump: 'box', down: 'beam', kick: 'wall', throw: 'enemy', catch: 'coin', fly: 'river' };
 const HIT_WORD = { box: 'JUMP!', beam: 'DOWN!', wall: 'KICK!', enemy: 'THROW!', river: 'JUMP + FLY!' };
 
 // "העולם" של המשחק: 160 על 100 יחידות, מוגדל לגודל המסך
@@ -182,7 +215,7 @@ const WALL = { w: 5, h: 30 };          // KICK – גבוה מדי לקפיצה
 const KICK = { time: 0.5, range: 14 }; // בעיטה פעילה חצי שנייה, מגיעה 14 יחידות קדימה
 const ENEMY = { w: 9, h: 22, extra: 0.3 }; // THROW – אויב גבוה, רץ מהר יותר מהמסך
 const SHURIKEN = { speed: 110, cooldown: 0.35 };
-const SCROLL = { y: GROUND - 24, reachBack: 4, reachFwd: 34 }; // CATCH – מגילה באוויר
+const COIN = { y: GROUND - 24, reachBack: 4, reachFwd: 34 }; // CATCH – מטבע זהב באוויר
 const FLY = { time: 2.5, sink: 3 };    // FLY – גלישה 2.5 שניות, יורד לאט
 const RIVER_FACTOR = 1.5;              // הנהר רחב פי 1.5 ממה שקפיצה רגילה עוברת
 
@@ -196,7 +229,7 @@ let state = 'menu';           // menu | play | over
 let mode = 'free';            // free | stage
 let diffKey = loadDiff(), cfg = LEVELS[diffKey];
 let stageIdx = 0, playWords = ['jump', 'down'];
-let speed = 0, score = 0, lives = 0, hits = 0, done = 0, spawned = 0, caught = 0, scrolls = 0;
+let speed = 0, score = 0, lives = 0, hits = 0, done = 0, spawned = 0, caught = 0, coins = 0;
 let obstacles = [], shurikens = [], particles = [];
 let distSinceSpawn = 0, nextGap = 0, nextType = null, flag = null;
 let py = 0, vy = 0, duckT = 0, invulnT = 0, kickT = 0, flyT = 0, catchT = 0, throwT = 0, throwCd = 0;
@@ -342,14 +375,21 @@ function handleText(text, isFinal) {
   for (let i = 0; i < words.length; i++) {
     if (i >= seenWords.length) {
       seenWords.push(words[i]);
-      command(words[i], 'voice');
+      voiceCommand(words[i]);
     } else if (i === words.length - 1 && words[i] !== seenWords[i]) {
       seenWords[i] = words[i];
-      command(words[i], 'voice');
+      voiceCommand(words[i]);
     }
   }
   if (text) dbg('heard', '"' + text + '"' + (isFinal ? ' (final)' : ''));
   if (isFinal) seenWords = [];
+}
+
+// בזמן שהמילון מקריא מילה, המיקרופון שומע אותה – לא מפעילים אותה פעמיים
+let ignoreVoiceUntil = 0;
+function voiceCommand(w) {
+  if (performance.now() < ignoreVoiceUntil) { dbg('heard', w + ' (ignored – speaker)'); return; }
+  command(w, 'voice');
 }
 
 // מד עוצמה – הנורית נדלקת ברגע שמתחילים לדבר
@@ -369,7 +409,7 @@ function updateMic() {
    ============================================================ */
 function command(word, source) {
   dbg('command', word + ' (' + source + ')');
-  if (state !== 'play') return;
+  if (state !== 'play' && state !== 'demo') return;
   heard = { text: word.toUpperCase(), t: 0.8 };
 
   if (word === 'jump') {
@@ -388,10 +428,10 @@ function command(word, source) {
       throwCd = SHURIKEN.cooldown; throwT = 0.25;
     }
   } else if (word === 'catch') {
-    catchT = 0.4;                          // תופס מגילה שקרובה מספיק
-    const s = obstacles.find(o => o.type === 'scroll' && !o.caught && !o.passed &&
-                                  o.x + 3 >= PLAYER.x - SCROLL.reachBack && o.x <= PLAYER.x + SCROLL.reachFwd);
-    if (s) catchScroll(s);
+    catchT = 0.4;                          // תופס מטבע שקרוב מספיק
+    const s = obstacles.find(o => o.type === 'coin' && !o.caught && !o.passed &&
+                                  o.x + 3 >= PLAYER.x - COIN.reachBack && o.x <= PLAYER.x + COIN.reachFwd);
+    if (s) catchCoin(s);
   } else if (word === 'fly') {
     if (py > 0 && flyT <= 0) {             // FLY עובד רק באוויר – אחרי קפיצה
       flyT = FLY.time; duckT = 0;
@@ -418,7 +458,7 @@ async function play(m, idx) {
 function startGame(m, idx) {
   mode = m; stageIdx = idx || 0; cfg = LEVELS[diffKey];
   playWords = mode === 'stage' ? STAGES[stageIdx].words : freeWords();
-  speed = cfg.speed; score = 0; lives = cfg.lives; hits = 0; done = 0; spawned = 0; caught = 0; scrolls = 0;
+  speed = cfg.speed; score = 0; lives = cfg.lives; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0;
   obstacles = []; shurikens = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0;
@@ -462,7 +502,7 @@ function showOver(title, big, sub, primaryLabel, primaryAction, starsStyle) {
   $('over').classList.add('show');
 }
 
-function catchText() { return scrolls ? '  ·  📜 ' + caught + ' / ' + scrolls : ''; }
+function catchText() { return coins ? '  ·  🪙 ' + caught + ' / ' + coins : ''; }
 
 function endFree(byButton) {
   const prev = getBest(diffKey);
@@ -475,7 +515,7 @@ function endFree(byButton) {
 }
 
 function stageComplete() {
-  const misses = hits + (scrolls - caught);   // מגילה שלא נתפסה מורידה כוכבים (אבל לא לבבות)
+  const misses = hits + (coins - caught);   // מטבע שלא נתפס מוריד כוכבים (אבל לא לבבות)
   const got = misses === 0 ? 3 : misses <= 2 ? 2 : 1;
   const stars = getStars();
   if (got > (stars[stageIdx] || 0)) { stars[stageIdx] = got; store('stars', stars); }
@@ -512,7 +552,7 @@ function spawn() {
   const type = nextType;
   const o = { type, x: W + 2, passed: false, hit: false };
   if (type === 'river') o.w = riverWidth();
-  if (type === 'scroll') scrolls++;
+  if (type === 'coin') coins++;
   obstacles.push(o);
   spawned++;
   distSinceSpawn = 0;
@@ -539,23 +579,28 @@ function obstacleBox(o) {
     case 'wall':  return { l: o.x, r: o.x + WALL.w, t: GROUND - WALL.h, b: GROUND };
     case 'enemy': return { l: o.x, r: o.x + ENEMY.w, t: GROUND - ENEMY.h, b: GROUND };
     case 'river': return { l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 20 };
-    case 'scroll':return { l: o.x, r: o.x + 6, t: SCROLL.y - 3, b: SCROLL.y + 3 };
+    case 'coin':return { l: o.x, r: o.x + 6, t: COIN.y - 3, b: COIN.y + 3 };
   }
 }
 
 // האם הנינג'ה נפגע מהמכשול הזה עכשיו
+// ברמה הקלה (forgive) מכווצים את אזור הפגיעה – נגיעה בקצה לא נחשבת
 function collides(o, pb) {
-  if (o.type === 'scroll' || o.broken || o.defeated) return false;
+  if (o.type === 'coin' || o.broken || o.defeated) return false;
+  const m = cfg.forgive || 0;
   if (o.type === 'river') {
     const cx = (pb.l + pb.r) / 2;
-    return py === 0 && cx > o.x + 2 && cx < o.x + o.w - 2;   // עומד על הקרקע מעל המים
+    return py === 0 && cx > o.x + 2 + m * 2 && cx < o.x + o.w - 2 - m * 2;   // עומד על הקרקע מעל המים
   }
   const b = obstacleBox(o);
-  return pb.l < b.r && pb.r > b.l && pb.t < b.b && pb.b > b.t;
+  return pb.l < b.r - m && pb.r > b.l + m && pb.t < b.b - m && pb.b > b.t + m;
 }
 
 function onHit(o) {
   o.hit = true;
+  if (state === 'demo') {   // במילון – רק מראים את המילה הנכונה, בלי עונש
+    flash = { text: HIT_WORD[o.type], t: 1.2 }; invulnT = INVULN_TIME; return;
+  }
   hits++; done++;
   flash = { text: HIT_WORD[o.type], t: 1.2 };   // מראה את המילה הנכונה
   invulnT = INVULN_TIME;
@@ -576,10 +621,10 @@ function cleared(o) {
   renderHud();
 }
 
-function catchScroll(s) {
+function catchCoin(s) {
   s.caught = true; s.ct = 0; caught++;
   cleared(s);
-  burst(s.x + 3, SCROLL.y, '#fde047', 10);
+  burst(s.x + 3, COIN.y, '#fde047', 10);
   const el = $('catchHud'); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
 }
 
@@ -620,12 +665,13 @@ function update(dt) {
   const dx = speed * dt;
   bgX += dx;
   distSinceSpawn += dx;
-  if (distSinceSpawn >= nextGap) {
+  if (state === 'play' && distSinceSpawn >= nextGap) {
     if (mode === 'free' || spawned < STAGES[stageIdx].count) spawn();
     else if (!flag) flag = { x: W + 2 };
   }
 
   const pb = playerBox();
+  if (state === 'demo') demoAuto(pb, dt);
 
   // שוריקנים
   for (const s of shurikens) {
@@ -656,10 +702,10 @@ function update(dt) {
       cleared(o);
     }
 
-    if (!o.hit && !o.passed && invulnT <= 0 && collides(o, pb)) { onHit(o); if (state !== 'play') return; }
+    if (!o.hit && !o.passed && invulnT <= 0 && collides(o, pb)) { onHit(o); if (state === 'over') return; }
     const ob = obstacleBox(o);
     if (!o.passed && !o.hit && ob.r < pb.l) {
-      if (o.type === 'scroll') { o.passed = true; done++; renderHud(); }   // מגילה שהוחמצה – בלי נקודה, בלי עונש
+      if (o.type === 'coin') { o.passed = true; done++; renderHud(); }   // מטבע שהוחמץ – בלי נקודה, בלי עונש
       else cleared(o);                                                     // עבר את המכשול בשלום
     }
   }
@@ -778,14 +824,14 @@ function draw() {
   ctx.globalAlpha = 1;
 
   // מה הנינג'ה שמע
-  if (heard && state === 'play') {
+  if (heard && (state === 'play' || state === 'demo')) {
     const pb = playerBox();
     label(heard.text, PLAYER.x + 4, pb.t - (flyT > 0 ? 14 : 6), 4, '#16a34a', '#fff');
   }
   ctx.restore();
 
   // המילה הנכונה אחרי פגיעה / כותרת פתיחה
-  if (state === 'play') {
+  if (state === 'play' || state === 'demo') {
     if (flash) bigText(flash.text, 40, 14, '#dc2626');
     else if (banner) {
       bigText(banner.text, 32, 9, '#4f46e5');
@@ -827,19 +873,33 @@ function drawObstacle(o, top) {
     label('KICK', x + WALL.w / 2, y - 5, 4, '#fde047', '#1e293b');
   } else if (o.type === 'enemy') {
     drawEnemy(o);
-  } else if (o.type === 'scroll') {
-    let sx = x, sy = SCROLL.y + Math.sin(performance.now() / 250 + x) * 1.2;
+  } else if (o.type === 'coin') {
+    const now = performance.now() / 1000;
+    let cx = x + 3, cy = COIN.y + Math.sin(now * 4 + x) * 1.6;   // מקפץ למעלה ולמטה
     if (o.caught) {                           // עף אל הנינג'ה
       const k = Math.min(1, o.ct / 0.35), pb = playerBox();
-      sx = x + (PLAYER.x + 2 - x) * k; sy = sy + (pb.t - sy) * k;
+      cx = cx + (PLAYER.x + 4 - cx) * k; cy = cy + (pb.t - cy) * k;
       ctx.globalAlpha = 1 - k * 0.7;
     }
-    ctx.fillStyle = 'rgba(253,224,71,.35)'; ctx.beginPath(); ctx.arc(sx + 3, sy, 5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#fef3c7'; ctx.fillRect(sx, sy - 2.2, 6, 4.4);
-    ctx.fillStyle = '#b45309'; ctx.fillRect(sx - 0.8, sy - 2.8, 1.2, 5.6); ctx.fillRect(sx + 5.6, sy - 2.8, 1.2, 5.6);
-    ctx.fillStyle = '#dc2626'; ctx.fillRect(sx + 2.6, sy - 2.2, 0.8, 4.4);
+    // הילה זוהרת
+    const glow = ctx.createRadialGradient(cx, cy, 1, cx, cy, 7);
+    glow.addColorStop(0, 'rgba(253,224,71,.65)'); glow.addColorStop(1, 'rgba(253,224,71,0)');
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.fill();
+    // מטבע מסתובב (רוחב משתנה)
+    const sx = Math.max(0.15, Math.abs(Math.cos(now * 3 + x)));
+    ctx.save(); ctx.translate(cx, cy); ctx.scale(sx, 1);
+    ctx.fillStyle = '#b45309'; ctx.beginPath(); ctx.arc(0, 0, 3.4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(0, 0, 2.9, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 0.4; ctx.beginPath(); ctx.arc(0, 0, 2.1, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#fef9c3'; ctx.fillRect(-1.6, -1.8, 0.9, 1.6);      // ברק
+    ctx.restore();
+    // ניצוצות סביב
+    for (let i = 0; i < 3; i++) {
+      const a = now * 2 + i * 2.1, tw = (Math.sin(now * 6 + i * 3) + 1) / 2;
+      if (tw > 0.4) star4(cx + Math.cos(a) * 5.5, cy + Math.sin(a) * 4.5, 0.9 * tw + 0.3, 0, '#fff7ae');
+    }
     ctx.globalAlpha = 1;
-    if (!o.caught && !o.passed) label('CATCH', sx + 3, sy - 8, 3.6, '#fde047', '#1e293b');
+    if (!o.caught && !o.passed) label('CATCH', cx, cy - 8, 3.6, '#16a34a', '#fff');   // תווית ירוקה = פרס
   }
 }
 
@@ -879,7 +939,7 @@ function drawNinja() {
   if (invulnT > 0 && Math.floor(invulnT * 10) % 2 === 0) return;  // הבהוב אחרי פגיעה
   const pb = playerBox();
   const x = pb.l, w = pb.r - pb.l, t = pb.t, b = pb.b;
-  const headR = 3.3, hx = x + w / 2 + (duckT > 0 ? 1.5 : 0), hy = t + headR;
+  const headR = 3.3, hx = x + w / 2 + (duckT > 0 ? 1.5 : 0) - (kickT > 0 ? 1.2 : 0), hy = t + headR;   // בבעיטה – נוטה אחורה
 
   // גלשן מעל הראש בזמן FLY
   if (flyT > 0) {
@@ -894,10 +954,18 @@ function drawNinja() {
   const wave = Math.sin(performance.now() / 90) * 1.2;
   ctx.beginPath(); ctx.moveTo(hx - headR, hy - 1); ctx.lineTo(hx - headR - 4, hy - 2 + wave); ctx.stroke();
 
-  // בעיטה – רגל קדימה
+  // בעיטה – רגל עולה באלכסון קדימה, עם קו תנועה
   if (kickT > 0) {
-    ctx.fillStyle = '#1e293b';
-    roundRect(x + w - 1, b - 5, 7, 2.4, 1); ctx.fill();
+    const k = 1 - kickT / KICK.time;                 // 0→1 לאורך הבעיטה
+    const ang = -0.25 - Math.sin(Math.min(1, k * 2.2) * Math.PI / 2) * 0.75;   // רגל מתרוממת
+    ctx.save();
+    ctx.translate(x + w - 1.5, b - 4.5);              // מפרק הירך
+    ctx.rotate(ang);
+    ctx.fillStyle = '#1e293b'; roundRect(0, -1.3, 9, 2.6, 1.2); ctx.fill();
+    ctx.fillStyle = '#dc2626'; roundRect(7.4, -1.4, 2.2, 2.8, 0.8); ctx.fill();   // כף רגל
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 0.6;
+    ctx.beginPath(); ctx.arc(x + w - 1.5, b - 4.5, 11, -1.3, -0.15); ctx.stroke();
   }
 
   // גוף
@@ -919,13 +987,89 @@ function drawNinja() {
 }
 
 /* ============================================================
+   מילון מילים – לוחצים על מילה, שומעים אותה ורואים מה היא עושה
+   ============================================================ */
+const TYPE_WORD = Object.fromEntries(Object.entries(WORD_OBSTACLE).map(([w, t]) => [t, w]));
+let demoFlyAt = null;
+
+function renderDict() {
+  const grid = $('wordGrid');
+  grid.innerHTML = '';
+  WORDS.forEach(w => {
+    const b = document.createElement('button');
+    b.className = 'word'; b.dataset.w = w;
+    b.innerHTML = '<span class="ic">' + WORD_ICON[w] + '</span>' + w.toUpperCase();
+    b.onclick = () => showWord(w);
+    grid.appendChild(b);
+  });
+}
+
+function openDict() {
+  state = 'demo'; mode = 'demo';
+  cfg = LEVELS.medium; speed = 40; lives = Infinity;
+  obstacles = []; shurikens = []; particles = []; flag = null; banner = null; flash = null;
+  py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0;
+  seenWords = []; demoFlyAt = null;
+  $('menu').classList.remove('show');
+  ['hudFree', 'hudStage', 'progress', 'catchHud', 'endBtn'].forEach(id => $(id).classList.add('hide'));
+  $('lives').textContent = '';
+  renderDict();
+  $('dict').classList.add('show');
+  if (model) ensureAudio();   // אם המודל מוכן – הילד יכול גם להגיד את המילה בעצמו
+}
+
+function speak(w) {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(w);
+    u.lang = 'en-US'; u.rate = 0.85;
+    const voices = speechSynthesis.getVoices();
+    const v = voices.find(x => /^en[-_]US/i.test(x.lang)) || voices.find(x => /^en/i.test(x.lang));
+    if (v) u.voice = v;
+    ignoreVoiceUntil = performance.now() + 1600;
+    u.onend = () => { ignoreVoiceUntil = performance.now() + 400; };
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+function showWord(w) {
+  speak(w);
+  document.querySelectorAll('.word').forEach(b => b.classList.toggle('active', b.dataset.w === w));
+  obstacles = []; shurikens = []; flash = null; invulnT = 0; demoFlyAt = null;
+  py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0;
+  const type = WORD_OBSTACLE[w];
+  const o = { type, x: PLAYER.x + PLAYER.w + speed * 1.8, passed: false, hit: false, auto: true };
+  if (type === 'river') o.w = riverWidth();
+  obstacles.push(o);
+}
+
+// הנינג'ה מבצע את הפעולה בזמן הנכון
+function demoAuto(pb, dt) {
+  for (const o of obstacles) {
+    if (!o.auto || o.acted || o.passed || o.hit) continue;
+    const d = o.x - pb.r;
+    const fire = { box: d <= speed * 0.2, beam: d <= speed * 0.3, wall: d <= KICK.range + speed * 0.2,
+                   enemy: d <= 45, coin: o.x <= PLAYER.x + 25, river: d <= speed * 0.05 }[o.type];
+    if (!fire) continue;
+    o.acted = true;
+    if (o.type === 'river') { command('jump', 'demo'); demoFlyAt = 0.4; }
+    else command(TYPE_WORD[o.type], 'demo');
+  }
+  if (demoFlyAt !== null && (demoFlyAt -= dt) <= 0) { demoFlyAt = null; command('fly', 'demo'); }
+}
+
+$('dictBtn').onclick = openDict;
+$('dictClose').onclick = toMenu;
+
+/* ============================================================
    לולאה ראשית
    ============================================================ */
 function loop(t) {
   const now = t / 1000;
   const dt = Math.min(0.05, lastT ? now - lastT : 0);
   lastT = now;
-  if (state === 'play') update(dt);
+  if (state === 'play' || state === 'demo') update(dt);
   updateMic();
   draw();
   requestAnimationFrame(loop);
@@ -937,6 +1081,8 @@ requestAnimationFrame(loop);
    ============================================================ */
 function toMenu() {
   state = 'menu';
+  $('dict').classList.remove('show');
+  try { speechSynthesis.cancel(); } catch (e) {}
   $('over').classList.remove('show');
   $('endBtn').classList.add('hide');
   $('hudFree').classList.remove('hide');
