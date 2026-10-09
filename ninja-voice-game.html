@@ -21,30 +21,50 @@ canvas { display: block; width: 100%; height: 100%; }
 .hbtn { background: rgba(15,23,42,.55); color: #fff; border: 0; border-radius: 10px; padding: 8px 14px;
         font-size: clamp(13px, 1.9vw, 17px); font-weight: 800; }
 #mic { width: 18px; height: 18px; border-radius: 50%; background: #64748b; display: inline-block; vertical-align: middle;
-       transition: transform .08s, background .08s; }
+       transition: transform .08s, background .08s; flex: none; }
 #mic.on { background: #16a34a; }
 #mic.loud { background: #4ade80; transform: scale(1.5); box-shadow: 0 0 14px #4ade80; }
+#progress { width: clamp(120px, 28vw, 320px); height: 14px; background: rgba(15,23,42,.45); border-radius: 7px; overflow: hidden; }
+#progress div { height: 100%; width: 0; background: #fde047; border-radius: 7px; transition: width .25s; }
+.hide { display: none !important; }
 
 /* חלונות מעל המשחק */
 .overlay { position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
            background: rgba(15,23,42,.5); padding: 16px; }
 .overlay.show { display: flex; }
-.panel { background: #fff; color: #1e293b; border-radius: 22px; padding: clamp(14px, 3vh, 30px) clamp(16px, 3vw, 34px);
-         text-align: center; width: min(600px, 100%); max-height: 100%; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
-.panel h1 { font-size: clamp(26px, 5vh, 44px); margin-bottom: 6px; }
+.panel { background: #fff; color: #1e293b; border-radius: 22px; padding: clamp(14px, 3vh, 28px) clamp(16px, 3vw, 32px);
+         text-align: center; width: min(620px, 100%); max-height: 100%; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.panel h1 { font-size: clamp(24px, 4.6vh, 42px); margin-bottom: 4px; }
 .panel h2 { font-size: clamp(26px, 5vh, 42px); margin-bottom: 4px; }
-.panel p { font-size: clamp(14px, 2.2vh, 19px); color: #475569; margin-bottom: 6px; line-height: 1.35; }
-.cmd { display: inline-block; background: #fde047; color: #1e293b; border-radius: 8px; padding: 0 8px; font-weight: 900; }
-.status { font-size: clamp(13px, 2vh, 16px); color: #64748b; min-height: 1.4em; margin: 6px 0 12px; }
+.panel p { font-size: clamp(14px, 2.1vh, 18px); color: #475569; margin-bottom: 4px; line-height: 1.35; }
+.label { font-size: clamp(12px, 1.8vh, 14px); font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: .06em; margin: clamp(8px, 1.6vh, 14px) 0 6px; }
+.status { font-size: clamp(13px, 1.9vh, 16px); color: #64748b; min-height: 1.4em; margin-top: 4px; }
 .status.err { color: #dc2626; }
-.levels { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-.lvl { flex: 1; min-width: 150px; border: 0; border-radius: 16px; padding: clamp(10px, 2vh, 18px) 10px; color: #fff;
-       font-size: clamp(19px, 3.2vh, 26px); font-weight: 900; }
-.lvl small { display: block; font-size: clamp(12px, 1.8vh, 14px); font-weight: 600; opacity: .95; margin-top: 4px; }
-.lvl:disabled { opacity: .4; }
+
+/* בחירת קושי */
+.diffs { display: flex; gap: 8px; justify-content: center; }
+.diff { flex: 1; max-width: 170px; border: 3px solid transparent; border-radius: 12px; padding: clamp(6px, 1.2vh, 10px) 6px;
+        font-size: clamp(15px, 2.4vh, 19px); font-weight: 900; color: #fff; opacity: .55; }
+.diff small { display: block; font-size: clamp(11px, 1.5vh, 13px); font-weight: 600; }
+.diff.sel { opacity: 1; border-color: #1e293b; }
 .easy { background: #16a34a; } .medium { background: #f59e0b; } .hard { background: #dc2626; }
+
+/* שלבים */
+.stages { display: flex; gap: 10px; justify-content: center; }
+.stage { flex: 1; max-width: 180px; border: 0; border-radius: 16px; padding: clamp(8px, 1.8vh, 16px) 6px; background: #4f46e5; color: #fff; }
+.stage .num { font-size: clamp(22px, 4vh, 34px); font-weight: 900; line-height: 1; }
+.stage .name { font-size: clamp(12px, 1.8vh, 15px); font-weight: 800; margin-top: 4px; }
+.stage .stars { font-size: clamp(16px, 2.6vh, 22px); margin-top: 4px; color: #fde047; letter-spacing: 2px; }
+.stage.locked { background: #cbd5e1; color: #64748b; }
+.stage:disabled { opacity: .5; }
+.free { margin-top: clamp(8px, 1.6vh, 14px); border: 0; border-radius: 14px; padding: clamp(8px, 1.6vh, 13px) 26px;
+        font-size: clamp(15px, 2.4vh, 19px); font-weight: 900; background: #e2e8f0; color: #1e293b; }
+.free:disabled { opacity: .5; }
+
+/* מסך סיום */
 .big { font-size: clamp(44px, 10vh, 80px); font-weight: 900; color: #4f46e5; line-height: 1.1; }
-.row { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+.big.starsBig { color: #f59e0b; letter-spacing: 6px; }
+.row { display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
 .btn { border: 0; border-radius: 14px; padding: clamp(10px, 2vh, 16px) 24px; font-size: clamp(17px, 2.8vh, 22px);
        font-weight: 900; background: #4f46e5; color: #fff; }
 .btn.sec { background: #e2e8f0; color: #1e293b; }
@@ -61,12 +81,13 @@ canvas { display: block; width: 100%; height: 100%; }
   <canvas id="c"></canvas>
 
   <div id="hud">
-    <span>Score: <span id="score">0</span></span>
-    <span>Best: <span id="best">0</span></span>
+    <span id="hudFree"><span>Score: <span id="score">0</span></span>&nbsp;&nbsp;<span>Best: <span id="best">0</span></span></span>
+    <span id="hudStage" class="hide"><span id="stageName">Stage 1</span></span>
+    <div id="progress" class="hide"><div id="progressBar"></div></div>
     <span id="lives"></span>
     <span class="sp"></span>
     <span id="mic"></span>
-    <button class="hbtn" id="endBtn" style="display:none">End</button>
+    <button class="hbtn hide" id="endBtn">End</button>
     <button class="hbtn" id="dbgBtn">🐞</button>
   </div>
 
@@ -74,13 +95,20 @@ canvas { display: block; width: 100%; height: 100%; }
   <div class="overlay show" id="menu">
     <div class="panel">
       <h1>🥷 Ninja Voice</h1>
-      <p>Say <span class="cmd">JUMP</span> to jump over boxes.<br>Say <span class="cmd">DOWN</span> to duck under beams.</p>
+      <p>Say <b>JUMP</b> to jump over boxes · Say <b>DOWN</b> to duck under beams</p>
       <div class="status" id="status">Loading…</div>
-      <div class="levels">
-        <button class="lvl easy" data-level="easy" disabled>Easy<small>Slow · no game over</small></button>
-        <button class="lvl medium" data-level="medium" disabled>Medium<small>3 lives</small></button>
-        <button class="lvl hard" data-level="hard" disabled>Hard<small>Fast · 1 life</small></button>
+
+      <div class="label">Difficulty</div>
+      <div class="diffs">
+        <button class="diff easy" data-diff="easy">Easy<small>Slow · no fail</small></button>
+        <button class="diff medium" data-diff="medium">Medium<small>3 lives</small></button>
+        <button class="diff hard" data-diff="hard">Hard<small>Fast · 1 life</small></button>
       </div>
+
+      <div class="label">Stages</div>
+      <div class="stages" id="stages"></div>
+
+      <button class="free" id="freeBtn" disabled>∞ Free Play</button>
     </div>
   </div>
 
@@ -88,10 +116,10 @@ canvas { display: block; width: 100%; height: 100%; }
   <div class="overlay" id="over">
     <div class="panel">
       <h2 id="overTitle">Game Over</h2>
-      <div class="big" id="overScore">0</div>
-      <p id="overBest">Best: 0</p>
+      <div class="big" id="overBig">0</div>
+      <p id="overSub"></p>
       <div class="row">
-        <button class="btn" id="againBtn">Play again</button>
+        <button class="btn" id="primaryBtn">Play again</button>
         <button class="btn sec" id="menuBtn">Menu</button>
       </div>
     </div>
@@ -106,18 +134,31 @@ canvas { display: block; width: 100%; height: 100%; }
    ============================================================ */
 const MODEL_URL = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz';
 
-// רמות קושי. speed = מהירות המכשולים, gap = רווח בין מכשולים (ביחידות עולם)
-// gravity / jumpV = קפיצה. ברמה הקלה הקפיצה "מרחפת" יותר, כדי שיהיה יותר זמן לתזמן
+// רמות קושי – קובעות מהירות, לבבות וקפיצה.
+// gapT = הזמן (בשניות) בין מכשול למכשול. מוגדר בזמן ולא במרחק,
+// כדי שתמיד יהיה מספיק זמן להגיב – גם כשהמהירות עולה.
+// gravity / jumpV = הקפיצה. ברמה הקלה היא "מרחפת" יותר.
 const LEVELS = {
-  easy:   { speed: 35, accel: 0,   maxSpeed: 35, gapMin: 90, gapMax: 130, lives: Infinity, penalty: 1, gravity: 100, jumpV: 63 },
-  medium: { speed: 50, accel: 0,   maxSpeed: 50, gapMin: 70, gapMax: 100, lives: 3,        penalty: 0, gravity: 160, jumpV: 80 },
-  hard:   { speed: 60, accel: 1.2, maxSpeed: 95, gapMin: 55, gapMax: 85,  lives: 1,        penalty: 0, gravity: 160, jumpV: 80 }
+  easy:   { speed: 35, accel: 0,   maxSpeed: 35, gapT: [2.6, 3.6], lives: Infinity, penalty: 1, gravity: 100, jumpV: 63 },
+  medium: { speed: 50, accel: 0,   maxSpeed: 50, gapT: [1.8, 2.6], lives: 3,        penalty: 0, gravity: 160, jumpV: 80 },
+  hard:   { speed: 60, accel: 1.2, maxSpeed: 95, gapT: [1.5, 2.2], lives: 1,        penalty: 0, gravity: 160, jumpV: 80 }
 };
+
+// שלבים. כל זוג מילים מקבל 3 שלבים: מילה אחת, מילה שנייה, ומעורבב.
+// מילים חדשות בעתיד = מוסיפים כאן שלבים.
+const STAGES = [
+  { name: 'JUMP',        words: ['jump'],         count: 8 },
+  { name: 'DOWN',        words: ['down'],         count: 8 },
+  { name: 'JUMP + DOWN', words: ['jump', 'down'], count: 10 }
+];
+
+// איזה מכשול מתאים לכל מילה
+const WORD_OBSTACLE = { jump: 'box', down: 'beam' };
 
 // "העולם" של המשחק: 160 על 100 יחידות, מוגדל לגודל המסך
 const W = 160, H = 100, GROUND = 85;
 const PLAYER = { x: 25, w: 8, h: 14, duckW: 10, duckH: 8 };
-const DUCK_TIME = 1.0;                 // כמה זמן הנינג'ה נשאר כפוף (שניות)
+const DUCK_TIME = 1.0;                 // כמה זמן הנינג'ה נשאר כפוף אחרי כל "down"
 const INVULN_TIME = 1.2;               // זמן חסינות אחרי פגיעה
 const BOX = { w: 6, h: 9 };            // מכשול קרקע – קופצים מעליו
 const BEAM = { w: 8, clear: 11, thick: 5 }; // קורה תלויה – מתכופפים מתחתיה
@@ -129,11 +170,13 @@ const $ = id => document.getElementById(id);
 const canvas = $('c'), ctx = canvas.getContext('2d');
 
 let state = 'menu';           // menu | play | over
-let levelKey = null, cfg = null;
-let speed = 0, score = 0, lives = 0;
-let obstacles = [], distSinceSpawn = 0, nextGap = 0;
+let mode = 'free';            // free | stage
+let diffKey = loadDiff(), cfg = LEVELS[diffKey];
+let stageIdx = 0;
+let speed = 0, score = 0, lives = 0, hits = 0, done = 0, spawned = 0;
+let obstacles = [], distSinceSpawn = 0, nextGap = 0, flag = null;
 let py = 0, vy = 0, duckT = 0, invulnT = 0;  // py = גובה הנינג'ה מעל הקרקע
-let flash = null, heard = null;              // הודעות על המסך
+let flash = null, heard = null, banner = null;
 let bgX = 0, lastT = 0;
 
 /* ============================================================
@@ -150,14 +193,48 @@ function renderDebug() {
 $('dbgBtn').onclick = () => { $('debug').classList.toggle('show'); renderDebug(); };
 
 /* ============================================================
-   שיא לכל רמה
+   שמירה ב-iPad: קושי, כוכבים, שיא
    ============================================================ */
-function getBest(key) {
-  try { return parseInt(localStorage.getItem('ninjaVoiceBest_' + key)) || 0; } catch (e) { return 0; }
+function store(key, val) { try { localStorage.setItem('ninjaVoice_' + key, JSON.stringify(val)); } catch (e) {} }
+function load(key, def) {
+  try { const v = localStorage.getItem('ninjaVoice_' + key); return v === null ? def : JSON.parse(v); } catch (e) { return def; }
 }
-function setBest(key, v) {
-  try { localStorage.setItem('ninjaVoiceBest_' + key, String(v)); } catch (e) {}
+function loadDiff() { const d = load('difficulty', 'easy'); return LEVELS[d] ? d : 'easy'; }
+function getStars() { return load('stars', {}); }               // { "0": 3, "1": 2, ... }
+function getBest(d) {
+  // תמיכה גם בשיא שנשמר בגרסה הקודמת
+  let old = 0;
+  try { old = parseInt(localStorage.getItem('ninjaVoiceBest_' + d)) || 0; } catch (e) {}
+  return Math.max(old, load('best_' + d, 0));
 }
+
+/* ============================================================
+   מסך פתיחה
+   ============================================================ */
+function renderMenu() {
+  document.querySelectorAll('.diff').forEach(b => b.classList.toggle('sel', b.dataset.diff === diffKey));
+  const stars = getStars();
+  const box = $('stages');
+  box.innerHTML = '';
+  STAGES.forEach((s, i) => {
+    const unlocked = i === 0 || (stars[i - 1] || 0) > 0;
+    const got = stars[i] || 0;
+    const b = document.createElement('button');
+    b.className = 'stage' + (unlocked ? '' : ' locked');
+    b.disabled = !model || !unlocked;
+    b.innerHTML = '<div class="num">' + (unlocked ? (i + 1) : '🔒') + '</div>' +
+                  '<div class="name">' + s.name + '</div>' +
+                  '<div class="stars">' + (unlocked ? '★'.repeat(got) + '☆'.repeat(3 - got) : '&nbsp;') + '</div>';
+    b.onclick = () => play('stage', i);
+    box.appendChild(b);
+  });
+  $('freeBtn').disabled = !model;
+}
+
+document.querySelectorAll('.diff').forEach(b => {
+  b.onclick = () => { diffKey = b.dataset.diff; cfg = LEVELS[diffKey]; store('difficulty', diffKey); renderMenu(); };
+});
+$('freeBtn').onclick = () => play('free');
 
 /* ============================================================
    זיהוי דיבור – Vosk
@@ -183,9 +260,9 @@ async function loadModel() {
   try {
     model = await Vosk.createModel(MODEL_URL);
     const secs = ((performance.now() - t0) / 1000).toFixed(1);
-    setStatus('Ready! Choose a level');
+    setStatus('Ready! Choose a stage');
     dbg('model', 'ready (' + secs + 's)');
-    document.querySelectorAll('.lvl').forEach(b => b.disabled = false);
+    renderMenu();
   } catch (e) {
     setStatus('Voice engine failed to load: ' + (e.message || e), true);
     dbg('model', 'ERROR ' + (e.message || e));
@@ -202,7 +279,7 @@ async function ensureAudio() {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }
     });
-    // רשימת מילים סגורה – רק jump ו-down. כל השאר "לא מוכר"
+    // רשימת מילים סגורה – רק המילים של המשחק. כל השאר "לא מוכר"
     const rec = new model.KaldiRecognizer(ac.sampleRate, JSON.stringify(['jump', 'down', '[unk]']));
     rec.on('partialresult', m => handleText(m.result.partial, false));
     rec.on('result', m => handleText(m.result.text, true));
@@ -264,10 +341,10 @@ function command(word, source) {
   if (state !== 'play') return;
   heard = { text: word.toUpperCase(), t: 0.8 };
   if (word === 'jump') {
-    if (py === 0) { vy = cfg.jumpV; py = 0.001; duckT = 0; }
+    if (py === 0) { vy = cfg.jumpV; py = 0.001; duckT = 0; }   // קופץ גם מתוך התכופפות
   } else if (word === 'down') {
-    duckT = DUCK_TIME;
-    if (py > 0) vy = Math.min(vy, -60);   // באוויר – נוחת מהר
+    duckT = DUCK_TIME;                     // כל "down" נוסף מאריך את ההתכופפות
+    if (py > 0) vy = Math.min(vy, -60);    // באוויר – נוחת מהר
   }
 }
 
@@ -280,46 +357,96 @@ window.addEventListener('keydown', e => {
 /* ============================================================
    מהלך המשחק
    ============================================================ */
-function startGame(key) {
-  levelKey = key; cfg = LEVELS[key];
-  speed = cfg.speed; score = 0; lives = cfg.lives;
-  obstacles = []; distSinceSpawn = 0; nextGap = speed * 2.2;  // המכשול הראשון אחרי ~2 שניות
-  py = 0; vy = 0; duckT = 0; invulnT = 0; flash = null; heard = null;
-  seenWords = [];
-  $('menu').classList.remove('show');
-  $('over').classList.remove('show');
-  $('endBtn').style.display = '';
-  $('best').textContent = getBest(key);
-  renderHud();
-  dbg('level', key);
-  state = 'play';
+async function play(m, idx) {
+  if (!model) return;
+  const ok = await ensureAudio();   // נקרא ישירות מהלחיצה
+  if (ok) startGame(m, idx);
 }
 
-function endGame(byButton) {
-  state = 'over';
-  $('endBtn').style.display = 'none';
-  const prev = getBest(levelKey);
-  const isNew = score > prev;
-  if (isNew) setBest(levelKey, score);
-  $('best').textContent = Math.max(prev, score);
-  $('overTitle').textContent = byButton ? 'Well done!' : 'Game Over';
-  $('overScore').textContent = score;
-  $('overBest').textContent = isNew && score > 0 ? '🏆 New best!' : 'Best: ' + prev;
-  $('over').classList.add('show');
+function startGame(m, idx) {
+  mode = m; stageIdx = idx || 0; cfg = LEVELS[diffKey];
+  speed = cfg.speed; score = 0; lives = cfg.lives; hits = 0; done = 0; spawned = 0;
+  obstacles = []; flag = null; distSinceSpawn = 0; nextGap = speed * 2.2;  // המכשול הראשון אחרי ~2 שניות
+  py = 0; vy = 0; duckT = 0; invulnT = 0; flash = null; heard = null;
+  seenWords = [];
+  banner = { text: mode === 'stage' ? 'Stage ' + (stageIdx + 1) + ': ' + STAGES[stageIdx].name : 'Free Play', t: 2 };
+
+  $('menu').classList.remove('show');
+  $('over').classList.remove('show');
+  $('endBtn').classList.remove('hide');
+  $('hudFree').classList.toggle('hide', mode !== 'free');
+  $('hudStage').classList.toggle('hide', mode !== 'stage');
+  $('progress').classList.toggle('hide', mode !== 'stage');
+  if (mode === 'stage') $('stageName').textContent = 'Stage ' + (stageIdx + 1);
+  else $('best').textContent = getBest(diffKey);
+  renderHud();
+  dbg('game', mode + (mode === 'stage' ? ' ' + (stageIdx + 1) : '') + ' / ' + diffKey);
+  state = 'play';
 }
 
 function renderHud() {
   $('score').textContent = score;
+  if (mode === 'stage') $('progressBar').style.width = (100 * done / STAGES[stageIdx].count) + '%';
   if (!isFinite(lives)) $('lives').textContent = '';
   else $('lives').textContent = '❤️'.repeat(Math.max(0, lives)) + '🤍'.repeat(Math.max(0, cfg.lives - lives));
 }
 
+// חלון סיום – משותף לכל המצבים
+function showOver(title, big, sub, primaryLabel, primaryAction, starsStyle) {
+  state = 'over';
+  $('endBtn').classList.add('hide');
+  $('overTitle').textContent = title;
+  $('overBig').textContent = big;
+  $('overBig').classList.toggle('starsBig', !!starsStyle);
+  $('overSub').textContent = sub;
+  $('primaryBtn').textContent = primaryLabel;
+  $('primaryBtn').onclick = primaryAction;
+  $('over').classList.add('show');
+}
+
+function endFree(byButton) {
+  const prev = getBest(diffKey);
+  const isNew = score > prev;
+  if (isNew) store('best_' + diffKey, score);
+  $('best').textContent = Math.max(prev, score);
+  showOver(byButton ? 'Well done!' : 'Game Over', String(score),
+           isNew && score > 0 ? '🏆 New best!' : 'Best: ' + prev,
+           'Play again', () => play('free'));
+}
+
+function stageComplete() {
+  const got = hits === 0 ? 3 : hits <= 2 ? 2 : 1;
+  const stars = getStars();
+  if (got > (stars[stageIdx] || 0)) { stars[stageIdx] = got; store('stars', stars); }
+  const hasNext = stageIdx + 1 < STAGES.length;
+  showOver('Stage ' + (stageIdx + 1) + ' complete!', '★'.repeat(got) + '☆'.repeat(3 - got),
+           hits === 0 ? 'Perfect – no hits!' : hits === 1 ? '1 hit' : hits + ' hits',
+           hasNext ? 'Next stage ▶' : 'Play again',
+           hasNext ? () => play('stage', stageIdx + 1) : () => play('stage', stageIdx), true);
+}
+
+function stageFailed() {
+  showOver('Try again!', '💥', 'Stage ' + (stageIdx + 1) + ': ' + STAGES[stageIdx].name, 'Retry', () => play('stage', stageIdx));
+}
+
 function rand(a, b) { return a + Math.random() * (b - a); }
 
+// בוחר את המכשול הבא. לא יותר מ-3 מאותו סוג ברצף
+function pickType() {
+  const words = mode === 'stage' ? STAGES[stageIdx].words : ['jump', 'down'];
+  let w = words[Math.floor(Math.random() * words.length)];
+  const last = obstacles.slice(-3).map(o => o.type);
+  if (words.length > 1 && last.length === 3 && last.every(t => t === WORD_OBSTACLE[w])) {
+    w = words.find(x => WORD_OBSTACLE[x] !== WORD_OBSTACLE[w]);
+  }
+  return WORD_OBSTACLE[w];
+}
+
 function spawn() {
-  obstacles.push({ type: Math.random() < 0.5 ? 'box' : 'beam', x: W + 2, passed: false, hit: false });
+  obstacles.push({ type: pickType(), x: W + 2, passed: false, hit: false });
+  spawned++;
   distSinceSpawn = 0;
-  nextGap = rand(cfg.gapMin, cfg.gapMax);
+  nextGap = speed * rand(cfg.gapT[0], cfg.gapT[1]);
 }
 
 function playerBox() {
@@ -339,16 +466,17 @@ function overlap(a, b) { return a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t
 
 function onHit(o) {
   o.hit = true;
+  hits++; done++;
   flash = { text: o.type === 'box' ? 'JUMP!' : 'DOWN!', t: 1.2 };   // מראה את המילה הנכונה
   invulnT = INVULN_TIME;
   if (isFinite(lives)) {
     lives--;
     renderHud();
-    if (lives <= 0) { endGame(false); return; }
-  } else if (cfg.penalty) {
+    if (lives <= 0) { mode === 'stage' ? stageFailed() : endFree(false); return; }
+  } else if (cfg.penalty && mode === 'free') {
     score = Math.max(0, score - cfg.penalty);
-    renderHud();
   }
+  renderHud();
 }
 
 function update(dt) {
@@ -364,21 +492,30 @@ function update(dt) {
   if (invulnT > 0) invulnT -= dt;
   if (flash && (flash.t -= dt) <= 0) flash = null;
   if (heard && (heard.t -= dt) <= 0) heard = null;
+  if (banner && (banner.t -= dt) <= 0) banner = null;
 
-  // מכשולים
+  // מכשולים / דגל סיום
   const dx = speed * dt;
   bgX += dx;
   distSinceSpawn += dx;
-  if (distSinceSpawn >= nextGap) spawn();
+  if (distSinceSpawn >= nextGap) {
+    if (mode === 'free' || spawned < STAGES[stageIdx].count) spawn();
+    else if (!flag) flag = { x: W + 2 };
+  }
 
   const pb = playerBox();
   for (const o of obstacles) {
     o.x -= dx;
     const ob = obstacleBox(o);
     if (!o.hit && invulnT <= 0 && overlap(pb, ob)) { onHit(o); if (state !== 'play') return; }
-    if (!o.passed && !o.hit && ob.r < pb.l) { o.passed = true; score++; renderHud(); }
+    if (!o.passed && !o.hit && ob.r < pb.l) { o.passed = true; done++; score++; renderHud(); }
   }
   obstacles = obstacles.filter(o => o.x > -20);
+
+  if (flag) {
+    flag.x -= dx;
+    if (flag.x <= PLAYER.x + PLAYER.w) { stageComplete(); return; }
+  }
   dbg('speed', speed.toFixed(1));
 }
 
@@ -416,6 +553,14 @@ function label(text, cx, cy, size, bg, fg) {
   roundRect(cx - tw / 2 - size * 0.4, cy - size * 0.65, tw + size * 0.8, size * 1.3, size * 0.35);
   ctx.fillStyle = bg; ctx.fill();
   ctx.fillStyle = fg; ctx.fillText(text, cx, cy + size * 0.05);
+}
+
+function bigText(text, y, size, color) {
+  ctx.font = '900 ' + size + 'px -apple-system, system-ui, Arial, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.lineWidth = size * 0.16; ctx.strokeStyle = '#fff'; ctx.lineJoin = 'round';
+  ctx.strokeText(text, W / 2, y);
+  ctx.fillStyle = color; ctx.fillText(text, W / 2, y);
 }
 
 function draw() {
@@ -466,6 +611,13 @@ function draw() {
     }
   }
 
+  // דגל סיום
+  if (flag) {
+    ctx.fillStyle = '#475569'; ctx.fillRect(flag.x, GROUND - 26, 1.2, 26);
+    ctx.fillStyle = '#16a34a';
+    ctx.beginPath(); ctx.moveTo(flag.x + 1.2, GROUND - 26); ctx.lineTo(flag.x + 12, GROUND - 22); ctx.lineTo(flag.x + 1.2, GROUND - 18); ctx.fill();
+  }
+
   drawNinja();
 
   // מה הנינג'ה שמע
@@ -475,13 +627,10 @@ function draw() {
   }
   ctx.restore();
 
-  // המילה הנכונה אחרי פגיעה
-  if (flash && state === 'play') {
-    ctx.font = '900 16px -apple-system, system-ui, Arial, sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.lineWidth = 2.5; ctx.strokeStyle = '#fff';
-    ctx.strokeText(flash.text, W / 2, 40);
-    ctx.fillStyle = '#dc2626'; ctx.fillText(flash.text, W / 2, 40);
+  // המילה הנכונה אחרי פגיעה / כותרת פתיחה
+  if (state === 'play') {
+    if (flash) bigText(flash.text, 40, 16, '#dc2626');
+    else if (banner) bigText(banner.text, 36, 9, '#4f46e5');
   }
 
   ctx.restore();
@@ -530,27 +679,31 @@ requestAnimationFrame(loop);
 /* ============================================================
    כפתורים
    ============================================================ */
-document.querySelectorAll('.lvl').forEach(btn => {
-  btn.onclick = async () => {
-    if (!model) return;
-    const ok = await ensureAudio();   // נקרא ישירות מהלחיצה
-    if (ok) startGame(btn.dataset.level);
-  };
-});
-$('againBtn').onclick = async () => { if (await ensureAudio()) startGame(levelKey); };
-$('menuBtn').onclick = () => {
+function toMenu() {
   state = 'menu';
   $('over').classList.remove('show');
+  $('endBtn').classList.add('hide');
+  $('hudFree').classList.remove('hide');
+  $('hudStage').classList.add('hide');
+  $('progress').classList.add('hide');
+  $('lives').textContent = '';
+  obstacles = []; flag = null; py = 0; vy = 0; duckT = 0; invulnT = 0;
+  renderMenu();
+  if (model) setStatus('Ready! Choose a stage');
   $('menu').classList.add('show');
-  setStatus('Ready! Choose a level');
+}
+$('menuBtn').onclick = toMenu;
+$('endBtn').onclick = () => {
+  if (state !== 'play') return;
+  if (mode === 'free') endFree(true); else toMenu();
 };
-$('endBtn').onclick = () => { if (state === 'play') endGame(true); };
 
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && audio) audio.ctx.resume();
 });
 
 dbg('model', '—'); dbg('mic', 'off'); dbg('heard', '—'); dbg('command', '—');
+renderMenu();
 loadModel();
 </script>
 </body>
