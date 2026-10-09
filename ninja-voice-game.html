@@ -353,8 +353,8 @@ const RIVER_FACTOR = 1.5;              // הנהר רחב פי 1.5 ממה שקפ
 // מילים חדשות
 const ROCK = { size: 8, hangY: GROUND - 40, fall: 0.9, warn: 0.75 };   // STOP – סלע נופל כשמגיעים אליו
 const STOP_TIME = 1.6;                                               // העולם עוצר לשנייה וחצי
-const RUN_BOOST = { mult: 2.2, time: 1.5 };                          // RUN – מהירות כפולה לשנייה וחצי
-const BRIDGE = { factor: 1.4, collapse: 0.85 };                      // גשר שמתמוטט אחרי 0.85 שניות
+const RUN_BOOST = { mult: 2.2, time: 2.0 };                          // RUN – מהירות כפולה לשתי שניות
+const BRIDGE = { factor: 2.2, collapse: 1.15 };                      // גשר ארוך שמתמוטט אחרי 1.15 שניות – בהליכה לוקח 2.2
 const LAKE = { factor: 1.4 }, SWIM_TIME = 2.3;                       // SWIM – אגם עמוק
 const CLIFF = { w: 12, h: 28, range: 10, time: 0.8 };               // CLIMB – צוק גבוה מדי לקפיצה
 const BOULDER = { r: 10, range: 10 };                                // PUSH – סלע עגול גדול
@@ -384,7 +384,9 @@ function resetAct() { for (const k in act) act[k] = 0; }
 // מהירות העולם בפועל: STOP ו-CLIMB עוצרים אותו, RUN מאיץ
 function curSpeed() { return (act.stop > 0 || act.climb > 0) ? 0 : speed * (act.run > 0 ? RUN_BOOST.mult : 1); }
 let bgX = 0, lastT = 0;
-let world = 0, shakeT = 0;   // world: 0 יער במבוק, 1 כפר בלילה, 2 הרים מושלגים
+let world = 0, shakeT = 0;
+let sinkT = 0, sinkType = '';   // אנימציית נפילה לתהום / שקיעה במים אחרי כישלון
+const SINK_TIME = 0.9;   // world: 0 יער במבוק, 1 כפר בלילה, 2 הרים מושלגים
 
 /* ============================================================
    דיבאג
@@ -461,7 +463,9 @@ function bankCoins() {
   pStore('coins', pLoad('coins', 0) + caught);
 }
 
-function isUnlocked(i, stars) { return i === 0 || (stars[i - 1] || 0) > 0; }
+// שחקן בשם Tester – הכל פתוח, לבדיקות
+function isTester() { return !!player && player.name.trim().toLowerCase() === 'tester'; }
+function isUnlocked(i, stars) { return isTester() || i === 0 || (stars[i - 1] || 0) > 0; }
 
 // ב-Free Play משתמשים בכל המילים מהשלבים שכבר נפתחו
 // מילה נפתחת כשהשלב הראשון שמלמד אותה נפתח
@@ -579,7 +583,9 @@ async function ensureAudio() {
       audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }
     });
     // רשימת מילים סגורה – רק המילים של המשחק. כל השאר "לא מוכר"
-    const rec = new model.KaldiRecognizer(ac.sampleRate, JSON.stringify([...WORDS, '[unk]']));
+    // מקשיבים רק למילים של השלב / של ה-Free Play – פחות מילים = פחות טעויות
+    const rec = new model.KaldiRecognizer(ac.sampleRate, JSON.stringify([...listenWords, '[unk]']));
+    dbg('listening', listenWords.join(', '));
     rec.on('partialresult', m => handleText(m.result.partial, false));
     rec.on('result', m => handleText(m.result.text, true));
 
@@ -621,9 +627,13 @@ function handleText(text, isFinal) {
 }
 
 // בזמן שהמילון מקריא מילה, המיקרופון שומע אותה – לא מפעילים אותה פעמיים
-let ignoreVoiceUntil = 0;
+let ignoreVoiceUntil = 0, lastLoudT = -1e9;
+let listenWords = [...WORDS];          // המילים שהזיהוי מקשיב להן במשחק הנוכחי
 function voiceCommand(w) {
   if (performance.now() < ignoreVoiceUntil) { dbg('heard', w + ' (ignored – speaker)'); return; }
+  if (!listenWords.includes(w)) { dbg('heard', w + ' (ignored – not in this stage)'); return; }
+  // מילה מתקבלת רק אם המיקרופון קלט קול ברור בשנייה וחצי האחרונות – לא רעש חלש ברקע
+  if (performance.now() - lastLoudT > 1500) { dbg('heard', w + ' (ignored – too quiet)'); return; }
   command(w, 'voice');
 }
 
@@ -635,6 +645,7 @@ function updateMic() {
   for (let i = 0; i < audio.buf.length; i++) s += audio.buf[i] * audio.buf[i];
   const rms = Math.sqrt(s / audio.buf.length);
   const loud = rms > Math.max(0.02, noise * 4);
+  if (loud) lastLoudT = performance.now();
   if (!loud) noise = noise * 0.97 + rms * 0.03;
   $('mic').className = loud ? 'loud' : 'on';
 }
@@ -709,6 +720,9 @@ function stopAudio() {
 
 async function play(m, idx) {
   if (!model) return;
+  const words = m === 'stage' ? STAGES[idx || 0].words : freeWords();
+  listenWords = words.includes('fly') && !words.includes('jump') ? [...words, 'jump'] : [...words];   // FLY צריך גם JUMP
+  stopAudio();                      // מתחילים מחדש עם רשימת המילים של המשחק הזה
   const ok = await ensureAudio();   // נקרא ישירות מהלחיצה
   if (ok) startGame(m, idx);
 }
@@ -716,7 +730,7 @@ async function play(m, idx) {
 function startGame(m, idx) {
   mode = m; stageIdx = idx || 0; cfg = LEVELS[diffKey];
   playWords = mode === 'stage' ? STAGES[stageIdx].words : freeWords();
-  banked = false; resetAct();
+  banked = false; resetAct(); sinkT = 0;
   world = m === 'stage' ? PAIR_WORLD[Math.floor((idx || 0) / 3)] : 0;
   speed = cfg.speed; score = 0; lives = cfg.lives; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0;
   obstacles = []; shurikens = []; particles = []; flag = null;
@@ -893,6 +907,7 @@ function collides(o, pb) {
 function onHit(o) {
   o.hit = true;
   shakeT = 0.3;
+  if (o.type === 'bridge' || o.type === 'river' || o.type === 'lake') { sinkT = SINK_TIME; sinkType = o.type; }   // נופל / שוקע
   if (state === 'demo' || state === 'intro') {   // בהדגמה – בלי עונש
     flash = { text: HIT_WORD[o.type], t: 1.2 }; invulnT = INVULN_TIME; return;
   }
@@ -1733,6 +1748,19 @@ function drawNinja() {
   const swim = swimmingNow();
   const duck = duckT > 0, fx = pb.l + (duck ? 5.5 : swim ? 3 : 4), fy = swim ? GROUND + 1.5 : pb.b;
   const now = performance.now() / 1000;
+  if (sinkT > 0) {                                                               // נופל לתהום או שוקע במים
+    const k = 1 - sinkT / SINK_TIME;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(fx - 20, GROUND - 40, 40, 40 + (sinkType === 'bridge' ? 60 : 0)); ctx.clip();
+    if (sinkType !== 'bridge') { ctx.beginPath(); ctx.rect(fx - 20, GROUND - 40, 40, 40.5); ctx.clip(); }   // במים – נעלם מתחת לפני המים
+    ctx.translate(fx, GROUND + k * k * (sinkType === 'bridge' ? 45 : 16));
+    ctx.rotate(sinkType === 'bridge' ? k * 2.5 : 0);
+    drawFigure({ fx: 0, fy: 0, facing: 1, scale: 1, body: '#1e293b', back: '#0b1220', front: '#3b4a63', edge: '#05080f', accent: playerColor(),
+                 outline: 'rgba(255,255,255,.6)', pose: poseAir(false) });
+    ctx.restore();
+    if (sinkType !== 'bridge' && k < 0.4) burst(fx, GROUND, '#bae6fd', 2, 25);       // התזה
+    return;
+  }
   if (act.hide > 0 && !(invulnT > 0 && Math.floor(invulnT * 10) % 2 === 0)) {   // מתחבא – שיח עם עיניים
     const sh = Math.sin(now * 9) * 0.3;
     ctx.fillStyle = '#166534'; circle(fx - 3 + sh, GROUND - 4, 4.6); circle(fx + 3.5 - sh, GROUND - 4.3, 4.8); circle(fx + 0.5, GROUND - 8, 5);
@@ -1956,6 +1984,7 @@ $('dictClose').onclick = toMenu;
 // חלקיקים ורעידה – ממשיכים לזוז גם במסך הסיום (קונפטי)
 function updateEffects(dt) {
   if (shakeT > 0) shakeT = Math.max(0, shakeT - dt);
+  if (sinkT > 0 && state !== 'paused') sinkT = Math.max(0, sinkT - dt);
   for (const p of particles) {
     p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.g === undefined ? 60 : p.g) * dt; p.life -= dt;
     if (p.rot !== undefined) p.rot += p.vr * dt;
