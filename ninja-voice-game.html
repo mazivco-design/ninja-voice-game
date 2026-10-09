@@ -13,7 +13,7 @@ html, body { height: 100%; overflow: hidden; background: #0f172a; font-family: -
 canvas { display: block; width: 100%; height: 100%; }
 
 /* פס עליון */
-#hud { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 14px;
+#hud { position: absolute; top: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center; gap: 14px;
        padding: max(10px, env(safe-area-inset-top)) 14px 10px; color: #fff; font-weight: 800;
        font-size: clamp(15px, 2.3vw, 22px); pointer-events: none; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
 #hud .sp { flex: 1; }
@@ -118,6 +118,20 @@ canvas { display: block; width: 100%; height: 100%; }
 .del { margin-top: 12px; border: 0; background: none; color: #dc2626; font-weight: 800; font-size: 15px; padding: 6px; }
 .err { color: #dc2626; font-size: 14px; min-height: 1.2em; }
 
+/* כפתור עצירה בולט */
+#pauseBtn { background: #f59e0b; color: #1e293b; font-size: clamp(15px, 2.2vw, 20px); padding: 9px 16px; }
+#skipBtn { background: #16a34a; color: #fff; }
+
+/* מעבדת אנימציות */
+#lab { position: absolute; left: 0; right: 0; bottom: 0; display: none; justify-content: center; padding: 0 10px max(10px, env(safe-area-inset-bottom)); }
+#lab.show { display: flex; }
+#lab .panel { width: min(900px, 100%); padding: 10px 12px; text-align: start; }
+.labRow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0; }
+.labRow .lbl { font-size: 13px; font-weight: 800; color: #64748b; min-width: 56px; }
+.lb { border: 0; border-radius: 10px; background: #e2e8f0; color: #1e293b; font-weight: 800; font-size: 15px; padding: 8px 11px; }
+.lb.on { background: #4f46e5; color: #fff; }
+#labInfo { font: 13px ui-monospace, Menlo, monospace; color: #475569; }
+
 /* חלונית דיבאג */
 #debug { position: absolute; left: 10px; bottom: 10px; max-width: min(440px, calc(100% - 20px)); background: rgba(15,23,42,.88);
          color: #e2e8f0; font: 12px/1.55 ui-monospace, Menlo, monospace; padding: 10px 12px; border-radius: 10px;
@@ -137,8 +151,10 @@ canvas { display: block; width: 100%; height: 100%; }
     <span id="lives"></span>
     <span class="sp"></span>
     <span id="mic"></span>
+    <button class="hbtn hide" id="skipBtn">Skip ▶</button>
     <button class="hbtn hide" id="pauseBtn">⏸ Pause</button>
     <button class="hbtn hide" id="endBtn">End</button>
+    <button class="hbtn" id="labBtn">🎬</button>
     <button class="hbtn" id="dbgBtn">🐞</button>
   </div>
 
@@ -227,6 +243,18 @@ canvas { display: block; width: 100%; height: 100%; }
         <button class="btn" id="primaryBtn">Play again</button>
         <button class="btn sec" id="menuBtn">Menu</button>
       </div>
+    </div>
+  </div>
+
+  <!-- מעבדת אנימציות – לבדיקת כל תנועה בנפרד -->
+  <div id="lab">
+    <div class="panel">
+      <div class="labRow"><span class="lbl">Move</span><span id="labPoses"></span></div>
+      <div class="labRow"><span class="lbl">Speed</span><span id="labSpeeds"></span>
+        <button class="lb" id="labPlay">⏸</button><button class="lb" id="labStep">Step ▶|</button>
+        <button class="lb" id="labSkel">Skeleton</button><button class="lb" id="labEnemy">Enemy</button>
+        <button class="lb" id="labClose">✕ Close</button></div>
+      <div id="labInfo"></div>
     </div>
   </div>
 
@@ -526,7 +554,7 @@ function updateMic() {
    ============================================================ */
 function command(word, source) {
   dbg('command', word + ' (' + source + ')');
-  if (state !== 'play' && !(state === 'demo' && source === 'demo')) return;   // במילון – רק ההדגמה מזיזה את הנינג'ה
+  if (state !== 'play' && !((state === 'demo' || state === 'intro') && source === 'demo')) return;   // במילון ובהדגמה – רק ההדגמה מזיזה את הנינג'ה
   heard = { text: word.toUpperCase(), t: 0.8 };
 
   if (word === 'jump') {
@@ -569,6 +597,18 @@ window.addEventListener('keydown', e => {
 /* ============================================================
    מהלך המשחק
    ============================================================ */
+// עוצרים את המיקרופון כשלא משחקים – כדי שסימן ההאזנה בדפדפן ייעלם
+function stopAudio() {
+  if (!audio) return;
+  try { audio.stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+  try { audio.node.disconnect(); } catch (e) {}
+  try { audio.ctx.close(); } catch (e) {}
+  try { audio.rec.remove(); } catch (e) {}
+  audio = null; seenWords = [];
+  $('mic').className = '';
+  dbg('mic', 'off');
+}
+
 async function play(m, idx) {
   if (!model) return;
   const ok = await ensureAudio();   // נקרא ישירות מהלחיצה
@@ -601,7 +641,9 @@ function startGame(m, idx) {
   else $('best').textContent = getBest(diffKey);
   renderHud();
   dbg('game', mode + (mode === 'stage' ? ' ' + (stageIdx + 1) : '') + ' / ' + diffKey);
-  state = 'play';
+  $('labBtn').classList.add('hide');
+  if (mode === 'stage') startIntro();
+  else state = 'play';
 }
 
 function renderHud() {
@@ -615,6 +657,8 @@ function renderHud() {
 // חלון סיום – משותף לכל המצבים
 function showOver(title, big, sub, primaryLabel, primaryAction, starsStyle) {
   state = 'over';
+  stopAudio();
+  $('skipBtn').classList.add('hide');
   bankCoins();
   $('endBtn').classList.add('hide');
   $('pauseBtn').classList.add('hide');
@@ -726,7 +770,7 @@ function collides(o, pb) {
 function onHit(o) {
   o.hit = true;
   shakeT = 0.3;
-  if (state === 'demo') {   // במילון – רק מראים את המילה הנכונה, בלי עונש
+  if (state === 'demo' || state === 'intro') {   // בהדגמה – בלי עונש
     flash = { text: HIT_WORD[o.type], t: 1.2 }; invulnT = INVULN_TIME; return;
   }
   hits++; done++;
@@ -801,7 +845,8 @@ function update(dt) {
   }
 
   const pb = playerBox();
-  if (state === 'demo') demoAuto(pb, dt);
+  if (state === 'demo' || state === 'intro') demoAuto(pb, dt);
+  if (state === 'intro' && (introT -= dt) <= 0) introNext();
 
   // שוריקנים
   for (const s of shurikens) {
@@ -1033,29 +1078,29 @@ function drawSnow(left, right, top, bottom) {
 
 /* ---------- דמות נינג'ה עם ידיים ורגליים ---------- */
 // זוויות נמדדות מ"ישר למטה"; זווית חיובית = קדימה (לכיוון שאליו הדמות פונה)
-const THIGH = 2.5, SHIN = 2.4, UPPER = 2.4, FORE = 2.3;
+const THIGH = 2.5, SHIN = 2.4, UPPER = 2.7, FORE = 2.5;
 function lerp(a, b, k) { return a + (b - a) * k; }
 function endOf(x, y, a, len) { return [x + Math.sin(a) * len, y + Math.cos(a) * len]; }
 
 function poseIdle(now) {
   const br = Math.sin(now * 2.5);
-  return { hipY: -4.6, torso: 3.2, lean: 0.05, bob: br * 0.15, legs: [[-0.15, -0.1], [0.18, 0.12]], arms: [[-0.2, 0.25], [0.25, 0.7]] };
+  return { hipY: -4.6, torso: 3.4, lean: 0.05, bob: br * 0.15, legs: [[-0.15, -0.1], [0.18, 0.12]], arms: [[-0.2, 0.25], [0.25, 0.7]] };
 }
 function poseRun(p) {
   const leg = q => { const s = Math.sin(q), t = 0.85 * s; return [t, t - 1.0 * Math.max(0, Math.sin(q - 1.3))]; };
   const arm = q => { const u = -1.15 * Math.sin(q); return [u, u + 1.55]; };   // מרפק כפוף, אמה קדימה
-  return { hipY: -4.6, torso: 3.2, lean: 0.18, bob: -Math.abs(Math.cos(p)) * 0.6, legs: [leg(p + Math.PI), leg(p)], arms: [arm(p), arm(p + Math.PI)] };
+  return { hipY: -4.6, torso: 3.4, lean: 0.18, bob: -Math.abs(Math.cos(p)) * 0.6, legs: [leg(p + Math.PI), leg(p)], arms: [arm(p), arm(p + Math.PI)] };
 }
 function poseAir(rising) {
-  return { hipY: -4.6, torso: 3.2, lean: 0.12, bob: 0, legs: [[0.5, -0.8], [1.35, 0.15]],
+  return { hipY: -4.6, torso: 3.4, lean: 0.12, bob: 0, legs: [[0.5, -0.8], [1.35, 0.15]],
            arms: rising ? [[-2.0, -2.4], [1.9, 2.4]] : [[-1.5, -1.9], [1.4, 1.9]] };   // ידיים פרושות קדימה ואחורה
 }
 function poseDuck() {   // גלישה על הקרקע, רגליים קדימה, גוף נוטה אחורה
-  return { hipY: -1.7, torso: 3.0, lean: -0.95, bob: 0, legs: [[1.0, -0.5], [1.48, 1.55]], arms: [[-0.55, -0.25], [1.25, 1.7]], headTilt: 0.5 };
+  return { hipY: -1.7, torso: 3.2, lean: -0.95, bob: 0, legs: [[1.0, -0.5], [1.48, 1.55]], arms: [[-0.55, -0.25], [1.25, 1.7]], headTilt: 0.5 };
 }
 function poseFly(now) {
   const sw = Math.sin(now * 3) * 0.15;
-  return { hipY: -4.6, torso: 3.2, lean: 0.05, bob: 0, legs: [[-0.3 + sw, -0.15 + sw], [0.05 + sw, 0.2 + sw]], arms: [[2.3, 2.6], [2.55, 2.8]] };
+  return { hipY: -4.6, torso: 3.4, lean: 0.05, bob: 0, legs: [[-0.3 + sw, -0.15 + sw], [0.05 + sw, 0.2 + sw]], arms: [[2.3, 2.6], [2.55, 2.8]] };
 }
 function applyKick(P, k) {
   // 0–0.2: מקפלים ברך למעלה · 0.2–0.75: רגל נשלחת ישר קדימה · אחר כך חוזרת
@@ -1073,7 +1118,7 @@ function applyThrow(P, k) {
   const u = Math.min(1.6, -2.4 + k * 5);                    // יד מאחור-למעלה → קדימה
   P.arms = [[-0.6, -0.2], [u, u - 0.15]]; P.lean = 0.25;
 }
-function applyCatch(P) { P.arms = [[0.3, 0.8], [2.15, 1.95]]; P.openHand = true; }   // יד נשלחת קדימה-למעלה
+function applyCatch(P) { P.arms = [[1.75, 1.55], [2.15, 1.9]]; P.openHand = true; P.lean = 0.2; }   // שתי הידיים נשלחות קדימה-למעלה
 
 function playerPose() {
   const now = performance.now() / 1000;
@@ -1089,59 +1134,88 @@ function playerPose() {
   return P;
 }
 
-// F = { fx, fy, facing, scale, body, back, accent, outline, pose }
+// F = { fx, fy, facing, scale, body, back, front, edge, accent, outline, pose, skeleton }
+// שלד: ירך → צוואר (גוף). הכתף נמצאת על הגוף מתחת לצוואר, והראש מעל הצוואר.
+const NECK = 3.4, SHOULDER_AT = 0.8, HEAD_UP = 2.6, HEAD_R = 3.0;
+function figureJoints(P) {
+  const along = (o, d) => [o[0] + Math.sin(P.lean) * d, o[1] - Math.cos(P.lean) * d];
+  const hip = [0, P.hipY];
+  const torso = P.torso || NECK;
+  const neck = along(hip, torso);
+  const sh = along(hip, torso * SHOULDER_AT);
+  const head = along(neck, HEAD_UP);
+  return { hip, neck, sh, head };
+}
+
 function drawFigure(F) {
   const P = F.pose, now = performance.now() / 1000;
   ctx.save();
   ctx.translate(F.fx, F.fy + (P.bob || 0) * F.scale);
   ctx.scale(F.facing * F.scale, F.scale);
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  const hip = [0, P.hipY];
-  const sh = [Math.sin(P.lean) * P.torso, P.hipY - Math.cos(P.lean) * P.torso];
-  const head = [sh[0] + Math.sin(P.lean) * 3.3, sh[1] - Math.cos(P.lean) * 3.3];
+  const { hip, neck, sh, head } = figureJoints(P);
+  const pts = {};
 
-  const limb = (o, a, l1, l2, lw, col) => {
+  const limb = (o, a, l1, l2, lw, col, name) => {
     const k = endOf(o[0], o[1], a[0], l1), e = endOf(k[0], k[1], a[1], l2);
     ctx.strokeStyle = col; ctx.lineWidth = lw;
     ctx.beginPath(); ctx.moveTo(o[0], o[1]); ctx.lineTo(k[0], k[1]); ctx.lineTo(e[0], e[1]); ctx.stroke();
+    if (name) pts[name] = [o, k, e];
     return e;
   };
   const paint = (outline) => {
     const ex = outline ? 0.9 : 0;
     const col = c => outline ? F.outline : c;
-    limb(hip, P.legs[0], THIGH, SHIN, 2.1 + ex, col(F.back));
-    limb(sh, P.arms[0], UPPER, FORE, 1.8 + ex, col(F.back));
-    ctx.strokeStyle = col(F.body); ctx.lineWidth = 4.4 + ex;                 // גוף
-    ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.lineTo(sh[0], sh[1]); ctx.stroke();
-    ctx.fillStyle = col(F.body); circle(head[0], head[1], 3.2 + ex / 2);   // ראש
-    if (!outline) {                                                       // קו כהה מפריד – היד והרגל הקדמיות "לפני" הגוף
-      limb(hip, P.legs[1], THIGH, SHIN, 2.8, F.edge);
-      limb(sh, P.arms[1], UPPER, FORE, 2.5, F.edge);
+    // שכבה אחורית: רגל ויד רחוקות
+    limb(hip, P.legs[0], THIGH, SHIN, 2.1 + ex, col(F.back), 'legB');
+    const handB = limb(sh, P.arms[0], UPPER, FORE, 1.7 + ex, col(F.back), 'armB');
+    if (!outline) { ctx.fillStyle = F.accent; circle(handB[0], handB[1], 0.95); }
+    // גוף וראש
+    ctx.strokeStyle = col(F.body); ctx.lineWidth = 4.2 + ex;
+    ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.lineTo(neck[0], neck[1]); ctx.stroke();
+    ctx.fillStyle = col(F.body); circle(head[0], head[1], HEAD_R + ex / 2);
+    // שכבה קדמית: קו כהה מפריד ואז הרגל והיד הקרובות – מעל הגוף
+    if (!outline) {
+      limb(hip, P.legs[1], THIGH, SHIN, 2.9, F.edge);
+      limb(sh, P.arms[1], UPPER, FORE, 2.6, F.edge);
     }
-    const foot = limb(hip, P.legs[1], THIGH, SHIN, 2.1 + ex, col(F.front));
-    const hand = limb(sh, P.arms[1], UPPER, FORE, 1.8 + ex, col(F.front));
-    if (!outline && P.kickFoot) { ctx.fillStyle = F.accent; circle(foot[0], foot[1], 1.35); }
-    if (!outline) {                                                       // כף יד (פתוחה בתפיסה)
-      ctx.fillStyle = F.edge; circle(hand[0], hand[1], P.openHand ? 1.55 : 1.15);
-      ctx.fillStyle = P.openHand ? '#fcd9b6' : F.front; circle(hand[0], hand[1], P.openHand ? 1.2 : 0.85);
+    const foot = limb(hip, P.legs[1], THIGH, SHIN, 2.1 + ex, col(F.front), 'legF');
+    const hand = limb(sh, P.arms[1], UPPER, FORE, 1.7 + ex, col(F.front), 'armF');
+    if (!outline) {
+      if (P.kickFoot) { ctx.fillStyle = F.accent; circle(foot[0], foot[1], 1.35); }
+      // כפפה בצבע השחקן – רואים בדיוק איפה היד נגמרת (גדולה ופתוחה בתפיסה)
+      ctx.fillStyle = F.edge; circle(hand[0], hand[1], P.openHand ? 1.6 : 1.25);
+      ctx.fillStyle = F.accent; circle(hand[0], hand[1], P.openHand ? 1.25 : 0.95);
     }
   };
   paint(true); paint(false);
 
   // חגורה
   ctx.save(); ctx.translate(hip[0], hip[1]); ctx.rotate(P.lean);
-  ctx.fillStyle = F.accent; ctx.fillRect(-2.3, -1.3, 4.6, 1.1);
+  ctx.fillStyle = F.accent; ctx.fillRect(-2.2, -1.3, 4.4, 1.1);
   ctx.restore();
   // פנים, עיניים, סרט ראש עם זנבות מתנופפים
   ctx.save(); ctx.translate(head[0], head[1]); ctx.rotate(P.lean + (P.headTilt || 0));
-  ctx.fillStyle = '#fcd9b6'; roundRect(-1.9, -0.9, 4.9, 1.9, 0.6); ctx.fill();
+  ctx.fillStyle = '#fcd9b6'; roundRect(-1.7, -0.85, 4.6, 1.8, 0.6); ctx.fill();
   ctx.fillStyle = '#000'; ctx.fillRect(0.4, -0.45, 0.8, 0.9); ctx.fillRect(1.9, -0.45, 0.8, 0.9);
-  ctx.fillStyle = F.accent; ctx.fillRect(-3.1, -2.4, 6.0, 0.95);
+  ctx.fillStyle = F.accent; ctx.fillRect(-2.9, -2.3, 5.7, 0.95);
   const wv = Math.sin(now * 11 + F.fx) * 0.9;
   ctx.strokeStyle = F.accent; ctx.lineWidth = 0.8;
-  ctx.beginPath(); ctx.moveTo(-3, -1.9); ctx.quadraticCurveTo(-5, -2.2 + wv, -7, -1.4 - wv); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(-3, -1.9); ctx.quadraticCurveTo(-4.6, -1 + wv, -6.3, 0.2 + wv * 0.6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-2.8, -1.8); ctx.quadraticCurveTo(-4.8, -2.1 + wv, -6.8, -1.3 - wv); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-2.8, -1.8); ctx.quadraticCurveTo(-4.4, -0.9 + wv, -6.1, 0.3 + wv * 0.6); ctx.stroke();
   ctx.restore();
+
+  // מצב בדיקה: מציגים את השלד והמפרקים
+  if (F.skeleton) {
+    ctx.lineWidth = 0.25; ctx.strokeStyle = '#ef4444';
+    ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.lineTo(neck[0], neck[1]); ctx.lineTo(head[0], head[1]); ctx.stroke();
+    for (const [n, [a, k, e]] of Object.entries(pts)) {
+      ctx.strokeStyle = n.endsWith('F') ? '#22c55e' : '#f59e0b';
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(k[0], k[1]); ctx.lineTo(e[0], e[1]); ctx.stroke();
+      ctx.fillStyle = ctx.strokeStyle; [a, k, e].forEach(q => circle(q[0], q[1], 0.35));
+    }
+    ctx.fillStyle = '#ef4444'; [hip, neck, sh, head].forEach(q => circle(q[0], q[1], 0.4));
+  }
   ctx.restore();
 }
 
@@ -1186,14 +1260,14 @@ function draw() {
   drawSnow(left, right, top, bottom);
 
   // מה הנינג'ה שמע
-  if (heard && (state === 'play' || state === 'demo')) {
+  if (heard && (state === 'play' || state === 'demo' || state === 'intro')) {
     const pb = playerBox();
     label(heard.text, PLAYER.x + 4, pb.t - (flyT > 0 ? 16 : 7), 4, '#16a34a', '#fff');
   }
   ctx.restore();
 
   // המילה הנכונה אחרי פגיעה / כותרת פתיחה
-  if (state === 'play' || state === 'demo') {
+  if (state === 'play' || state === 'demo' || state === 'intro') {
     if (flash) bigText(flash.text, 40, 14, '#dc2626');
     else if (banner) {
       bigText(banner.text, 32, 9, '#4f46e5');
@@ -1334,10 +1408,13 @@ function drawNinja() {
    ============================================================ */
 let managing = false, editing = null, editColor = COLORS[0], delArmed = false, delTimer = null;
 
-function hideAllOverlays() { ['menu', 'over', 'editP', 'dict', 'players', 'pause'].forEach(id => $(id).classList.remove('show')); }
+function hideAllOverlays() { ['menu', 'over', 'editP', 'dict', 'players', 'pause', 'lab'].forEach(id => $(id).classList.remove('show')); }
 
 function showPlayers() {
   state = 'menu';
+  stopAudio();
+  $('labBtn').classList.remove('hide');
+  $('lab').classList.remove('show');
   hideAllOverlays();
   try { speechSynthesis.cancel(); } catch (e) {}
   if (!players.length) { openEdit(null); return; }
@@ -1463,6 +1540,7 @@ function resetDemo() {
 }
 
 function openDict() {
+  stopAudio();
   state = 'demo'; mode = 'demo'; world = 0;
   cfg = LEVELS.medium; speed = 0; lives = Infinity;   // speed 0 = העולם עומד
   resetDemo();
@@ -1493,12 +1571,8 @@ function showWord(w) {
   speak(w);
   document.querySelectorAll('.word').forEach(b => b.classList.toggle('active', b.dataset.w === w));
   resetDemo();
-  const near = PLAYER.x + PLAYER.w;
-  if (w === 'kick')  obstacles.push({ type: 'wall',  x: near + 6 });
-  if (w === 'throw') obstacles.push({ type: 'enemy', x: near + 55 });
-  if (w === 'catch') obstacles.push({ type: 'coin',  x: near + 12 });
-  obstacles.forEach(o => { o.passed = false; o.hit = false; });
-  demoSteps = w === 'fly' ? [{ at: 0.35, w: 'jump' }, { at: 0.75, w: 'fly' }] : [{ at: 0.45, w }];
+  setupDemo(w);
+  demoSteps.forEach(st => st.at -= 0.45);   // במילון – הפעולה מגיעה מהר יותר
 }
 
 function demoAuto(pb, dt) {
@@ -1528,16 +1602,160 @@ function confetti() {
 }
 
 /* ============================================================
+   הדגמה בתחילת שלב – רואים ושומעים כל מילה לפני שמשחקים
+   ============================================================ */
+let introWords = [], introT = 0, runSpeed = 0;
+
+// מציב חפץ קטן ליד הנינג'ה ומתזמן את הפעולה (משותף למילון ולהדגמה)
+function setupDemo(w) {
+  obstacles = []; shurikens = []; flash = null; invulnT = 0;
+  py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0;
+  demoSteps = []; demoClock = 0;
+  const near = PLAYER.x + PLAYER.w;
+  if (w === 'kick')  obstacles.push({ type: 'wall',  x: near + 6 });
+  if (w === 'throw') obstacles.push({ type: 'enemy', x: near + 55 });
+  if (w === 'catch') obstacles.push({ type: 'coin',  x: near + 12 });
+  obstacles.forEach(o => { o.passed = false; o.hit = false; });
+  demoSteps = w === 'fly' ? [{ at: 0.9, w: 'jump' }, { at: 1.3, w: 'fly' }] : [{ at: 0.9, w }];
+}
+
+function startIntro() {
+  runSpeed = speed; speed = 0;            // העולם עומד בזמן ההדגמה
+  introWords = [...STAGES[stageIdx].words];
+  state = 'intro';
+  $('pauseBtn').classList.add('hide');
+  $('skipBtn').classList.remove('hide');
+  introNext();
+}
+
+function introNext() {
+  if (!introWords.length) { finishIntro(); return; }
+  const w = introWords.shift();
+  setupDemo(w);
+  speak(w);
+  banner = { text: 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
+  introT = w === 'fly' ? 4.6 : 2.8;
+}
+
+function finishIntro() {
+  if (state !== 'intro') return;
+  obstacles = []; shurikens = []; demoSteps = []; flash = null; invulnT = 0;
+  py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0;
+  speed = runSpeed; distSinceSpawn = 0; nextGap = speed * 2.4;
+  seenWords = [];
+  banner = { text: 'Go!', sub: '', t: 1.2 };
+  $('skipBtn').classList.add('hide');
+  $('pauseBtn').classList.remove('hide');
+  state = 'play';
+}
+$('skipBtn').onclick = () => { try { speechSynthesis.cancel(); } catch (e) {} finishIntro(); };
+
+/* ============================================================
+   מעבדת אנימציות – בודקים כל תנועה לבד, לאט, עם שלד
+   ============================================================ */
+const LAB_POSES = ['run', 'idle', 'jump', 'duck', 'kick', 'throw', 'catch', 'fly'];
+const LAB_SPEEDS = [0.1, 0.25, 0.5, 1];
+let lab = { pose: 'run', speed: 0.25, playing: true, skeleton: true, enemy: false, t: 0 };
+
+function openLab() {
+  stopAudio();
+  hideAllOverlays();
+  state = 'lab';
+  ['hudFree', 'hudStage', 'progress', 'catchHud', 'endBtn', 'pauseBtn', 'skipBtn', 'labBtn'].forEach(id => $(id).classList.add('hide'));
+  $('lives').textContent = '';
+  renderLab();
+  $('lab').classList.add('show');
+}
+function closeLab() {
+  $('lab').classList.remove('show');
+  if (player) toMenu(); else showPlayers();
+}
+function renderLab() {
+  const mk = (box, items, cur, fmt, set) => {
+    box.innerHTML = '';
+    items.forEach(v => {
+      const b = document.createElement('button');
+      b.className = 'lb' + (v === cur ? ' on' : ''); b.textContent = fmt(v);
+      b.onclick = () => { set(v); renderLab(); };
+      box.appendChild(b);
+    });
+  };
+  mk($('labPoses'), LAB_POSES, lab.pose, v => v.toUpperCase(), v => { lab.pose = v; lab.t = 0; });
+  mk($('labSpeeds'), LAB_SPEEDS, lab.speed, v => v + '×', v => { lab.speed = v; });
+  $('labPlay').textContent = lab.playing ? '⏸' : '▶';
+  $('labSkel').classList.toggle('on', lab.skeleton);
+  $('labEnemy').classList.toggle('on', lab.enemy);
+}
+$('labBtn').onclick = openLab;
+$('labClose').onclick = closeLab;
+$('labPlay').onclick = () => { lab.playing = !lab.playing; renderLab(); };
+$('labStep').onclick = () => { lab.playing = false; lab.t += 1 / 30; renderLab(); };
+$('labSkel').onclick = () => { lab.skeleton = !lab.skeleton; renderLab(); };
+$('labEnemy').onclick = () => { lab.enemy = !lab.enemy; renderLab(); };
+
+// התנוחה לפי הזמן במעבדה – אותן פונקציות בדיוק כמו במשחק
+function labPose(t) {
+  const L = LEVELS.medium, air = 2 * L.jumpV / L.gravity;
+  let P, lift = 0, info = '';
+  switch (lab.pose) {
+    case 'run':  P = poseRun(t * 50 * 0.42); info = 'phase ' + ((t * 21) % (Math.PI * 2)).toFixed(2); break;
+    case 'idle': P = poseIdle(t); break;
+    case 'jump': {
+      const c = t % (air + 0.6);
+      if (c < air) { lift = L.jumpV * c - L.gravity * c * c / 2; P = poseAir(L.jumpV - L.gravity * c > 0); }
+      else P = poseIdle(t);
+      info = 'height ' + lift.toFixed(1); break;
+    }
+    case 'duck': P = poseDuck(); break;
+    case 'kick':  { const c = t % 1.2; P = poseIdle(t); if (c < KICK.time) applyKick(P, c / KICK.time); info = 'k ' + Math.min(1, c / KICK.time).toFixed(2); break; }
+    case 'throw': { const c = t % 1.0; P = poseIdle(t); if (c < 0.25) applyThrow(P, c / 0.25); info = 'k ' + Math.min(1, c / 0.25).toFixed(2); break; }
+    case 'catch': { const c = t % 1.2; P = poseIdle(t); if (c < 0.4) applyCatch(P); break; }
+    case 'fly':  P = poseFly(t); lift = 12; break;
+  }
+  return { P, lift, info };
+}
+
+function drawLab(dt) {
+  if (lab.playing) lab.t += dt * lab.speed;
+  ctx.fillStyle = '#e0f2fe'; ctx.fillRect(0, 0, cw, ch);
+  const u = Math.min(cw / 60, ch / 34);                   // יחידה גדולה – הדמות ענקית
+  const fx = cw / 2 - (lab.enemy ? 9 * u : 0), fy = ch * 0.6;
+  // רשת עזר
+  ctx.strokeStyle = 'rgba(15,23,42,.08)'; ctx.lineWidth = 1;
+  for (let y = fy; y > 0; y -= u * 2) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cw, y); ctx.stroke(); }
+  for (let x = fx % (u * 2); x < cw; x += u * 2) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, fy); ctx.stroke(); }
+  ctx.fillStyle = '#a16207'; ctx.fillRect(0, fy, cw, ch - fy);
+  ctx.fillStyle = '#4ade80'; ctx.fillRect(0, fy, cw, u * 0.5);
+
+  const { P, lift, info } = labPose(lab.t);
+  ctx.save(); ctx.translate(fx, fy); ctx.scale(u, u);
+  if (lab.pose === 'fly') {                               // גלשן
+    ctx.fillStyle = playerColor();
+    ctx.beginPath(); ctx.moveTo(-12, -lift - 15); ctx.lineTo(0.5, -lift - 21); ctx.lineTo(13, -lift - 15); ctx.lineTo(0.5, -lift - 17); ctx.closePath(); ctx.fill();
+  }
+  drawFigure({ fx: 0, fy: -lift, facing: 1, scale: 1, body: '#1e293b', back: '#0b1220', front: '#3b4a63', edge: '#05080f',
+               accent: playerColor(), outline: 'rgba(255,255,255,.6)', pose: P, skeleton: lab.skeleton });
+  if (lab.enemy) {
+    const E = lab.pose === 'run' ? poseRun(lab.t * 10) : labPose(lab.t).P;
+    drawFigure({ fx: 18, fy: 0, facing: -1, scale: ENEMY.h / 14, body: '#7f1d1d', back: '#5b1313', front: '#a52a2a', edge: '#3b0a0a',
+                 accent: '#facc15', outline: 'rgba(255,255,255,.45)', pose: E, skeleton: lab.skeleton });
+  }
+  ctx.restore();
+  $('labInfo').textContent = lab.pose.toUpperCase() + ' · t=' + lab.t.toFixed(2) + 's · ' + lab.speed + '×' + (info ? ' · ' + info : '') +
+                             (lab.skeleton ? '   (red = body · green = front limbs · orange = back limbs)' : '');
+}
+
+/* ============================================================
    לולאה ראשית
    ============================================================ */
 function loop(t) {
   const now = t / 1000;
   const dt = Math.min(0.05, lastT ? now - lastT : 0);
   lastT = now;
-  if (state === 'play' || state === 'demo') update(dt);
+  if (state === 'play' || state === 'demo' || state === 'intro') update(dt);
   updateEffects(dt);
   updateMic();
-  draw();
+  if (state === 'lab') drawLab(dt); else draw();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
@@ -1547,6 +1765,9 @@ requestAnimationFrame(loop);
    ============================================================ */
 function toMenu() {
   state = 'menu';
+  stopAudio();
+  $('skipBtn').classList.add('hide');
+  $('labBtn').classList.remove('hide');
   $('pause').classList.remove('show');
   $('pauseBtn').classList.add('hide');
   $('dict').classList.remove('show');
@@ -1566,6 +1787,7 @@ function toMenu() {
 }
 $('menuBtn').onclick = toMenu;
 $('endBtn').onclick = () => {
+  if (state === 'intro') { try { speechSynthesis.cancel(); } catch (e) {} toMenu(); return; }
   if (state !== 'play') return;
   if (mode === 'free') endFree(true); else { bankCoins(); toMenu(); }
 };
@@ -1574,13 +1796,14 @@ $('endBtn').onclick = () => {
 function pauseGame() {
   if (state !== 'play') return;
   state = 'paused';
+  stopAudio();                                     // בזמן עצירה המיקרופון כבוי
   $('pause').classList.add('show');
 }
-function resumeGame() {
+async function resumeGame() {
   if (state !== 'paused') return;
+  if (!(await ensureAudio())) return;              // מדליקים מחדש את המיקרופון (בתוך הלחיצה)
   $('pause').classList.remove('show');
   seenWords = []; lastT = 0;
-  if (audio) audio.ctx.resume();
   state = 'play';
 }
 $('pauseBtn').onclick = pauseGame;
@@ -1588,7 +1811,7 @@ $('resumeBtn').onclick = resumeGame;
 $('pauseMenuBtn').onclick = () => { bankCoins(); toMenu(); };
 
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) pauseGame();                 // יצאו מהאפליקציה – עוצרים אוטומטית
+  if (document.hidden) { pauseGame(); if (state !== 'play' && state !== 'intro') stopAudio(); }   // יצאו מהאפליקציה – עוצרים
   else if (audio) audio.ctx.resume();
 });
 
