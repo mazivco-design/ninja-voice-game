@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>בדיקת מהירות זיהוי</title>
+<script src="https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js"></script>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--deep:#0b1222;--text:#f1f5f9;--muted:#94a3b8;--accent:#22c55e;--warn:#f59e0b;--bad:#ef4444;--blue:#3b82f6;--line:#334155}
+*{box-sizing:border-box}
+body{margin:0 auto;font-family:-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);padding:16px;max-width:760px}
+h1{font-size:22px;margin:0 0 4px}
+p.sub{color:var(--muted);margin:0 0 16px;font-size:14px;line-height:1.5}
+.card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px}
+.card h2{font-size:17px;margin:0 0 8px}
+.card p{font-size:14px;color:var(--muted);margin:0 0 8px;line-height:1.5}
+button{font-size:17px;padding:12px 18px;border-radius:10px;border:0;background:var(--blue);color:#fff;font-weight:600;margin:4px 0 4px 8px;-webkit-tap-highlight-color:transparent}
+button:disabled{opacity:.4}
+button.stop{background:var(--bad)}
+.status{font-size:14px;color:var(--muted);margin-top:6px;min-height:20px}
+#prompt{height:170px;display:flex;align-items:center;justify-content:center;font-size:60px;font-weight:800;border-radius:14px;background:var(--deep);transition:background .1s}
+#prompt.go{background:var(--warn);color:#000}
+#prompt.hit{background:var(--accent);color:#000}
+#prompt.miss{background:var(--bad)}
+.meter{height:10px;background:var(--deep);border-radius:5px;overflow:hidden;margin-top:10px}
+.meter div{height:100%;width:0;background:var(--accent)}
+#heard{font-family:ui-monospace,Menlo,monospace;font-size:15px;margin-top:10px;min-height:22px;direction:ltr;text-align:left;color:var(--muted)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.stat{flex:1;min-width:140px;background:var(--deep);border-radius:10px;padding:10px;text-align:center}
+.stat .lbl{font-size:13px;color:var(--muted)}
+.stat .big{font-size:24px;font-weight:800;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:15px;margin-top:10px}
+th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:500}
+details{margin-top:8px;font-size:13px;color:var(--muted)}
+input{width:100%;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--deep);color:var(--text);direction:ltr}
+</style>
+</head>
+<body>
+
+<h1>בדיקת מהירות זיהוי "JUMP"</h1>
+<p class="sub">בכל בדיקה יופיעו 8 פעמים המילה JUMP במועדים אקראיים. ברגע שהיא מופיעה, אומרים "jump" בקול. בסוף משווים בין שני המנועים.</p>
+
+<div class="card">
+  <h2>1. Vosk (רץ על ה-iPad)</h2>
+  <p>בפעם הראשונה צריך לטעון מודל של כ-40MB (עדיף ב-WiFi). אחרי זה הוא נשמר בדפדפן.</p>
+  <button id="voskLoad">טען מודל</button>
+  <button id="voskStart" disabled>התחל בדיקה</button>
+  <div class="status" id="voskStatus"></div>
+  <details><summary>כתובת המודל</summary>
+    <input id="modelUrl" value="https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz">
+  </details>
+</div>
+
+<div class="card">
+  <h2>2. Web Speech (של אפל)</h2>
+  <p>צריך שההכתבה תהיה מופעלת: הגדרות ← כללי ← מקלדת ← הפעל הכתבה.</p>
+  <button id="wsStart">התחל בדיקה</button>
+  <div class="status" id="wsStatus"></div>
+</div>
+
+<div class="card">
+  <div id="prompt">מוכן</div>
+  <div class="meter"><div id="meterBar"></div></div>
+  <div id="heard"></div>
+  <button id="stopBtn" class="stop" disabled>עצור</button>
+</div>
+
+<div class="card">
+  <h2>תוצאות</h2>
+  <p><b>מתחילת הדיבור</b> – העיכוב של המנוע עצמו. זה המספר החשוב: מתחת ל-400ms מצוין, מעל 800ms מורגש במשחק.<br>
+  <b>מהופעת המילה</b> – כולל גם את זמן התגובה של מי שמדבר.</p>
+  <div class="row" id="summary"></div>
+  <table>
+    <thead><tr><th>מנוע</th><th>סבב</th><th>זוהה?</th><th>מתחילת הדיבור</th><th>מהופעת המילה</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+
+<script>
+const ROUNDS = 8, WINDOW = 3000;
+const $ = id => document.getElementById(id);
+const NAMES = { vosk: 'Vosk', webspeech: 'Web Speech' };
+
+let engine = null, running = false, round = 0;
+let promptTime = null, onsetTime = null, roundTimer = null;
+let lastCount = 0, noise = 0.01;
+const results = { vosk: [], webspeech: [] };
+
+/* ---------- זיהוי המילה ---------- */
+function countJump(text) {
+  return ((text || '').toLowerCase().match(/\bjump/g) || []).length;
+}
+function onHeard(text, count) {
+  $('heard').textContent = text ? 'שמעתי: ' + text : '';
+  if (count > lastCount) { lastCount = count; detected(); }
+}
+
+/* ---------- מהלך הבדיקה ---------- */
+function setPrompt(text, cls) { const p = $('prompt'); p.textContent = text; p.className = cls || ''; }
+
+function setButtons(busy) {
+  $('voskStart').disabled = busy || !model;
+  $('voskLoad').disabled = busy || !!model;
+  $('wsStart').disabled = busy;
+  $('stopBtn').disabled = !busy;
+}
+
+function startTest(name) {
+  engine = name; running = true; round = 0; results[name] = [];
+  setButtons(true); render();
+  nextRound();
+}
+
+function nextRound() {
+  if (!running) return;
+  if (round >= ROUNDS) { finishTest(); return; }
+  setPrompt('…');
+  promptTime = null;
+  roundTimer = setTimeout(showPrompt, 1800 + Math.random() * 2200);
+}
+
+function showPrompt() {
+  if (!running) return;
+  round++;
+  promptTime = performance.now(); onsetTime = null;
+  setPrompt('JUMP!', 'go');
+  roundTimer = setTimeout(() => {
+    if (!promptTime) return;
+    record(false, null, null);
+    setPrompt('פספוס', 'miss');
+    promptTime = null;
+    roundTimer = setTimeout(nextRound, 900);
+  }, WINDOW);
+}
+
+function detected() {
+  if (!running || !promptTime) return;
+  clearTimeout(roundTimer);
+  const t = performance.now();
+  const total = t - promptTime;
+  const speech = onsetTime !== null ? t - onsetTime : null;
+  record(true, total, speech);
+  setPrompt(speech !== null ? Math.round(speech) + 'ms' : '✓', 'hit');
+  promptTime = null;
+  roundTimer = setTimeout(nextRound, 900);
+}
+
+function record(hit, total, speech) {
+  results[engine].push({ round, hit, total, speech });
+  render();
+}
+
+function finishTest() {
+  running = false; stopEngine(); setButtons(false);
+  setPrompt('סיום ✓', 'hit');
+}
+
+$('stopBtn').onclick = () => {
+  running = false; clearTimeout(roundTimer); promptTime = null;
+  stopEngine(); setButtons(false); setPrompt('נעצר');
+};
+
+/* ---------- מד עוצמה + זיהוי תחילת דיבור (Vosk) ---------- */
+let analyser = null;
+const buf = new Float32Array(1024);
+function meterLoop() {
+  if (analyser) {
+    analyser.getFloatTimeDomainData(buf);
+    let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i];
+    const rms = Math.sqrt(s / buf.length);
+    $('meterBar').style.width = Math.min(100, rms * 400) + '%';
+    if (!promptTime) noise = noise * 0.97 + rms * 0.03;
+    const threshold = Math.max(0.02, noise * 4);
+    if (promptTime && onsetTime === null && rms > threshold) onsetTime = performance.now();
+  } else {
+    $('meterBar').style.width = '0';
+  }
+  requestAnimationFrame(meterLoop);
+}
+requestAnimationFrame(meterLoop);
+
+/* ---------- Vosk ---------- */
+let model = null, vosk = null;
+
+$('voskLoad').onclick = async () => {
+  if (typeof Vosk === 'undefined') { $('voskStatus').textContent = 'הספרייה לא נטענה – בדוק חיבור לאינטרנט'; return; }
+  $('voskLoad').disabled = true;
+  $('voskStatus').textContent = 'טוען מודל… בפעם הראשונה זה יכול לקחת דקה';
+  const t0 = performance.now();
+  try {
+    model = await Vosk.createModel($('modelUrl').value.trim());
+    $('voskStatus').textContent = 'המודל מוכן ✓ (נטען ב-' + ((performance.now() - t0) / 1000).toFixed(1) + ' שניות)';
+    setButtons(false);
+  } catch (e) {
+    $('voskStatus').textContent = 'שגיאה בטעינת המודל: ' + (e.message || e);
+    $('voskLoad').disabled = false;
+  }
+};
+
+$('voskStart').onclick = async () => {
+  // יוצרים את ה-AudioContext מיד בתוך הלחיצה – דרישה של iOS
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  ctx.resume();
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }
+    });
+    // רשימת מילים סגורה: רק jump, וכל השאר נחשב "לא מוכר"
+    const rec = new model.KaldiRecognizer(ctx.sampleRate, JSON.stringify(['jump', '[unk]']));
+    rec.on('partialresult', m => { const p = m.result.partial; onHeard(p, countJump(p)); });
+    rec.on('result', m => { const t = m.result.text; onHeard(t, countJump(t)); lastCount = 0; });
+
+    const src = ctx.createMediaStreamSource(stream);
+    const node = ctx.createScriptProcessor(2048, 1, 1);
+    node.onaudioprocess = e => { try { rec.acceptWaveform(e.inputBuffer); } catch (err) {} };
+    analyser = ctx.createAnalyser(); analyser.fftSize = 1024;
+    src.connect(analyser); src.connect(node); node.connect(ctx.destination);
+
+    vosk = { ctx, stream, node, rec };
+    lastCount = 0;
+    $('voskStatus').textContent = 'מקשיב ✓';
+    startTest('vosk');
+  } catch (e) {
+    ctx.close();
+    $('voskStatus').textContent = 'שגיאה: ' + (e.message || e);
+  }
+};
+
+/* ---------- Web Speech ---------- */
+let wsRec = null;
+
+$('wsStart').onclick = () => {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { $('wsStatus').textContent = 'הדפדפן לא תומך ב-Web Speech'; return; }
+  wsRec = new SR();
+  wsRec.lang = 'en-US';
+  wsRec.continuous = false;      // יציב יותר ב-iOS, מפעילים מחדש ב-onend
+  wsRec.interimResults = true;   // מקבלים תוצאות חלקיות = תגובה מהירה יותר
+  wsRec.maxAlternatives = 3;
+
+  wsRec.onstart = () => { $('wsStatus').textContent = 'מקשיב ✓'; };
+  const markOnset = () => { if (promptTime && onsetTime === null) onsetTime = performance.now(); };
+  wsRec.onsoundstart = markOnset;
+  wsRec.onspeechstart = markOnset;
+
+  wsRec.onresult = e => {
+    let text = '', count = 0;
+    for (let i = 0; i < e.results.length; i++) {
+      const r = e.results[i];
+      text += r[0].transcript + ' ';
+      let best = 0;
+      for (let j = 0; j < r.length; j++) best = Math.max(best, countJump(r[j].transcript));
+      count += best;
+    }
+    onHeard(text.trim(), count);
+  };
+
+  wsRec.onerror = e => {
+    if (e.error === 'no-speech' || e.error === 'aborted') return;
+    let msg = 'שגיאה: ' + e.error;
+    if (e.error === 'not-allowed') msg += ' – בדוק הרשאת מיקרופון';
+    if (e.error === 'service-not-allowed') msg += ' – כנראה ההכתבה כבויה בהגדרות';
+    $('wsStatus').textContent = msg;
+  };
+
+  wsRec.onend = () => {
+    lastCount = 0;
+    if (running && engine === 'webspeech') {
+      try { wsRec.start(); }
+      catch (err) { $('wsStatus').textContent = 'ההקשבה נעצרה: ' + err.message; }
+    }
+  };
+
+  // start() נקרא ישירות בתוך הלחיצה, בלי await לפניו
+  try { wsRec.start(); }
+  catch (err) { $('wsStatus').textContent = 'לא הצלחתי להתחיל: ' + err.message; return; }
+  lastCount = 0;
+  startTest('webspeech');
+};
+
+/* ---------- עצירה ---------- */
+function stopEngine() {
+  if (vosk) {
+    try { vosk.stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+    try { vosk.node.disconnect(); } catch (e) {}
+    try { vosk.ctx.close(); } catch (e) {}
+    try { vosk.rec.remove(); } catch (e) {}
+    vosk = null; analyser = null;
+    $('voskStatus').textContent = model ? 'המודל מוכן ✓' : '';
+  }
+  if (wsRec) {
+    try { wsRec.abort(); } catch (e) {}
+    wsRec = null;
+    $('wsStatus').textContent = '';
+  }
+}
+
+/* ---------- תצוגת תוצאות ---------- */
+function median(a) {
+  if (!a.length) return null;
+  const s = [...a].sort((x, y) => x - y), m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+const fmt = v => v == null ? '—' : Math.round(v) + 'ms';
+
+function render() {
+  let sum = '', rows = '';
+  for (const name of ['vosk', 'webspeech']) {
+    const r = results[name];
+    if (!r.length) continue;
+    const hits = r.filter(x => x.hit);
+    sum += `<div class="stat"><div class="lbl">${NAMES[name]} – זוהו</div><div class="big">${hits.length}/${r.length}</div></div>
+            <div class="stat"><div class="lbl">${NAMES[name]} – מתחילת הדיבור</div><div class="big">${fmt(median(hits.map(x => x.speech).filter(v => v != null)))}</div></div>
+            <div class="stat"><div class="lbl">${NAMES[name]} – מהופעת המילה</div><div class="big">${fmt(median(hits.map(x => x.total)))}</div></div>`;
+    for (const x of r) {
+      rows += `<tr><td>${NAMES[name]}</td><td>${x.round}</td><td>${x.hit ? '✓' : '✗'}</td><td>${fmt(x.speech)}</td><td>${fmt(x.total)}</td></tr>`;
+    }
+  }
+  $('summary').innerHTML = sum;
+  $('rows').innerHTML = rows;
+}
+</script>
+</body>
+</html>
