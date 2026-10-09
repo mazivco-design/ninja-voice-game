@@ -290,6 +290,7 @@ let distSinceSpawn = 0, nextGap = 0, nextType = null, flag = null;
 let py = 0, vy = 0, duckT = 0, invulnT = 0, kickT = 0, flyT = 0, catchT = 0, throwT = 0, throwCd = 0;
 let flash = null, heard = null, banner = null;
 let bgX = 0, lastT = 0;
+let world = 0, shakeT = 0;   // world: 0 יער במבוק, 1 כפר בלילה, 2 הרים מושלגים
 
 /* ============================================================
    דיבאג
@@ -563,6 +564,7 @@ function startGame(m, idx) {
   mode = m; stageIdx = idx || 0; cfg = LEVELS[diffKey];
   playWords = mode === 'stage' ? STAGES[stageIdx].words : freeWords();
   banked = false;
+  world = m === 'stage' ? Math.floor((idx || 0) / 3) % WORLDS.length : 0;
   speed = cfg.speed; score = 0; lives = cfg.lives; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0;
   obstacles = []; shurikens = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
@@ -621,6 +623,7 @@ function endFree(byButton) {
 }
 
 function stageComplete() {
+  confetti();
   const misses = hits + (coins - caught);   // מטבע שלא נתפס מוריד כוכבים (אבל לא לבבות)
   const got = misses === 0 ? 3 : misses <= 2 ? 2 : 1;
   const stars = getStars();
@@ -655,6 +658,7 @@ function riverWidth() {
 }
 
 function spawn() {
+  if (mode === 'free') world = Math.floor(spawned / 12) % WORLDS.length;   // ב-Free Play העולם מתחלף כל 12 מכשולים
   const type = nextType;
   const o = { type, x: W + 2, passed: false, hit: false };
   if (type === 'river') o.w = riverWidth();
@@ -704,6 +708,7 @@ function collides(o, pb) {
 
 function onHit(o) {
   o.hit = true;
+  shakeT = 0.3;
   if (state === 'demo') {   // במילון – רק מראים את המילה הנכונה, בלי עונש
     flash = { text: HIT_WORD[o.type], t: 1.2 }; invulnT = INVULN_TIME; return;
   }
@@ -747,6 +752,7 @@ function update(dt) {
   if (cfg.accel) speed = Math.min(cfg.maxSpeed, speed + cfg.accel * dt);
 
   // הנינג'ה
+  const wasAir = py > 0;
   if (flyT > 0) {
     flyT -= dt;
     vy = -FLY.sink;                 // גולש – יורד לאט
@@ -757,6 +763,7 @@ function update(dt) {
     py += vy * dt;
     if (py <= 0) { py = 0; vy = 0; }
   }
+  if (wasAir && py === 0) burst(PLAYER.x + 4, GROUND - 0.5, WORLDS[world].dust, 7, 14);   // אבק בנחיתה
   if (duckT > 0) duckT -= dt;
   if (invulnT > 0) invulnT -= dt;
   if (kickT > 0) kickT -= dt;
@@ -820,9 +827,6 @@ function update(dt) {
     return r > -10 && !(o.caught && o.ct > 0.35);
   });
 
-  // חלקיקים
-  for (const p of particles) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 60 * dt; p.life -= dt; }
-  particles = particles.filter(p => p.life > 0);
 
   if (flag) {
     flag.x -= dx;
@@ -885,54 +889,276 @@ function star4(x, y, r, rot, color) {
   ctx.closePath(); ctx.fill(); ctx.restore();
 }
 
+/* ---------- עולמות: יער במבוק, כפר בלילה, הרים מושלגים ---------- */
+const WORLDS = [
+  { sky: ['#a5f3fc', '#ecfeff'], ground: '#92400e', top: '#4ade80', mark: '#78350f', dust: '#d6d3d1' },
+  { sky: ['#1e1b4b', '#4338ca'], ground: '#44403c', top: '#78716c', mark: '#292524', dust: '#a8a29e' },
+  { sky: ['#bae6fd', '#f0f9ff'], ground: '#cbd5e1', top: '#f8fafc', mark: '#94a3b8', dust: '#ffffff' }
+];
+function hash(n) { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+function circle(x, y, r) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
+
+// מצייר אלמנט שחוזר על עצמו ברקע, זז לאט יותר מהקרקע (parallax)
+function repeat(left, right, par, spacing, fn) {
+  const off = bgX * par;
+  for (let i = Math.floor((left + off) / spacing) - 1; i * spacing - off < right + spacing; i++) fn(i * spacing - off, i);
+}
+
+function hills(left, right, par, amp, color, seed) {
+  ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(left, GROUND);
+  for (let x = left; x <= right + 4; x += 4) {
+    const u = (x + bgX * par) * 0.045 + seed;
+    ctx.lineTo(x, GROUND - amp * (0.55 + 0.25 * Math.sin(u) + 0.2 * Math.sin(u * 2.3 + 1)));
+  }
+  ctx.lineTo(right + 4, GROUND); ctx.closePath(); ctx.fill();
+}
+
+function bamboo(x, h, seed) {
+  const top = GROUND - h, w = 2.2;
+  ctx.fillStyle = seed > 0.5 ? '#65a30d' : '#4d7c0f'; ctx.fillRect(x, top, w, h);
+  ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(x + 0.3, top, 0.5, h);
+  ctx.fillStyle = '#365314';
+  for (let y = GROUND - 6; y > top; y -= 7) ctx.fillRect(x - 0.2, y, w + 0.4, 0.6);
+  ctx.fillStyle = '#4d7c0f';
+  for (let k = 0; k < 3; k++) {
+    const ly = top + 4 + k * 6, dir = (k + Math.floor(seed * 10)) % 2 ? 1 : -1;
+    ctx.beginPath(); ctx.ellipse(x + w / 2 + dir * 3, ly, 3.2, 0.9, dir * 0.4, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function house(x, i) {
+  const w = 16 + hash(i) * 10, h = 10 + hash(i + 1) * 12, base = GROUND;
+  ctx.fillStyle = '#1e1b4b'; ctx.fillRect(x, base - h, w, h);
+  ctx.fillStyle = '#0f0d2e';                                   // גג עם קצוות מעוקלים
+  ctx.beginPath(); ctx.moveTo(x - 3, base - h); ctx.quadraticCurveTo(x + w / 2, base - h - 9, x + w + 3, base - h);
+  ctx.lineTo(x + w + 4, base - h - 1.2); ctx.lineTo(x - 4, base - h - 1.2); ctx.closePath(); ctx.fill();
+  for (let k = 0; k < 2; k++) {                                // חלונות מוארים
+    if (hash(i * 3 + k) < 0.35) continue;
+    const wx = x + 3 + k * (w / 2), wy = base - h + 3;
+    ctx.fillStyle = 'rgba(253,230,138,.25)'; circle(wx + 1.5, wy + 2, 3.5);
+    ctx.fillStyle = '#fde68a'; ctx.fillRect(wx, wy, 3, 4);
+  }
+  if (hash(i + 7) > 0.45) {                                    // פנס אדום
+    const lx = x + w + 1, ly = base - h + 4 + Math.sin(performance.now() / 600 + i) * 0.4;
+    ctx.strokeStyle = '#0f0d2e'; ctx.lineWidth = 0.3; ctx.beginPath(); ctx.moveTo(lx, base - h); ctx.lineTo(lx, ly - 1.6); ctx.stroke();
+    ctx.fillStyle = 'rgba(248,113,113,.35)'; circle(lx, ly, 3.4);
+    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.ellipse(lx, ly, 1.3, 1.7, 0, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function peak(x, i, par) {
+  const w = 40 + hash(i) * 30, h = 26 + hash(i + 2) * 24;
+  ctx.fillStyle = '#94a3b8';
+  ctx.beginPath(); ctx.moveTo(x, GROUND); ctx.lineTo(x + w / 2, GROUND - h); ctx.lineTo(x + w, GROUND); ctx.fill();
+  ctx.fillStyle = '#f8fafc';                                   // כיפת שלג
+  ctx.beginPath(); ctx.moveTo(x + w / 2, GROUND - h);
+  ctx.lineTo(x + w / 2 + w * 0.16, GROUND - h * 0.68); ctx.lineTo(x + w / 2 + w * 0.05, GROUND - h * 0.74);
+  ctx.lineTo(x + w / 2 - w * 0.04, GROUND - h * 0.66); ctx.lineTo(x + w / 2 - w * 0.16, GROUND - h * 0.7); ctx.closePath(); ctx.fill();
+}
+
+function pine(x, i) {
+  const h = 16 + hash(i) * 14, w = h * 0.5;
+  ctx.fillStyle = '#7c2d12'; ctx.fillRect(x - 0.7, GROUND - 3, 1.4, 3);
+  for (let k = 0; k < 3; k++) {
+    const ty = GROUND - 3 - k * h * 0.28, tw = w * (1 - k * 0.25);
+    ctx.fillStyle = '#166534';
+    ctx.beginPath(); ctx.moveTo(x - tw / 2, ty); ctx.lineTo(x, ty - h * 0.42); ctx.lineTo(x + tw / 2, ty); ctx.fill();
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath(); ctx.moveTo(x - tw * 0.18, ty - h * 0.3); ctx.lineTo(x, ty - h * 0.42); ctx.lineTo(x + tw * 0.18, ty - h * 0.3); ctx.fill();
+  }
+}
+
+function drawWorld(left, right, top, bottom) {
+  const wd = WORLDS[world], now = performance.now() / 1000;
+  if (world === 0) {
+    ctx.fillStyle = 'rgba(254,240,138,.35)'; circle(W * 0.82, 16, 11);
+    ctx.fillStyle = 'rgba(254,240,138,.9)'; circle(W * 0.82, 16, 6);
+    hills(left, right, 0.05, 30, '#bbf7d0', 0);
+    hills(left, right, 0.12, 20, '#86efac', 2);
+    repeat(left, right, 0.35, 15, (x, i) => { if (hash(i) > 0.25) bamboo(x + hash(i + 5) * 5, 34 + hash(i + 9) * 40, hash(i + 3)); });
+  } else if (world === 1) {
+    for (let i = 0; i < 45; i++) {                              // כוכבים מנצנצים
+      const sx = left + hash(i) * (right - left), sy = top + hash(i + 50) * (GROUND - 35 - top);
+      ctx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(now * (0.8 + hash(i + 9)) + i));
+      ctx.fillStyle = '#fff'; ctx.fillRect(sx, sy, 0.6, 0.6);
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = 'rgba(254,249,195,.15)'; circle(W * 0.8, 18, 13);
+    ctx.fillStyle = '#fef9c3'; circle(W * 0.8, 18, 7);
+    ctx.fillStyle = '#4338ca'; circle(W * 0.8 + 2.5, 16.5, 6);   // ירח חרמש
+    hills(left, right, 0.05, 28, '#312e81', 1);
+    repeat(left, right, 0.3, 30, (x, i) => { if (hash(i + 4) > 0.2) house(x, i); });
+  } else {
+    repeat(left, right, 0.05, 45, (x, i) => peak(x, i));
+    hills(left, right, 0.12, 12, '#e2e8f0', 3);
+    repeat(left, right, 0.32, 14, (x, i) => { if (hash(i + 1) > 0.3) pine(x + hash(i) * 6, i); });
+  }
+
+  // קרקע
+  ctx.fillStyle = wd.ground; ctx.fillRect(left, GROUND, right - left, bottom - GROUND);
+  ctx.fillStyle = wd.top; ctx.fillRect(left, GROUND, right - left, 2);
+  ctx.fillStyle = wd.mark;
+  if (world === 1) repeat(left, right, 1, 10, x => { ctx.fillRect(x, GROUND + 2, 0.5, 6); ctx.fillRect(x + 5, GROUND + 8, 0.5, 6); });
+  else repeat(left, right, 1, 12, (x, i) => { ctx.fillRect(x, GROUND + 5 + hash(i) * 4, 3 + hash(i + 1) * 2, 1); });
+}
+
+function drawSnow(left, right, top, bottom) {
+  if (world !== 2) return;
+  const now = performance.now() / 1000, hgt = bottom - top;
+  ctx.fillStyle = 'rgba(255,255,255,.9)';
+  for (let i = 0; i < 50; i++) {
+    const sp = 6 + hash(i + 3) * 8;
+    const y = top + (((hash(i + 2) * hgt + now * sp) % hgt) + hgt) % hgt;
+    const x = left + ((((hash(i) * 200 - now * (3 + hash(i + 1) * 4) - bgX * 0.4) % 200) + 200) % 200) * ((right - left) / 200);
+    circle(x + Math.sin(now + i) * 1.2, y, 0.35 + hash(i + 7) * 0.4);
+  }
+}
+
+/* ---------- דמות נינג'ה עם ידיים ורגליים ---------- */
+// זוויות נמדדות מ"ישר למטה"; זווית חיובית = קדימה (לכיוון שאליו הדמות פונה)
+const THIGH = 2.5, SHIN = 2.4, UPPER = 2.4, FORE = 2.3;
+function lerp(a, b, k) { return a + (b - a) * k; }
+function endOf(x, y, a, len) { return [x + Math.sin(a) * len, y + Math.cos(a) * len]; }
+
+function poseIdle(now) {
+  const br = Math.sin(now * 2.5);
+  return { hipY: -4.6, torso: 3.2, lean: 0.05, bob: br * 0.15, legs: [[-0.15, -0.1], [0.18, 0.12]], arms: [[-0.2, 0.25], [0.25, 0.7]] };
+}
+function poseRun(p) {
+  const leg = q => { const s = Math.sin(q), t = 0.85 * s; return [t, t - 1.0 * Math.max(0, Math.sin(q - 1.3))]; };
+  const arm = q => { const u = -0.9 * Math.sin(q); return [u, u + 1.2]; };
+  return { hipY: -4.6, torso: 3.2, lean: 0.18, bob: -Math.abs(Math.cos(p)) * 0.6, legs: [leg(p + Math.PI), leg(p)], arms: [arm(p), arm(p + Math.PI)] };
+}
+function poseAir(rising) {
+  return { hipY: -4.6, torso: 3.2, lean: 0.12, bob: 0, legs: [[0.5, -0.8], [1.35, 0.15]],
+           arms: rising ? [[-2.0, -2.4], [1.9, 2.4]] : [[-1.5, -1.9], [1.4, 1.9]] };   // ידיים פרושות קדימה ואחורה
+}
+function poseDuck() {
+  return { hipY: -2.3, torso: 2.3, lean: 1.0, bob: 0, legs: [[-0.35, -1.7], [1.35, 1.55]], arms: [[-1.6, -1.3], [0.7, 1.3]] };
+}
+function poseFly(now) {
+  const sw = Math.sin(now * 3) * 0.15;
+  return { hipY: -4.6, torso: 3.2, lean: 0.05, bob: 0, legs: [[-0.3 + sw, -0.15 + sw], [0.05 + sw, 0.2 + sw]], arms: [[2.3, 2.6], [2.55, 2.8]] };
+}
+function applyKick(P, k) {
+  const e = Math.sin(Math.min(1, k * 2.2) * Math.PI / 2);   // רגל עולה מהר ונשארת
+  const t = lerp(0.2, 2.1, e);
+  P.legs[1] = [t, t]; P.legs[0] = [-0.2, -0.05];
+  P.lean = -0.3 * e; P.arms = [[-1.1, -0.7], [lerp(0.3, 1.1, e), 1.5]]; P.kickFoot = true;
+}
+function applyThrow(P, k) {
+  const u = Math.min(1.6, -2.4 + k * 5);                    // יד מאחור-למעלה → קדימה
+  P.arms = [[-0.6, -0.2], [u, u - 0.15]]; P.lean = 0.25;
+}
+function applyCatch(P) { P.arms = [[0.4, 0.9], [2.9, 3.05]]; }
+
+function playerPose() {
+  const now = performance.now() / 1000;
+  let P;
+  if (duckT > 0) P = poseDuck();
+  else if (flyT > 0) P = poseFly(now);
+  else if (py > 0) P = poseAir(vy > 0);
+  else if (state === 'play' && speed > 0) P = poseRun(bgX * 0.42);
+  else P = poseIdle(now);
+  if (kickT > 0) applyKick(P, 1 - kickT / KICK.time);
+  if (throwT > 0) applyThrow(P, 1 - throwT / 0.25);
+  if (catchT > 0) applyCatch(P);
+  return P;
+}
+
+// F = { fx, fy, facing, scale, body, back, accent, outline, pose }
+function drawFigure(F) {
+  const P = F.pose, now = performance.now() / 1000;
+  ctx.save();
+  ctx.translate(F.fx, F.fy + (P.bob || 0) * F.scale);
+  ctx.scale(F.facing * F.scale, F.scale);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const hip = [0, P.hipY];
+  const sh = [Math.sin(P.lean) * P.torso, P.hipY - Math.cos(P.lean) * P.torso];
+  const head = [sh[0] + Math.sin(P.lean) * 3.3, sh[1] - Math.cos(P.lean) * 3.3];
+
+  const limb = (o, a, l1, l2, lw, col) => {
+    const k = endOf(o[0], o[1], a[0], l1), e = endOf(k[0], k[1], a[1], l2);
+    ctx.strokeStyle = col; ctx.lineWidth = lw;
+    ctx.beginPath(); ctx.moveTo(o[0], o[1]); ctx.lineTo(k[0], k[1]); ctx.lineTo(e[0], e[1]); ctx.stroke();
+    return e;
+  };
+  const paint = (outline) => {
+    const ex = outline ? 0.9 : 0;
+    const col = c => outline ? F.outline : c;
+    limb(hip, P.legs[0], THIGH, SHIN, 2.1 + ex, col(F.back));
+    limb(sh, P.arms[0], UPPER, FORE, 1.8 + ex, col(F.back));
+    ctx.strokeStyle = col(F.body); ctx.lineWidth = 4.4 + ex;                 // גוף
+    ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.lineTo(sh[0], sh[1]); ctx.stroke();
+    ctx.fillStyle = col(F.body); circle(head[0], head[1], 3.2 + ex / 2);   // ראש
+    const foot = limb(hip, P.legs[1], THIGH, SHIN, 2.1 + ex, col(F.body));
+    const hand = limb(sh, P.arms[1], UPPER, FORE, 1.8 + ex, col(F.body));
+    if (!outline && P.kickFoot) { ctx.fillStyle = F.accent; circle(foot[0], foot[1], 1.3); }
+    if (!outline) { ctx.fillStyle = F.body; circle(hand[0], hand[1], 0.9); }
+  };
+  paint(true); paint(false);
+
+  // חגורה
+  ctx.save(); ctx.translate(hip[0], hip[1]); ctx.rotate(P.lean);
+  ctx.fillStyle = F.accent; ctx.fillRect(-2.3, -1.3, 4.6, 1.1);
+  ctx.restore();
+  // פנים, עיניים, סרט ראש עם זנבות מתנופפים
+  ctx.save(); ctx.translate(head[0], head[1]); ctx.rotate(P.lean);
+  ctx.fillStyle = '#fcd9b6'; roundRect(-1.9, -0.9, 4.9, 1.9, 0.6); ctx.fill();
+  ctx.fillStyle = '#000'; ctx.fillRect(0.4, -0.45, 0.8, 0.9); ctx.fillRect(1.9, -0.45, 0.8, 0.9);
+  ctx.fillStyle = F.accent; ctx.fillRect(-3.1, -2.4, 6.0, 0.95);
+  const wv = Math.sin(now * 11 + F.fx) * 0.9;
+  ctx.strokeStyle = F.accent; ctx.lineWidth = 0.8;
+  ctx.beginPath(); ctx.moveTo(-3, -1.9); ctx.quadraticCurveTo(-5, -2.2 + wv, -7, -1.4 - wv); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-3, -1.9); ctx.quadraticCurveTo(-4.6, -1 + wv, -6.3, 0.2 + wv * 0.6); ctx.stroke();
+  ctx.restore();
+  ctx.restore();
+}
+
 function draw() {
+  const wd = WORLDS[world];
   // שמיים על כל המסך
   const g = ctx.createLinearGradient(0, 0, 0, ch);
-  g.addColorStop(0, '#7dd3fc'); g.addColorStop(1, '#e0f2fe');
+  g.addColorStop(0, wd.sky[0]); g.addColorStop(1, wd.sky[1]);
   ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
 
   ctx.save();
   ctx.translate(ox, oy); ctx.scale(scale, scale);
-  const left = -ox / scale, right = (cw - ox) / scale, top = -oy / scale, bottom = (ch - oy) / scale;
+  if (shakeT > 0) ctx.translate((Math.random() - 0.5) * 2.4 * shakeT * 3, (Math.random() - 0.5) * 2.4 * shakeT * 3);
+  const left = -ox / scale - 3, right = (cw - ox) / scale + 3, top = -oy / scale - 3, bottom = (ch - oy) / scale + 3;
 
-  // הרים ברקע (זזים לאט)
-  ctx.fillStyle = '#93c5fd';
-  const mOff = (bgX * 0.15) % 60;
-  for (let x = left - 60 - mOff; x < right + 60; x += 60) {
-    ctx.beginPath(); ctx.moveTo(x, GROUND); ctx.lineTo(x + 30, GROUND - 28); ctx.lineTo(x + 60, GROUND); ctx.fill();
-  }
-
-  // קרקע
-  ctx.fillStyle = '#a16207'; ctx.fillRect(left, GROUND, right - left, bottom - GROUND);
-  ctx.fillStyle = '#4ade80'; ctx.fillRect(left, GROUND, right - left, 2);
-  ctx.fillStyle = '#854d0e';
-  const gOff = bgX % 12;
-  for (let x = left - gOff; x < right; x += 12) ctx.fillRect(x, GROUND + 5, 4, 1);
+  drawWorld(left, right, top, bottom);
 
   // מכאן – רק בתוך שטח העולם
   ctx.save();
   ctx.beginPath(); ctx.rect(0, top, W, bottom - top); ctx.clip();
 
-  // נהרות קודם (הם חלק מהקרקע)
   for (const o of obstacles) if (o.type === 'river') drawRiver(o, bottom);
   for (const o of obstacles) if (o.type !== 'river') drawObstacle(o, top);
 
   // דגל סיום
   if (flag) {
     ctx.fillStyle = '#475569'; ctx.fillRect(flag.x, GROUND - 26, 1.2, 26);
+    const wv = Math.sin(performance.now() / 150) * 1;
     ctx.fillStyle = '#16a34a';
-    ctx.beginPath(); ctx.moveTo(flag.x + 1.2, GROUND - 26); ctx.lineTo(flag.x + 12, GROUND - 22); ctx.lineTo(flag.x + 1.2, GROUND - 18); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(flag.x + 1.2, GROUND - 26); ctx.quadraticCurveTo(flag.x + 7, GROUND - 25 + wv, flag.x + 12, GROUND - 22);
+    ctx.quadraticCurveTo(flag.x + 7, GROUND - 19 - wv, flag.x + 1.2, GROUND - 18); ctx.fill();
   }
 
   drawNinja();
   for (const s of shurikens) star4(s.x, s.y, 2, s.rot, '#475569');
-  for (const p of particles) { ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 2)); ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size); }
+  for (const p of particles) {
+    ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 2)); ctx.fillStyle = p.color;
+    if (p.rot !== undefined) { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2); ctx.restore(); }
+    else ctx.fillRect(p.x, p.y, p.size, p.size);
+  }
   ctx.globalAlpha = 1;
+  drawSnow(left, right, top, bottom);
 
   // מה הנינג'ה שמע
   if (heard && (state === 'play' || state === 'demo')) {
     const pb = playerBox();
-    label(heard.text, PLAYER.x + 4, pb.t - (flyT > 0 ? 14 : 6), 4, '#16a34a', '#fff');
+    label(heard.text, PLAYER.x + 4, pb.t - (flyT > 0 ? 16 : 7), 4, '#16a34a', '#fff');
   }
   ctx.restore();
 
@@ -944,152 +1170,133 @@ function draw() {
       if (banner.sub) bigText(banner.sub, 43, 5, '#1e293b');
     }
   }
-
   ctx.restore();
+
+  // הבזק אדום בפגיעה
+  if (shakeT > 0) { ctx.fillStyle = 'rgba(220,38,38,' + (shakeT * 0.6) + ')'; ctx.fillRect(0, 0, cw, ch); }
 }
 
 function drawObstacle(o, top) {
   const x = o.x;
-  if (o.type === 'box') {
+  if (o.type === 'box') {                       // ארגז עץ
     const y = GROUND - BOX.h;
-    ctx.fillStyle = '#b45309'; ctx.fillRect(x, y, BOX.w, BOX.h);
-    ctx.strokeStyle = '#78350f'; ctx.lineWidth = 0.6;
+    ctx.fillStyle = '#c2410c'; ctx.fillRect(x, y, BOX.w, BOX.h);
+    ctx.fillStyle = '#ea580c'; ctx.fillRect(x, y, BOX.w, 1.2);
+    ctx.strokeStyle = '#7c2d12'; ctx.lineWidth = 0.6;
     ctx.strokeRect(x + 0.3, y + 0.3, BOX.w - 0.6, BOX.h - 0.6);
-    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + BOX.w, GROUND); ctx.moveTo(x + BOX.w, y); ctx.lineTo(x, GROUND); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + 0.6, y + 0.6); ctx.lineTo(x + BOX.w - 0.6, GROUND - 0.6); ctx.moveTo(x + BOX.w - 0.6, y + 0.6); ctx.lineTo(x + 0.6, GROUND - 0.6); ctx.stroke();
     label('JUMP', x + BOX.w / 2, y - 5, 4, '#fde047', '#1e293b');
-  } else if (o.type === 'beam') {
+  } else if (o.type === 'beam') {               // מוט במבוק תלוי
     const by = GROUND - BEAM.clear - BEAM.thick;
     ctx.strokeStyle = '#78716c'; ctx.lineWidth = 0.7;
     ctx.beginPath();
     ctx.moveTo(x + 1.5, top); ctx.lineTo(x + 1.5, by);
     ctx.moveTo(x + BEAM.w - 1.5, top); ctx.lineTo(x + BEAM.w - 1.5, by);
     ctx.stroke();
-    ctx.fillStyle = '#92400e'; roundRect(x - 4, by, BEAM.w + 8, BEAM.thick, 1.2); ctx.fill();
+    const bg = ctx.createLinearGradient(0, by, 0, by + BEAM.thick);
+    bg.addColorStop(0, '#bef264'); bg.addColorStop(1, '#4d7c0f');
+    ctx.fillStyle = bg; roundRect(x - 4, by, BEAM.w + 8, BEAM.thick, 2); ctx.fill();
+    ctx.fillStyle = '#365314';
+    for (let k = 0; k <= 3; k++) ctx.fillRect(x - 3 + k * ((BEAM.w + 6) / 3), by, 0.6, BEAM.thick);
     label('DOWN', x + BEAM.w / 2, by + BEAM.thick / 2, 3.4, '#fde047', '#1e293b');
-  } else if (o.type === 'wall') {
+  } else if (o.type === 'wall') {               // חומת אבנים
     if (o.broken) return;
     const y = GROUND - WALL.h;
-    ctx.fillStyle = '#64748b'; ctx.fillRect(x, y, WALL.w, WALL.h);
-    ctx.fillStyle = '#94a3b8';
-    for (let r = 0; r < 10; r++) {           // לבנים
-      const yy = y + r * 3 + 0.4, off = r % 2 ? 0 : 1.25;
-      ctx.fillRect(x + 0.3, yy, 2.1 - (off ? 0 : 0), 2.2);
-      ctx.fillRect(x + 2.7, yy, 2.0, 2.2);
+    ctx.fillStyle = '#57534e'; ctx.fillRect(x - 0.3, y, WALL.w + 0.6, WALL.h);
+    for (let r = 0; r < 10; r++) {
+      const yy = y + r * 3 + 0.3, half = r % 2;
+      ctx.fillStyle = r % 3 === 0 ? '#a8a29e' : '#d6d3d1';
+      if (half) { ctx.fillRect(x + 0.2, yy, 1.9, 2.4); ctx.fillRect(x + 2.4, yy, 2.4, 2.4); }
+      else { ctx.fillRect(x + 0.2, yy, 2.4, 2.4); ctx.fillRect(x + 2.9, yy, 1.9, 2.4); }
     }
-    label('KICK', x + WALL.w / 2, y - 5, 4, '#fde047', '#1e293b');
+    ctx.fillStyle = '#44403c'; ctx.fillRect(x - 0.8, y - 1, WALL.w + 1.6, 1.4);
+    label('KICK', x + WALL.w / 2, y - 5.5, 4, '#fde047', '#1e293b');
   } else if (o.type === 'enemy') {
     drawEnemy(o);
   } else if (o.type === 'coin') {
     const now = performance.now() / 1000;
-    let cx = x + 3, cy = COIN.y + Math.sin(now * 4 + x) * 1.6;   // מקפץ למעלה ולמטה
-    if (o.caught) {                           // עף אל הנינג'ה
+    let cx = x + 3, cy = COIN.y + Math.sin(now * 4 + x) * 1.6;
+    if (o.caught) {
       const k = Math.min(1, o.ct / 0.35), pb = playerBox();
       cx = cx + (PLAYER.x + 4 - cx) * k; cy = cy + (pb.t - cy) * k;
       ctx.globalAlpha = 1 - k * 0.7;
     }
-    // הילה זוהרת
     const glow = ctx.createRadialGradient(cx, cy, 1, cx, cy, 7);
     glow.addColorStop(0, 'rgba(253,224,71,.65)'); glow.addColorStop(1, 'rgba(253,224,71,0)');
-    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.fill();
-    // מטבע מסתובב (רוחב משתנה)
+    ctx.fillStyle = glow; circle(cx, cy, 7);
     const sx = Math.max(0.15, Math.abs(Math.cos(now * 3 + x)));
     ctx.save(); ctx.translate(cx, cy); ctx.scale(sx, 1);
-    ctx.fillStyle = '#b45309'; ctx.beginPath(); ctx.arc(0, 0, 3.4, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(0, 0, 2.9, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#b45309'; circle(0, 0, 3.4);
+    ctx.fillStyle = '#facc15'; circle(0, 0, 2.9);
     ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 0.4; ctx.beginPath(); ctx.arc(0, 0, 2.1, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = '#fef9c3'; ctx.fillRect(-1.6, -1.8, 0.9, 1.6);      // ברק
+    ctx.fillStyle = '#fef9c3'; ctx.fillRect(-1.6, -1.8, 0.9, 1.6);
     ctx.restore();
-    // ניצוצות סביב
     for (let i = 0; i < 3; i++) {
       const a = now * 2 + i * 2.1, tw = (Math.sin(now * 6 + i * 3) + 1) / 2;
       if (tw > 0.4) star4(cx + Math.cos(a) * 5.5, cy + Math.sin(a) * 4.5, 0.9 * tw + 0.3, 0, '#fff7ae');
     }
     ctx.globalAlpha = 1;
-    if (!o.caught && !o.passed) label('CATCH', cx, cy - 8, 3.6, '#16a34a', '#fff');   // תווית ירוקה = פרס
+    if (!o.caught && !o.passed) label('CATCH', cx, cy - 8, 3.6, '#16a34a', '#fff');
   }
 }
 
 function drawRiver(o, bottom) {
-  const x = o.x, w = o.w;
-  ctx.fillStyle = '#0284c7'; ctx.fillRect(x, GROUND, w, bottom - GROUND);
-  ctx.fillStyle = '#38bdf8'; ctx.fillRect(x, GROUND + 1.5, w, 2.5);
-  ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 0.6;
-  const t = performance.now() / 300;
-  for (let i = 0; i < w; i += 9) {          // גלים
-    ctx.beginPath(); ctx.moveTo(x + i + 1, GROUND + 7 + Math.sin(t + i) * 0.8); ctx.lineTo(x + i + 5, GROUND + 7 + Math.sin(t + i + 1) * 0.8); ctx.stroke();
+  const x = o.x, w = o.w, t = performance.now() / 300;
+  const wg = ctx.createLinearGradient(0, GROUND, 0, bottom);
+  wg.addColorStop(0, '#38bdf8'); wg.addColorStop(1, '#075985');
+  ctx.fillStyle = wg; ctx.fillRect(x, GROUND + 1, w, bottom - GROUND);
+  ctx.fillStyle = WORLDS[world].mark; ctx.fillRect(x - 1, GROUND, 1.2, bottom - GROUND); ctx.fillRect(x + w - 0.2, GROUND, 1.2, bottom - GROUND);
+  ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 0.6;
+  for (let i = 2; i < w - 4; i += 7) {
+    const yy = GROUND + 4 + (i % 3) * 2;
+    ctx.beginPath(); ctx.moveTo(x + i, yy + Math.sin(t + i) * 0.7); ctx.quadraticCurveTo(x + i + 2, yy - 0.8, x + i + 4, yy + Math.sin(t + i + 1) * 0.7); ctx.stroke();
   }
   label('JUMP + FLY', x + w / 2, GROUND - 6, 4, '#fde047', '#1e293b');
 }
 
 function drawEnemy(o) {
-  const x = o.x, h = ENEMY.h, w = ENEMY.w;
+  const w = ENEMY.w, fx = o.x + w / 2;
   ctx.save();
-  if (o.defeated) {                          // נופל ונעלם
+  if (o.defeated) {                              // נופל ונעלם
     ctx.globalAlpha = Math.max(0, 1 - o.ft * 1.5);
-    ctx.translate(x + w / 2, GROUND); ctx.rotate(Math.min(1.5, o.ft * 4)); ctx.translate(-(x + w / 2), -GROUND);
+    ctx.translate(fx, GROUND); ctx.rotate(-Math.min(1.5, o.ft * 4)); ctx.translate(-fx, -GROUND);
   }
-  const t = GROUND - h, headR = 4.4, hx = x + w / 2 - 0.5, hy = t + headR;
-  const step = o.defeated ? 0 : Math.sin(performance.now() / 70) * 1.5;
-  ctx.fillStyle = '#7f1d1d';
-  ctx.fillRect(x + 1.5 + step, GROUND - 6, 2.2, 6); ctx.fillRect(x + w - 3.7 - step, GROUND - 6, 2.2, 6);   // רגליים
-  roundRect(x, t + headR * 1.4, w, h - headR * 1.4 - 4, 2); ctx.fill();                                     // גוף
-  ctx.beginPath(); ctx.arc(hx, hy, headR, 0, Math.PI * 2); ctx.fill();                                      // ראש
-  ctx.fillStyle = '#fcd9b6'; ctx.fillRect(hx - headR + 0.6, hy - 1, headR * 2 - 1.2, 2);
-  ctx.fillStyle = '#000'; ctx.fillRect(hx - 2.6, hy - 0.5, 1, 1); ctx.fillRect(hx - 0.6, hy - 0.5, 1, 1);  // מביט שמאלה
-  ctx.fillStyle = '#facc15'; ctx.fillRect(x, GROUND - 10, w, 1.2);                                          // חגורה
+  const now = performance.now() / 1000;
+  const pose = o.defeated ? poseIdle(now) : (speed > 0 ? poseRun(now * 10 + o.x) : poseIdle(now));
+  drawFigure({ fx, fy: GROUND, facing: -1, scale: ENEMY.h / 14, body: '#7f1d1d', back: '#5b1313', accent: '#facc15',
+               outline: 'rgba(255,255,255,.45)', pose });
   ctx.restore();
-  if (!o.defeated) label('THROW', x + w / 2, t - 5, 4, '#fde047', '#1e293b');
+  if (!o.defeated) label('THROW', fx, GROUND - ENEMY.h - 5, 4, '#fde047', '#1e293b');
 }
 
 function drawNinja() {
-  if (invulnT > 0 && Math.floor(invulnT * 10) % 2 === 0) return;  // הבהוב אחרי פגיעה
   const pb = playerBox();
-  const x = pb.l, w = pb.r - pb.l, t = pb.t, b = pb.b;
-  const headR = 3.3, hx = x + w / 2 + (duckT > 0 ? 1.5 : 0) - (kickT > 0 ? 1.2 : 0), hy = t + headR;   // בבעיטה – נוטה אחורה
+  const duck = duckT > 0, fx = pb.l + (duck ? 3 : 4), fy = pb.b;
+  // צל על הקרקע
+  ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';
+  ctx.beginPath(); ctx.ellipse(fx + 0.5, GROUND + 0.6, Math.max(1.5, 4.5 - py * 0.08), 0.9, 0, 0, Math.PI * 2); ctx.fill();
+  if (invulnT > 0 && Math.floor(invulnT * 10) % 2 === 0) return;   // הבהוב אחרי פגיעה
 
   // גלשן מעל הראש בזמן FLY
   if (flyT > 0) {
-    ctx.strokeStyle = '#334155'; ctx.lineWidth = 0.4;
-    ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx - 8, t - 8); ctx.moveTo(hx, hy); ctx.lineTo(hx + 8, t - 8); ctx.stroke();
+    const gy = fy - 15.5, gx = fx + 0.5;
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 0.35;
+    ctx.beginPath(); ctx.moveTo(gx - 0.5, gy + 3); ctx.lineTo(gx - 9, gy - 2.5); ctx.moveTo(gx + 0.5, gy + 3); ctx.lineTo(gx + 9, gy - 2.5); ctx.stroke();
     ctx.fillStyle = playerColor();
-    ctx.beginPath(); ctx.moveTo(hx - 11, t - 7); ctx.lineTo(hx, t - 13); ctx.lineTo(hx + 11, t - 7); ctx.lineTo(hx, t - 9); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(gx - 12, gy - 1.5); ctx.lineTo(gx, gy - 7.5); ctx.lineTo(gx + 12, gy - 1.5); ctx.lineTo(gx, gy - 3.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.beginPath(); ctx.moveTo(gx - 6, gy - 4.5); ctx.lineTo(gx, gy - 7.5); ctx.lineTo(gx, gy - 3.5); ctx.closePath(); ctx.fill();
   }
 
-  // סרט אדום מתנופף
-  ctx.strokeStyle = playerColor(); ctx.lineWidth = 1;
-  const wave = Math.sin(performance.now() / 90) * 1.2;
-  ctx.beginPath(); ctx.moveTo(hx - headR, hy - 1); ctx.lineTo(hx - headR - 4, hy - 2 + wave); ctx.stroke();
+  const P = playerPose();
+  drawFigure({ fx, fy, facing: 1, scale: 1, body: '#1e293b', back: '#0b1220', accent: playerColor(),
+               outline: 'rgba(255,255,255,.6)', pose: P });
 
-  // בעיטה – רגל עולה באלכסון קדימה, עם קו תנועה
+  // קו תנועה בבעיטה
   if (kickT > 0) {
-    const k = 1 - kickT / KICK.time;                 // 0→1 לאורך הבעיטה
-    const ang = -0.25 - Math.sin(Math.min(1, k * 2.2) * Math.PI / 2) * 0.75;   // רגל מתרוממת
-    ctx.save();
-    ctx.translate(x + w - 1.5, b - 4.5);              // מפרק הירך
-    ctx.rotate(ang);
-    ctx.fillStyle = '#1e293b'; roundRect(0, -1.3, 9, 2.6, 1.2); ctx.fill();
-    ctx.fillStyle = playerColor(); roundRect(7.4, -1.4, 2.2, 2.8, 0.8); ctx.fill();   // כף רגל
-    ctx.restore();
     ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 0.6;
-    ctx.beginPath(); ctx.arc(x + w - 1.5, b - 4.5, 11, -1.3, -0.15); ctx.stroke();
+    ctx.beginPath(); ctx.arc(fx, fy - 4.6, 6.5, -1.5, -0.1); ctx.stroke();
   }
-
-  // גוף
-  ctx.fillStyle = '#1e293b';
-  roundRect(x, t + headR * 1.3, w, b - t - headR * 1.3, 1.5); ctx.fill();
-  // חגורה
-  ctx.fillStyle = playerColor(); ctx.fillRect(x, b - (b - t) * 0.42, w, 1);
-  // יד – מורמת בזמן תפיסה, קדימה בזמן זריקה
-  if (catchT > 0) { ctx.fillStyle = '#1e293b'; roundRect(x + w - 2, t - 2, 2, 7, 1); ctx.fill(); }
-  if (throwT > 0) { ctx.fillStyle = '#1e293b'; roundRect(x + w - 1, t + 5, 5, 2, 1); ctx.fill(); }
-  // ראש
-  ctx.fillStyle = '#1e293b';
-  ctx.beginPath(); ctx.arc(hx, hy, headR, 0, Math.PI * 2); ctx.fill();
-  // פס פנים ועיניים
-  ctx.fillStyle = '#fcd9b6'; ctx.fillRect(hx - headR + 0.6, hy - 0.9, headR * 2 - 1.2, 1.8);
-  ctx.fillStyle = '#000';
-  ctx.fillRect(hx + 0.2, hy - 0.4, 0.8, 0.8);
-  ctx.fillRect(hx + 1.8, hy - 0.4, 0.8, 0.8);
 }
 
 /* ============================================================
@@ -1226,7 +1433,7 @@ function resetDemo() {
 }
 
 function openDict() {
-  state = 'demo'; mode = 'demo';
+  state = 'demo'; mode = 'demo'; world = 0;
   cfg = LEVELS.medium; speed = 0; lives = Infinity;   // speed 0 = העולם עומד
   resetDemo();
   $('menu').classList.remove('show');
@@ -1272,6 +1479,24 @@ function demoAuto(pb, dt) {
 $('dictBtn').onclick = openDict;
 $('dictClose').onclick = toMenu;
 
+// חלקיקים ורעידה – ממשיכים לזוז גם במסך הסיום (קונפטי)
+function updateEffects(dt) {
+  if (shakeT > 0) shakeT = Math.max(0, shakeT - dt);
+  for (const p of particles) {
+    p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.g === undefined ? 60 : p.g) * dt; p.life -= dt;
+    if (p.rot !== undefined) p.rot += p.vr * dt;
+  }
+  particles = particles.filter(p => p.life > 0);
+}
+
+function confetti() {
+  const cols = ['#f43f5e', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#facc15'];
+  for (let i = 0; i < 80; i++) {
+    particles.push({ x: 10 + Math.random() * (W - 20), y: -5 - Math.random() * 25, vx: (Math.random() - 0.5) * 12, vy: 8 + Math.random() * 10,
+                     g: 6, life: 3 + Math.random() * 1.5, color: cols[i % cols.length], size: 1.6 + Math.random(), rot: Math.random() * 6, vr: (Math.random() - 0.5) * 10 });
+  }
+}
+
 /* ============================================================
    לולאה ראשית
    ============================================================ */
@@ -1280,6 +1505,7 @@ function loop(t) {
   const dt = Math.min(0.05, lastT ? now - lastT : 0);
   lastT = now;
   if (state === 'play' || state === 'demo') update(dt);
+  updateEffects(dt);
   updateMic();
   draw();
   requestAnimationFrame(loop);
