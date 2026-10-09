@@ -110,7 +110,7 @@ canvas { display: block; width: 100%; height: 100%; }
 .managing .pcard { outline: 2px dashed #94a3b8; }
 .pcard.add { background: #eef2ff; color: #4f46e5; font-weight: 900; font-size: clamp(16px, 2.4vh, 20px); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 120px; }
 .pcard.add span { font-size: 34px; line-height: 1; }
-#pName { width: 100%; font-size: 22px; font-weight: 800; padding: 12px 14px; border-radius: 12px; border: 2px solid #cbd5e1; margin: 10px 0;
+#pName { -webkit-user-select: text !important; width: 100%; font-size: 22px; font-weight: 800; padding: 12px 14px; border-radius: 12px; border: 2px solid #cbd5e1; margin: 10px 0;
          -webkit-user-select: text; user-select: text; text-align: center; }
 .swatches { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 4px 0 6px; }
 .sw { width: 40px; height: 40px; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 0 0 2px #cbd5e1; }
@@ -137,6 +137,7 @@ canvas { display: block; width: 100%; height: 100%; }
     <span id="lives"></span>
     <span class="sp"></span>
     <span id="mic"></span>
+    <button class="hbtn hide" id="pauseBtn">⏸ Pause</button>
     <button class="hbtn hide" id="endBtn">End</button>
     <button class="hbtn" id="dbgBtn">🐞</button>
   </div>
@@ -164,6 +165,17 @@ canvas { display: block; width: 100%; height: 100%; }
       <div class="menuRow">
         <button class="free" id="freeBtn" disabled>∞ Free Play</button>
         <button class="free words" id="dictBtn">📖 Words</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- עצירה -->
+  <div class="overlay" id="pause">
+    <div class="panel">
+      <h2>⏸ Paused</h2>
+      <div class="row">
+        <button class="btn" id="resumeBtn">▶ Resume</button>
+        <button class="btn sec" id="pauseMenuBtn">Menu</button>
       </div>
     </div>
   </div>
@@ -548,6 +560,9 @@ function command(word, source) {
 // מקלדת – לבדיקה במחשב
 const KEYS = { Space: 'jump', ArrowUp: 'jump', ArrowDown: 'down', KeyK: 'kick', KeyT: 'throw', KeyC: 'catch', KeyF: 'fly' };
 window.addEventListener('keydown', e => {
+  const tag = e.target && e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;      // כותבים שם – לא מפעילים פקודות
+  if (e.code === 'Escape' || e.code === 'KeyP') { state === 'paused' ? resumeGame() : pauseGame(); return; }
   if (KEYS[e.code]) { command(KEYS[e.code], 'key'); e.preventDefault(); }
 });
 
@@ -577,6 +592,7 @@ function startGame(m, idx) {
   $('menu').classList.remove('show');
   $('over').classList.remove('show');
   $('endBtn').classList.remove('hide');
+  $('pauseBtn').classList.remove('hide');
   $('hudFree').classList.toggle('hide', mode !== 'free');
   $('hudStage').classList.toggle('hide', mode !== 'stage');
   $('progress').classList.toggle('hide', mode !== 'stage');
@@ -601,6 +617,7 @@ function showOver(title, big, sub, primaryLabel, primaryAction, starsStyle) {
   state = 'over';
   bankCoins();
   $('endBtn').classList.add('hide');
+  $('pauseBtn').classList.add('hide');
   $('overTitle').textContent = title;
   $('overBig').textContent = big;
   $('overBig').classList.toggle('starsBig', !!starsStyle);
@@ -1026,31 +1043,37 @@ function poseIdle(now) {
 }
 function poseRun(p) {
   const leg = q => { const s = Math.sin(q), t = 0.85 * s; return [t, t - 1.0 * Math.max(0, Math.sin(q - 1.3))]; };
-  const arm = q => { const u = -0.9 * Math.sin(q); return [u, u + 1.2]; };
+  const arm = q => { const u = -1.15 * Math.sin(q); return [u, u + 1.55]; };   // מרפק כפוף, אמה קדימה
   return { hipY: -4.6, torso: 3.2, lean: 0.18, bob: -Math.abs(Math.cos(p)) * 0.6, legs: [leg(p + Math.PI), leg(p)], arms: [arm(p), arm(p + Math.PI)] };
 }
 function poseAir(rising) {
   return { hipY: -4.6, torso: 3.2, lean: 0.12, bob: 0, legs: [[0.5, -0.8], [1.35, 0.15]],
            arms: rising ? [[-2.0, -2.4], [1.9, 2.4]] : [[-1.5, -1.9], [1.4, 1.9]] };   // ידיים פרושות קדימה ואחורה
 }
-function poseDuck() {
-  return { hipY: -2.3, torso: 2.3, lean: 1.0, bob: 0, legs: [[-0.35, -1.7], [1.35, 1.55]], arms: [[-1.6, -1.3], [0.7, 1.3]] };
+function poseDuck() {   // גלישה על הקרקע, רגליים קדימה, גוף נוטה אחורה
+  return { hipY: -1.7, torso: 3.0, lean: -0.95, bob: 0, legs: [[1.0, -0.5], [1.48, 1.55]], arms: [[-0.55, -0.25], [1.25, 1.7]], headTilt: 0.5 };
 }
 function poseFly(now) {
   const sw = Math.sin(now * 3) * 0.15;
   return { hipY: -4.6, torso: 3.2, lean: 0.05, bob: 0, legs: [[-0.3 + sw, -0.15 + sw], [0.05 + sw, 0.2 + sw]], arms: [[2.3, 2.6], [2.55, 2.8]] };
 }
 function applyKick(P, k) {
-  const e = Math.sin(Math.min(1, k * 2.2) * Math.PI / 2);   // רגל עולה מהר ונשארת
-  const t = lerp(0.2, 2.1, e);
-  P.legs[1] = [t, t]; P.legs[0] = [-0.2, -0.05];
-  P.lean = -0.3 * e; P.arms = [[-1.1, -0.7], [lerp(0.3, 1.1, e), 1.5]]; P.kickFoot = true;
+  // 0–0.2: מקפלים ברך למעלה · 0.2–0.75: רגל נשלחת ישר קדימה · אחר כך חוזרת
+  let thigh, shin;
+  if (k < 0.2) { const e = k / 0.2; thigh = lerp(0.2, 1.65, e); shin = lerp(0.1, -0.2, e); }
+  else if (k < 0.75) { const e = Math.min(1, (k - 0.2) / 0.12); thigh = lerp(1.65, 1.8, e); shin = lerp(-0.2, 1.8, e); }
+  else { const e = (k - 0.75) / 0.25; thigh = lerp(1.8, 0.3, e); shin = lerp(1.8, 0.1, e); }
+  const lean = k < 0.75 ? -0.5 : lerp(-0.5, 0, (k - 0.75) / 0.25);
+  P.legs[1] = [thigh, shin]; P.legs[0] = [-0.3, 0.05];
+  P.lean = lean; P.bob = 0;
+  P.arms = [[-1.9, -1.5], [1.2, 2.9]];      // יד אחורית לאיזון, יד קדמית שומרת מול החזה
+  P.kickFoot = k >= 0.2 && k < 0.75;
 }
 function applyThrow(P, k) {
   const u = Math.min(1.6, -2.4 + k * 5);                    // יד מאחור-למעלה → קדימה
   P.arms = [[-0.6, -0.2], [u, u - 0.15]]; P.lean = 0.25;
 }
-function applyCatch(P) { P.arms = [[0.4, 0.9], [2.9, 3.05]]; }
+function applyCatch(P) { P.arms = [[0.3, 0.8], [2.15, 1.95]]; P.openHand = true; }   // יד נשלחת קדימה-למעלה
 
 function playerPose() {
   const now = performance.now() / 1000;
@@ -1091,10 +1114,17 @@ function drawFigure(F) {
     ctx.strokeStyle = col(F.body); ctx.lineWidth = 4.4 + ex;                 // גוף
     ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.lineTo(sh[0], sh[1]); ctx.stroke();
     ctx.fillStyle = col(F.body); circle(head[0], head[1], 3.2 + ex / 2);   // ראש
-    const foot = limb(hip, P.legs[1], THIGH, SHIN, 2.1 + ex, col(F.body));
-    const hand = limb(sh, P.arms[1], UPPER, FORE, 1.8 + ex, col(F.body));
-    if (!outline && P.kickFoot) { ctx.fillStyle = F.accent; circle(foot[0], foot[1], 1.3); }
-    if (!outline) { ctx.fillStyle = F.body; circle(hand[0], hand[1], 0.9); }
+    if (!outline) {                                                       // קו כהה מפריד – היד והרגל הקדמיות "לפני" הגוף
+      limb(hip, P.legs[1], THIGH, SHIN, 2.8, F.edge);
+      limb(sh, P.arms[1], UPPER, FORE, 2.5, F.edge);
+    }
+    const foot = limb(hip, P.legs[1], THIGH, SHIN, 2.1 + ex, col(F.front));
+    const hand = limb(sh, P.arms[1], UPPER, FORE, 1.8 + ex, col(F.front));
+    if (!outline && P.kickFoot) { ctx.fillStyle = F.accent; circle(foot[0], foot[1], 1.35); }
+    if (!outline) {                                                       // כף יד (פתוחה בתפיסה)
+      ctx.fillStyle = F.edge; circle(hand[0], hand[1], P.openHand ? 1.55 : 1.15);
+      ctx.fillStyle = P.openHand ? '#fcd9b6' : F.front; circle(hand[0], hand[1], P.openHand ? 1.2 : 0.85);
+    }
   };
   paint(true); paint(false);
 
@@ -1103,7 +1133,7 @@ function drawFigure(F) {
   ctx.fillStyle = F.accent; ctx.fillRect(-2.3, -1.3, 4.6, 1.1);
   ctx.restore();
   // פנים, עיניים, סרט ראש עם זנבות מתנופפים
-  ctx.save(); ctx.translate(head[0], head[1]); ctx.rotate(P.lean);
+  ctx.save(); ctx.translate(head[0], head[1]); ctx.rotate(P.lean + (P.headTilt || 0));
   ctx.fillStyle = '#fcd9b6'; roundRect(-1.9, -0.9, 4.9, 1.9, 0.6); ctx.fill();
   ctx.fillStyle = '#000'; ctx.fillRect(0.4, -0.45, 0.8, 0.9); ctx.fillRect(1.9, -0.45, 0.8, 0.9);
   ctx.fillStyle = F.accent; ctx.fillRect(-3.1, -2.4, 6.0, 0.95);
@@ -1263,7 +1293,7 @@ function drawEnemy(o) {
   }
   const now = performance.now() / 1000;
   const pose = o.defeated ? poseIdle(now) : (speed > 0 ? poseRun(now * 10 + o.x) : poseIdle(now));
-  drawFigure({ fx, fy: GROUND, facing: -1, scale: ENEMY.h / 14, body: '#7f1d1d', back: '#5b1313', accent: '#facc15',
+  drawFigure({ fx, fy: GROUND, facing: -1, scale: ENEMY.h / 14, body: '#7f1d1d', back: '#5b1313', front: '#a52a2a', edge: '#3b0a0a', accent: '#facc15',
                outline: 'rgba(255,255,255,.45)', pose });
   ctx.restore();
   if (!o.defeated) label('THROW', fx, GROUND - ENEMY.h - 5, 4, '#fde047', '#1e293b');
@@ -1271,7 +1301,7 @@ function drawEnemy(o) {
 
 function drawNinja() {
   const pb = playerBox();
-  const duck = duckT > 0, fx = pb.l + (duck ? 3 : 4), fy = pb.b;
+  const duck = duckT > 0, fx = pb.l + (duck ? 5.5 : 4), fy = pb.b;
   // צל על הקרקע
   ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';
   ctx.beginPath(); ctx.ellipse(fx + 0.5, GROUND + 0.6, Math.max(1.5, 4.5 - py * 0.08), 0.9, 0, 0, Math.PI * 2); ctx.fill();
@@ -1289,7 +1319,7 @@ function drawNinja() {
   }
 
   const P = playerPose();
-  drawFigure({ fx, fy, facing: 1, scale: 1, body: '#1e293b', back: '#0b1220', accent: playerColor(),
+  drawFigure({ fx, fy, facing: 1, scale: 1, body: '#1e293b', back: '#0b1220', front: '#3b4a63', edge: '#05080f', accent: playerColor(),
                outline: 'rgba(255,255,255,.6)', pose: P });
 
   // קו תנועה בבעיטה
@@ -1304,7 +1334,7 @@ function drawNinja() {
    ============================================================ */
 let managing = false, editing = null, editColor = COLORS[0], delArmed = false, delTimer = null;
 
-function hideAllOverlays() { ['menu', 'over', 'editP', 'dict', 'players'].forEach(id => $(id).classList.remove('show')); }
+function hideAllOverlays() { ['menu', 'over', 'editP', 'dict', 'players', 'pause'].forEach(id => $(id).classList.remove('show')); }
 
 function showPlayers() {
   state = 'menu';
@@ -1437,7 +1467,7 @@ function openDict() {
   cfg = LEVELS.medium; speed = 0; lives = Infinity;   // speed 0 = העולם עומד
   resetDemo();
   $('menu').classList.remove('show');
-  ['hudFree', 'hudStage', 'progress', 'catchHud', 'endBtn'].forEach(id => $(id).classList.add('hide'));
+  ['hudFree', 'hudStage', 'progress', 'catchHud', 'endBtn', 'pauseBtn'].forEach(id => $(id).classList.add('hide'));
   $('lives').textContent = '';
   renderDict();
   $('dict').classList.add('show');
@@ -1517,6 +1547,8 @@ requestAnimationFrame(loop);
    ============================================================ */
 function toMenu() {
   state = 'menu';
+  $('pause').classList.remove('show');
+  $('pauseBtn').classList.add('hide');
   $('dict').classList.remove('show');
   try { speechSynthesis.cancel(); } catch (e) {}
   $('over').classList.remove('show');
@@ -1538,8 +1570,26 @@ $('endBtn').onclick = () => {
   if (mode === 'free') endFree(true); else { bankCoins(); toMenu(); }
 };
 
+// עצירה: המשחק קופא במקום, ופקודות קוליות לא פועלות עד שממשיכים
+function pauseGame() {
+  if (state !== 'play') return;
+  state = 'paused';
+  $('pause').classList.add('show');
+}
+function resumeGame() {
+  if (state !== 'paused') return;
+  $('pause').classList.remove('show');
+  seenWords = []; lastT = 0;
+  if (audio) audio.ctx.resume();
+  state = 'play';
+}
+$('pauseBtn').onclick = pauseGame;
+$('resumeBtn').onclick = resumeGame;
+$('pauseMenuBtn').onclick = () => { bankCoins(); toMenu(); };
+
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && audio) audio.ctx.resume();
+  if (document.hidden) pauseGame();                 // יצאו מהאפליקציה – עוצרים אוטומטית
+  else if (audio) audio.ctx.resume();
 });
 
 dbg('model', '—'); dbg('mic', 'off'); dbg('heard', '—'); dbg('command', '—');
