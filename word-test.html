@@ -37,11 +37,12 @@ td.w{direction:ltr;font-weight:800}
 <body>
 
 <h1>בדיקת מילים חדשות</h1>
-<p class="sub">בכל סבב מופיעה מילה אחת מתוך 6. אומרים אותה בקול כשהיא מופיעה. בסוף רואים לכל מילה כמה פעמים זוהתה נכון, ועם אילו מילים היא התבלבלה. כדאי שגם הילד יעשה את הבדיקה.</p>
+<p class="sub">בכל סבב מופיעה מילה אחת. אומרים אותה בקול כשהיא מופיעה. בסוף רואים לכל מילה כמה פעמים זוהתה נכון, ועם אילו מילים היא התבלבלה. כדאי שגם הילד יעשה את הבדיקה.</p>
 
 <div class="card">
   <button id="loadBtn">טען מודל</button>
-  <button id="startBtn" disabled>התחל בדיקה (18 סבבים)</button>
+  <button id="startBtn" disabled>מילים חדשות (8 × 3 = 24 סבבים)</button>
+  <button id="startAllBtn" disabled>כל המילים (14 × 2 = 28 סבבים)</button>
   <button id="stopBtn" class="stop" disabled>עצור</button>
   <div class="status" id="status"></div>
 </div>
@@ -62,8 +63,12 @@ td.w{direction:ltr;font-weight:800}
 </div>
 
 <script>
-const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly'];
-const PER_WORD = 3, WINDOW = 3500;
+// כל המילים שהמשחק יכיר – הזיהוי תמיד מקשיב לכולן, כדי לגלות בלבולים ביניהן
+const OLD_WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly'];
+const NEW_WORDS = ['stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block'];
+const WORDS = [...OLD_WORDS, ...NEW_WORDS];
+const WINDOW = 3500;
+let testWords = NEW_WORDS, PER_WORD = 3;
 const MODEL_URL = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz';
 const $ = id => document.getElementById(id);
 
@@ -85,7 +90,7 @@ $('loadBtn').onclick = async () => {
   try {
     model = await Vosk.createModel(MODEL_URL);
     $('status').textContent = 'המודל מוכן ✓';
-    $('startBtn').disabled = false;
+    $('startBtn').disabled = false; $('startAllBtn').disabled = false;
   } catch (e) {
     $('status').textContent = 'שגיאה: ' + (e.message || e);
     $('loadBtn').disabled = false;
@@ -157,16 +162,20 @@ requestAnimationFrame(meterLoop);
 /* ---------- מהלך הבדיקה ---------- */
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
-$('startBtn').onclick = async () => {
+$('startBtn').onclick = () => startTest(NEW_WORDS, 3);
+$('startAllBtn').onclick = () => startTest(WORDS, 2);
+
+async function startTest(list, per) {
   if (!(await ensureAudio())) return;
-  queue = shuffle(WORDS.flatMap(w => Array(PER_WORD).fill(w)));
+  testWords = list; PER_WORD = per;
+  queue = shuffle(testWords.flatMap(w => Array(PER_WORD).fill(w)));
   results.length = 0; round = 0; seenWords = [];
   running = true;
-  $('startBtn').disabled = true; $('stopBtn').disabled = false;
+  $('startBtn').disabled = true; $('startAllBtn').disabled = true; $('stopBtn').disabled = false;
   $('status').textContent = 'מקשיב ✓';
   render();
   next();
-};
+}
 
 function next() {
   if (!running) return;
@@ -191,13 +200,13 @@ function next() {
 
 function finish() {
   running = false;
-  $('startBtn').disabled = false; $('stopBtn').disabled = true;
+  $('startBtn').disabled = false; $('startAllBtn').disabled = false; $('stopBtn').disabled = true;
   setPrompt('סיום ✓', 'צלם את התוצאות ושלח לי', 'hit');
 }
 
 $('stopBtn').onclick = () => {
   running = false; clearTimeout(timer); promptTime = null;
-  $('startBtn').disabled = false; $('stopBtn').disabled = true;
+  $('startBtn').disabled = false; $('startAllBtn').disabled = false; $('stopBtn').disabled = true;
   setPrompt('נעצר', '', '');
 };
 
@@ -205,7 +214,7 @@ $('stopBtn').onclick = () => {
 function median(a) { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
 
 function render() {
-  $('rows').innerHTML = WORDS.map(w => {
+  $('rows').innerHTML = testWords.map(w => {
     const r = results.filter(x => x.target === w);
     if (!r.length) return '<tr><td class="w">' + w.toUpperCase() + '</td><td>—</td><td>—</td><td>—</td></tr>';
     const ok = r.filter(x => x.heard === w);
