@@ -163,7 +163,7 @@ function setBest(key, v) {
    זיהוי דיבור – Vosk
    ============================================================ */
 let model = null, audio = null, noise = 0.01;
-let counts = { jump: 0, down: 0 };
+let seenWords = [];   // המילים שכבר הפעלנו במשפט הנוכחי
 
 function setStatus(text, isErr) {
   const s = $('status');
@@ -226,15 +226,22 @@ async function ensureAudio() {
   }
 }
 
-// כל פעם שמספר המופעים של מילה עולה – מפעילים את הפקודה מיד
+// עוקבים אחרי רצף המילים ששמענו (למשל "down down jump").
+// כל מילה חדשה בסוף הרצף מפעילה פקודה מיד.
+// אם Vosk "מתקן" את המילה האחרונה (שמע down ואז הבין שזה jump) – מפעילים את המילה המתוקנת.
 function handleText(text, isFinal) {
-  const c = { jump: 0, down: 0 };
-  (text || '').toLowerCase().split(/\s+/).forEach(w => { if (w in c) c[w]++; });
-  for (const k of ['jump', 'down']) {
-    while (c[k] > counts[k]) { counts[k]++; command(k, 'voice'); }
+  const words = (text || '').toLowerCase().split(/\s+/).filter(w => w === 'jump' || w === 'down');
+  for (let i = 0; i < words.length; i++) {
+    if (i >= seenWords.length) {
+      seenWords.push(words[i]);
+      command(words[i], 'voice');
+    } else if (i === words.length - 1 && words[i] !== seenWords[i]) {
+      seenWords[i] = words[i];
+      command(words[i], 'voice');
+    }
   }
   if (text) dbg('heard', '"' + text + '"' + (isFinal ? ' (final)' : ''));
-  if (isFinal) counts = { jump: 0, down: 0 };
+  if (isFinal) seenWords = [];
 }
 
 // מד עוצמה – הנורית נדלקת ברגע שמתחילים לדבר
@@ -278,7 +285,7 @@ function startGame(key) {
   speed = cfg.speed; score = 0; lives = cfg.lives;
   obstacles = []; distSinceSpawn = 0; nextGap = speed * 2.2;  // המכשול הראשון אחרי ~2 שניות
   py = 0; vy = 0; duckT = 0; invulnT = 0; flash = null; heard = null;
-  counts = { jump: 0, down: 0 };
+  seenWords = [];
   $('menu').classList.remove('show');
   $('over').classList.remove('show');
   $('endBtn').style.display = '';
