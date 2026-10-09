@@ -409,7 +409,7 @@ function updateMic() {
    ============================================================ */
 function command(word, source) {
   dbg('command', word + ' (' + source + ')');
-  if (state !== 'play' && state !== 'demo') return;
+  if (state !== 'play' && !(state === 'demo' && source === 'demo')) return;   // במילון – רק ההדגמה מזיזה את הנינג'ה
   heard = { text: word.toUpperCase(), t: 0.8 };
 
   if (word === 'jump') {
@@ -989,8 +989,9 @@ function drawNinja() {
 /* ============================================================
    מילון מילים – לוחצים על מילה, שומעים אותה ורואים מה היא עושה
    ============================================================ */
-const TYPE_WORD = Object.fromEntries(Object.entries(WORD_OBSTACLE).map(([w, t]) => [t, w]));
-let demoFlyAt = null;
+// במילון אין משחק: הנינג'ה עומד במקום, העולם לא זז, ואין זיהוי קולי.
+// לוחצים על מילה → שומעים אותה → הנינג'ה מבצע את הפעולה מול חפץ קטן לידו.
+let demoSteps = [], demoClock = 0;
 
 function renderDict() {
   const grid = $('wordGrid');
@@ -1004,18 +1005,21 @@ function renderDict() {
   });
 }
 
+function resetDemo() {
+  obstacles = []; shurikens = []; particles = []; flag = null; banner = null; flash = null; heard = null;
+  py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0;
+  demoSteps = []; demoClock = 0;
+}
+
 function openDict() {
   state = 'demo'; mode = 'demo';
-  cfg = LEVELS.medium; speed = 40; lives = Infinity;
-  obstacles = []; shurikens = []; particles = []; flag = null; banner = null; flash = null;
-  py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0;
-  seenWords = []; demoFlyAt = null;
+  cfg = LEVELS.medium; speed = 0; lives = Infinity;   // speed 0 = העולם עומד
+  resetDemo();
   $('menu').classList.remove('show');
   ['hudFree', 'hudStage', 'progress', 'catchHud', 'endBtn'].forEach(id => $(id).classList.add('hide'));
   $('lives').textContent = '';
   renderDict();
   $('dict').classList.add('show');
-  if (model) ensureAudio();   // אם המודל מוכן – הילד יכול גם להגיד את המילה בעצמו
 }
 
 function speak(w) {
@@ -1033,30 +1037,22 @@ function speak(w) {
   } catch (e) {}
 }
 
+// חפץ קטן ליד הנינג'ה (אם צריך), ורשימת פעולות לפי זמן
 function showWord(w) {
   speak(w);
   document.querySelectorAll('.word').forEach(b => b.classList.toggle('active', b.dataset.w === w));
-  obstacles = []; shurikens = []; flash = null; invulnT = 0; demoFlyAt = null;
-  py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0;
-  const type = WORD_OBSTACLE[w];
-  const o = { type, x: PLAYER.x + PLAYER.w + speed * 1.8, passed: false, hit: false, auto: true };
-  if (type === 'river') o.w = riverWidth();
-  obstacles.push(o);
+  resetDemo();
+  const near = PLAYER.x + PLAYER.w;
+  if (w === 'kick')  obstacles.push({ type: 'wall',  x: near + 6 });
+  if (w === 'throw') obstacles.push({ type: 'enemy', x: near + 55 });
+  if (w === 'catch') obstacles.push({ type: 'coin',  x: near + 12 });
+  obstacles.forEach(o => { o.passed = false; o.hit = false; });
+  demoSteps = w === 'fly' ? [{ at: 0.35, w: 'jump' }, { at: 0.75, w: 'fly' }] : [{ at: 0.45, w }];
 }
 
-// הנינג'ה מבצע את הפעולה בזמן הנכון
 function demoAuto(pb, dt) {
-  for (const o of obstacles) {
-    if (!o.auto || o.acted || o.passed || o.hit) continue;
-    const d = o.x - pb.r;
-    const fire = { box: d <= speed * 0.2, beam: d <= speed * 0.3, wall: d <= KICK.range + speed * 0.2,
-                   enemy: d <= 45, coin: o.x <= PLAYER.x + 25, river: d <= speed * 0.05 }[o.type];
-    if (!fire) continue;
-    o.acted = true;
-    if (o.type === 'river') { command('jump', 'demo'); demoFlyAt = 0.4; }
-    else command(TYPE_WORD[o.type], 'demo');
-  }
-  if (demoFlyAt !== null && (demoFlyAt -= dt) <= 0) { demoFlyAt = null; command('fly', 'demo'); }
+  demoClock += dt;
+  while (demoSteps.length && demoClock >= demoSteps[0].at) command(demoSteps.shift().w, 'demo');
 }
 
 $('dictBtn').onclick = openDict;
