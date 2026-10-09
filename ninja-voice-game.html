@@ -1,161 +1,550 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ninja Voice Test</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Ninja Voice Game</title>
+<script src="https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js"></script>
 <style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #1b1f2a;
-    color: #fff;
-    text-align: center;
-  }
-  #status {
-    padding: 12px;
-    font-size: 18px;
-  }
-  #heard {
-    font-size: 22px;
-    color: #ffd166;
-    min-height: 30px;
-  }
-  button {
-    font-size: 20px;
-    padding: 10px 24px;
-    margin: 8px;
-    border: none;
-    border-radius: 8px;
-    background: #ef476f;
-    color: #fff;
-    cursor: pointer;
-  }
-  #stage {
-    position: relative;
-    width: 600px;
-    height: 300px;
-    margin: 20px auto;
-    background: #2a3142;
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  #ground {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 40px;
-    background: #4a5568;
-  }
-  #ninja {
-    position: absolute;
-    left: 60px;
-    bottom: 40px;
-    width: 40px;
-    height: 60px;
-    transition: bottom 0.4s ease-out;
-  }
-  #ninja .head   { position:absolute; left:10px; top:0;  width:20px; height:20px; background:#222; border-radius:50%; }
-  #ninja .body   { position:absolute; left:12px; top:20px; width:16px; height:22px; background:#2d7dd2; border-radius:4px; }
-  #ninja .arm    { position:absolute; top:22px; width:6px; height:18px; background:#222; }
-  #ninja .arm.l  { left:4px; }
-  #ninja .arm.r  { right:4px; }
-  #ninja .leg    { position:absolute; top:42px; width:7px; height:18px; background:#222; }
-  #ninja .leg.l  { left:12px; }
-  #ninja .leg.r  { right:12px; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: #0f172a; font-family: -apple-system, system-ui, Arial, sans-serif; overscroll-behavior: none; touch-action: manipulation; }
+#app { position: fixed; inset: 0; }
+canvas { display: block; width: 100%; height: 100%; }
+
+/* פס עליון */
+#hud { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 14px;
+       padding: max(10px, env(safe-area-inset-top)) 14px 10px; color: #fff; font-weight: 800;
+       font-size: clamp(15px, 2.3vw, 22px); pointer-events: none; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
+#hud .sp { flex: 1; }
+#hud button { pointer-events: auto; }
+.hbtn { background: rgba(15,23,42,.55); color: #fff; border: 0; border-radius: 10px; padding: 8px 14px;
+        font-size: clamp(13px, 1.9vw, 17px); font-weight: 800; }
+#mic { width: 18px; height: 18px; border-radius: 50%; background: #64748b; display: inline-block; vertical-align: middle;
+       transition: transform .08s, background .08s; }
+#mic.on { background: #16a34a; }
+#mic.loud { background: #4ade80; transform: scale(1.5); box-shadow: 0 0 14px #4ade80; }
+
+/* חלונות מעל המשחק */
+.overlay { position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+           background: rgba(15,23,42,.5); padding: 16px; }
+.overlay.show { display: flex; }
+.panel { background: #fff; color: #1e293b; border-radius: 22px; padding: clamp(14px, 3vh, 30px) clamp(16px, 3vw, 34px);
+         text-align: center; width: min(600px, 100%); max-height: 100%; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.panel h1 { font-size: clamp(26px, 5vh, 44px); margin-bottom: 6px; }
+.panel h2 { font-size: clamp(26px, 5vh, 42px); margin-bottom: 4px; }
+.panel p { font-size: clamp(14px, 2.2vh, 19px); color: #475569; margin-bottom: 6px; line-height: 1.35; }
+.cmd { display: inline-block; background: #fde047; color: #1e293b; border-radius: 8px; padding: 0 8px; font-weight: 900; }
+.status { font-size: clamp(13px, 2vh, 16px); color: #64748b; min-height: 1.4em; margin: 6px 0 12px; }
+.status.err { color: #dc2626; }
+.levels { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.lvl { flex: 1; min-width: 150px; border: 0; border-radius: 16px; padding: clamp(10px, 2vh, 18px) 10px; color: #fff;
+       font-size: clamp(19px, 3.2vh, 26px); font-weight: 900; }
+.lvl small { display: block; font-size: clamp(12px, 1.8vh, 14px); font-weight: 600; opacity: .95; margin-top: 4px; }
+.lvl:disabled { opacity: .4; }
+.easy { background: #16a34a; } .medium { background: #f59e0b; } .hard { background: #dc2626; }
+.big { font-size: clamp(44px, 10vh, 80px); font-weight: 900; color: #4f46e5; line-height: 1.1; }
+.row { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+.btn { border: 0; border-radius: 14px; padding: clamp(10px, 2vh, 16px) 24px; font-size: clamp(17px, 2.8vh, 22px);
+       font-weight: 900; background: #4f46e5; color: #fff; }
+.btn.sec { background: #e2e8f0; color: #1e293b; }
+
+/* חלונית דיבאג */
+#debug { position: absolute; left: 10px; bottom: 10px; max-width: min(440px, calc(100% - 20px)); background: rgba(15,23,42,.88);
+         color: #e2e8f0; font: 12px/1.55 ui-monospace, Menlo, monospace; padding: 10px 12px; border-radius: 10px;
+         display: none; pointer-events: none; white-space: pre-wrap; }
+#debug.show { display: block; }
 </style>
 </head>
 <body>
+<div id="app">
+  <canvas id="c"></canvas>
 
-<h2>Ninja Voice Test</h2>
-<div id="status">לחץ על התחל ואמור JUMP</div>
-<div id="heard"></div>
-<button id="startBtn">התחל</button>
-
-<div id="stage">
-  <div id="ninja">
-    <div class="head"></div>
-    <div class="body"></div>
-    <div class="arm l"></div>
-    <div class="arm r"></div>
-    <div class="leg l"></div>
-    <div class="leg r"></div>
+  <div id="hud">
+    <span>Score: <span id="score">0</span></span>
+    <span>Best: <span id="best">0</span></span>
+    <span id="lives"></span>
+    <span class="sp"></span>
+    <span id="mic"></span>
+    <button class="hbtn" id="endBtn" style="display:none">End</button>
+    <button class="hbtn" id="dbgBtn">🐞</button>
   </div>
-  <div id="ground"></div>
+
+  <!-- מסך פתיחה -->
+  <div class="overlay show" id="menu">
+    <div class="panel">
+      <h1>🥷 Ninja Voice</h1>
+      <p>Say <span class="cmd">JUMP</span> to jump over boxes.<br>Say <span class="cmd">DOWN</span> to duck under beams.</p>
+      <div class="status" id="status">Loading…</div>
+      <div class="levels">
+        <button class="lvl easy" data-level="easy" disabled>Easy<small>Slow · no game over</small></button>
+        <button class="lvl medium" data-level="medium" disabled>Medium<small>3 lives</small></button>
+        <button class="lvl hard" data-level="hard" disabled>Hard<small>Fast · 1 life</small></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- מסך סיום -->
+  <div class="overlay" id="over">
+    <div class="panel">
+      <h2 id="overTitle">Game Over</h2>
+      <div class="big" id="overScore">0</div>
+      <p id="overBest">Best: 0</p>
+      <div class="row">
+        <button class="btn" id="againBtn">Play again</button>
+        <button class="btn sec" id="menuBtn">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="debug"></div>
 </div>
 
 <script>
-  const statusEl = document.getElementById('status');
-  const heardEl = document.getElementById('heard');
-  const startBtn = document.getElementById('startBtn');
-  const ninja = document.getElementById('ninja');
+/* ============================================================
+   הגדרות
+   ============================================================ */
+const MODEL_URL = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz';
 
-  // וריאציות הגייה אפשריות למילה JUMP
-  const JUMP_WORDS = ['jump', 'jomp', 'jamp', 'jum', 'jumb'];
+// רמות קושי. speed = מהירות המכשולים, gap = רווח בין מכשולים (ביחידות עולם)
+// gravity / jumpV = קפיצה. ברמה הקלה הקפיצה "מרחפת" יותר, כדי שיהיה יותר זמן לתזמן
+const LEVELS = {
+  easy:   { speed: 35, accel: 0,   maxSpeed: 35, gapMin: 90, gapMax: 130, lives: Infinity, penalty: 1, gravity: 100, jumpV: 63 },
+  medium: { speed: 50, accel: 0,   maxSpeed: 50, gapMin: 70, gapMax: 100, lives: 3,        penalty: 0, gravity: 160, jumpV: 80 },
+  hard:   { speed: 60, accel: 1.2, maxSpeed: 95, gapMin: 55, gapMax: 85,  lives: 1,        penalty: 0, gravity: 160, jumpV: 80 }
+};
 
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+// "העולם" של המשחק: 160 על 100 יחידות, מוגדל לגודל המסך
+const W = 160, H = 100, GROUND = 85;
+const PLAYER = { x: 25, w: 8, h: 14, duckW: 10, duckH: 8 };
+const DUCK_TIME = 1.0;                 // כמה זמן הנינג'ה נשאר כפוף (שניות)
+const INVULN_TIME = 1.2;               // זמן חסינות אחרי פגיעה
+const BOX = { w: 6, h: 9 };            // מכשול קרקע – קופצים מעליו
+const BEAM = { w: 8, clear: 11, thick: 5 }; // קורה תלויה – מתכופפים מתחתיה
 
-  if (!SpeechRecognition) {
-    statusEl.textContent = 'הדפדפן הזה לא תומך בזיהוי קולי. השתמש ב-Chrome.';
-    startBtn.disabled = true;
-  } else {
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 3;
+/* ============================================================
+   מצב המשחק
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const canvas = $('c'), ctx = canvas.getContext('2d');
 
-    let listening = false;
+let state = 'menu';           // menu | play | over
+let levelKey = null, cfg = null;
+let speed = 0, score = 0, lives = 0;
+let obstacles = [], distSinceSpawn = 0, nextGap = 0;
+let py = 0, vy = 0, duckT = 0, invulnT = 0;  // py = גובה הנינג'ה מעל הקרקע
+let flash = null, heard = null;              // הודעות על המסך
+let bgX = 0, lastT = 0;
 
-    function jump() {
-      ninja.style.bottom = '160px';
-      setTimeout(() => { ninja.style.bottom = '40px'; }, 500);
-    }
+/* ============================================================
+   דיבאג
+   ============================================================ */
+const dbgLines = {};
+function dbg(key, val) {
+  dbgLines[key] = val;
+  if ($('debug').classList.contains('show')) renderDebug();
+}
+function renderDebug() {
+  $('debug').textContent = Object.entries(dbgLines).map(([k, v]) => k + ': ' + v).join('\n');
+}
+$('dbgBtn').onclick = () => { $('debug').classList.toggle('show'); renderDebug(); };
 
-    recognition.onresult = (event) => {
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        // בודקים את כל החלופות שהזיהוי מציע
-        for (let j = 0; j < result.length; j++) {
-          const text = result[j].transcript.trim().toLowerCase();
-          heardEl.textContent = 'שמעתי: ' + text;
-          if (JUMP_WORDS.some(w => text.includes(w))) {
-            jump();
-            break;
-          }
-        }
-      }
-    };
+/* ============================================================
+   שיא לכל רמה
+   ============================================================ */
+function getBest(key) {
+  try { return parseInt(localStorage.getItem('ninjaVoiceBest_' + key)) || 0; } catch (e) { return 0; }
+}
+function setBest(key, v) {
+  try { localStorage.setItem('ninjaVoiceBest_' + key, String(v)); } catch (e) {}
+}
 
-    recognition.onerror = (event) => {
-      statusEl.textContent = 'שגיאה: ' + event.error;
-      if (event.error === 'not-allowed') {
-        listening = false;
-        startBtn.textContent = 'התחל';
-      }
-    };
+/* ============================================================
+   זיהוי דיבור – Vosk
+   ============================================================ */
+let model = null, audio = null, noise = 0.01;
+let counts = { jump: 0, down: 0 };
 
-    recognition.onend = () => {
-      // Chrome מפסיק להקשיב מדי פעם, מפעילים מחדש אם המשתמש עדיין במצב האזנה
-      if (listening) recognition.start();
-    };
+function setStatus(text, isErr) {
+  const s = $('status');
+  s.textContent = text;
+  s.classList.toggle('err', !!isErr);
+}
 
-    startBtn.addEventListener('click', () => {
-      if (!listening) {
-        listening = true;
-        recognition.start();
-        statusEl.textContent = 'מקשיב... אמור JUMP';
-        startBtn.textContent = 'עצור';
-      } else {
-        listening = false;
-        recognition.stop();
-        statusEl.textContent = 'הזיהוי הופסק';
-        startBtn.textContent = 'התחל';
-      }
-    });
+async function loadModel() {
+  if (typeof Vosk === 'undefined') {
+    setStatus('Voice library did not load. Check the internet and reload.', true);
+    dbg('model', 'Vosk library missing');
+    return;
   }
-</script>
+  setStatus('Loading voice engine… (first time can take a minute)');
+  dbg('model', 'loading…');
+  const t0 = performance.now();
+  try {
+    model = await Vosk.createModel(MODEL_URL);
+    const secs = ((performance.now() - t0) / 1000).toFixed(1);
+    setStatus('Ready! Choose a level');
+    dbg('model', 'ready (' + secs + 's)');
+    document.querySelectorAll('.lvl').forEach(b => b.disabled = false);
+  } catch (e) {
+    setStatus('Voice engine failed to load: ' + (e.message || e), true);
+    dbg('model', 'ERROR ' + (e.message || e));
+  }
+}
 
+// מפעיל את המיקרופון בפעם הראשונה (חייב לקרות בתוך לחיצה)
+async function ensureAudio() {
+  if (audio) { audio.ctx.resume(); return true; }
+  const ac = new (window.AudioContext || window.webkitAudioContext)();
+  ac.resume();
+  dbg('mic', 'requesting…');
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }
+    });
+    // רשימת מילים סגורה – רק jump ו-down. כל השאר "לא מוכר"
+    const rec = new model.KaldiRecognizer(ac.sampleRate, JSON.stringify(['jump', 'down', '[unk]']));
+    rec.on('partialresult', m => handleText(m.result.partial, false));
+    rec.on('result', m => handleText(m.result.text, true));
+
+    const src = ac.createMediaStreamSource(stream);
+    const node = ac.createScriptProcessor(2048, 1, 1);
+    node.onaudioprocess = e => { try { rec.acceptWaveform(e.inputBuffer); } catch (err) {} };
+    const an = ac.createAnalyser();
+    an.fftSize = 1024;
+    src.connect(an); src.connect(node); node.connect(ac.destination);
+
+    audio = { ctx: ac, stream, node, rec, an, buf: new Float32Array(1024) };
+    $('mic').className = 'on';
+    dbg('mic', 'on (' + ac.sampleRate + ' Hz)');
+    return true;
+  } catch (e) {
+    try { ac.close(); } catch (_) {}
+    setStatus('Microphone problem: ' + (e.message || e), true);
+    dbg('mic', 'ERROR ' + (e.message || e));
+    return false;
+  }
+}
+
+// כל פעם שמספר המופעים של מילה עולה – מפעילים את הפקודה מיד
+function handleText(text, isFinal) {
+  const c = { jump: 0, down: 0 };
+  (text || '').toLowerCase().split(/\s+/).forEach(w => { if (w in c) c[w]++; });
+  for (const k of ['jump', 'down']) {
+    while (c[k] > counts[k]) { counts[k]++; command(k, 'voice'); }
+  }
+  if (text) dbg('heard', '"' + text + '"' + (isFinal ? ' (final)' : ''));
+  if (isFinal) counts = { jump: 0, down: 0 };
+}
+
+// מד עוצמה – הנורית נדלקת ברגע שמתחילים לדבר
+function updateMic() {
+  if (!audio) return;
+  audio.an.getFloatTimeDomainData(audio.buf);
+  let s = 0;
+  for (let i = 0; i < audio.buf.length; i++) s += audio.buf[i] * audio.buf[i];
+  const rms = Math.sqrt(s / audio.buf.length);
+  const loud = rms > Math.max(0.02, noise * 4);
+  if (!loud) noise = noise * 0.97 + rms * 0.03;
+  $('mic').className = loud ? 'loud' : 'on';
+}
+
+/* ============================================================
+   פקודות – פועלות מיד, גם אם זו לא המילה הנכונה למכשול
+   ============================================================ */
+function command(word, source) {
+  dbg('command', word + ' (' + source + ')');
+  if (state !== 'play') return;
+  heard = { text: word.toUpperCase(), t: 0.8 };
+  if (word === 'jump') {
+    if (py === 0) { vy = cfg.jumpV; py = 0.001; duckT = 0; }
+  } else if (word === 'down') {
+    duckT = DUCK_TIME;
+    if (py > 0) vy = Math.min(vy, -60);   // באוויר – נוחת מהר
+  }
+}
+
+// מקלדת – לבדיקה במחשב
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'ArrowUp') { command('jump', 'key'); e.preventDefault(); }
+  if (e.code === 'ArrowDown') { command('down', 'key'); e.preventDefault(); }
+});
+
+/* ============================================================
+   מהלך המשחק
+   ============================================================ */
+function startGame(key) {
+  levelKey = key; cfg = LEVELS[key];
+  speed = cfg.speed; score = 0; lives = cfg.lives;
+  obstacles = []; distSinceSpawn = 0; nextGap = speed * 2.2;  // המכשול הראשון אחרי ~2 שניות
+  py = 0; vy = 0; duckT = 0; invulnT = 0; flash = null; heard = null;
+  counts = { jump: 0, down: 0 };
+  $('menu').classList.remove('show');
+  $('over').classList.remove('show');
+  $('endBtn').style.display = '';
+  $('best').textContent = getBest(key);
+  renderHud();
+  dbg('level', key);
+  state = 'play';
+}
+
+function endGame(byButton) {
+  state = 'over';
+  $('endBtn').style.display = 'none';
+  const prev = getBest(levelKey);
+  const isNew = score > prev;
+  if (isNew) setBest(levelKey, score);
+  $('best').textContent = Math.max(prev, score);
+  $('overTitle').textContent = byButton ? 'Well done!' : 'Game Over';
+  $('overScore').textContent = score;
+  $('overBest').textContent = isNew && score > 0 ? '🏆 New best!' : 'Best: ' + prev;
+  $('over').classList.add('show');
+}
+
+function renderHud() {
+  $('score').textContent = score;
+  if (!isFinite(lives)) $('lives').textContent = '';
+  else $('lives').textContent = '❤️'.repeat(Math.max(0, lives)) + '🤍'.repeat(Math.max(0, cfg.lives - lives));
+}
+
+function rand(a, b) { return a + Math.random() * (b - a); }
+
+function spawn() {
+  obstacles.push({ type: Math.random() < 0.5 ? 'box' : 'beam', x: W + 2, passed: false, hit: false });
+  distSinceSpawn = 0;
+  nextGap = rand(cfg.gapMin, cfg.gapMax);
+}
+
+function playerBox() {
+  const ducking = duckT > 0;
+  const w = ducking ? PLAYER.duckW : PLAYER.w;
+  const h = ducking ? PLAYER.duckH : PLAYER.h;
+  const bottom = GROUND - py;
+  return { l: PLAYER.x, r: PLAYER.x + w, t: bottom - h, b: bottom };
+}
+
+function obstacleBox(o) {
+  if (o.type === 'box') return { l: o.x, r: o.x + BOX.w, t: GROUND - BOX.h, b: GROUND };
+  return { l: o.x, r: o.x + BEAM.w, t: -1e6, b: GROUND - BEAM.clear };
+}
+
+function overlap(a, b) { return a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t; }
+
+function onHit(o) {
+  o.hit = true;
+  flash = { text: o.type === 'box' ? 'JUMP!' : 'DOWN!', t: 1.2 };   // מראה את המילה הנכונה
+  invulnT = INVULN_TIME;
+  if (isFinite(lives)) {
+    lives--;
+    renderHud();
+    if (lives <= 0) { endGame(false); return; }
+  } else if (cfg.penalty) {
+    score = Math.max(0, score - cfg.penalty);
+    renderHud();
+  }
+}
+
+function update(dt) {
+  if (cfg.accel) speed = Math.min(cfg.maxSpeed, speed + cfg.accel * dt);
+
+  // הנינג'ה
+  if (py > 0 || vy > 0) {
+    vy -= cfg.gravity * dt;
+    py += vy * dt;
+    if (py <= 0) { py = 0; vy = 0; }
+  }
+  if (duckT > 0) duckT -= dt;
+  if (invulnT > 0) invulnT -= dt;
+  if (flash && (flash.t -= dt) <= 0) flash = null;
+  if (heard && (heard.t -= dt) <= 0) heard = null;
+
+  // מכשולים
+  const dx = speed * dt;
+  bgX += dx;
+  distSinceSpawn += dx;
+  if (distSinceSpawn >= nextGap) spawn();
+
+  const pb = playerBox();
+  for (const o of obstacles) {
+    o.x -= dx;
+    const ob = obstacleBox(o);
+    if (!o.hit && invulnT <= 0 && overlap(pb, ob)) { onHit(o); if (state !== 'play') return; }
+    if (!o.passed && !o.hit && ob.r < pb.l) { o.passed = true; score++; renderHud(); }
+  }
+  obstacles = obstacles.filter(o => o.x > -20);
+  dbg('speed', speed.toFixed(1));
+}
+
+/* ============================================================
+   ציור
+   ============================================================ */
+let cw = 0, ch = 0, scale = 1, ox = 0, oy = 0;
+
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  cw = window.innerWidth; ch = window.innerHeight;
+  canvas.width = Math.round(cw * dpr); canvas.height = Math.round(ch * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  scale = Math.min(cw / W, ch / H);
+  ox = (cw - W * scale) / 2;
+  oy = (ch - H * scale) * 0.75;   // במצב לאורך – יותר שמיים, פחות אדמה
+}
+window.addEventListener('resize', resize);
+resize();
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function label(text, cx, cy, size, bg, fg) {
+  ctx.font = '900 ' + size + 'px -apple-system, system-ui, Arial, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const tw = ctx.measureText(text).width;
+  roundRect(cx - tw / 2 - size * 0.4, cy - size * 0.65, tw + size * 0.8, size * 1.3, size * 0.35);
+  ctx.fillStyle = bg; ctx.fill();
+  ctx.fillStyle = fg; ctx.fillText(text, cx, cy + size * 0.05);
+}
+
+function draw() {
+  // שמיים על כל המסך
+  const g = ctx.createLinearGradient(0, 0, 0, ch);
+  g.addColorStop(0, '#7dd3fc'); g.addColorStop(1, '#e0f2fe');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
+
+  ctx.save();
+  ctx.translate(ox, oy); ctx.scale(scale, scale);
+  const left = -ox / scale, right = (cw - ox) / scale, top = -oy / scale, bottom = (ch - oy) / scale;
+
+  // הרים ברקע (זזים לאט)
+  ctx.fillStyle = '#93c5fd';
+  const mOff = (bgX * 0.15) % 60;
+  for (let x = left - 60 - mOff; x < right + 60; x += 60) {
+    ctx.beginPath(); ctx.moveTo(x, GROUND); ctx.lineTo(x + 30, GROUND - 28); ctx.lineTo(x + 60, GROUND); ctx.fill();
+  }
+
+  // קרקע
+  ctx.fillStyle = '#a16207'; ctx.fillRect(left, GROUND, right - left, bottom - GROUND);
+  ctx.fillStyle = '#4ade80'; ctx.fillRect(left, GROUND, right - left, 2);
+  ctx.fillStyle = '#854d0e';
+  const gOff = bgX % 12;
+  for (let x = left - gOff; x < right; x += 12) ctx.fillRect(x, GROUND + 5, 4, 1);
+
+  // מכאן – רק בתוך שטח העולם
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, top, W, bottom - top); ctx.clip();
+
+  for (const o of obstacles) {
+    if (o.type === 'box') {
+      const x = o.x, y = GROUND - BOX.h;
+      ctx.fillStyle = '#b45309'; ctx.fillRect(x, y, BOX.w, BOX.h);
+      ctx.strokeStyle = '#78350f'; ctx.lineWidth = 0.6;
+      ctx.strokeRect(x + 0.3, y + 0.3, BOX.w - 0.6, BOX.h - 0.6);
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + BOX.w, GROUND); ctx.moveTo(x + BOX.w, y); ctx.lineTo(x, GROUND); ctx.stroke();
+      label('JUMP', x + BOX.w / 2, y - 5, 4, '#fde047', '#1e293b');
+    } else {
+      const x = o.x, by = GROUND - BEAM.clear - BEAM.thick;
+      ctx.strokeStyle = '#78716c'; ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(x + 1.5, top); ctx.lineTo(x + 1.5, by);
+      ctx.moveTo(x + BEAM.w - 1.5, top); ctx.lineTo(x + BEAM.w - 1.5, by);
+      ctx.stroke();
+      ctx.fillStyle = '#92400e'; roundRect(x - 4, by, BEAM.w + 8, BEAM.thick, 1.2); ctx.fill();
+      label('DOWN', x + BEAM.w / 2, by + BEAM.thick / 2, 3.4, '#fde047', '#1e293b');
+    }
+  }
+
+  drawNinja();
+
+  // מה הנינג'ה שמע
+  if (heard && state === 'play') {
+    const pb = playerBox();
+    label(heard.text, PLAYER.x + 4, pb.t - 6, 4, '#16a34a', '#fff');
+  }
+  ctx.restore();
+
+  // המילה הנכונה אחרי פגיעה
+  if (flash && state === 'play') {
+    ctx.font = '900 16px -apple-system, system-ui, Arial, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = 2.5; ctx.strokeStyle = '#fff';
+    ctx.strokeText(flash.text, W / 2, 40);
+    ctx.fillStyle = '#dc2626'; ctx.fillText(flash.text, W / 2, 40);
+  }
+
+  ctx.restore();
+}
+
+function drawNinja() {
+  if (invulnT > 0 && Math.floor(invulnT * 10) % 2 === 0) return;  // הבהוב אחרי פגיעה
+  const pb = playerBox();
+  const x = pb.l, w = pb.r - pb.l, t = pb.t, b = pb.b;
+  const headR = 3.3, hx = x + w / 2 + (duckT > 0 ? 1.5 : 0), hy = t + headR;
+
+  // סרט אדום מתנופף
+  ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 1;
+  const wave = Math.sin(performance.now() / 90) * 1.2;
+  ctx.beginPath(); ctx.moveTo(hx - headR, hy - 1); ctx.lineTo(hx - headR - 4, hy - 2 + wave); ctx.stroke();
+
+  // גוף
+  ctx.fillStyle = '#1e293b';
+  roundRect(x, t + headR * 1.3, w, b - t - headR * 1.3, 1.5); ctx.fill();
+  // חגורה
+  ctx.fillStyle = '#dc2626'; ctx.fillRect(x, b - (b - t) * 0.42, w, 1);
+  // ראש
+  ctx.fillStyle = '#1e293b';
+  ctx.beginPath(); ctx.arc(hx, hy, headR, 0, Math.PI * 2); ctx.fill();
+  // פס פנים ועיניים
+  ctx.fillStyle = '#fcd9b6'; ctx.fillRect(hx - headR + 0.6, hy - 0.9, headR * 2 - 1.2, 1.8);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(hx + 0.2, hy - 0.4, 0.8, 0.8);
+  ctx.fillRect(hx + 1.8, hy - 0.4, 0.8, 0.8);
+}
+
+/* ============================================================
+   לולאה ראשית
+   ============================================================ */
+function loop(t) {
+  const now = t / 1000;
+  const dt = Math.min(0.05, lastT ? now - lastT : 0);
+  lastT = now;
+  if (state === 'play') update(dt);
+  updateMic();
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ============================================================
+   כפתורים
+   ============================================================ */
+document.querySelectorAll('.lvl').forEach(btn => {
+  btn.onclick = async () => {
+    if (!model) return;
+    const ok = await ensureAudio();   // נקרא ישירות מהלחיצה
+    if (ok) startGame(btn.dataset.level);
+  };
+});
+$('againBtn').onclick = async () => { if (await ensureAudio()) startGame(levelKey); };
+$('menuBtn').onclick = () => {
+  state = 'menu';
+  $('over').classList.remove('show');
+  $('menu').classList.add('show');
+  setStatus('Ready! Choose a level');
+};
+$('endBtn').onclick = () => { if (state === 'play') endGame(true); };
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && audio) audio.ctx.resume();
+});
+
+dbg('model', '—'); dbg('mic', 'off'); dbg('heard', '—'); dbg('command', '—');
+loadModel();
+</script>
 </body>
 </html>
