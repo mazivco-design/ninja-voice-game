@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>בדיקת מילים</title>
+<script src="https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js"></script>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--deep:#0b1222;--text:#f1f5f9;--muted:#94a3b8;--accent:#22c55e;--warn:#f59e0b;--bad:#ef4444;--blue:#3b82f6;--line:#334155}
+*{box-sizing:border-box}
+body{margin:0 auto;font-family:-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);padding:16px;max-width:760px}
+h1{font-size:22px;margin:0 0 4px}
+p.sub{color:var(--muted);margin:0 0 14px;font-size:14px;line-height:1.5}
+.card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px}
+.card h2{font-size:17px;margin:0 0 8px}
+.card p{font-size:14px;color:var(--muted);margin:0 0 8px;line-height:1.5}
+button{font-size:17px;padding:12px 18px;border-radius:10px;border:0;background:var(--blue);color:#fff;font-weight:600;margin:4px 0 4px 8px;-webkit-tap-highlight-color:transparent}
+button:disabled{opacity:.4}
+button.stop{background:var(--bad)}
+.status{font-size:14px;color:var(--muted);margin-top:6px;min-height:20px}
+#prompt{height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:64px;font-weight:800;border-radius:14px;background:var(--deep);transition:background .1s;direction:ltr}
+#prompt small{font-size:18px;font-weight:600;margin-top:4px}
+#prompt.go{background:var(--warn);color:#000}
+#prompt.hit{background:var(--accent);color:#000}
+#prompt.wrong{background:#a855f7;color:#fff}
+#prompt.miss{background:var(--bad)}
+.meter{height:10px;background:var(--deep);border-radius:5px;overflow:hidden;margin-top:10px}
+.meter div{height:100%;width:0;background:var(--accent)}
+#heard{font-family:ui-monospace,Menlo,monospace;font-size:15px;margin-top:10px;min-height:22px;direction:ltr;text-align:left;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:15px;margin-top:6px}
+th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:500}
+td.w{direction:ltr;font-weight:800}
+.good{color:var(--accent)} .mid{color:var(--warn)} .badc{color:var(--bad)}
+</style>
+</head>
+<body>
+
+<h1>בדיקת מילים חדשות</h1>
+<p class="sub">בכל סבב מופיעה מילה אחת מתוך 6. אומרים אותה בקול כשהיא מופיעה. בסוף רואים לכל מילה כמה פעמים זוהתה נכון, ועם אילו מילים היא התבלבלה. כדאי שגם הילד יעשה את הבדיקה.</p>
+
+<div class="card">
+  <button id="loadBtn">טען מודל</button>
+  <button id="startBtn" disabled>התחל בדיקה (18 סבבים)</button>
+  <button id="stopBtn" class="stop" disabled>עצור</button>
+  <div class="status" id="status"></div>
+</div>
+
+<div class="card">
+  <div id="prompt">מוכן</div>
+  <div class="meter"><div id="meterBar"></div></div>
+  <div id="heard"></div>
+</div>
+
+<div class="card">
+  <h2>תוצאות לפי מילה</h2>
+  <p><b>זוהתה נכון</b> – כמה פעמים המשחק הבין את המילה הנכונה. <b>בלבול</b> – מה הוא שמע במקום. <b>זמן</b> – מתחילת הדיבור ועד הזיהוי.</p>
+  <table>
+    <thead><tr><th>מילה</th><th>זוהתה נכון</th><th>בלבול</th><th>זמן (חציון)</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+
+<script>
+const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly'];
+const PER_WORD = 3, WINDOW = 3500;
+const MODEL_URL = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz';
+const $ = id => document.getElementById(id);
+
+let model = null, audio = null, running = false;
+let queue = [], round = 0, target = null, promptTime = null, onsetTime = null, timer = null;
+let seenWords = [], noise = 0.01;
+const results = [];   // { target, heard, ms }
+
+function setPrompt(main, sub, cls) {
+  $('prompt').innerHTML = main + (sub ? '<small>' + sub + '</small>' : '');
+  $('prompt').className = cls || '';
+}
+
+/* ---------- טעינה ---------- */
+$('loadBtn').onclick = async () => {
+  if (typeof Vosk === 'undefined') { $('status').textContent = 'הספרייה לא נטענה – בדוק חיבור לאינטרנט'; return; }
+  $('loadBtn').disabled = true;
+  $('status').textContent = 'טוען מודל…';
+  try {
+    model = await Vosk.createModel(MODEL_URL);
+    $('status').textContent = 'המודל מוכן ✓';
+    $('startBtn').disabled = false;
+  } catch (e) {
+    $('status').textContent = 'שגיאה: ' + (e.message || e);
+    $('loadBtn').disabled = false;
+  }
+};
+
+/* ---------- מיקרופון ---------- */
+async function ensureAudio() {
+  if (audio) { audio.ctx.resume(); return true; }
+  const ac = new (window.AudioContext || window.webkitAudioContext)();
+  ac.resume();
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
+    const rec = new model.KaldiRecognizer(ac.sampleRate, JSON.stringify([...WORDS, '[unk]']));
+    rec.on('partialresult', m => handleText(m.result.partial, false));
+    rec.on('result', m => handleText(m.result.text, true));
+    const src = ac.createMediaStreamSource(stream);
+    const node = ac.createScriptProcessor(2048, 1, 1);
+    node.onaudioprocess = e => { try { rec.acceptWaveform(e.inputBuffer); } catch (err) {} };
+    const an = ac.createAnalyser(); an.fftSize = 1024;
+    src.connect(an); src.connect(node); node.connect(ac.destination);
+    audio = { ctx: ac, stream, node, rec, an, buf: new Float32Array(1024) };
+    return true;
+  } catch (e) {
+    try { ac.close(); } catch (_) {}
+    $('status').textContent = 'בעיה במיקרופון: ' + (e.message || e);
+    return false;
+  }
+}
+
+/* ---------- זיהוי ---------- */
+function handleText(text, isFinal) {
+  const words = (text || '').toLowerCase().split(/\s+/).filter(w => WORDS.includes(w));
+  for (let i = 0; i < words.length; i++) {
+    if (i >= seenWords.length) { seenWords.push(words[i]); onWord(words[i]); }
+    else if (i === words.length - 1 && words[i] !== seenWords[i]) { seenWords[i] = words[i]; onWord(words[i]); }
+  }
+  if (text) $('heard').textContent = 'שמעתי: ' + text;
+  if (isFinal) seenWords = [];
+}
+
+function onWord(w) {
+  if (!running || !promptTime) return;
+  clearTimeout(timer);
+  const t = performance.now();
+  const ms = onsetTime !== null ? t - onsetTime : null;
+  results.push({ target, heard: w, ms });
+  if (w === target) setPrompt('✓ ' + w.toUpperCase(), ms !== null ? Math.round(ms) + 'ms' : '', 'hit');
+  else setPrompt('✗ ' + w.toUpperCase(), 'ביקשנו ' + target.toUpperCase(), 'wrong');
+  promptTime = null;
+  render();
+  timer = setTimeout(next, 1100);
+}
+
+/* ---------- מד עוצמה ---------- */
+function meterLoop() {
+  if (audio) {
+    audio.an.getFloatTimeDomainData(audio.buf);
+    let s = 0; for (let i = 0; i < audio.buf.length; i++) s += audio.buf[i] * audio.buf[i];
+    const rms = Math.sqrt(s / audio.buf.length);
+    $('meterBar').style.width = Math.min(100, rms * 400) + '%';
+    if (!promptTime) noise = noise * 0.97 + rms * 0.03;
+    if (promptTime && onsetTime === null && rms > Math.max(0.02, noise * 4)) onsetTime = performance.now();
+  }
+  requestAnimationFrame(meterLoop);
+}
+requestAnimationFrame(meterLoop);
+
+/* ---------- מהלך הבדיקה ---------- */
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+$('startBtn').onclick = async () => {
+  if (!(await ensureAudio())) return;
+  queue = shuffle(WORDS.flatMap(w => Array(PER_WORD).fill(w)));
+  results.length = 0; round = 0; seenWords = [];
+  running = true;
+  $('startBtn').disabled = true; $('stopBtn').disabled = false;
+  $('status').textContent = 'מקשיב ✓';
+  render();
+  next();
+};
+
+function next() {
+  if (!running) return;
+  if (round >= queue.length) { finish(); return; }
+  setPrompt('…', '', '');
+  promptTime = null;
+  timer = setTimeout(() => {
+    if (!running) return;
+    target = queue[round++];
+    promptTime = performance.now(); onsetTime = null;
+    setPrompt(target.toUpperCase(), round + ' / ' + queue.length, 'go');
+    timer = setTimeout(() => {
+      if (!promptTime) return;
+      results.push({ target, heard: null, ms: null });
+      setPrompt('פספוס', target.toUpperCase(), 'miss');
+      promptTime = null;
+      render();
+      timer = setTimeout(next, 1100);
+    }, WINDOW);
+  }, 1200 + Math.random() * 1200);
+}
+
+function finish() {
+  running = false;
+  $('startBtn').disabled = false; $('stopBtn').disabled = true;
+  setPrompt('סיום ✓', 'צלם את התוצאות ושלח לי', 'hit');
+}
+
+$('stopBtn').onclick = () => {
+  running = false; clearTimeout(timer); promptTime = null;
+  $('startBtn').disabled = false; $('stopBtn').disabled = true;
+  setPrompt('נעצר', '', '');
+};
+
+/* ---------- טבלה ---------- */
+function median(a) { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
+
+function render() {
+  $('rows').innerHTML = WORDS.map(w => {
+    const r = results.filter(x => x.target === w);
+    if (!r.length) return '<tr><td class="w">' + w.toUpperCase() + '</td><td>—</td><td>—</td><td>—</td></tr>';
+    const ok = r.filter(x => x.heard === w);
+    const conf = r.filter(x => x.heard !== w).map(x => x.heard ? x.heard.toUpperCase() : 'לא נשמע');
+    const pct = ok.length / r.length;
+    const cls = pct >= 0.8 ? 'good' : pct >= 0.5 ? 'mid' : 'badc';
+    const med = median(ok.map(x => x.ms).filter(v => v !== null));
+    return '<tr><td class="w">' + w.toUpperCase() + '</td>' +
+           '<td class="' + cls + '">' + ok.length + '/' + r.length + '</td>' +
+           '<td>' + (conf.length ? conf.join(', ') : '—') + '</td>' +
+           '<td>' + (med === null ? '—' : Math.round(med) + 'ms') + '</td></tr>';
+  }).join('');
+}
+render();
+</script>
+</body>
+</html>
