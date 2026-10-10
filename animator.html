@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Ninja Animator</title>
-<script src="ninja-figure.js"></script>
+<script src="ninja-figure.js?v=20261010c"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; overflow: hidden; background: #0f172a; color: #e2e8f0; font-family: -apple-system, system-ui, Arial, sans-serif; }
@@ -157,7 +157,7 @@ const PREVIEW_PLAYER_COLOR = (() => {     // צבע של שחקן אמיתי, א
 
 const CHARS = { ninja: 'Ninja', enemy: 'Enemy', guard: 'Guard' };
 const MOVE_LABEL = { idle: 'IDLE', run: 'RUN', jump: 'JUMP', duck: 'DOWN', fly: 'FLY', swim: 'SWIM', climb: 'CLIMB', push: 'PUSH', pull: 'PULL',
-                     kick: 'KICK', throw: 'THROW', catch: 'CATCH', block: 'BLOCK', stop: 'STOP' };
+                     kick: 'KICK', throw: 'THROW', catch: 'CATCH', block: 'BLOCK', stop: 'STOP', leap: 'LEAP', dive: 'DIVE' };
 
 const COLOR_FIELDS = [
   ['body', 'גוף וראש'], ['front', 'יד ורגל קדמיות'], ['back', 'יד ורגל אחוריות'], ['edge', 'קו כהה מסביב'],
@@ -595,8 +595,8 @@ function showTip() {
    ציר זמן ותמונות מפתח
    ============================================================ */
 let selKey = -1, tlReady = false, kfDrag = null;
-const DEFAULT_DUR = { idle: 2.5, fly: 2.1, swim: 0.9, climb: 0.63, pull: 0.45, duck: 1, push: 1, catch: 1, block: 1, stop: 1, run: 1, kick: 1, throw: 1, jump: 1 };
-const STATIC_MOVES = ['duck', 'push', 'catch', 'block', 'stop'];
+const DEFAULT_DUR = { leap: 1, dive: 0.52, idle: 2.5, fly: 2.1, swim: 0.9, climb: 0.63, pull: 0.45, duck: 1, push: 1, catch: 1, block: 1, stop: 1, run: 1, kick: 1, throw: 1, jump: 1 };
+const STATIC_MOVES = ['duck', 'push', 'catch', 'block', 'stop', 'leap'];
 
 function currentPhase() {               // איפה הדמות נמצאת בתנועה עכשיו (או null אם מוצגת תנועה אחרת, למשל עמידה אחרי בעיטה)
   const P = view && view.out.P;

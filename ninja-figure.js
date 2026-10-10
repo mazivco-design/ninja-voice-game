@@ -53,7 +53,7 @@ const RIG_DEFAULT = {
   offsets: {}   // { run: { lean, hipY, head, legB:[ירך,ברך], legF:[...], armB:[כתף,מרפק], armF:[...] }, kick: {...}, ... }
 };
 
-const MOVES = ['idle', 'run', 'jump', 'duck', 'fly', 'swim', 'climb', 'push', 'pull', 'kick', 'throw', 'catch', 'block', 'stop'];
+const MOVES = ['idle', 'run', 'jump', 'duck', 'fly', 'swim', 'climb', 'push', 'pull', 'kick', 'throw', 'catch', 'block', 'stop', 'leap', 'dive'];
 
 function rigClone(o) { return JSON.parse(JSON.stringify(o)); }
 // מיזוג עמוק: שדות חדשים שנוספו בעתיד מקבלים ערך ברירת מחדל
@@ -195,14 +195,27 @@ function poseSwim(t) {          // שוחה: גוף אופקי, ידיים בת�
 }
 function poseClimb(t) {         // מטפס: ידיים למעלה לסירוגין, ברכיים מתכופפות
   const s = Math.sin(t * 10);
-  return tune('climb', { hipY: -4.6, torso: RIG.shape.torso, lean: 0.15, bob: 0, legs: [[0.9 + 0.45 * s, -0.3], [0.9 - 0.45 * s, -0.3]], arms: [[2.7 + 0.35 * s, 2.95], [2.7 - 0.35 * s, 2.95]] }, timePhase('climb', t));
+  return tune('climb', { hipY: -4.6, torso: RIG.shape.torso, lean: 0.3, bob: 0, legs: [[0.9 + 0.45 * s, -0.3], [0.9 - 0.45 * s, -0.3]], arms: [[2.7 + 0.35 * s, 2.95], [2.7 - 0.35 * s, 2.95]] }, timePhase('climb', t));
 }
 function posePush() {           // דוחף: נוטה קדימה, שתי ידיים ישרות, רגל אחורית נמתחת
   return tune('push', { hipY: -4.2, torso: RIG.shape.torso, lean: 0.75, bob: 0, legs: [[-0.7, -0.5], [0.55, 0.1]], arms: [[1.45, 1.55], [1.55, 1.6]], openHand: true }, timePhase('push', poseClock()));
 }
-function posePull(t) {          // מושך: נוטה אחורה, ידיים קדימה על החבל
-  const tug = Math.sin(t * 14) * 0.1;
-  return tune('pull', { hipY: -4.4, torso: RIG.shape.torso, lean: -0.5 + tug, bob: 0, legs: [[-0.15, 0.05], [0.6, 0.35]], arms: [[1.35, 1.5], [1.25, 1.45]] }, timePhase('pull', t));
+function posePull(t) {          // מושך חבל: יד אחרי יד – מושיט למעלה, מושך עד המותניים, הגוף מתכופף עם המאמץ
+  const ph = frac(t / 0.7), sm = q => (1 - Math.cos(2 * Math.PI * q)) / 2;
+  const sF = sm(ph), sB = sm(ph + 0.5);                      // 0 = יד למעלה על החבל, 1 = יד למטה
+  const arm = s => [lerp(2.75, 0.85, s), lerp(2.95, 1.75, s)];
+  const effort = Math.max(sF, sB);
+  return tune('pull', { hipY: -4.3 + effort * 0.5, torso: RIG.shape.torso, lean: -0.08 + effort * 0.18, bob: 0, headTilt: -0.15,
+                        legs: [[-0.45, -0.1], [0.55 + effort * 0.15, 0.05]], arms: [arm(sB), arm(sF)] }, timePhase('pull', t));
+}
+function poseLeap() {          // זינוק אופקי – הגוף ישר קדימה, ידיים מושטות, רגליים מאחור
+  return tune('leap', { hipY: -2.2, torso: RIG.shape.torso, lean: 1.45, bob: 0, headTilt: -1.0,
+                        legs: [[-1.55, -1.6], [-1.45, -1.5]], arms: [[1.55, 1.6], [1.65, 1.7]] }, timePhase('leap', poseClock()));
+}
+function poseDive(t) {         // צולל מתחת למים – גוף אופקי ונוטה מטה, ידיים קדימה, רגליים בועטות
+  const f = Math.sin(t * 12) * 0.3;
+  return tune('dive', { hipY: -2.2, torso: RIG.shape.torso, lean: 1.75, bob: 0, headTilt: -1.2,
+                        legs: [[-1.55 + f, -1.6 + f], [-1.55 - f, -1.6 - f]], arms: [[1.85, 1.9], [1.95, 2.0]] }, timePhase('dive', t));
 }
 
 // תוספות על תנוחה קיימת (k = התקדמות הפעולה 0→1)
@@ -425,6 +438,8 @@ function movePose(move, t) {
     case 'catch': { const c = t % 1.2; P = poseIdle(t); if (keyed || c < 0.4) applyCatch(P); break; }
     case 'block': { const c = t % 1.6; P = poseIdle(t); if (keyed || c < 0.8) applyBlock(P); break; }
     case 'stop':  { const c = t % 1.6; P = poseIdle(t); if (keyed || c < 0.8) applyStop(P); break; }
+    case 'leap':  P = poseLeap(); lift = 4; break;
+    case 'dive':  P = poseDive(t); break;
     default: P = poseIdle(t);
   }
   POSE_CLOCK = null;
