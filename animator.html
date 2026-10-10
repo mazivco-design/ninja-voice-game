@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Ninja Animator</title>
+<script src="ninja-figure.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: #0f172a; color: #e2e8f0; font-family: -apple-system, system-ui, Arial, sans-serif; }
+#app { position: fixed; inset: 0; display: flex; flex-direction: row-reverse; }
+@media (max-aspect-ratio: 1/1) { #app { flex-direction: column; } }
+
+/* תצוגה */
+#stage { position: relative; flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+#bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: max(8px, env(safe-area-inset-top)) 10px 8px; background: #111827; direction: ltr; }
+#bar .grp { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+#bar .sep { width: 1px; height: 26px; background: #334155; margin: 0 4px; }
+.b { border: 0; border-radius: 9px; background: #1f2937; color: #e2e8f0; font-weight: 800; font-size: 14px; padding: 7px 10px; }
+.b.on { background: #4f46e5; color: #fff; }
+.b.go { background: #16a34a; color: #fff; }
+.b.warn { background: #b91c1c; color: #fff; }
+#moves { display: flex; gap: 4px; overflow-x: auto; padding: 6px 10px; background: #0b1220; direction: ltr; scrollbar-width: none; }
+#moves .b { flex: none; }
+#view { position: relative; flex: 1; min-height: 0; }
+canvas { display: block; width: 100%; height: 100%; }
+#info { position: absolute; left: 10px; bottom: 8px; font: 12px ui-monospace, Menlo, monospace; color: #475569; direction: ltr; pointer-events: none; }
+
+/* פאנל עריכה */
+#panel { width: min(380px, 42vw); background: #111827; border-left: 1px solid #1f2937; display: flex; flex-direction: column; min-height: 0; }
+@media (max-aspect-ratio: 1/1) { #panel { width: 100%; height: 46%; border-left: 0; border-top: 1px solid #1f2937; } }
+#tabs { display: flex; gap: 4px; padding: 8px; }
+#tabs .b { flex: 1; font-size: 15px; padding: 9px 6px; }
+#content { flex: 1; overflow-y: auto; padding: 4px 12px 12px; -webkit-overflow-scrolling: touch; }
+h3 { font-size: 14px; color: #94a3b8; margin: 12px 0 6px; font-weight: 800; }
+.hint { font-size: 12px; color: #64748b; line-height: 1.45; margin-bottom: 6px; }
+.row { display: grid; grid-template-columns: 1fr 1.6fr 46px; gap: 8px; align-items: center; padding: 5px 0; border-bottom: 1px solid #1f2937; }
+.row label { font-size: 13px; font-weight: 700; color: #cbd5e1; }
+.row input[type=range] { width: 100%; direction: ltr; accent-color: #6366f1; height: 26px; }
+.row .val { font: 12px ui-monospace, Menlo, monospace; color: #94a3b8; text-align: left; direction: ltr; }
+.crow { display: grid; grid-template-columns: 1fr 52px 70px; gap: 8px; align-items: center; padding: 5px 0; border-bottom: 1px solid #1f2937; }
+.crow label { font-size: 13px; font-weight: 700; color: #cbd5e1; }
+.crow input[type=color] { width: 52px; height: 32px; border: 0; background: none; padding: 0; }
+.crow .val { font: 12px ui-monospace, Menlo, monospace; color: #94a3b8; direction: ltr; text-align: left; }
+.chk { display: flex; gap: 8px; align-items: center; font-size: 13px; font-weight: 700; padding: 6px 0; }
+.chk input { width: 20px; height: 20px; accent-color: #6366f1; }
+.small { border: 0; border-radius: 8px; background: #1f2937; color: #cbd5e1; font-weight: 700; font-size: 13px; padding: 7px 10px; margin-top: 10px; }
+
+#foot { display: flex; gap: 6px; padding: 8px; border-top: 1px solid #1f2937; flex-wrap: wrap; }
+#foot .b { flex: 1; font-size: 14px; padding: 10px 6px; }
+#dirty { font-size: 12px; color: #f59e0b; padding: 0 10px 6px; min-height: 18px; }
+
+/* חלון ייבוא/ייצוא */
+#modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; padding: 16px; }
+#modal.show { display: flex; }
+#modal .box { background: #111827; border-radius: 16px; padding: 16px; width: min(560px, 100%); }
+#modal h2 { font-size: 18px; margin-bottom: 8px; }
+#modal textarea { width: 100%; height: 220px; background: #0b1220; color: #e2e8f0; border: 1px solid #334155; border-radius: 10px; padding: 10px;
+                  font: 12px ui-monospace, Menlo, monospace; direction: ltr; }
+#modal .btns { display: flex; gap: 8px; margin-top: 10px; }
+#modal .btns .b { flex: 1; padding: 10px; }
+#modalMsg { font-size: 13px; color: #f59e0b; min-height: 18px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <div id="bar">
+      <div class="grp" id="chars"></div>
+      <div class="sep"></div>
+      <div class="grp">
+        <button class="b" id="play">⏸</button>
+        <button class="b" id="step">Step ▶|</button>
+        <span id="speeds" class="grp"></span>
+      </div>
+      <div class="sep"></div>
+      <div class="grp">
+        <button class="b" id="skel">Skeleton</button>
+        <button class="b" id="zoomOut">−</button><button class="b" id="zoomIn">+</button>
+      </div>
+    </div>
+    <div id="moves"></div>
+    <div id="view"><canvas id="c"></canvas><div id="info"></div></div>
+  </div>
+
+  <div id="panel">
+    <div id="tabs">
+      <button class="b on" data-tab="colors">🎨 צבעים</button>
+      <button class="b" data-tab="shape">📏 צורה</button>
+      <button class="b" data-tab="pose">🦵 תנוחה</button>
+    </div>
+    <div id="content"></div>
+    <div id="dirty"></div>
+    <div id="foot">
+      <button class="b go" id="save">✓ שמור</button>
+      <button class="b" id="undo">↶ בטל שינויים</button>
+      <button class="b" id="share">📋 העתק / הדבק</button>
+      <button class="b warn" id="resetAll">איפוס הכל</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal">
+  <div class="box">
+    <h2>העתקה והדבקה של ההגדרות</h2>
+    <div class="hint">"העתק" מעתיק את כל ההגדרות כטקסט – אפשר להדביק אותו בצ'אט כדי לקבוע אותן כברירת המחדל במשחק.<br>
+      כדי לטעון הגדרות: הדבק טקסט בתיבה ולחץ "טען".</div>
+    <textarea id="json" spellcheck="false"></textarea>
+    <div id="modalMsg"></div>
+    <div class="btns">
+      <button class="b on" id="copy">📋 העתק</button>
+      <button class="b go" id="load">טען</button>
+      <button class="b" id="close">סגור</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const canvas = $('c'), ctx = canvas.getContext('2d');
+
+/* ============================================================
+   מצב העורך
+   ============================================================ */
+let saved = JSON.stringify(RIG);          // מה ששמור כרגע ב-iPad
+let char = 'ninja', move = 'run', tab = 'colors';
+let playing = true, speedMul = 0.5, skeleton = true, zoom = 1, t = 0, lastT = 0;
+const PREVIEW_PLAYER_COLOR = (() => {     // צבע של שחקן אמיתי, אם יש
+  try { const ps = JSON.parse(localStorage.getItem('ninjaVoice_players') || '[]'); return ps[0] ? ps[0].color : '#2563eb'; } catch (e) { return '#2563eb'; }
+})();
+
+const CHARS = { ninja: 'Ninja', enemy: 'Enemy', guard: 'Guard' };
+const MOVE_LABEL = { idle: 'IDLE', run: 'RUN', jump: 'JUMP', duck: 'DOWN', fly: 'FLY', swim: 'SWIM', climb: 'CLIMB', push: 'PUSH', pull: 'PULL',
+                     kick: 'KICK', throw: 'THROW', catch: 'CATCH', block: 'BLOCK', stop: 'STOP' };
+
+const COLOR_FIELDS = [
+  ['body', 'גוף וראש'], ['front', 'יד ורגל קדמיות'], ['back', 'יד ורגל אחוריות'], ['edge', 'קו מפריד (קדמי)'],
+  ['skin', 'פס הפנים'], ['eyes', 'עיניים'], ['outline', 'קו מתאר']
+];
+const SHAPE_FIELDS = [
+  ['thigh', 'ירך (אורך)', 1, 4.5, 0.05], ['shin', 'שוק (אורך)', 1, 4.5, 0.05],
+  ['upper', 'זרוע (אורך)', 1, 4.5, 0.05], ['fore', 'אמה (אורך)', 1, 4.5, 0.05],
+  ['torso', 'גוף (אורך)', 2, 5, 0.05], ['shoulderAt', 'גובה הכתף על הגוף', 0.5, 1, 0.01],
+  ['headR', 'גודל הראש', 2, 4.5, 0.05], ['headUp', 'אורך הצוואר', 1.5, 4, 0.05],
+  ['bodyW', 'עובי הגוף', 2, 6, 0.05], ['legW', 'עובי רגליים', 1, 3.5, 0.05], ['armW', 'עובי ידיים', 0.8, 3, 0.05],
+  ['handR', 'גודל כף יד', 0.5, 1.8, 0.05], ['outlineW', 'עובי קו מתאר', 0, 2, 0.05], ['edgeW', 'עובי קו מפריד', 0, 2, 0.05]
+];
+const RUN_FIELDS = [
+  ['legSwing', 'תנופת רגליים', 0.2, 1.6, 0.01], ['kneeBend', 'כיפוף ברכיים', 0, 2, 0.01],
+  ['armSwing', 'תנופת ידיים', 0, 2, 0.01], ['elbowBend', 'כיפוף מרפקים', 0, 2.5, 0.01],
+  ['lean', 'הטיית גוף קדימה', -0.3, 0.8, 0.01], ['bob', 'קפיצה בכל צעד', 0, 2, 0.01], ['cadence', 'מהירות הצעדים', 0.4, 2, 0.01]
+];
+const DEG = 180 / Math.PI;
+const OFFSET_FIELDS = [   // [מפתח, תווית, אינדקס במערך (או null), טווח]
+  ['lean', 'הטיית גוף', null, 60], ['hipY', 'גובה הירך', null, 3], ['head', 'הטיית ראש', null, 60],
+  ['armF', 'כתף קדמית', 0, 90], ['armF', 'מרפק קדמי', 1, 90],
+  ['armB', 'כתף אחורית', 0, 90], ['armB', 'מרפק אחורי', 1, 90],
+  ['legF', 'ירך קדמית', 0, 90], ['legF', 'ברך קדמית', 1, 90],
+  ['legB', 'ירך אחורית', 0, 90], ['legB', 'ברך אחורית', 1, 90]
+];
+
+/* ============================================================
+   כפתורים עליונים
+   ============================================================ */
+function btnRow(box, items, cur, label, onPick) {
+  box.innerHTML = '';
+  items.forEach(v => {
+    const b = document.createElement('button');
+    b.className = 'b' + (v === cur ? ' on' : ''); b.textContent = label(v);
+    b.onclick = () => onPick(v);
+    box.appendChild(b);
+  });
+}
+function renderBar() {
+  btnRow($('chars'), Object.keys(CHARS), char, v => CHARS[v], v => { char = v; renderBar(); renderPanel(); });
+  btnRow($('moves'), MOVES, move, v => MOVE_LABEL[v], v => { move = v; t = 0; renderBar(); if (tab === 'pose') renderPanel(); });
+  btnRow($('speeds'), [0.1, 0.25, 0.5, 1], speedMul, v => v + '×', v => { speedMul = v; renderBar(); });
+  $('play').textContent = playing ? '⏸' : '▶';
+  $('skel').classList.toggle('on', skeleton);
+}
+$('play').onclick = () => { playing = !playing; renderBar(); };
+$('step').onclick = () => { playing = false; t += 1 / 30; renderBar(); };
+$('skel').onclick = () => { skeleton = !skeleton; renderBar(); };
+$('zoomIn').onclick = () => { zoom = Math.min(2.2, zoom * 1.2); };
+$('zoomOut').onclick = () => { zoom = Math.max(0.5, zoom / 1.2); };
+
+/* ============================================================
+   פאנל עריכה
+   ============================================================ */
+document.querySelectorAll('#tabs .b').forEach(b => b.onclick = () => {
+  tab = b.dataset.tab;
+  document.querySelectorAll('#tabs .b').forEach(x => x.classList.toggle('on', x === b));
+  renderPanel();
+});
+
+function slider(box, label, value, min, max, step, fmt, onInput) {
+  const row = document.createElement('div'); row.className = 'row';
+  row.innerHTML = '<label></label><input type="range"><span class="val"></span>';
+  row.querySelector('label').textContent = label;
+  const inp = row.querySelector('input'), val = row.querySelector('.val');
+  inp.min = min; inp.max = max; inp.step = step; inp.value = value;
+  val.textContent = fmt(value);
+  inp.oninput = () => { const v = parseFloat(inp.value); val.textContent = fmt(v); onInput(v); markDirty(); };
+  inp.ondblclick = () => {};
+  box.appendChild(row);
+  return inp;
+}
+function head(box, text, hint) {
+  const h = document.createElement('h3'); h.textContent = text; box.appendChild(h);
+  if (hint) { const p = document.createElement('div'); p.className = 'hint'; p.textContent = hint; box.appendChild(p); }
+}
+function smallBtn(box, text, fn) {
+  const b = document.createElement('button'); b.className = 'small'; b.textContent = text;
+  b.onclick = () => { fn(); markDirty(); renderPanel(); };
+  box.appendChild(b);
+}
+
+function renderPanel() {
+  const box = $('content');
+  box.innerHTML = '';
+  if (tab === 'colors') renderColors(box);
+  else if (tab === 'shape') renderShape(box);
+  else renderPose(box);
+}
+
+function renderColors(box) {
+  const C = RIG.colors[char];
+  head(box, 'צבעים – ' + CHARS[char], 'בוחרים דמות למעלה (Ninja / Enemy / Guard). כל שינוי מופיע מיד בתצוגה.');
+  COLOR_FIELDS.forEach(([k, lbl]) => {
+    const row = document.createElement('div'); row.className = 'crow';
+    row.innerHTML = '<label></label><input type="color"><span class="val"></span>';
+    row.querySelector('label').textContent = lbl;
+    const inp = row.querySelector('input'), val = row.querySelector('.val');
+    inp.value = C[k]; val.textContent = C[k];
+    inp.oninput = () => { C[k] = inp.value; val.textContent = inp.value; markDirty(); };
+    box.appendChild(row);
+  });
+  slider(box, 'שקיפות קו המתאר', C.outlineAlpha, 0, 1, 0.01, v => Math.round(v * 100) + '%', v => C.outlineAlpha = v);
+
+  head(box, 'צבע מיוחד (סרט, חגורה, כפפות)');
+  if (char === 'ninja') {
+    const lab = document.createElement('label'); lab.className = 'chk';
+    lab.innerHTML = '<input type="checkbox"> לפי הצבע שכל שחקן בחר';
+    const cb = lab.querySelector('input'); cb.checked = !C.accent;
+    cb.onchange = () => { C.accent = cb.checked ? '' : PREVIEW_PLAYER_COLOR; markDirty(); renderPanel(); };
+    box.appendChild(lab);
+  }
+  if (C.accent) {
+    const row = document.createElement('div'); row.className = 'crow';
+    row.innerHTML = '<label>צבע מיוחד</label><input type="color"><span class="val"></span>';
+    const inp = row.querySelector('input'), val = row.querySelector('.val');
+    inp.value = C.accent; val.textContent = C.accent;
+    inp.oninput = () => { C.accent = inp.value; val.textContent = inp.value; markDirty(); };
+    box.appendChild(row);
+  }
+  smallBtn(box, '↺ איפוס הצבעים של ' + CHARS[char], () => { RIG.colors[char] = rigClone(RIG_DEFAULT.colors[char]); });
+}
+
+function renderShape(box) {
+  head(box, 'פרופורציות', 'משותף לכל הדמויות (האויב והשומר פשוט גדולים יותר). אורכים נמדדים ביחידות של המשחק – הנינג\'ה בגובה 14 יחידות.');
+  SHAPE_FIELDS.forEach(([k, lbl, mn, mx, st]) => slider(box, lbl, RIG.shape[k], mn, mx, st, v => v.toFixed(2), v => RIG.shape[k] = v));
+  smallBtn(box, '↺ איפוס הצורה', () => { RIG.shape = rigClone(RIG_DEFAULT.shape); });
+}
+
+function renderPose(box) {
+  if (move === 'run') {
+    head(box, 'מחזור הריצה', 'שולטים בתנועה כולה: כמה הרגליים והידיים מתנדנדות, כמה הן מתכופפות ובאיזה קצב.');
+    RUN_FIELDS.forEach(([k, lbl, mn, mx, st]) => slider(box, lbl, RIG.run[k], mn, mx, st, v => v.toFixed(2), v => RIG.run[k] = v));
+    smallBtn(box, '↺ איפוס מחזור הריצה', () => { RIG.run = rigClone(RIG_DEFAULT.run); });
+  }
+  head(box, 'תיקוני זווית – ' + MOVE_LABEL[move],
+       'מזיזים כל מפרק בזווית קבועה, שמתווספת לתנועה. כדאי לעצור (⏸) או להאט ל-0.1× ולהפעיל Skeleton. ירוק = יד/רגל קדמית, כתום = אחורית.');
+  const O = RIG.offsets[move] || {};
+  OFFSET_FIELDS.forEach(([k, lbl, idx, range]) => {
+    const isUnits = k === 'hipY';
+    const cur = idx === null ? (O[k] || 0) : ((O[k] || [0, 0])[idx] || 0);
+    const shown = isUnits ? cur : cur * DEG;
+    slider(box, lbl, shown, -range, range, isUnits ? 0.05 : 1, v => isUnits ? v.toFixed(2) : Math.round(v) + '°', v => {
+      const o = RIG.offsets[move] = RIG.offsets[move] || {};
+      const raw = isUnits ? v : v / DEG;
+      if (idx === null) o[k] = raw; else { o[k] = o[k] || [0, 0]; o[k][idx] = raw; }
+    });
+  });
+  smallBtn(box, '↺ איפוס התיקונים של ' + MOVE_LABEL[move], () => { delete RIG.offsets[move]; });
+}
+
+/* ============================================================
+   שמירה, ביטול, העתקה
+   ============================================================ */
+function markDirty() {
+  const dirty = JSON.stringify(RIG) !== saved;
+  $('dirty').textContent = dirty ? '● יש שינויים שלא נשמרו – המשחק עדיין משתמש בגרסה השמורה' : '';
+}
+$('save').onclick = () => {
+  saveRig(RIG); saved = JSON.stringify(RIG); markDirty();
+  $('dirty').textContent = '✓ נשמר – המשחק ישתמש בזה מעכשיו';
+  setTimeout(markDirty, 2500);
+};
+$('undo').onclick = () => { RIG = rigMerge(RIG_DEFAULT, JSON.parse(saved)); renderPanel(); markDirty(); };
+$('resetAll').onclick = () => {
+  if (!confirm('לאפס את כל ההגדרות לברירת המחדל? (ייכנס לתוקף רק אחרי "שמור")')) return;
+  RIG = rigClone(RIG_DEFAULT); renderPanel(); markDirty();
+};
+$('share').onclick = () => { $('json').value = JSON.stringify(RIG, null, 1); $('modalMsg').textContent = ''; $('modal').classList.add('show'); };
+$('close').onclick = () => $('modal').classList.remove('show');
+$('copy').onclick = async () => {
+  const txt = JSON.stringify(RIG);
+  try { await navigator.clipboard.writeText(txt); $('modalMsg').textContent = '✓ הועתק – אפשר להדביק בצ\'אט'; }
+  catch (e) { $('json').value = txt; $('json').select(); $('modalMsg').textContent = 'סמן את הטקסט והעתק ידנית'; }
+};
+$('load').onclick = () => {
+  try { RIG = rigMerge(RIG_DEFAULT, JSON.parse($('json').value)); renderPanel(); markDirty(); $('modalMsg').textContent = '✓ נטען – לחץ "שמור" כדי שהמשחק ישתמש בזה'; }
+  catch (e) { $('modalMsg').textContent = 'הטקסט לא תקין: ' + e.message; }
+};
+
+/* ============================================================
+   ציור התצוגה
+   ============================================================ */
+let cw = 0, ch = 0;
+function resize() {
+  const r = $('view').getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  cw = r.width; ch = r.height;
+  canvas.width = Math.round(cw * dpr); canvas.height = Math.round(ch * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+
+function frame(ts) {
+  const now = ts / 1000, dt = Math.min(0.05, lastT ? now - lastT : 0); lastT = now;
+  if (playing) t += dt * speedMul;
+  if (!cw) resize();
+  const u = Math.min(cw / 34, ch / 26) * zoom;     // גודל יחידה – דמות גדולה
+  const fx = cw / 2, fy = ch * 0.78;
+  ctx.fillStyle = '#e0f2fe'; ctx.fillRect(0, 0, cw, ch);
+  ctx.strokeStyle = 'rgba(15,23,42,.07)'; ctx.lineWidth = 1;   // רשת: כל קו = 2 יחידות
+  for (let y = fy; y > 0; y -= u * 2) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cw, y); ctx.stroke(); }
+  for (let x = fx % (u * 2); x < cw; x += u * 2) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, fy); ctx.stroke(); }
+  ctx.fillStyle = '#a16207'; ctx.fillRect(0, fy, cw, ch - fy);
+  ctx.fillStyle = '#4ade80'; ctx.fillRect(0, fy, cw, u * 0.5);
+
+  const { P, lift } = movePose(move, t);
+  ctx.save(); ctx.translate(fx, fy); ctx.scale(u, u);
+  if (move === 'fly') {
+    const C = RIG.colors[char];
+    ctx.fillStyle = C.accent || PREVIEW_PLAYER_COLOR;
+    ctx.beginPath(); ctx.moveTo(-12, -lift - 15); ctx.lineTo(0.5, -lift - 21); ctx.lineTo(13, -lift - 15); ctx.lineTo(0.5, -lift - 17); ctx.closePath(); ctx.fill();
+  }
+  drawFigure({ fx: 0, fy: -lift, facing: 1, scale: 1, kind: char, accent: PREVIEW_PLAYER_COLOR, pose: P, skeleton });
+  ctx.restore();
+  $('info').textContent = MOVE_LABEL[move] + ' · t=' + t.toFixed(2) + 's · ' + speedMul + '×';
+  requestAnimationFrame(frame);
+}
+
+renderBar(); renderPanel(); markDirty();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
