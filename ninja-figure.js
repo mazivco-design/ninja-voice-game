@@ -8,10 +8,19 @@
    shape   – אורכים ועוביים של האיברים
    run     – פרמטרים של מחזור הריצה
    offsets – תיקוני זווית לכל תנועה (ברדיאנים), שנוספים על התנוחה הבסיסית
+   layers  – סדר הציור של החלקים (מאחור לפנים), כללי או מיוחד לתנועה
+   elements– לכל חלק: האם יש לו הילה בהירה מסביב / קו כהה מסביב
+   attach  – הזזת נקודות החיבור (כתפיים, ירכיים, ראש) על הגוף
    ההגדרות נשמרות ב-iPad (localStorage) ונטענות אוטומטית גם במשחק.
    ============================================================ */
 
 const RIG_KEY = 'ninjaVoice_rig';
+
+// החלקים של הדמות, לפי סדר הציור הרגיל (הראשון מאחור, האחרון מקדימה)
+const ELEMENTS = ['legB', 'armB', 'handB', 'torso', 'belt', 'head', 'face', 'band', 'legF', 'armF', 'handF'];
+const ELEMENT_LABEL = { legB: 'רגל אחורית', armB: 'יד אחורית', handB: 'כפפה אחורית', torso: 'גוף', belt: 'חגורה', head: 'ראש',
+                        face: 'פנים ועיניים', band: 'סרט ראש', legF: 'רגל קדמית', armF: 'יד קדמית', handF: 'כפפה קדמית (ומגן)' };
+const ATTACH_LABEL = { shB: 'כתף אחורית', shF: 'כתף קדמית', hipB: 'ירך אחורית', hipF: 'ירך קדמית', head: 'ראש' };
 
 const RIG_DEFAULT = {
   colors: {
@@ -29,6 +38,15 @@ const RIG_DEFAULT = {
     outlineW: 0.9, edgeW: 0.8, handR: 0.95
   },
   run: { legSwing: 0.85, kneeBend: 1.0, armSwing: 1.15, elbowBend: 1.55, lean: 0.18, bob: 0.6, cadence: 1.0 },
+  layers: { order: ELEMENTS.slice(), perMove: {} },   // perMove: { kick: [...], ... }
+  elements: {
+    legB: { halo: true, edge: false }, armB: { halo: true, edge: false }, handB: { halo: false, edge: false },
+    torso: { halo: true, edge: false }, belt: { halo: false, edge: false }, head: { halo: true, edge: false },
+    face: { halo: false, edge: false }, band: { halo: false, edge: false },
+    legF: { halo: true, edge: true }, armF: { halo: true, edge: true }, handF: { halo: false, edge: true }
+  },
+  // [קדימה, למעלה] ביחידות, יחסית לגוף (מסתובב עם הטיית הגוף)
+  attach: { shB: [0, 0], shF: [0, 0], hipB: [0, 0], hipF: [0, 0], head: [0, 0] },
   offsets: {}   // { run: { lean, hipY, head, legB:[ירך,ברך], legF:[...], armB:[כתף,מרפק], armF:[...] }, kick: {...}, ... }
 };
 
@@ -49,6 +67,14 @@ function rigMerge(def, val) {
 function loadRig() {
   try { const v = localStorage.getItem(RIG_KEY); return rigMerge(RIG_DEFAULT, v ? JSON.parse(v) : {}); }
   catch (e) { return rigClone(RIG_DEFAULT); }
+}
+// סדר השכבות לתנועה מסוימת – תמיד מכיל את כל החלקים בדיוק פעם אחת
+function layerOrder(move) {
+  const L = RIG.layers || {};
+  const src = (L.perMove && L.perMove[move]) || L.order || ELEMENTS;
+  const out = src.filter((e, i) => ELEMENTS.includes(e) && src.indexOf(e) === i);
+  ELEMENTS.forEach(e => { if (!out.includes(e)) out.push(e); });
+  return out;
 }
 function saveRig(r) { try { localStorage.setItem(RIG_KEY, JSON.stringify(r)); } catch (e) {} }
 function resetRig() { try { localStorage.removeItem(RIG_KEY); } catch (e) {} RIG = rigClone(RIG_DEFAULT); }
@@ -79,6 +105,7 @@ function hexA(hex, a) {
 // תיקוני הזווית מהעורך – מתווספים לתנוחה
 function tune(name, P) {
   const o = RIG.offsets[name];
+  P.move = name;                 // איזו תנועה – בשביל סדר השכבות ובשביל העורך
   if (!o) return P;
   const add = (arr, d) => d ? [arr[0] + (d[0] || 0), arr[1] + (d[1] || 0)] : arr;
   P.lean += o.lean || 0;
@@ -158,83 +185,97 @@ function applyStop(P)  { P.arms = [P.arms[0], [1.55, 1.85]]; P.openHand = true; 
    F = { fx, fy, facing, scale, kind: 'ninja'|'enemy'|'guard', accent, pose, skeleton }
    שלד: ירך → צוואר (גוף). הכתף על הגוף מתחת לצוואר, והראש מעל הצוואר. */
 function figureJoints(P) {
-  const S = RIG.shape;
-  const along = (o, d) => [o[0] + Math.sin(P.lean) * d, o[1] - Math.cos(P.lean) * d];
+  const S = RIG.shape, A = RIG.attach || {};
+  const up = [Math.sin(P.lean), -Math.cos(P.lean)], fw = [Math.cos(P.lean), Math.sin(P.lean)];   // כיוון הגוף: למעלה / קדימה
+  const along = (o, d) => [o[0] + up[0] * d, o[1] + up[1] * d];
+  const off = (o, d) => d ? [o[0] + fw[0] * d[0] + up[0] * d[1], o[1] + fw[1] * d[0] + up[1] * d[1]] : o;
   const hip = [0, P.hipY];
   const torso = P.torso || S.torso;
   const neck = along(hip, torso);
   const sh = along(hip, torso * S.shoulderAt);
-  const head = along(neck, S.headUp);
-  return { hip, neck, sh, head };
+  const head0 = along(neck, S.headUp);
+  return { hip, neck, sh, head0, head: off(head0, A.head),
+           shB: off(sh, A.shB), shF: off(sh, A.shF), hipB: off(hip, A.hipB), hipF: off(hip, A.hipF), up, fw };
 }
 
 function drawFigure(F) {
   const P = F.pose, S = RIG.shape, now = performance.now() / 1000;
   const C = RIG.colors[F.kind || 'ninja'] || RIG.colors.ninja;
   const accent = C.accent || F.accent || '#dc2626';
-  const outline = hexA(C.outline, C.outlineAlpha);
+  const halo = hexA(C.outline, C.outlineAlpha);
+  const EL = RIG.elements || {};
   ctx.save();
   ctx.translate(F.fx, F.fy + (P.bob || 0) * F.scale);
   ctx.scale(F.facing * F.scale, F.scale);
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  const { hip, neck, sh, head } = figureJoints(P);
-  const pts = {};
-
-  const limb = (o, a, l1, l2, lw, col, name) => {
-    const k = endOf(o[0], o[1], a[0], l1), e = endOf(k[0], k[1], a[1], l2);
-    ctx.strokeStyle = col; ctx.lineWidth = lw;
-    ctx.beginPath(); ctx.moveTo(o[0], o[1]); ctx.lineTo(k[0], k[1]); ctx.lineTo(e[0], e[1]); ctx.stroke();
-    if (name) pts[name] = [o, k, e];
-    return e;
-  };
-  const paint = (isOutline) => {
-    const ex = isOutline ? S.outlineW : 0;
-    const col = c => isOutline ? outline : c;
-    if (isOutline && S.outlineW <= 0) return;
-    // שכבה אחורית: רגל ויד רחוקות
-    limb(hip, P.legs[0], S.thigh, S.shin, S.legW + ex, col(C.back), 'legB');
-    const handB = limb(sh, P.arms[0], S.upper, S.fore, S.armW + ex, col(C.back), 'armB');
-    if (!isOutline) { ctx.fillStyle = accent; circle(handB[0], handB[1], S.handR); }
-    // גוף וראש
-    ctx.strokeStyle = col(C.body); ctx.lineWidth = S.bodyW + ex;
-    ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.lineTo(neck[0], neck[1]); ctx.stroke();
-    ctx.fillStyle = col(C.body); circle(head[0], head[1], S.headR + ex / 2);
-    // שכבה קדמית: קו כהה מפריד ואז הרגל והיד הקרובות – מעל הגוף
-    if (!isOutline && S.edgeW > 0) {
-      limb(hip, P.legs[1], S.thigh, S.shin, S.legW + S.edgeW, C.edge);
-      limb(sh, P.arms[1], S.upper, S.fore, S.armW + S.edgeW, C.edge);
-    }
-    const foot = limb(hip, P.legs[1], S.thigh, S.shin, S.legW + ex, col(C.front), 'legF');
-    const hand = limb(sh, P.arms[1], S.upper, S.fore, S.armW + ex, col(C.front), 'armF');
-    if (!isOutline) {
-      if (P.kickFoot) { ctx.fillStyle = accent; circle(foot[0], foot[1], 1.35); }
-      // כפפה בצבע הדמות – רואים בדיוק איפה היד נגמרת (גדולה ופתוחה בתפיסה)
-      ctx.fillStyle = C.edge; circle(hand[0], hand[1], (P.openHand ? 1.6 : 1.25) * S.handR / 0.95);
-      ctx.fillStyle = accent; circle(hand[0], hand[1], (P.openHand ? 1.25 : 0.95) * S.handR / 0.95);
-      if (P.shield) {                                     // מגן עגול ביד הקדמית
-        ctx.fillStyle = accent; circle(hand[0] + 0.8, hand[1], 4.4);
-        ctx.fillStyle = '#92400e'; circle(hand[0] + 0.8, hand[1], 3.7);
-        ctx.fillStyle = '#d6d3d1'; circle(hand[0] + 0.8, hand[1], 1.2);
-      }
-    }
-  };
-  paint(true); paint(false);
-
-  // חגורה
-  ctx.save(); ctx.translate(hip[0], hip[1]); ctx.rotate(P.lean);
-  ctx.fillStyle = accent; ctx.fillRect(-S.bodyW * 0.52, -1.3, S.bodyW * 1.05, 1.1);
-  ctx.restore();
-  // פנים, עיניים, סרט ראש עם זנבות מתנופפים
+  const J = figureJoints(P);
+  const { hip, neck, head } = J;
   const hs = S.headR / 3;
-  ctx.save(); ctx.translate(head[0], head[1]); ctx.rotate(P.lean + (P.headTilt || 0)); ctx.scale(hs, hs);
-  ctx.fillStyle = C.skin; roundRect(-1.7, -0.85, 4.6, 1.8, 0.6); ctx.fill();
-  ctx.fillStyle = C.eyes; ctx.fillRect(0.4, -0.45, 0.8, 0.9); ctx.fillRect(1.9, -0.45, 0.8, 0.9);
-  ctx.fillStyle = accent; ctx.fillRect(-2.9, -2.3, 5.7, 0.95);
   const wv = Math.sin(now * 11 + F.fx) * 0.9;
-  ctx.strokeStyle = accent; ctx.lineWidth = 0.8;
-  ctx.beginPath(); ctx.moveTo(-2.8, -1.8); ctx.quadraticCurveTo(-4.8, -2.1 + wv, -6.8, -1.3 - wv); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(-2.8, -1.8); ctx.quadraticCurveTo(-4.4, -0.9 + wv, -6.1, 0.3 + wv * 0.6); ctx.stroke();
-  ctx.restore();
+
+  // נקודות האיברים (כתף/ירך → מרפק/ברך → כף יד/רגל)
+  const seg = (o, a, l1, l2) => { const k = endOf(o[0], o[1], a[0], l1); return [o, k, endOf(k[0], k[1], a[1], l2)]; };
+  const pts = {
+    legB: seg(J.hipB, P.legs[0], S.thigh, S.shin), legF: seg(J.hipF, P.legs[1], S.thigh, S.shin),
+    armB: seg(J.shB, P.arms[0], S.upper, S.fore),  armF: seg(J.shF, P.arms[1], S.upper, S.fore)
+  };
+  const line = (q, w, col) => {
+    ctx.strokeStyle = col; ctx.lineWidth = w;
+    ctx.beginPath(); ctx.moveTo(q[0][0], q[0][1]); for (let i = 1; i < q.length; i++) ctx.lineTo(q[i][0], q[i][1]); ctx.stroke();
+  };
+  const gloveR = () => (P.openHand ? 1.25 : 0.95) * S.handR / 0.95;
+
+  // כל חלק יודע לצייר את עצמו: ex = כמה להרחיב, col = צבע אחיד (להילה / לקו הכהה), או null = הצבעים הרגילים
+  const DRAW = {
+    legB: (ex, col) => line(pts.legB, S.legW + ex, col || C.back),
+    armB: (ex, col) => line(pts.armB, S.armW + ex, col || C.back),
+    legF: (ex, col) => {
+      line(pts.legF, S.legW + ex, col || C.front);
+      if (!col && P.kickFoot) { const e = pts.legF[2]; ctx.fillStyle = accent; circle(e[0], e[1], 1.35); }
+    },
+    armF: (ex, col) => line(pts.armF, S.armW + ex, col || C.front),
+    handB: (ex, col) => { const e = pts.armB[2]; ctx.fillStyle = col || accent; circle(e[0], e[1], S.handR + ex / 2); },
+    handF: (ex, col) => {
+      const e = pts.armF[2];
+      ctx.fillStyle = col || accent; circle(e[0], e[1], gloveR() + ex / 2);
+      if (P.shield) {                                     // מגן עגול ביד הקדמית
+        ctx.fillStyle = col || accent; circle(e[0] + 0.8, e[1], 4.4 + ex / 2);
+        if (!col) { ctx.fillStyle = '#92400e'; circle(e[0] + 0.8, e[1], 3.7); ctx.fillStyle = '#d6d3d1'; circle(e[0] + 0.8, e[1], 1.2); }
+      }
+    },
+    torso: (ex, col) => line([hip, neck], S.bodyW + ex, col || C.body),
+    head: (ex, col) => { ctx.fillStyle = col || C.body; circle(head[0], head[1], S.headR + ex / 2); },
+    belt: (ex, col) => {
+      ctx.save(); ctx.translate(hip[0], hip[1]); ctx.rotate(P.lean);
+      ctx.fillStyle = col || accent; ctx.fillRect(-S.bodyW * 0.52 - ex / 2, -1.3 - ex / 2, S.bodyW * 1.05 + ex, 1.1 + ex);
+      ctx.restore();
+    },
+    face: (ex, col) => {
+      ctx.save(); ctx.translate(head[0], head[1]); ctx.rotate(P.lean + (P.headTilt || 0)); ctx.scale(hs, hs);
+      const e = ex / 2 / hs;
+      ctx.fillStyle = col || C.skin; roundRect(-1.7 - e, -0.85 - e, 4.6 + 2 * e, 1.8 + 2 * e, 0.6 + e); ctx.fill();
+      if (!col) { ctx.fillStyle = C.eyes; ctx.fillRect(0.4, -0.45, 0.8, 0.9); ctx.fillRect(1.9, -0.45, 0.8, 0.9); }
+      ctx.restore();
+    },
+    band: (ex, col) => {                                  // סרט ראש עם זנבות מתנופפים
+      ctx.save(); ctx.translate(head[0], head[1]); ctx.rotate(P.lean + (P.headTilt || 0)); ctx.scale(hs, hs);
+      const e = ex / 2 / hs;
+      ctx.fillStyle = col || accent; ctx.fillRect(-2.9 - e, -2.3 - e, 5.7 + 2 * e, 0.95 + 2 * e);
+      ctx.strokeStyle = col || accent; ctx.lineWidth = 0.8 + 2 * e;
+      ctx.beginPath(); ctx.moveTo(-2.8, -1.8); ctx.quadraticCurveTo(-4.8, -2.1 + wv, -6.8, -1.3 - wv); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-2.8, -1.8); ctx.quadraticCurveTo(-4.4, -0.9 + wv, -6.1, 0.3 + wv * 0.6); ctx.stroke();
+      ctx.restore();
+    }
+  };
+
+  const order = layerOrder(P.move || 'idle');
+  // 1) הילה בהירה מאחורי כל הדמות – רק לחלקים שסומנו
+  if (S.outlineW > 0 && C.outlineAlpha > 0) order.forEach(n => { if (EL[n] && EL[n].halo) DRAW[n](S.outlineW, halo); });
+  // 2) החלקים עצמם, לפי סדר השכבות. חלק עם "קו כהה" מקבל קודם צללית כהה קצת יותר גדולה
+  order.forEach(n => {
+    if (EL[n] && EL[n].edge && S.edgeW > 0) DRAW[n](S.edgeW, C.edge);
+    DRAW[n](0, null);
+  });
 
   // מצב בדיקה: מציגים את השלד והמפרקים
   if (F.skeleton) {
@@ -245,9 +286,11 @@ function drawFigure(F) {
       ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(k[0], k[1]); ctx.lineTo(e[0], e[1]); ctx.stroke();
       ctx.fillStyle = ctx.strokeStyle; [a, k, e].forEach(q => circle(q[0], q[1], 0.35));
     }
-    ctx.fillStyle = '#ef4444'; [hip, neck, sh, head].forEach(q => circle(q[0], q[1], 0.4));
+    ctx.fillStyle = '#ef4444'; [hip, neck, head].forEach(q => circle(q[0], q[1], 0.4));
   }
   ctx.restore();
+  // לעורך: איפה כל מפרק נמצא (בקואורדינטות של הדמות)
+  if (F.out) Object.assign(F.out, { J, pts, P, bobY: (P.bob || 0) * F.scale });
 }
 
 // התנוחה של כל "תנועה" לפי זמן – משמש את העורך ואת מעבדת האנימציות
