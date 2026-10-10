@@ -23,7 +23,17 @@ html, body { height: 100%; overflow: hidden; background: #0f172a; color: #e2e8f0
 #moves { display: flex; gap: 4px; overflow-x: auto; padding: 6px 10px; background: #0b1220; direction: ltr; scrollbar-width: none; }
 #moves .b { flex: none; }
 #view { position: relative; flex: 1; min-height: 0; }
-canvas { display: block; width: 100%; height: 100%; }
+canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+#tip { position: absolute; right: 10px; top: 8px; max-width: 60%; font-size: 13px; font-weight: 700; color: #1e293b;
+       background: rgba(255,255,255,.85); border-radius: 10px; padding: 6px 10px; pointer-events: none; display: none; }
+#tip.show { display: block; }
+.lrow { display: grid; grid-template-columns: 1fr 34px 34px auto auto; gap: 6px; align-items: center; padding: 5px 0; border-bottom: 1px solid #1f2937; }
+.lrow .nm { font-size: 13px; font-weight: 800; color: #e2e8f0; }
+.lrow .ar { border: 0; border-radius: 8px; background: #1f2937; color: #e2e8f0; font-size: 16px; height: 32px; }
+.lrow .ar:disabled { opacity: .25; }
+.lrow label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #94a3b8; }
+.lrow input { width: 18px; height: 18px; accent-color: #6366f1; }
+.lrow.flash { background: rgba(99,102,241,.25); }
 #info { position: absolute; left: 10px; bottom: 8px; font: 12px ui-monospace, Menlo, monospace; color: #475569; direction: ltr; pointer-events: none; }
 
 /* פאנל עריכה */
@@ -76,11 +86,12 @@ h3 { font-size: 14px; color: #94a3b8; margin: 12px 0 6px; font-weight: 800; }
       <div class="sep"></div>
       <div class="grp">
         <button class="b" id="skel">Skeleton</button>
+        <span class="grp" id="drag"></span>
         <button class="b" id="zoomOut">−</button><button class="b" id="zoomIn">+</button>
       </div>
     </div>
     <div id="moves"></div>
-    <div id="view"><canvas id="c"></canvas><div id="info"></div></div>
+    <div id="view"><canvas id="c"></canvas><div id="tip"></div><div id="info"></div></div>
   </div>
 
   <div id="panel">
@@ -88,6 +99,7 @@ h3 { font-size: 14px; color: #94a3b8; margin: 12px 0 6px; font-weight: 800; }
       <button class="b on" data-tab="colors">🎨 צבעים</button>
       <button class="b" data-tab="shape">📏 צורה</button>
       <button class="b" data-tab="pose">🦵 תנוחה</button>
+      <button class="b" data-tab="layers">🧱 שכבות</button>
     </div>
     <div id="content"></div>
     <div id="dirty"></div>
@@ -125,6 +137,7 @@ const canvas = $('c'), ctx = canvas.getContext('2d');
 let saved = JSON.stringify(RIG);          // מה ששמור כרגע ב-iPad
 let char = 'ninja', move = 'run', tab = 'colors';
 let playing = true, speedMul = 0.5, skeleton = true, zoom = 1, t = 0, lastT = 0;
+let dragMode = 'off';                     // off | pose (מסובבים מפרקים) | attach (מזיזים נקודות חיבור)
 const PREVIEW_PLAYER_COLOR = (() => {     // צבע של שחקן אמיתי, אם יש
   try { const ps = JSON.parse(localStorage.getItem('ninjaVoice_players') || '[]'); return ps[0] ? ps[0].color : '#2563eb'; } catch (e) { return '#2563eb'; }
 })();
@@ -134,8 +147,8 @@ const MOVE_LABEL = { idle: 'IDLE', run: 'RUN', jump: 'JUMP', duck: 'DOWN', fly: 
                      kick: 'KICK', throw: 'THROW', catch: 'CATCH', block: 'BLOCK', stop: 'STOP' };
 
 const COLOR_FIELDS = [
-  ['body', 'גוף וראש'], ['front', 'יד ורגל קדמיות'], ['back', 'יד ורגל אחוריות'], ['edge', 'קו מפריד (קדמי)'],
-  ['skin', 'פס הפנים'], ['eyes', 'עיניים'], ['outline', 'קו מתאר']
+  ['body', 'גוף וראש'], ['front', 'יד ורגל קדמיות'], ['back', 'יד ורגל אחוריות'], ['edge', 'קו כהה מסביב'],
+  ['skin', 'פס הפנים'], ['eyes', 'עיניים'], ['outline', 'הילה בהירה מסביב']
 ];
 const SHAPE_FIELDS = [
   ['thigh', 'ירך (אורך)', 1, 4.5, 0.05], ['shin', 'שוק (אורך)', 1, 4.5, 0.05],
@@ -143,7 +156,7 @@ const SHAPE_FIELDS = [
   ['torso', 'גוף (אורך)', 2, 5, 0.05], ['shoulderAt', 'גובה הכתף על הגוף', 0.5, 1, 0.01],
   ['headR', 'גודל הראש', 2, 4.5, 0.05], ['headUp', 'אורך הצוואר', 1.5, 4, 0.05],
   ['bodyW', 'עובי הגוף', 2, 6, 0.05], ['legW', 'עובי רגליים', 1, 3.5, 0.05], ['armW', 'עובי ידיים', 0.8, 3, 0.05],
-  ['handR', 'גודל כף יד', 0.5, 1.8, 0.05], ['outlineW', 'עובי קו מתאר', 0, 2, 0.05], ['edgeW', 'עובי קו מפריד', 0, 2, 0.05]
+  ['handR', 'גודל כף יד', 0.5, 1.8, 0.05], ['outlineW', 'עובי ההילה', 0, 2, 0.05], ['edgeW', 'עובי הקו הכהה', 0, 2, 0.05]
 ];
 const RUN_FIELDS = [
   ['legSwing', 'תנופת רגליים', 0.2, 1.6, 0.01], ['kneeBend', 'כיפוף ברכיים', 0, 2, 0.01],
@@ -152,11 +165,11 @@ const RUN_FIELDS = [
 ];
 const DEG = 180 / Math.PI;
 const OFFSET_FIELDS = [   // [מפתח, תווית, אינדקס במערך (או null), טווח]
-  ['lean', 'הטיית גוף', null, 60], ['hipY', 'גובה הירך', null, 3], ['head', 'הטיית ראש', null, 60],
-  ['armF', 'כתף קדמית', 0, 90], ['armF', 'מרפק קדמי', 1, 90],
-  ['armB', 'כתף אחורית', 0, 90], ['armB', 'מרפק אחורי', 1, 90],
-  ['legF', 'ירך קדמית', 0, 90], ['legF', 'ברך קדמית', 1, 90],
-  ['legB', 'ירך אחורית', 0, 90], ['legB', 'ברך אחורית', 1, 90]
+  ['lean', 'הטיית גוף', null, 90], ['hipY', 'גובה הירך', null, 4], ['head', 'הטיית ראש', null, 90],
+  ['armF', 'כתף קדמית', 0, 180], ['armF', 'מרפק קדמי', 1, 180],
+  ['armB', 'כתף אחורית', 0, 180], ['armB', 'מרפק אחורי', 1, 180],
+  ['legF', 'ירך קדמית', 0, 180], ['legF', 'ברך קדמית', 1, 180],
+  ['legB', 'ירך אחורית', 0, 180], ['legB', 'ברך אחורית', 1, 180]
 ];
 
 /* ============================================================
@@ -173,7 +186,9 @@ function btnRow(box, items, cur, label, onPick) {
 }
 function renderBar() {
   btnRow($('chars'), Object.keys(CHARS), char, v => CHARS[v], v => { char = v; renderBar(); renderPanel(); });
-  btnRow($('moves'), MOVES, move, v => MOVE_LABEL[v], v => { move = v; t = 0; renderBar(); if (tab === 'pose') renderPanel(); });
+  btnRow($('moves'), MOVES, move, v => MOVE_LABEL[v], v => { move = v; t = 0; renderBar(); if (tab === 'pose' || tab === 'layers') renderPanel(); });
+  btnRow($('drag'), ['off', 'pose', 'attach'], dragMode, v => ({ off: '✋ Off', pose: '✋ Pose', attach: '🔩 Attach' })[v],
+         v => { dragMode = v; renderBar(); showTip(); });
   btnRow($('speeds'), [0.1, 0.25, 0.5, 1], speedMul, v => v + '×', v => { speedMul = v; renderBar(); });
   $('play').textContent = playing ? '⏸' : '▶';
   $('skel').classList.toggle('on', skeleton);
@@ -220,6 +235,7 @@ function renderPanel() {
   box.innerHTML = '';
   if (tab === 'colors') renderColors(box);
   else if (tab === 'shape') renderShape(box);
+  else if (tab === 'layers') renderLayers(box);
   else renderPose(box);
 }
 
@@ -260,6 +276,61 @@ function renderShape(box) {
   head(box, 'פרופורציות', 'משותף לכל הדמויות (האויב והשומר פשוט גדולים יותר). אורכים נמדדים ביחידות של המשחק – הנינג\'ה בגובה 14 יחידות.');
   SHAPE_FIELDS.forEach(([k, lbl, mn, mx, st]) => slider(box, lbl, RIG.shape[k], mn, mx, st, v => v.toFixed(2), v => RIG.shape[k] = v));
   smallBtn(box, '↺ איפוס הצורה', () => { RIG.shape = rigClone(RIG_DEFAULT.shape); });
+
+  head(box, 'נקודות חיבור', 'איפה כל יד, רגל והראש מתחברים לגוף. "קדימה" = לכיוון שהדמות מסתכלת, "למעלה" = לאורך הגוף. ' +
+       'אפשר גם לגרור אותן ישר על הדמות במצב 🔩 Attach.');
+  Object.keys(ATTACH_LABEL).forEach(k => {
+    const a = RIG.attach[k] = RIG.attach[k] || [0, 0];
+    slider(box, ATTACH_LABEL[k] + ' – קדימה', a[0], -4, 4, 0.05, v => v.toFixed(2), v => a[0] = v);
+    slider(box, ATTACH_LABEL[k] + ' – למעלה', a[1], -4, 4, 0.05, v => v.toFixed(2), v => a[1] = v);
+  });
+  smallBtn(box, '↺ איפוס נקודות החיבור', () => { RIG.attach = rigClone(RIG_DEFAULT.attach); });
+}
+
+/* ---------- שכבות ---------- */
+let flashEl = null, flashUntil = 0;
+function renderLayers(box) {
+  const per = RIG.layers.perMove = RIG.layers.perMove || {};
+  const own = !!per[move];
+  head(box, 'סדר השכבות', 'למעלה ברשימה = מצויר מקדימה (מעל כולם). ↑ מקרב חלק קדימה, ↓ שולח אותו אחורה. ' +
+       '"הילה" = הקו הבהיר מסביב לדמות. "קו כהה" = קו כהה צמוד לחלק, שמפריד אותו ממה שמאחוריו.');
+  const lab = document.createElement('label'); lab.className = 'chk';
+  lab.innerHTML = '<input type="checkbox"> סדר מיוחד רק ל-' + MOVE_LABEL[move];
+  const cb = lab.querySelector('input'); cb.checked = own;
+  cb.onchange = () => { if (cb.checked) per[move] = layerOrder(move); else delete per[move]; markDirty(); renderPanel(); };
+  box.appendChild(lab);
+  const hint = document.createElement('div'); hint.className = 'hint';
+  hint.textContent = own ? 'עורכים את הסדר של ' + MOVE_LABEL[move] + ' בלבד. שאר התנועות משתמשות בסדר הכללי.'
+                         : 'עורכים את הסדר הכללי – לכל התנועות שאין להן סדר מיוחד.';
+  box.appendChild(hint);
+
+  const order = layerOrder(move);
+  const setOrder = o => { if (own) per[move] = o; else RIG.layers.order = o; };
+  const list = order.slice().reverse();                // מציגים מהקדמי לאחורי
+  list.forEach((n, i) => {
+    const row = document.createElement('div'); row.className = 'lrow' + (n === flashEl && performance.now() < flashUntil ? ' flash' : '');
+    row.innerHTML = '<span class="nm"></span><button class="ar up">↑</button><button class="ar dn">↓</button>' +
+                    '<label><input type="checkbox" class="h">הילה</label><label><input type="checkbox" class="e">קו כהה</label>';
+    row.querySelector('.nm').textContent = ELEMENT_LABEL[n];
+    const up = row.querySelector('.up'), dn = row.querySelector('.dn');
+    up.disabled = i === 0; dn.disabled = i === list.length - 1;
+    const swap = d => {                                // d=+1 קדימה, -1 אחורה (בסדר הציור)
+      const o = layerOrder(move), j = o.indexOf(n), k = j + d;
+      if (k < 0 || k >= o.length) return;
+      [o[j], o[k]] = [o[k], o[j]]; setOrder(o);
+      flashEl = n; flashUntil = performance.now() + 1200;
+      markDirty(); renderPanel();
+    };
+    up.onclick = () => swap(+1); dn.onclick = () => swap(-1);
+    const E = RIG.elements[n] = RIG.elements[n] || { halo: false, edge: false };
+    const h = row.querySelector('.h'), e = row.querySelector('.e');
+    h.checked = !!E.halo; e.checked = !!E.edge;
+    h.onchange = () => { E.halo = h.checked; markDirty(); };
+    e.onchange = () => { E.edge = e.checked; markDirty(); };
+    row.querySelector('.nm').onclick = () => { flashEl = n; flashUntil = performance.now() + 1200; };
+    box.appendChild(row);
+  });
+  smallBtn(box, '↺ איפוס השכבות והקווים', () => { RIG.layers = rigClone(RIG_DEFAULT.layers); RIG.elements = rigClone(RIG_DEFAULT.elements); });
 }
 
 function renderPose(box) {
@@ -345,10 +416,127 @@ function frame(ts) {
     ctx.fillStyle = C.accent || PREVIEW_PLAYER_COLOR;
     ctx.beginPath(); ctx.moveTo(-12, -lift - 15); ctx.lineTo(0.5, -lift - 21); ctx.lineTo(13, -lift - 15); ctx.lineTo(0.5, -lift - 17); ctx.closePath(); ctx.fill();
   }
-  drawFigure({ fx: 0, fy: -lift, facing: 1, scale: 1, kind: char, accent: PREVIEW_PLAYER_COLOR, pose: P, skeleton });
+  const out = {};
+  drawFigure({ fx: 0, fy: -lift, facing: 1, scale: 1, kind: char, accent: PREVIEW_PLAYER_COLOR, pose: P, skeleton, out });
   ctx.restore();
-  $('info').textContent = MOVE_LABEL[move] + ' · t=' + t.toFixed(2) + 's · ' + speedMul + '×';
+  view = { fx, fy, u, lift, out };
+  drawHandles();
+  $('info').textContent = MOVE_LABEL[move] + ' · t=' + t.toFixed(2) + 's · ' + speedMul + '×' +
+                          (dragMode === 'pose' && out.P ? ' · editing: ' + (MOVE_LABEL[out.P.move] || out.P.move) : '');
   requestAnimationFrame(frame);
+}
+
+/* ============================================================
+   גרירה ישירה על הדמות
+   ✋ Pose   – גוררים ברך/מרפק (מסובב את הירך/הכתף), כף רגל/יד (מסובב את הברך/המרפק),
+               צוואר (הטיית גוף), ירך (גובה), נקודה סגולה מול הפנים (הטיית ראש)
+   🔩 Attach – גוררים את נקודות החיבור של הכתפיים, הירכיים והראש על הגוף
+   ============================================================ */
+let view = null, drag = null;
+const toScreen = q => [view.fx + q[0] * view.u, view.fy + (q[1] - view.lift) * view.u + view.out.bobY * view.u];
+const toLocal = (sx, sy) => [(sx - view.fx) / view.u, (sy - view.fy) / view.u + view.lift - view.out.bobY];
+const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
+const angDown = (from, to) => Math.atan2(to[0] - from[0], to[1] - from[1]);   // זווית מ"ישר למטה", חיובי = קדימה
+
+function handles() {
+  if (!view || !view.out.J || dragMode === 'off') return [];
+  const { J, pts, P } = view.out, H = [];
+  if (dragMode === 'pose') {
+    // הקדמיים אחרונים ברשימה – כשנקודות חופפות, תופסים קודם את הקדמית
+    ['legB', 'armB', 'legF', 'armF'].forEach(n => {
+      const side = n.endsWith('F') ? 'f' : 'b';
+      H.push({ kind: 'limb', n, idx: 0, at: pts[n][1], pivot: pts[n][0], side });
+      H.push({ kind: 'limb', n, idx: 1, at: pts[n][2], pivot: pts[n][1], side, end: true });
+    });
+    H.push({ kind: 'hipY', at: J.hip });
+    H.push({ kind: 'lean', at: J.neck, pivot: J.hip });
+    const th = P.lean + (P.headTilt || 0), r = RIG.shape.headR * 1.25;
+    H.push({ kind: 'head', at: [J.head[0] + Math.cos(th) * r, J.head[1] + Math.sin(th) * r], pivot: J.head });
+  } else {
+    ['shB', 'hipB', 'head', 'shF', 'hipF'].forEach(k => H.push({ kind: 'attach', key: k, at: J[k], side: k.endsWith('F') ? 'f' : k.endsWith('B') ? 'b' : 'h' }));
+  }
+  return H;
+}
+
+function drawHandles() {
+  const H = handles();
+  ctx.lineWidth = 2;
+  H.forEach(h => {
+    const [x, y] = toScreen(h.at), active = drag && drag.h.kind === h.kind && drag.h.n === h.n && drag.h.idx === h.idx && drag.h.key === h.key;
+    const col = h.kind === 'head' ? '#a855f7' : (h.kind === 'lean' || h.kind === 'hipY') ? '#ef4444' : h.side === 'f' ? '#22c55e' : h.side === 'b' ? '#f59e0b' : '#3b82f6';
+    ctx.fillStyle = active ? '#fff' : col; ctx.strokeStyle = active ? col : '#fff';
+    ctx.beginPath();
+    if (h.kind === 'attach') { ctx.rect(x - 8, y - 8, 16, 16); }
+    else ctx.arc(x, y, h.end ? 9 : 8, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    if (h.kind === 'hipY') { ctx.fillStyle = active ? col : '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('↕', x, y + 4); }
+  });
+}
+
+function offsetsFor(m) { return RIG.offsets[m] = RIG.offsets[m] || {}; }
+function getOff(o, h) {
+  if (h.kind === 'limb') return (o[h.n] || [0, 0])[h.idx] || 0;
+  if (h.kind === 'lean') return o.lean || 0;
+  if (h.kind === 'head') return o.head || 0;
+  if (h.kind === 'hipY') return o.hipY || 0;
+}
+function setOff(o, h, v) {
+  if (h.kind === 'limb') { o[h.n] = o[h.n] || [0, 0]; o[h.n][h.idx] = v; }
+  else o[h.kind === 'head' ? 'head' : h.kind] = v;
+}
+
+canvas.addEventListener('pointerdown', e => {
+  if (dragMode === 'off' || !view) return;
+  const r = canvas.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top;
+  let best = null, bd = 26;                    // רדיוס תפיסה בפיקסלים
+  handles().forEach(h => { const [x, y] = toScreen(h.at), d = Math.hypot(x - sx, y - sy); if (d <= bd + 0.01) { bd = d; best = h; } });
+  if (!best) return;
+  e.preventDefault();
+  playing = false; renderBar();                // עוצרים כדי שהתנוחה לא תזוז מתחת לאצבע
+  canvas.setPointerCapture(e.pointerId);
+  const L = toLocal(sx, sy), { J, P } = view.out;
+  drag = { h: best, L0: L };
+  if (best.kind === 'attach') {
+    drag.base = best.key === 'head' ? J.head0 : best.key.startsWith('sh') ? J.sh : J.hip;
+    drag.up = J.up; drag.fw = J.fw;
+  } else {
+    drag.move = P.move || move;
+    const o = offsetsFor(drag.move);
+    drag.off0 = getOff(o, best);
+    if (best.kind === 'limb') drag.a0 = angDown(best.pivot, best.at);
+    if (best.kind === 'lean') drag.a0 = Math.atan2(best.at[0] - best.pivot[0], -(best.at[1] - best.pivot[1]));
+    if (best.kind === 'head') drag.a0 = Math.atan2(best.at[1] - best.pivot[1], best.at[0] - best.pivot[0]);
+    drag.pivot = best.pivot;
+  }
+});
+canvas.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const r = canvas.getBoundingClientRect(), L = toLocal(e.clientX - r.left, e.clientY - r.top), h = drag.h;
+  if (h.kind === 'attach') {
+    const d = [L[0] - drag.base[0], L[1] - drag.base[1]];
+    const v = [d[0] * drag.fw[0] + d[1] * drag.fw[1], d[0] * drag.up[0] + d[1] * drag.up[1]];
+    RIG.attach[h.key] = [Math.round(v[0] * 20) / 20, Math.round(v[1] * 20) / 20];
+  } else {
+    const o = offsetsFor(drag.move);
+    let a;
+    if (h.kind === 'limb') a = angDown(drag.pivot, L);
+    if (h.kind === 'lean') a = Math.atan2(L[0] - drag.pivot[0], -(L[1] - drag.pivot[1]));
+    if (h.kind === 'head') a = Math.atan2(L[1] - drag.pivot[1], L[0] - drag.pivot[0]);
+    const v = h.kind === 'hipY' ? drag.off0 + (L[1] - drag.L0[1]) : drag.off0 + wrap(a - drag.a0);
+    setOff(o, h, v);
+  }
+  markDirty();
+});
+const endDrag = () => { if (!drag) return; drag = null; if (tab === 'pose' || tab === 'shape') renderPanel(); markDirty(); };
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
+
+function showTip() {
+  const tip = $('tip');
+  const txt = dragMode === 'pose' ? 'גוררים את הנקודות: ירוק = קדמי, כתום = אחורי, אדום = גוף, סגול = ראש. הגרירה עוצרת את האנימציה ומשנה רק את התנועה שמוצגת.'
+            : dragMode === 'attach' ? 'גוררים את הריבועים כדי להזיז איפה הכתפיים, הירכיים והראש מתחברים לגוף. זה משפיע על כל התנועות.' : '';
+  tip.textContent = txt; tip.classList.toggle('show', !!txt);
+  clearTimeout(showTip.t); if (txt) showTip.t = setTimeout(() => tip.classList.remove('show'), 6000);
 }
 
 renderBar(); renderPanel(); markDirty();
