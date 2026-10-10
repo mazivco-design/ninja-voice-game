@@ -128,6 +128,15 @@ canvas { display: block; width: 100%; height: 100%; }
 /* כפתור עצירה בולט */
 #pauseBtn { background: #f59e0b; color: #1e293b; font-size: clamp(15px, 2.2vw, 20px); padding: 9px 16px; }
 #skipBtn { background: #16a34a; color: #fff; }
+/* תחילת שלב: לשמוע שוב / להתחיל */
+#introBar { position: absolute; left: 0; right: 0; bottom: max(18px, env(safe-area-inset-bottom)); z-index: 10; display: flex;
+            justify-content: center; gap: 16px; pointer-events: none; }
+#introBar button { pointer-events: auto; border: 0; border-radius: 18px; font-weight: 900; font-size: clamp(20px, 3.4vh, 30px);
+                   padding: clamp(12px, 2vh, 18px) clamp(22px, 4vw, 40px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+#againBtn { background: #fff; color: #1e293b; }
+#startBtn { background: #16a34a; color: #fff; }
+#startBtn.ready { animation: pulse 1s infinite; }
+@keyframes pulse { 50% { transform: scale(1.08); } }
 
 /* בחירת מילים ל-Free Play */
 .word.off { background: #e2e8f0; color: #64748b; }
@@ -154,6 +163,11 @@ canvas { display: block; width: 100%; height: 100%; }
 <body>
 <div id="app">
   <canvas id="c"></canvas>
+
+  <div id="introBar" class="hide">
+    <button id="againBtn">🔊 Again</button>
+    <button id="startBtn">▶ START</button>
+  </div>
 
   <div id="hud">
     <span id="hudFree"><span>Score: <span id="score">0</span></span>&nbsp;&nbsp;<span>Best: <span id="best">0</span></span></span>
@@ -320,7 +334,7 @@ const STAGES = [
   { name: 'THROW',        words: ['throw'],          count: 8,  hint: 'Say THROW to stop enemies' },
   { name: 'KICK + THROW', words: ['kick', 'throw'],  count: 10, hint: 'Read the word!' },
   { name: 'CATCH',        words: ['catch'],          count: 8,  hint: 'Say CATCH to grab coins' },
-  { name: 'JUMP + FLY',   words: ['fly'],            count: 8,  hint: 'Say JUMP, then FLY in the air' },
+  { name: 'JUMP + FLY',   words: ['fly'],            count: 8,  hint: 'Say JUMP, then FLY over the chasm' },
   { name: 'CATCH + FLY',  words: ['catch', 'fly'],   count: 10, hint: 'Read the word!' },
   { name: 'STOP',         words: ['stop'],           count: 8,  hint: 'Say STOP before the rock falls' },
   { name: 'RUN',          words: ['run'],            count: 8,  hint: 'Say RUN to cross the bridge' },
@@ -331,7 +345,7 @@ const STAGES = [
   { name: 'PUSH',         words: ['push'],           count: 8,  hint: 'Say PUSH to move the rock' },
   { name: 'PULL',         words: ['pull'],           count: 8,  hint: 'Say PULL to open the gate' },
   { name: 'PUSH + PULL',  words: ['push', 'pull'],   count: 10, hint: 'Read the word!' },
-  { name: 'HIDE',         words: ['hide'],           count: 8,  hint: 'Say HIDE when the guard comes' },
+  { name: 'HIDE',         words: ['hide'],           count: 8,  hint: 'Say HIDE when the guards come' },
   { name: 'BLOCK',        words: ['block'],          count: 8,  hint: 'Say BLOCK to stop the arrows' },
   { name: 'HIDE + BLOCK', words: ['hide', 'block'],  count: 10, hint: 'Read the word!' }
 ];
@@ -363,11 +377,13 @@ const ROCK = { size: 8, hangY: GROUND - 40, fall: 0.9, warn: 0.75 };   // STOP �
 const STOP_TIME = 1.6;                                               // העולם עוצר לשנייה וחצי
 const RUN_BOOST = { mult: 2.2, time: 2.0 };                          // RUN – מהירות כפולה לשתי שניות
 const BRIDGE = { factor: 2.2, collapse: 1.15 };                      // גשר ארוך שמתמוטט אחרי 1.15 שניות – בהליכה לוקח 2.2
-const LAKE = { factor: 1.4 }, SWIM_TIME = 2.3;                       // SWIM – אגם עמוק
-const CLIFF = { w: 12, h: 28, range: 10, time: 0.8 };               // CLIMB – צוק גבוה מדי לקפיצה
-const BOULDER = { r: 10, range: 10 };                                // PUSH – סלע עגול גדול
+const LAKE = { factor: 2.2 }, SWIM_TIME = 1.2;                       // SWIM – אגם ארוך. שוחים עד הסוף
+const DROWN = { easy: 1.1, other: 0.8 };                              // כמה זמן שוקעים במים לפני שנכשלים – אפשר עוד להציל עם SWIM
+const CLIFF = { w: 14, h: 28, range: 2.5, time: 0.8 };              // CLIMB – מטפסים רק כשנוגעים בצוק
+const BOULDER = { r: 10, range: 25 };                                // PUSH – סלע עגול גדול, אפשר לדחוף מרחוק
 const GATE = { w: 5, range: 30 };                                    // PULL – שער (חלון רחב – המילה מזוהה לאט יותר)
-const GUARD = { w: 9, h: 18, walk: 14 }, HIDE_TIME = 1.8;            // HIDE – שומר עם פנס
+const GUARD = { w: 9, h: 18, walk: 14, gap: 5 }, HIDE_TIME = 1.8;    // HIDE – שני שומרים עם פנסים
+GUARD.span = GUARD.w * 2 + GUARD.gap;                                 // רוחב הזוג
 const ARROWS = { w: 7, speed: 30 }, BLOCK_TIME = 0.8;                 // BLOCK – מטח חיצים בכל הגבהים
 const ARROW_HEIGHTS = [GROUND - 3, GROUND - 8, GROUND - 13, GROUND - 18, GROUND - 22];   // גבוה מדי לקפוץ מעליו, נמוך מדי להתכופף
 
@@ -696,7 +712,7 @@ function command(word, source) {
   } else if (word === 'stop') { act.stop = STOP_TIME; act.run = 0; }       // העולם עוצר
   else if (word === 'run')   { act.run = RUN_BOOST.time; act.stop = 0; }   // דוהר מהר
   else if (word === 'swim')  { act.swim = SWIM_TIME; duckT = 0; }
-  else if (word === 'climb') { act.climbWant = 0.6; }                     // מטפס אם צוק קרוב (או מתקרב בחצי השנייה הקרובה)
+  else if (word === 'climb') { act.climbWant = 0.8; }                     // מטפס כשהנינג'ה מגיע לצוק (אם זה קורה בשנייה הקרובה)
   else if (word === 'push')  { act.push = 0.6; duckT = 0; }
   else if (word === 'pull')  { act.pull = 0.6; duckT = 0; }
   else if (word === 'hide')  { act.hide = HIDE_TIME; duckT = 0; }
@@ -886,7 +902,7 @@ function obstacleBox(o) {
     case 'cliff':   return { l: o.x, r: o.x + CLIFF.w, t: GROUND - CLIFF.h, b: GROUND };
     case 'boulder': return { l: o.x + 1, r: o.x + BOULDER.r * 2 - 1, t: GROUND - BOULDER.r * 2 + 1, b: GROUND };
     case 'gate':    return { l: o.x, r: o.x + GATE.w, t: -1e6, b: GROUND };
-    case 'guard':   return { l: o.x, r: o.x + GUARD.w, t: GROUND - GUARD.h, b: GROUND };
+    case 'guard':   return { l: o.x, r: o.x + GUARD.span, t: -1e6, b: GROUND };   // הפנסים רואים גם באוויר – רק HIDE עובד
     case 'arrows':  return { l: o.x, r: o.x + ARROWS.w, t: GROUND - 23, b: GROUND - 2 };
   }
 }
@@ -904,7 +920,7 @@ function collides(o, pb) {
   if (o.type === 'guard' && act.hide > 0) return false;                  // מתחבא – השומר לא רואה
   const m = cfg.forgive || 0;
   const cx = (pb.l + pb.r) / 2;
-  if (o.type === 'lake')   return py === 0 && act.swim <= 0 && cx > o.x + 2 + m * 2 && cx < o.x + o.w - 2 - m * 2;
+  if (o.type === 'lake')   return (o.drown || 0) >= drownTime();                // שקע עד הסוף בלי SWIM
   if (o.type === 'bridge') return o.collapsed && py === 0 && act.climb <= 0 && cx > o.x + 1 && cx < o.x + o.w - 1;
   if (o.type === 'river') {
     const cx = (pb.l + pb.r) / 2;
@@ -917,7 +933,7 @@ function collides(o, pb) {
 function onHit(o) {
   o.hit = true;
   shakeT = 0.3;
-  if (o.type === 'bridge' || o.type === 'river' || o.type === 'lake') { sinkT = SINK_TIME; sinkType = o.type; }   // נופל / שוקע
+  if (o.type === 'bridge' || o.type === 'river' || o.type === 'lake') { sinkT = SINK_TIME; sinkType = o.type === 'lake' ? 'lake' : 'fall'; }   // נופל לתהום / שוקע במים
   if (state === 'demo' || state === 'intro') {   // בהדגמה – בלי עונש
     flash = { text: HIT_WORD[o.type], t: 1.2 }; invulnT = INVULN_TIME; return;
   }
@@ -961,6 +977,11 @@ function overWide(type, pb) {           // הנינג'ה מעל אגם / גשר 
   const cx = (pb.l + pb.r) / 2;
   return obstacles.find(o => o.type === type && cx > o.x + 1 && cx < o.x + o.w - 1);
 }
+function drownTime() { return cfg.forgive ? DROWN.easy : DROWN.other; }
+let drownK = 0;                         // 0..1 – כמה הנינג'ה שקע (לציור)
+function cliffTop() {                   // עומד על צוק שטיפס עליו?
+  return obstacles.find(o => o.type === 'cliff' && o.climbed && PLAYER.x + PLAYER.w > o.x + 0.5 && PLAYER.x < o.x + CLIFF.w);
+}
 function swimmingNow() { return act.swim > 0 && py <= 0 && !!overWide('lake', playerBox()); }
 
 function update(dt) {
@@ -971,7 +992,9 @@ function update(dt) {
   if (act.climb > 0) {                     // מטפס – עולה לאט לגובה הצוק
     act.climb -= dt;
     py = CLIFF.h * Math.min(1, 1 - act.climb / CLIFF.time); vy = 0;
-    if (act.climb <= 0) { act.climb = 0; py = CLIFF.h + 0.5; vy = 12; }   // למעלה – קופץ ממשיך הלאה
+    if (act.climb <= 0) { act.climb = 0; py = CLIFF.h; vy = 0; }        // למעלה – הולך על הצוק ואז קופץ למטה
+  } else if (vy <= 0 && py >= CLIFF.h - 0.5 && cliffTop()) {
+    py = CLIFF.h; vy = 0;                  // הולך על ראש הצוק
   } else if (flyT > 0) {
     flyT -= dt;
     vy = -FLY.sink;                 // גולש – יורד לאט
@@ -1024,6 +1047,7 @@ function update(dt) {
   shurikens = shurikens.filter(s => !s.dead && s.x < W + 10);
 
   const cx = (pb.l + pb.r) / 2;
+  drownK = 0;
   for (const o of obstacles) {
     o.x -= dx;
     if (o.type === 'enemy' && !o.defeated) o.x -= speed * ENEMY.extra * dt;   // אויב רץ לקראתך
@@ -1052,7 +1076,7 @@ function update(dt) {
           if (nearStopped) { o.fallDur = ROCK.fall; o.vTrig = 0; }          // עצרו – נופל לפניהם ומתנפץ
           else {                                                              // ממשיכים – מתוזמן ליפול בדיוק עליהם
             const tArr = Math.max(0.05, d / v), tc = (ROCK.size + PLAYER.w) / v;
-            o.fallDur = Math.max(0.2, (tArr + tc * 0.5) / 0.75); o.vTrig = v;
+            o.fallDur = Math.max(0.2, tArr + tc * 0.5); o.vTrig = v;   // נוחת בדיוק עליהם – גם אם התכופפו
           }
         }
       } else if (!o.landed) {
@@ -1061,7 +1085,11 @@ function update(dt) {
         if (o.fallK >= 1) {
           o.landed = true;
           burst(o.x + ROCK.size / 2, GROUND - 2, '#78716c', 14, 35);
-          if (!o.hit) cleared(o);
+          // נפל על הנינג'ה (גם אם התכופף) – פגיעה. נפל לפניו – הצלחה
+          const on = pb.l < o.x + ROCK.size - (cfg.forgive || 0) && pb.r > o.x + (cfg.forgive || 0);
+          if (!o.hit && on && invulnT <= 0) onHit(o);
+          else if (!o.hit) cleared(o);
+          if (state === 'over') return;
         }
       }
     }
@@ -1082,7 +1110,17 @@ function update(dt) {
     }
     // PULL: מושך בחבל ופותח שער שקרוב מספיק
     if (o.type === 'gate' && !o.open && act.pull > 0 && o.x - pb.r <= GATE.range && o.x + GATE.w > pb.l) {
-      o.open = true; cleared(o);
+      o.open = true; act.pull = 0.7; cleared(o);      // מחזיק את החבל עד שהשער עולה
+    }
+    // SWIM: במים בלי לשחות – שוקעים לאט. SWIM בזמן הזה מציל. מי שכבר שוחה – ממשיך עד הסוף
+    if (o.type === 'lake') {
+      const inside = py <= 0 && cx > o.x + 2 && cx < o.x + o.w - 2;
+      if (inside) o.wet = true;
+      if (inside && act.swim > 0) { act.swim = Math.max(act.swim, 0.2); o.swam = true; o.drown = Math.max(0, (o.drown || 0) - dt * 3); }
+      else if (inside && !o.hit) o.drown = (o.drown || 0) + dt;
+      if (inside) drownK = Math.min(1, (o.drown || 0) / drownTime());
+      // אי אפשר לחצות אגם בלי לשחות (גם לא בריצה או בקפיצה לתוך המים)
+      if (o.wet && !o.swam && !o.hit && cx >= o.x + o.w - 2) o.drown = drownTime();
     }
     // BLOCK: המגן הודף את החיצים
     if (o.type === 'arrows' && !o.deflected && act.block > 0) {
@@ -1326,7 +1364,7 @@ function playerPose() {
   else if (swimmingNow()) P = poseSwim(now);
   else if (duckT > 0) P = poseDuck();
   else if (flyT > 0) P = poseFly(now);
-  else if (py > 0) P = poseAir(vy > 0);
+  else if (py > 0 && !(py >= CLIFF.h - 0.5 && vy === 0 && cliffTop())) P = poseAir(vy > 0, Math.max(0, Math.min(1, 0.5 - vy / (2 * cfg.jumpV))));
   else if (act.push > 0) P = posePush();
   else if (act.pull > 0) P = posePull(now);
   else if (state === 'play' && curSpeed() > 0) P = poseRun(bgX * 0.42 * RIG.run.cadence);
@@ -1456,15 +1494,26 @@ function drawObstacle(o, top) {
     ctx.beginPath(); ctx.moveTo(x + 1, ry + 1.5); ctx.lineTo(x + 4.5, ry); ctx.lineTo(x + s, ry + 2.5); ctx.lineTo(x + s - 0.5, ry + s - 1); ctx.lineTo(x + 3, ry + s); ctx.lineTo(x, ry + s - 2.5); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#a8a29e'; ctx.fillRect(x + 2, ry + 2, 2.2, 1.2);
     if (o.fallK === undefined) label('STOP', x + s / 2, ry + s + 5, 4, '#fde047', '#1e293b');
-  } else if (o.type === 'cliff') {               // CLIMB: צוק עם שכבות וגפנים
+  } else if (o.type === 'cliff') {               // CLIMB: צוק אדמה גבוה – דשא למעלה, אבני אחיזה וגפנים
     if (o.climbed && x + CLIFF.w < PLAYER.x - 30) return;
-    const y = GROUND - CLIFF.h;
-    ctx.fillStyle = '#78716c'; roundRect(x, y, CLIFF.w, CLIFF.h + 1, 1.5); ctx.fill();
-    ctx.fillStyle = '#57534e'; for (let k = 1; k < 6; k++) ctx.fillRect(x, y + k * 5, CLIFF.w, 0.8);
-    ctx.fillStyle = '#a8a29e'; ctx.fillRect(x, y, CLIFF.w, 1.5);
-    ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 0.6;
-    ctx.beginPath(); ctx.moveTo(x + 2, y + 1); ctx.quadraticCurveTo(x + 4, y + 12, x + 2.5, y + 24); ctx.moveTo(x + 8, y + 1); ctx.quadraticCurveTo(x + 6, y + 10, x + 8.5, y + 18); ctx.stroke();
-    if (!o.climbed) label('CLIMB', x + CLIFF.w / 2, y - 5, 4, '#fde047', '#1e293b');
+    const y = GROUND - CLIFF.h, w = CLIFF.w;
+    const g = ctx.createLinearGradient(x, 0, x + w, 0);
+    g.addColorStop(0, '#b45309'); g.addColorStop(1, '#78350f');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(x + 0.6, GROUND);
+    for (let k = 0; k <= 7; k++) ctx.lineTo(x + (k % 2 ? 0 : 1.1), GROUND - k * CLIFF.h / 7);   // דופן משוננת
+    ctx.lineTo(x + w - 0.8, y); ctx.lineTo(x + w, GROUND); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.18)';                                          // שכבות סלע
+    for (let k = 1; k < 6; k++) ctx.fillRect(x + 1, y + k * 4.6 + (k % 2), w - 1.5, 0.7);
+    ctx.fillStyle = '#a8a29e';                                                  // אבני אחיזה
+    [[2.2, 5], [4.5, 10.5], [2, 16], [4.8, 21.5], [2.6, 25.5]].forEach(([dx, dy]) => { circle(x + dx, y + dy, 0.95); });
+    ctx.fillStyle = '#57534e'; [[2.2, 5], [4.5, 10.5], [2, 16], [4.8, 21.5], [2.6, 25.5]].forEach(([dx, dy]) => ctx.fillRect(x + dx - 0.9, y + dy + 0.4, 1.8, 0.4));
+    ctx.strokeStyle = '#15803d'; ctx.lineWidth = 0.5;                          // גפנים עם עלים
+    ctx.beginPath(); ctx.moveTo(x + 7, y + 1); ctx.quadraticCurveTo(x + 9.5, y + 9, x + 7.5, y + 17); ctx.stroke();
+    ctx.fillStyle = '#22c55e'; for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.ellipse(x + 7.8 + (k % 2 ? 1 : -0.6), y + 3 + k * 3.8, 1, 0.5, k % 2 ? 0.5 : -0.5, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = '#16a34a'; roundRect(x - 1.2, y - 1.6, w + 2.2, 2.6, 1.2); ctx.fill();   // דשא על הראש, בולט מעט
+    ctx.fillStyle = '#4ade80'; for (let k = 0; k < w + 1; k += 1.6) ctx.fillRect(x - 0.8 + k, y - 2.4 - (k % 3 ? 0 : 0.6), 0.5, 1.2);
+    if (!o.climbed) label('CLIMB', x + w / 2, y - 7, 4, '#fde047', '#1e293b');
   } else if (o.type === 'boulder') {             // PUSH: סלע עגול גדול
     const r = BOULDER.r;
     ctx.save(); ctx.translate(x + r, GROUND - r); ctx.rotate(o.rot || 0);
@@ -1473,25 +1522,46 @@ function drawObstacle(o, top) {
     ctx.strokeStyle = '#4b5563'; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(-2, 2); ctx.lineTo(3, 4); ctx.lineTo(5, 1); ctx.stroke();
     ctx.restore();
     if (!o.pushed) label('PUSH', x + r, GROUND - 2 * r - 5, 4, '#fde047', '#1e293b');
-  } else if (o.type === 'gate') {                // PULL: שער סורג עם חבל
-    const lift = o.open ? Math.min(40, (o.oT || 0) * 70) : 0;
-    ctx.fillStyle = '#44403c'; ctx.fillRect(x - 1, top, GATE.w + 2, 3);
-    ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 0.8;
-    for (let k = 0; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(x + k * 2.5, top); ctx.lineTo(x + k * 2.5, GROUND - lift); ctx.stroke(); }
-    for (let yy = GROUND - lift - 3; yy > top; yy -= 6) { ctx.beginPath(); ctx.moveTo(x - 0.5, yy); ctx.lineTo(x + GATE.w + 0.5, yy); ctx.stroke(); }
-    const hy = o.open ? GROUND - 18 : GROUND - 12;           // חבל עם ידית
-    ctx.strokeStyle = '#a16207'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(x - 6, top); ctx.lineTo(x - 6, hy); ctx.stroke();
-    ctx.fillStyle = '#92400e'; roundRect(x - 8, hy, 4, 1.6, 0.6); ctx.fill();
-    if (!o.open) label('PULL', x - 6, hy - 5, 4, '#fde047', '#1e293b');
-  } else if (o.type === 'guard') {               // HIDE: שומר עם פנס
-    const now = performance.now() / 1000, fx = x + GUARD.w / 2;
-    const lx = fx - 6, ly = GROUND - 9.5;
-    ctx.fillStyle = 'rgba(253,224,71,.22)';                    // אלומת אור קדימה
-    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx - 26, GROUND); ctx.lineTo(lx - 6, GROUND); ctx.closePath(); ctx.fill();
-    drawFigure({ fx, fy: GROUND, facing: -1, scale: GUARD.h / 14, kind: 'guard', pose: poseRun(now * 5 + x) });
-    ctx.fillStyle = 'rgba(253,224,71,.5)'; circle(lx, ly, 2.4);
-    ctx.fillStyle = '#facc15'; roundRect(lx - 1, ly - 1.4, 2, 2.8, 0.5); ctx.fill();
-    if (!o.passed) label('HIDE', fx, GROUND - GUARD.h - 5, 4, '#fde047', '#1e293b');
+  } else if (o.type === 'gate') {                // PULL: שער ברזל בחומה, חבל על גלגלת. מושכים – השער עולה
+    const lintel = GROUND - 30, lift = o.open ? Math.min(28, (o.oT || 0) * 40) : 0;
+    const bot = GROUND - lift;
+    ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 0.8;                          // סורג (נכנס לתוך החומה כשעולה)
+    for (let k = 0; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(x + k * 2.5, lintel); ctx.lineTo(x + k * 2.5, bot); ctx.stroke(); }
+    for (let yy = bot - 3; yy > lintel; yy -= 5) { ctx.beginPath(); ctx.moveTo(x - 0.5, yy); ctx.lineTo(x + GATE.w + 0.5, yy); ctx.stroke(); }
+    ctx.fillStyle = '#1f2937'; for (let k = 0; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(x + k * 2.5 - 0.7, bot - 0.5); ctx.lineTo(x + k * 2.5, bot + 1.2); ctx.lineTo(x + k * 2.5 + 0.7, bot - 0.5); ctx.fill(); }
+    ctx.fillStyle = '#78716c'; ctx.fillRect(x - 3, top, GATE.w + 6, lintel - top);            // חומה מעל השער
+    ctx.fillStyle = '#a8a29e';
+    for (let yy = lintel - 3; yy > top; yy -= 3) for (let k = 0; k < 3; k++) ctx.fillRect(x - 2.6 + k * 3.7 + ((yy / 3) % 2 ? 1.6 : 0), yy, 2.8, 2.4);
+    ctx.fillStyle = '#57534e'; ctx.fillRect(x - 3.5, lintel - 1.2, GATE.w + 7, 1.6);
+    const px = x - 4.5, pyy = lintel + 1.5, spin = (o.oT || 0) * 12;                // גלגלת
+    ctx.fillStyle = '#92400e'; circle(px, pyy, 1.8);
+    ctx.strokeStyle = '#451a03'; ctx.lineWidth = 0.35;
+    ctx.beginPath(); ctx.moveTo(px + Math.cos(spin) * 1.6, pyy + Math.sin(spin) * 1.6); ctx.lineTo(px - Math.cos(spin) * 1.6, pyy - Math.sin(spin) * 1.6); ctx.stroke();
+    ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 0.6;                          // חבל
+    const pulling = o.open && (o.oT || 0) < 0.8;
+    const hx = pulling ? PLAYER.x + 10 : x - 9, hy = pulling ? GROUND - 9.5 : GROUND - 11;
+    ctx.beginPath(); ctx.moveTo(px - 1.8, pyy);
+    if (pulling) ctx.lineTo(hx, hy); else ctx.quadraticCurveTo(px - 4, (pyy + hy) / 2, hx, hy);
+    ctx.stroke();
+    ctx.fillStyle = '#92400e'; roundRect(hx - 1.6, hy - 0.4, 3.2, 1.5, 0.6); ctx.fill();   // ידית
+    if (!o.open) label('PULL', hx, hy - 5, 4, '#fde047', '#1e293b');
+  } else if (o.type === 'guard') {               // HIDE: שני שומרים עם פנסים – רואים אותך גם באוויר
+    const now = performance.now() / 1000, sc = GUARD.h / 14;
+    for (let g = 0; g < 2; g++) {
+      const fx = x + GUARD.w / 2 + g * (GUARD.w + GUARD.gap);
+      const P = poseRun(now * 5 + x + g * 1.7);
+      P.arms[1] = [1.25, 1.05];                                                    // יד קדמית מחזיקה פנס קדימה
+      const out = {};
+      drawFigure({ fx, fy: GROUND, facing: -1, scale: sc, kind: 'guard', pose: P, out });
+      const h = out.pts.armF[2];
+      const lx = fx - h[0] * sc, ly = GROUND + out.bobY + (h[1] + 2.2) * sc;   // מיקום הפנס בעולם
+      const fl = 0.85 + Math.sin(now * 13 + g) * 0.08;
+      const cone = ctx.createLinearGradient(lx, 0, lx - 30, 0);
+      cone.addColorStop(0, 'rgba(253,224,71,' + 0.42 * fl + ')'); cone.addColorStop(1, 'rgba(253,224,71,0)');
+      ctx.fillStyle = cone;                                                         // אלומת אור קדימה
+      ctx.beginPath(); ctx.moveTo(lx, ly - 1); ctx.lineTo(lx - 30, ly - 14); ctx.lineTo(lx - 30, GROUND); ctx.lineTo(lx - 6, GROUND); ctx.closePath(); ctx.fill();
+    }
+    if (!o.passed) label('HIDE', x + GUARD.span / 2, GROUND - GUARD.h - 9, 4, '#fde047', '#1e293b');
   } else if (o.type === 'arrows') {              // BLOCK: שלושה חיצים
     const d = o.dt2 || 0;
     ctx.save();
@@ -1538,6 +1608,10 @@ function drawLake(o, bottom) {
   ctx.fillStyle = '#15803d';                                                     // עלי לוטוס
   for (let i = 6; i < w - 6; i += 14) { ctx.beginPath(); ctx.ellipse(x + i + Math.sin(t + i) * 0.8, GROUND + 1.2, 2.6, 0.9, 0, 0, Math.PI * 2); ctx.fill(); }
   ctx.fillStyle = '#f9a8d4'; circle(x + w * 0.62, GROUND + 0.4, 0.9);
+  ctx.strokeStyle = '#65a30d'; ctx.lineWidth = 0.45;                                // קני סוף בשפות האגם
+  for (const ex of [x + 1, x + w - 3]) for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(ex + k, GROUND + 1); ctx.lineTo(ex + k + 0.4 * Math.sin(t + k), GROUND - 4 - k); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 0.35;                 // אדוות רגועות
+  for (let i = 4; i < w - 6; i += 11) { ctx.beginPath(); ctx.ellipse(x + i, GROUND + 3 + (i % 3), 2.4 + Math.sin(t + i) * 0.4, 0.5, 0, 0, Math.PI * 2); ctx.stroke(); }
   label('SWIM', x + w / 2, GROUND - 6, 4, '#fde047', '#1e293b');
 }
 
@@ -1561,17 +1635,23 @@ function drawBridge(o, bottom) {
   if (!o.collapsed) label('RUN', x + w / 2, GROUND - 11, 4, '#fde047', '#1e293b');
 }
 
-function drawRiver(o, bottom) {
-  const x = o.x, w = o.w, t = performance.now() / 300;
-  const wg = ctx.createLinearGradient(0, GROUND, 0, bottom);
-  wg.addColorStop(0, '#38bdf8'); wg.addColorStop(1, '#075985');
-  ctx.fillStyle = wg; ctx.fillRect(x, GROUND + 1, w, bottom - GROUND);
-  ctx.fillStyle = WORLDS[world].mark; ctx.fillRect(x - 1, GROUND, 1.2, bottom - GROUND); ctx.fillRect(x + w - 0.2, GROUND, 1.2, bottom - GROUND);
-  ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 0.6;
-  for (let i = 2; i < w - 4; i += 7) {
-    const yy = GROUND + 4 + (i % 3) * 2;
-    ctx.beginPath(); ctx.moveTo(x + i, yy + Math.sin(t + i) * 0.7); ctx.quadraticCurveTo(x + i + 2, yy - 0.8, x + i + 4, yy + Math.sin(t + i + 1) * 0.7); ctx.stroke();
+function drawRiver(o, bottom) {                  // FLY: תהום עמוקה בלי מים – קופצים ועפים מעליה
+  const x = o.x, w = o.w, wd = WORLDS[world], t = performance.now() / 1000;
+  const g = ctx.createLinearGradient(0, GROUND, 0, bottom);
+  g.addColorStop(0, '#44403c'); g.addColorStop(0.35, '#1c1917'); g.addColorStop(1, '#000');
+  ctx.fillStyle = g; ctx.fillRect(x, GROUND - 0.2, w, bottom - GROUND + 0.2);
+  ctx.fillStyle = 'rgba(255,255,255,.18)';                                       // ערפל בעומק
+  for (let i = 0; i < 4; i++) { const mx = x + ((i * 23 + t * 3) % w), my = GROUND + 9 + (i % 2) * 3; ctx.beginPath(); ctx.ellipse(mx, my, 7, 1.4, 0, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = wd.ground;                                                     // קירות התהום – שפות משוננות
+  for (const side of [0, 1]) {
+    const ex = side ? x + w : x, d = side ? -1 : 1;
+    ctx.beginPath(); ctx.moveTo(ex, GROUND);
+    for (let k = 1; k <= 8; k++) ctx.lineTo(ex + d * (k % 2 ? 2.4 : 0.8), GROUND + k * 3);
+    ctx.lineTo(ex, GROUND + 26); ctx.closePath(); ctx.fill();
   }
+  ctx.fillStyle = wd.top; ctx.fillRect(x - 1, GROUND, 1.5, 2); ctx.fillRect(x + w - 0.5, GROUND, 1.5, 2);
+  ctx.fillStyle = 'rgba(255,255,255,.6)';                                        // אבנים קטנות שנופלות
+  const fall = (t * 0.7) % 1; circle(x + w * 0.3, GROUND + fall * 22, 0.45); circle(x + w * 0.7, GROUND + ((fall + 0.5) % 1) * 22, 0.4);
   label('JUMP + FLY', x + w / 2, GROUND - 6, 4, '#fde047', '#1e293b');
 }
 
@@ -1584,26 +1664,28 @@ function drawEnemy(o) {
   }
   const now = performance.now() / 1000;
   const pose = o.defeated ? poseIdle(now) : (speed > 0 ? poseRun(now * 10 + o.x) : poseIdle(now));
+  if (!o.defeated) pose.arms[1] = [0.9, 1.9 + Math.sin(now * 8) * 0.12];   // סמוראי: חרב מורמת קדימה
   drawFigure({ fx, fy: GROUND, facing: -1, scale: ENEMY.h / 14, kind: 'enemy', pose });
   ctx.restore();
-  if (!o.defeated) label('THROW', fx, GROUND - ENEMY.h - 5, 4, '#fde047', '#1e293b');
+  if (!o.defeated) label('THROW', fx, GROUND - ENEMY.h - 10, 4, '#fde047', '#1e293b');
 }
 
 function drawNinja() {
   const pb = playerBox();
   const swim = swimmingNow();
-  const duck = duckT > 0, fx = pb.l + (duck ? 5.5 : swim ? 3 : 4), fy = swim ? GROUND + 1.5 : pb.b;
+  const drowning = drownK > 0 && !swim && py <= 0 && sinkT <= 0;     // במים בלי SWIM – שוקע
+  const duck = duckT > 0, fx = pb.l + (duck ? 5.5 : swim ? 3 : 4), fy = swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : pb.b;
   const now = performance.now() / 1000;
   if (sinkT > 0) {                                                               // נופל לתהום או שוקע במים
     const k = 1 - sinkT / SINK_TIME;
     ctx.save();
-    ctx.beginPath(); ctx.rect(fx - 20, GROUND - 40, 40, 40 + (sinkType === 'bridge' ? 60 : 0)); ctx.clip();
-    if (sinkType !== 'bridge') { ctx.beginPath(); ctx.rect(fx - 20, GROUND - 40, 40, 40.5); ctx.clip(); }   // במים – נעלם מתחת לפני המים
-    ctx.translate(fx, GROUND + k * k * (sinkType === 'bridge' ? 45 : 16));
-    ctx.rotate(sinkType === 'bridge' ? k * 2.5 : 0);
+    ctx.beginPath(); ctx.rect(fx - 20, GROUND - 40, 40, 40 + (sinkType === 'fall' ? 60 : 0)); ctx.clip();
+    if (sinkType !== 'fall') { ctx.beginPath(); ctx.rect(fx - 20, GROUND - 40, 40, 40.5); ctx.clip(); }   // במים – נעלם מתחת לפני המים
+    ctx.translate(fx, GROUND + k * k * (sinkType === 'fall' ? 45 : 16));
+    ctx.rotate(sinkType === 'fall' ? k * 2.5 : 0);
     drawFigure({ fx: 0, fy: 0, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: poseAir(false) });
     ctx.restore();
-    if (sinkType !== 'bridge' && k < 0.4) burst(fx, GROUND, '#bae6fd', 2, 25);       // התזה
+    if (sinkType !== 'fall' && k < 0.4) burst(fx, GROUND, '#bae6fd', 2, 25);       // התזה
     return;
   }
   if (act.hide > 0 && !(invulnT > 0 && Math.floor(invulnT * 10) % 2 === 0)) {   // מתחבא – שיח עם עיניים
@@ -1619,7 +1701,7 @@ function drawNinja() {
     for (let k = 0; k < 3; k++) { const yy = fy - 4 - k * 3.5, o2 = ((now * 60 + k * 7) % 10); ctx.beginPath(); ctx.moveTo(fx - 6 - o2, yy); ctx.lineTo(fx - 13 - o2, yy); ctx.stroke(); }
   }
   // צל על הקרקע
-  if (!swim) ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';
+  if (!swim && !drowning) ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';
   else ctx.fillStyle = 'rgba(0,0,0,0)';
   ctx.beginPath(); ctx.ellipse(fx + 0.5, GROUND + 0.6, Math.max(1.5, 4.5 - py * 0.08), 0.9, 0, 0, Math.PI * 2); ctx.fill();
   if (invulnT > 0 && Math.floor(invulnT * 10) % 2 === 0) return;   // הבהוב אחרי פגיעה
@@ -1635,8 +1717,12 @@ function drawNinja() {
     ctx.beginPath(); ctx.moveTo(gx - 6, gy - 4.5); ctx.lineTo(gx, gy - 7.5); ctx.lineTo(gx, gy - 3.5); ctx.closePath(); ctx.fill();
   }
 
-  const P = playerPose();
+  const P = drowning ? poseFly(now * 4) : playerPose();          // שוקע – מנופף בידיים
   drawFigure({ fx, fy, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: P });
+  if (drowning) {
+    if (Math.random() < 0.25) particles.push({ x: fx + (Math.random() - 0.5) * 4, y: GROUND, vx: 0, vy: -8, g: 0, life: 0.5, color: '#e0f2fe', size: 0.9 });
+    label('SWIM!', fx, GROUND - 22, 4.4, '#dc2626', '#fff');
+  }
 
   // קו תנועה בבעיטה
   if (kickT > 0) {
@@ -1869,9 +1955,9 @@ function setupDemo(w) {
   if (w === 'throw') obstacles.push({ type: 'enemy', x: near + 55 });
   if (w === 'catch') obstacles.push({ type: 'coin',  x: near + 12 });
   if (w === 'stop')  obstacles.push({ type: 'rock',  x: near + 18 });
-  if (w === 'swim')  obstacles.push({ type: 'lake',  x: PLAYER.x - 12, w: 34 });
-  if (w === 'climb') obstacles.push({ type: 'cliff', x: near + 3 });
-  if (w === 'push')  obstacles.push({ type: 'boulder', x: near + 3 });
+  if (w === 'swim')  obstacles.push({ type: 'lake',  x: PLAYER.x - 12, w: 34, wet: true, swam: true });
+  if (w === 'climb') obstacles.push({ type: 'cliff', x: near + 1 });
+  if (w === 'push')  obstacles.push({ type: 'boulder', x: near + 14 });
   if (w === 'pull')  obstacles.push({ type: 'gate',  x: near + 12 });
   if (w === 'hide')  obstacles.push({ type: 'guard', x: near + 14 });
   if (w === 'block') obstacles.push({ type: 'arrows', x: near + 28 });
@@ -1886,12 +1972,19 @@ function startIntro() {
   introWords = [...STAGES[stageIdx].words];
   state = 'intro';
   $('pauseBtn').classList.add('hide');
-  $('skipBtn').classList.remove('hide');
+  $('startBtn').classList.remove('ready');
   introNext();
 }
 
+// אחרי ההדגמה – מחכים ל-START (אפשר לשמוע שוב עם Again)
 function introNext() {
-  if (!introWords.length) { finishIntro(); return; }
+  if (!introWords.length) {
+    setupDemo('idle'); demoSteps = []; heard = null;
+    banner = { text: 'Ready? Press START', sub: STAGES[stageIdx].hint, t: 99 };
+    introT = 1e9;
+    $('startBtn').classList.add('ready');
+    return;
+  }
   const w = introWords.shift();
   setupDemo(w);
   speak(w);
@@ -1911,6 +2004,12 @@ function finishIntro() {
   state = 'play';
 }
 $('skipBtn').onclick = () => { try { speechSynthesis.cancel(); } catch (e) {} finishIntro(); };
+$('startBtn').onclick = () => { try { speechSynthesis.cancel(); } catch (e) {} finishIntro(); };
+$('againBtn').onclick = () => {
+  if (state !== 'intro') return;
+  $('startBtn').classList.remove('ready');
+  introWords = [...STAGES[stageIdx].words]; introNext();
+};
 
 /* ============================================================
    מעבדת אנימציות – בודקים כל תנועה לבד, לאט, עם שלד
@@ -2016,6 +2115,7 @@ function loop(t) {
   updateEffects(dt);
   updateMic();
   if (state === 'lab') drawLab(dt); else draw();
+  $('introBar').classList.toggle('hide', state !== 'intro');   // כפתורי Again / START רק בתחילת שלב
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
