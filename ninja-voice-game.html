@@ -9,8 +9,8 @@
 <script src="ninja-figure.js?v=20261010c"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; background: #0f172a; font-family: -apple-system, system-ui, Arial, sans-serif; overscroll-behavior: none; touch-action: manipulation; }
-#app { position: fixed; inset: 0; }
+html, body { position: fixed; inset: 0; height: 100%; overflow: hidden; background: #0f172a; font-family: -apple-system, system-ui, Arial, sans-serif; overscroll-behavior: none; touch-action: manipulation; }
+#app { position: fixed; top: 0; left: 0; width: 100%; height: 100%; height: 100dvh; overflow: hidden; }   /* בדיוק בגודל המסך הנראה */
 canvas { display: block; width: 100%; height: 100%; }
 
 /* פס עליון */
@@ -1224,7 +1224,9 @@ let cw = 0, ch = 0, scale = 1, ox = 0, oy = 0;
 
 function resize() {
   const dpr = window.devicePixelRatio || 1;
-  cw = window.innerWidth; ch = window.innerHeight;
+  const r = $('app').getBoundingClientRect();          // הגודל שבאמת רואים (בלי שורת הכתובת של Safari)
+  cw = r.width || window.innerWidth; ch = r.height || window.innerHeight;
+  window.scrollTo(0, 0);
   canvas.width = Math.round(cw * dpr); canvas.height = Math.round(ch * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   scale = Math.min(cw / W, ch / H);
@@ -1232,6 +1234,11 @@ function resize() {
   oy = (ch - H * scale) * 0.75;   // במצב לאורך – יותר שמיים, פחות אדמה
 }
 window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', () => setTimeout(resize, 300));
+if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+// אין גלילה של הדף: גרירה עובדת רק בתוך רשימות שבאמת צריך לגלול (רשימת שחקנים)
+document.addEventListener('touchmove', e => { if (!e.target.closest('.playerGrid')) e.preventDefault(); }, { passive: false });
+window.addEventListener('scroll', () => { if (window.scrollY || window.scrollX) window.scrollTo(0, 0); });
 resize();
 
 function label(text, cx, cy, size, bg, fg) {

@@ -7,8 +7,8 @@
 <script src="ninja-figure.js?v=20261010c"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; background: #0f172a; color: #e2e8f0; font-family: -apple-system, system-ui, Arial, sans-serif; }
-#app { position: fixed; inset: 0; display: flex; flex-direction: row-reverse; }
+html, body { position: fixed; inset: 0; height: 100%; overflow: hidden; overscroll-behavior: none; background: #0f172a; color: #e2e8f0; font-family: -apple-system, system-ui, Arial, sans-serif; }
+#app { position: fixed; top: 0; left: 0; width: 100%; height: 100%; height: 100dvh; display: flex; flex-direction: row-reverse; overflow: hidden; }
 @media (max-aspect-ratio: 1/1) { #app { flex-direction: column; } }
 
 /* תצוגה */
@@ -430,6 +430,11 @@ function resize() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', () => setTimeout(resize, 300));
+if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+// הדף עצמו לא נגלל – רק הפאנל, שורת התנועות ותיבת הטקסט
+document.addEventListener('touchmove', e => { if (!e.target.closest('#content, #moves, #json, #modal .box')) e.preventDefault(); }, { passive: false });
+window.addEventListener('scroll', () => { if (window.scrollY || window.scrollX) window.scrollTo(0, 0); });
 
 function frame(ts) {
   const now = ts / 1000, dt = Math.min(0.05, lastT ? now - lastT : 0); lastT = now;
