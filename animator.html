@@ -24,6 +24,18 @@ html, body { height: 100%; overflow: hidden; background: #0f172a; color: #e2e8f0
 #moves .b { flex: none; }
 #view { position: relative; flex: 1; min-height: 0; }
 canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+#tl { background: #111827; border-top: 1px solid #1f2937; padding: 6px 10px 8px; direction: ltr; display: flex; flex-direction: column; gap: 6px; }
+#tl .top { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+#tl label { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 800; color: #cbd5e1; }
+#tl input[type=checkbox] { width: 18px; height: 18px; accent-color: #6366f1; }
+#tl input[type=range] { width: 110px; accent-color: #6366f1; }
+#tl .note { font-size: 12px; color: #64748b; direction: rtl; }
+#track { position: relative; height: 34px; background: #0b1220; border-radius: 8px; touch-action: none; margin: 0 18px 2px; }
+#track .ph { position: absolute; top: 0; bottom: 0; width: 2px; background: #f43f5e; pointer-events: none; }
+#track .kf { position: absolute; top: 7px; width: 20px; height: 20px; margin-left: -10px; transform: rotate(45deg); background: #f59e0b;
+             border: 2px solid #fff; border-radius: 3px; }
+#track .kf.sel { background: #22c55e; }
+#track .tick { position: absolute; bottom: 0; width: 1px; height: 6px; background: #334155; }
 #tip { position: absolute; right: 10px; top: 8px; max-width: 60%; font-size: 13px; font-weight: 700; color: #1e293b;
        background: rgba(255,255,255,.85); border-radius: 10px; padding: 6px 10px; pointer-events: none; display: none; }
 #tip.show { display: block; }
@@ -92,6 +104,7 @@ h3 { font-size: 14px; color: #94a3b8; margin: 12px 0 6px; font-weight: 800; }
     </div>
     <div id="moves"></div>
     <div id="view"><canvas id="c"></canvas><div id="tip"></div><div id="info"></div></div>
+    <div id="tl"></div>
   </div>
 
   <div id="panel">
@@ -186,7 +199,7 @@ function btnRow(box, items, cur, label, onPick) {
 }
 function renderBar() {
   btnRow($('chars'), Object.keys(CHARS), char, v => CHARS[v], v => { char = v; renderBar(); renderPanel(); });
-  btnRow($('moves'), MOVES, move, v => MOVE_LABEL[v], v => { move = v; t = 0; renderBar(); if (tab === 'pose' || tab === 'layers') renderPanel(); });
+  btnRow($('moves'), MOVES, move, v => MOVE_LABEL[v], v => { move = v; t = 0; selKey = -1; renderBar(); renderTL(); if (tab === 'pose' || tab === 'layers') renderPanel(); });
   btnRow($('drag'), ['off', 'pose', 'attach'], dragMode, v => ({ off: '✋ Off', pose: '✋ Pose', attach: '🔩 Attach' })[v],
          v => { dragMode = v; renderBar(); showTip(); });
   btnRow($('speeds'), [0.1, 0.25, 0.5, 1], speedMul, v => v + '×', v => { speedMul = v; renderBar(); });
@@ -231,6 +244,7 @@ function smallBtn(box, text, fn) {
 }
 
 function renderPanel() {
+  if (typeof renderTL === 'function' && tlReady) renderTL();
   const box = $('content');
   box.innerHTML = '';
   if (tab === 'colors') renderColors(box);
@@ -339,6 +353,7 @@ function renderPose(box) {
     RUN_FIELDS.forEach(([k, lbl, mn, mx, st]) => slider(box, lbl, RIG.run[k], mn, mx, st, v => v.toFixed(2), v => RIG.run[k] = v));
     smallBtn(box, '↺ איפוס מחזור הריצה', () => { RIG.run = rigClone(RIG_DEFAULT.run); });
   }
+  if (keysOn(move)) { renderKeyPose(box); return; }
   head(box, 'תיקוני זווית – ' + MOVE_LABEL[move],
        'מזיזים כל מפרק בזווית קבועה, שמתווספת לתנועה. כדאי לעצור (⏸) או להאט ל-0.1× ולהפעיל Skeleton. ירוק = יד/רגל קדמית, כתום = אחורית.');
   const O = RIG.offsets[move] || {};
@@ -353,6 +368,26 @@ function renderPose(box) {
     });
   });
   smallBtn(box, '↺ איפוס התיקונים של ' + MOVE_LABEL[move], () => { delete RIG.offsets[move]; });
+}
+
+// כשיש תמונות מפתח: עורכים את התמונה שנבחרה (זוויות מלאות, לא תיקונים)
+function renderKeyPose(box) {
+  const k = RIG.keys[move], f = k.frames[selKey];
+  head(box, 'תמונת מפתח – ' + MOVE_LABEL[move],
+       'ל-' + MOVE_LABEL[move] + ' יש תמונות מפתח, ולכן התנוחה נלקחת מהן (תיקוני הזווית לא פועלים). בוחרים ◆ בציר הזמן שמתחת לדמות, ' +
+       'ואז גוררים מפרקים במצב ✋ Pose או משתמשים בפסים כאן. 0° = ישר למטה.');
+  if (!f) { const d = document.createElement('div'); d.className = 'hint'; d.textContent = 'לא נבחרה תמונה. לחץ על ◆ בציר הזמן, או על "+ Key" כדי להוסיף אחת במקום שבו הדמות עומדת.'; box.appendChild(d); return; }
+  const lbl = document.createElement('div'); lbl.className = 'hint'; lbl.textContent = 'תמונה ' + (selKey + 1) + ' מתוך ' + k.frames.length + ' · במקום ' + Math.round(f.t * 100) + '% מהתנועה';
+  box.appendChild(lbl);
+  OFFSET_FIELDS.forEach(([key, label, idx]) => {
+    const isUnits = key === 'hipY', fk = key === 'head' ? 'headTilt' : key;
+    const cur = idx === null ? (f[fk] || 0) : f[fk][idx];
+    slider(box, label, isUnits ? cur : cur * DEG, isUnits ? -8 : -200, isUnits ? 0 : 200, isUnits ? 0.05 : 1,
+           v => isUnits ? v.toFixed(2) : Math.round(v) + '°', v => {
+      const raw = isUnits ? v : v / DEG;
+      if (idx === null) f[fk] = raw; else f[fk][idx] = raw;
+    });
+  });
 }
 
 /* ============================================================
@@ -400,8 +435,10 @@ function frame(ts) {
   const now = ts / 1000, dt = Math.min(0.05, lastT ? now - lastT : 0); lastT = now;
   if (playing) t += dt * speedMul;
   if (!cw) resize();
-  const u = Math.min(cw / 34, ch / 26) * zoom;     // גודל יחידה – דמות גדולה
-  const fx = cw / 2, fy = ch * 0.78;
+  // גודל יחידה: מספיק מקום גם לקפיצה ולתעופה, כדי שהדמות לא תצא מהמסך
+  const need = 21 + (move === 'jump' ? 21 : move === 'fly' ? 15 : 0);
+  const u = Math.min(cw / 34, ch * 0.84 / need) * zoom;
+  const fx = cw / 2, fy = ch * 0.88;
   ctx.fillStyle = '#e0f2fe'; ctx.fillRect(0, 0, cw, ch);
   ctx.strokeStyle = 'rgba(15,23,42,.07)'; ctx.lineWidth = 1;   // רשת: כל קו = 2 יחידות
   for (let y = fy; y > 0; y -= u * 2) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cw, y); ctx.stroke(); }
@@ -421,6 +458,7 @@ function frame(ts) {
   ctx.restore();
   view = { fx, fy, u, lift, out };
   drawHandles();
+  updatePlayhead(out.P);
   $('info').textContent = MOVE_LABEL[move] + ' · t=' + t.toFixed(2) + 's · ' + speedMul + '×' +
                           (dragMode === 'pose' && out.P ? ' · editing: ' + (MOVE_LABEL[out.P.move] || out.P.move) : '');
   requestAnimationFrame(frame);
@@ -499,6 +537,14 @@ canvas.addEventListener('pointerdown', e => {
   if (best.kind === 'attach') {
     drag.base = best.key === 'head' ? J.head0 : best.key.startsWith('sh') ? J.sh : J.hip;
     drag.up = J.up; drag.fw = J.fw;
+  } else if (P.keyed && P.move !== move) {
+    drag = null; $('tip').textContent = 'כרגע מוצגת התנועה ' + (MOVE_LABEL[P.move] || P.move) + ' – עבור לרגע שבו ' + MOVE_LABEL[move] + ' מתבצעת (בציר הזמן).';
+    $('tip').classList.add('show'); return;
+  } else if (P.keyed) {
+    // עורכים תמונת מפתח: אם אין תמונה בדיוק כאן – יוצרים אחת
+    drag.key = keyAtPlayhead(true);
+    drag.hip0 = drag.key.hipY; drag.pivot = best.pivot;
+    renderTL(); if (tab === 'pose') renderPanel();
   } else {
     drag.move = P.move || move;
     const o = offsetsFor(drag.move);
@@ -516,6 +562,12 @@ canvas.addEventListener('pointermove', e => {
     const d = [L[0] - drag.base[0], L[1] - drag.base[1]];
     const v = [d[0] * drag.fw[0] + d[1] * drag.fw[1], d[0] * drag.up[0] + d[1] * drag.up[1]];
     RIG.attach[h.key] = [Math.round(v[0] * 20) / 20, Math.round(v[1] * 20) / 20];
+  } else if (drag.key) {
+    const f = drag.key;
+    if (h.kind === 'limb') f[h.n][h.idx] = angDown(drag.pivot, L);
+    if (h.kind === 'lean') f.lean = Math.atan2(L[0] - drag.pivot[0], -(L[1] - drag.pivot[1]));
+    if (h.kind === 'head') f.headTilt = Math.atan2(L[1] - drag.pivot[1], L[0] - drag.pivot[0]) - f.lean;
+    if (h.kind === 'hipY') f.hipY = drag.hip0 + (L[1] - drag.L0[1]);
   } else {
     const o = offsetsFor(drag.move);
     let a;
@@ -539,7 +591,114 @@ function showTip() {
   clearTimeout(showTip.t); if (txt) showTip.t = setTimeout(() => tip.classList.remove('show'), 6000);
 }
 
-renderBar(); renderPanel(); markDirty();
+/* ============================================================
+   ציר זמן ותמונות מפתח
+   ============================================================ */
+let selKey = -1, tlReady = false, kfDrag = null;
+const DEFAULT_DUR = { idle: 2.5, fly: 2.1, swim: 0.9, climb: 0.63, pull: 0.45, duck: 1, push: 1, catch: 1, block: 1, stop: 1, run: 1, kick: 1, throw: 1, jump: 1 };
+const STATIC_MOVES = ['duck', 'push', 'catch', 'block', 'stop'];
+
+function currentPhase() {               // איפה הדמות נמצאת בתנועה עכשיו (או null אם מוצגת תנועה אחרת, למשל עמידה אחרי בעיטה)
+  const P = view && view.out.P;
+  return P && P.move === move ? P.phase : null;
+}
+function keyAtPlayhead(create) {
+  const k = RIG.keys[move], ph = currentPhase();
+  if (ph === null) return k.frames[selKey] || null;
+  let i = k.frames.findIndex(f => Math.abs(f.t - ph) < 0.012 || Math.abs(Math.abs(f.t - ph) - 1) < 0.012);
+  if (i < 0 && create) {
+    k.frames.push(Object.assign({ t: Math.round(ph * 1000) / 1000 }, poseToKey(view.out.P)));
+    k.frames.sort((a, b) => a.t - b.t);
+    i = k.frames.findIndex(f => Math.abs(f.t - ph) < 0.012);
+    markDirty();
+  }
+  selKey = i;
+  return i >= 0 ? k.frames[i] : null;
+}
+function gotoKey(i) {
+  const k = RIG.keys[move]; if (!k || !k.frames[i]) return;
+  selKey = i; playing = false; t = timeForPhase(move, k.frames[i].t);
+  renderBar(); renderTL(); if (tab === 'pose') renderPanel();
+}
+function tlBtn(box, text, fn, cls) { const b = document.createElement('button'); b.className = 'b' + (cls ? ' ' + cls : ''); b.textContent = text; b.onclick = fn; box.appendChild(b); return b; }
+function tlChk(box, text, val, fn) {
+  const l = document.createElement('label'); l.innerHTML = '<input type="checkbox"> ' + text;
+  const c = l.querySelector('input'); c.checked = !!val; c.onchange = () => fn(c.checked); box.appendChild(l); return c;
+}
+
+function renderTL() {
+  tlReady = true;
+  const box = $('tl'); box.innerHTML = '';
+  const k = RIG.keys[move], on = keysOn(move);
+  const top = document.createElement('div'); top.className = 'top'; box.appendChild(top);
+  tlChk(top, '🎞 Keyframes · ' + MOVE_LABEL[move], on, v => {
+    if (v) {
+      if (k && k.frames && k.frames.length) k.on = true;
+      else {
+        const n = move === 'run' ? 4 : STATIC_MOVES.includes(move) ? 1 : KEY_DRIVEN[move] ? 3 : 4;
+        RIG.keys[move] = { on: true, dur: DEFAULT_DUR[move] || 1, loop: !KEY_DRIVEN[move] || move === 'run', smooth: true, frames: captureKeys(move, n) };
+      }
+      selKey = 0;
+    } else if (k) k.on = false;
+    markDirty(); renderTL(); renderPanel();
+  });
+  if (!on) {
+    const n = document.createElement('div'); n.className = 'note';
+    n.textContent = 'הפעלה יוצרת תמונות מפתח מהתנועה הנוכחית. אחר כך בוחרים תמונה (◆) ומזיזים מפרקים. כיבוי מחזיר את התנועה המקורית (התמונות נשמרות).';
+    box.appendChild(n); return;
+  }
+  tlChk(top, 'Loop', k.loop, v => { k.loop = v; markDirty(); });
+  tlChk(top, 'Smooth', k.smooth !== false, v => { k.smooth = v; markDirty(); });
+  if (!KEY_DRIVEN[move]) {
+    const l = document.createElement('label'); l.innerHTML = 'Duration <input type="range" min="0.2" max="4" step="0.05"> <span></span>';
+    const r = l.querySelector('input'), sp = l.querySelector('span'); r.value = k.dur; sp.textContent = (+k.dur).toFixed(2) + 's';
+    r.oninput = () => { k.dur = parseFloat(r.value); sp.textContent = k.dur.toFixed(2) + 's'; markDirty(); };
+    top.appendChild(l);
+  }
+  tlBtn(top, '◀', () => { const ph = currentPhase() ?? 0, F = k.frames; let i = -1; F.forEach((f, j) => { if (f.t < ph - 0.012) i = j; }); gotoKey(i < 0 ? F.length - 1 : i); });
+  tlBtn(top, '+ Key', () => { playing = false; renderBar(); keyAtPlayhead(true); renderTL(); if (tab === 'pose') renderPanel(); }, 'go');
+  tlBtn(top, '🗑', () => {
+    if (selKey < 0 || k.frames.length <= 1) return;
+    k.frames.splice(selKey, 1); selKey = Math.min(selKey, k.frames.length - 1); markDirty(); renderTL(); if (tab === 'pose') renderPanel();
+  }, 'warn');
+  tlBtn(top, '▶', () => { const ph = currentPhase() ?? 0, F = k.frames; const i = F.findIndex(f => f.t > ph + 0.012); gotoKey(i < 0 ? 0 : i); });
+  if (KEY_DRIVEN[move]) { const n = document.createElement('span'); n.className = 'note'; n.textContent = 'הקצב נקבע במשחק לפי ' + KEY_DRIVEN[move]; top.appendChild(n); }
+
+  const tr = document.createElement('div'); tr.id = 'track'; box.appendChild(tr);
+  [0, 0.25, 0.5, 0.75, 1].forEach(x => { const d = document.createElement('div'); d.className = 'tick'; d.style.left = (x * 100) + '%'; tr.appendChild(d); });
+  k.frames.forEach((f, i) => {
+    const d = document.createElement('div'); d.className = 'kf' + (i === selKey ? ' sel' : ''); d.style.left = (f.t * 100) + '%'; d.dataset.i = i;
+    tr.appendChild(d);
+  });
+  const ph = document.createElement('div'); ph.className = 'ph'; ph.id = 'ph'; tr.appendChild(ph);
+  const phaseAt = e => { const r = tr.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); };
+  tr.onpointerdown = e => {
+    e.preventDefault(); tr.setPointerCapture(e.pointerId);
+    playing = false; renderBar();
+    const i = e.target.dataset && e.target.dataset.i !== undefined ? +e.target.dataset.i : -1;
+    if (i >= 0) { kfDrag = { f: k.frames[i], moved: false }; gotoKey(i); }
+    else { t = timeForPhase(move, phaseAt(e)); selKey = -1; kfDrag = { scrub: true }; renderTL(); if (tab === 'pose') renderPanel(); }
+  };
+  tr.onpointermove = e => {
+    if (!kfDrag) return;
+    if (kfDrag.scrub) { t = timeForPhase(move, phaseAt(e)); return; }
+    kfDrag.f.t = Math.round(phaseAt(e) * 100) / 100; kfDrag.moved = true;
+    t = timeForPhase(move, kfDrag.f.t);
+    const el = tr.querySelector('.kf.sel'); if (el) el.style.left = (kfDrag.f.t * 100) + '%';
+  };
+  tr.onpointerup = tr.onpointercancel = () => {
+    if (kfDrag && kfDrag.moved) { const f = kfDrag.f; k.frames.sort((a, b) => a.t - b.t); selKey = k.frames.indexOf(f); markDirty(); renderTL(); if (tab === 'pose') renderPanel(); }
+    kfDrag = null;
+  };
+}
+function updatePlayhead(P) {
+  const el = $('ph'); if (!el) return;
+  const ph = P && P.move === move ? P.phase : null;
+  el.style.display = ph === null ? 'none' : 'block';
+  if (ph !== null) el.style.left = (ph * 100) + '%';
+}
+
+renderBar(); renderPanel(); renderTL(); markDirty();
 requestAnimationFrame(frame);
 </script>
 </body>
