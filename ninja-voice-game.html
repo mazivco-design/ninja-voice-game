@@ -107,6 +107,11 @@ canvas { display: block; width: 100%; height: 100%; }
 .pcard .band { position: absolute; left: 0; right: 0; top: 10px; height: 6px; }
 .pcard .pname { font-weight: 900; font-size: clamp(16px, 2.4vh, 20px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pcard .pstats { font-size: 13px; color: #64748b; margin-top: 2px; }
+/* כניסה נסתרת לבודק: כפתור קטן ושקוף בפינה, צריך להחזיק אותו שנייה */
+.testerBtn { position: absolute; left: 10px; bottom: 10px; width: 44px; height: 44px; border: 0; border-radius: 50%;
+             background: rgba(255,255,255,.12); font-size: 20px; opacity: .3; -webkit-user-select: none; user-select: none;
+             -webkit-touch-callout: none; transition: opacity .2s, transform .2s; }
+.testerBtn.holding { opacity: .9; transform: scale(1.25); transition: opacity 1s, transform 1s; }
 .pcard .edit { position: absolute; top: 6px; right: 8px; font-size: 18px; display: none; }
 .managing .pcard .edit { display: block; }
 .managing .pcard { outline: 2px dashed #94a3b8; }
@@ -225,6 +230,7 @@ canvas { display: block; width: 100%; height: 100%; }
       <div class="playerGrid" id="playerGrid"></div>
       <button class="free" id="manageBtn">✏️ Manage players</button>
     </div>
+    <button class="testerBtn" aria-label="Tester">🧪</button>
   </div>
 
   <!-- הוספה / עריכה של שחקן -->
@@ -240,6 +246,7 @@ canvas { display: block; width: 100%; height: 100%; }
       </div>
       <button class="del" id="pDelete">🗑 Delete player</button>
     </div>
+    <button class="testerBtn" aria-label="Tester">🧪</button>
   </div>
 
   <!-- מילון מילים -->
@@ -464,8 +471,10 @@ function bankCoins() {
   pStore('coins', pLoad('coins', 0) + caught);
 }
 
-// שחקן בשם Tester – הכל פתוח, לבדיקות
-function isTester() { return !!player && player.name.trim().toLowerCase() === 'tester'; }
+// בודק מובנה – לא צריך ליצור אותו, ולא מופיע ברשימת השחקנים.
+// נכנסים אליו בהחזקה של שנייה על 🧪 הקטן בפינה. הכל פתוח, וההתקדמות שלו נפרדת.
+const TESTER = { id: 'tester', name: 'Tester', color: '#64748b', builtIn: true };
+function isTester() { return !!player && (player.id === 'tester' || player.name.trim().toLowerCase() === 'tester'); }
 function isUnlocked(i, stars) { return isTester() || i === 0 || (stars[i - 1] || 0) > 0; }
 
 // ב-Free Play משתמשים בכל המילים מהשלבים שכבר נפתחו
@@ -515,7 +524,7 @@ $('freeBack').onclick = () => { hideAllOverlays(); $('menu').classList.add('show
    מסך פתיחה
    ============================================================ */
 function renderMenu() {
-  if (player) { $('pchipName').textContent = player.name; $('pchipDot').style.background = player.color; }
+  if (player) { $('pchipName').textContent = (isTester() ? '🧪 ' : '') + player.name; $('pchipDot').style.background = player.color; }
   document.querySelectorAll('.diff').forEach(b => b.classList.toggle('sel', b.dataset.diff === diffKey));
   const stars = getStars();
   const box = $('stages');
@@ -1746,6 +1755,16 @@ $('pDelete').onclick = () => {
 };
 $('manageBtn').onclick = () => { managing = !managing; renderPlayers(); };
 $('pchip').onclick = () => { managing = false; showPlayers(); };
+document.querySelectorAll('.testerBtn').forEach(b => {
+  let timer = null;
+  const cancel = () => { clearTimeout(timer); timer = null; b.classList.remove('holding'); };
+  b.addEventListener('pointerdown', e => {
+    e.preventDefault(); b.classList.add('holding');
+    timer = setTimeout(() => { cancel(); managing = false; selectPlayer(TESTER); }, 1000);
+  });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, cancel));
+  b.addEventListener('contextmenu', e => e.preventDefault());
+});
 
 /* ============================================================
    מילון מילים – לוחצים על מילה, שומעים אותה ורואים מה היא עושה
