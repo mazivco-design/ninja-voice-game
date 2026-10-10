@@ -423,7 +423,13 @@ $('load').onclick = () => {
    ציור התצוגה
    ============================================================ */
 let cw = 0, ch = 0;
+function fitApp() {
+  const vv = window.visualViewport, a = $('app');
+  if (!vv) return;
+  a.style.top = vv.offsetTop + 'px'; a.style.left = vv.offsetLeft + 'px'; a.style.width = vv.width + 'px'; a.style.height = vv.height + 'px';
+}
 function resize() {
+  fitApp();
   const r = $('view').getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
   cw = r.width; ch = r.height;
   canvas.width = Math.round(cw * dpr); canvas.height = Math.round(ch * dpr);
@@ -431,7 +437,7 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', () => setTimeout(resize, 300));
-if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+if (window.visualViewport) { window.visualViewport.addEventListener('resize', resize); window.visualViewport.addEventListener('scroll', resize); }
 // הדף עצמו לא נגלל – רק הפאנל, שורת התנועות ותיבת הטקסט
 document.addEventListener('touchmove', e => { if (!e.target.closest('#content, #moves, #json, #modal .box')) e.preventDefault(); }, { passive: false });
 window.addEventListener('scroll', () => { if (window.scrollY || window.scrollX) window.scrollTo(0, 0); });
