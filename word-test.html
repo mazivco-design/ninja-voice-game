@@ -41,8 +41,8 @@ td.w{direction:ltr;font-weight:800}
 
 <div class="card">
   <button id="loadBtn">טען מודל</button>
-  <button id="startBtn" disabled>LEAP · DIVE · JUMP · FLY (4 × 3 = 12 סבבים)</button>
-  <button id="startAllBtn" disabled>כל המילים (16 × 2 = 32 סבבים)</button>
+  <button id="startBtn" disabled>BOUNCE · CRAWL · LEAP · DIVE · JUMP · FLY (6 × 3 = 18 סבבים)</button>
+  <button id="startAllBtn" disabled>כל המילים (18 × 2 = 36 סבבים)</button>
   <button id="stopBtn" class="stop" disabled>עצור</button>
   <div class="status" id="status"></div>
 </div>
@@ -64,10 +64,10 @@ td.w{direction:ltr;font-weight:800}
 
 <script>
 // כל המילים שהמשחק יכיר – הזיהוי תמיד מקשיב לכולן, כדי לגלות בלבולים ביניהן
-const OLD_WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block'];
+const OLD_WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive'];
 // המילים החדשות נבדקות יחד עם המילים שהן עלולות להתבלבל איתן
-const NEW_WORDS = ['leap', 'dive', 'jump', 'fly'];
-const WORDS = [...OLD_WORDS, ...NEW_WORDS];
+const NEW_WORDS = ['bounce', 'crawl', 'leap', 'dive', 'jump', 'fly'];
+const WORDS = [...new Set([...OLD_WORDS, ...NEW_WORDS])];
 const WINDOW = 3500;
 let testWords = NEW_WORDS, PER_WORD = 3;
 const MODEL_URL = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz';
