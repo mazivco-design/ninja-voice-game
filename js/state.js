@@ -1,0 +1,52 @@
+/* ninja-voice-game – state.js
+   משתני המצב של המשחק, וחלונית הדיבאג
+   כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
+
+/* ============================================================
+   מצב המשחק
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const canvas = $('c'), ctx = canvas.getContext('2d');
+
+let state = 'menu';           // menu | play | over
+let mode = 'free';            // free | stage
+let diffKey = 'easy', cfg = LEVELS[diffKey];
+let stageIdx = 0, playWords = ['jump', 'down'];
+let speed = 0, score = 0, lives = 0, hits = 0, done = 0, spawned = 0, caught = 0, coins = 0;
+let obstacles = [], shurikens = [], particles = [];
+let distSinceSpawn = 0, nextGap = 0, nextType = null, flag = null;
+let py = 0, vy = 0, duckT = 0, invulnT = 0, kickT = 0, flyT = 0, catchT = 0, throwT = 0, throwCd = 0;
+let flash = null, heard = null, banner = null;
+// טיימרים של הפעולות החדשות
+const act = { stop: 0, run: 0, swim: 0, climb: 0, climbWant: 0, push: 0, pull: 0, pullWant: 0, pulling: 0, hide: 0, block: 0,
+              leap: 0, leapWant: 0, dive: 0, hiding: 0, crawl: 0, crawlWant: 0 };
+let hidingFrom = null;       // השומרים שמתחבאים מהם עכשיו
+const HIDE_RANGE = 70;       // מתחבאים כשהשומרים במרחק הזה
+const GUARD_PASS = 34;       // כמה מהר השומרים עוברים כשהנינג'ה מתחבא
+let climbK = 0;              // התקדמות בטיפוס על הסולם 0→1
+function resetAct() { for (const k in act) act[k] = 0; climbK = 0; leapWin = null; hidingFrom = null; hideT = 0; }
+let hideT = 0;               // כמה זמן הנינג'ה כבר בשיח (לאנימציה)
+// מהירות העולם בפועל: STOP ו-CLIMB עוצרים אותו, RUN מאיץ
+function curSpeed() {
+  if (act.climb > 0) return CLIFF.ladder / CLIFF.time;         // על הסולם – מתקדמים לאט באלכסון
+  if (act.stop > 0 || act.pulling > 0 || act.hiding > 0) return 0;   // עוצרים / מושכים בחבל / מתחבאים בשיח
+  return speed * (act.run > 0 ? RUN_BOOST.mult : 1) * (crawling() ? BRAMBLE.slow : 1);
+}
+let bgX = 0, lastT = 0;
+let world = 0, shakeT = 0;
+let sinkT = 0, sinkType = '';   // אנימציית נפילה לתהום / שקיעה במים אחרי כישלון
+const SINK_TIME = 0.9;   // world: 0 יער במבוק, 1 כפר בלילה, 2 הרים מושלגים
+
+/* ============================================================
+   דיבאג
+   ============================================================ */
+const dbgLines = {};
+function dbg(key, val) {
+  dbgLines[key] = val;
+  if ($('debug').classList.contains('show')) renderDebug();
+}
+function renderDebug() {
+  $('debug').textContent = Object.entries(dbgLines).map(([k, v]) => k + ': ' + v).join('\n');
+}
+$('dbgBtn').onclick = () => { $('debug').classList.toggle('show'); renderDebug(); };
+
