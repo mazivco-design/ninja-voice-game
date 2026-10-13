@@ -142,7 +142,7 @@ function spawn() {
   if (type === 'lake') o.w = speed * LAKE.factor;        // רחב מדי לקפיצה
   if (type === 'bridge') o.w = speed * BRIDGE.factor;    // רחב מדי לקפיצה, ארוך מדי להליכה
   if (type === 'pond') o.w = Math.max(40, speed * POND.factor);   // הרשת באמצע
-  if (type === 'bramble') o.w = Math.max(36, speed * BRAMBLE.factor);
+  if (type === 'bramble') o.w = BRAMBLE.ramp + Math.max(30, speed * BRAMBLE.factor) + BRAMBLE.exit;   // כניסה שהולכת ונעשית צרה + החלק הנמוך + יציאה
   if (type === 'coin') coins++;
   obstacles.push(o);
   spawned++;
@@ -213,8 +213,10 @@ function collides(o, pb) {
   if (o.type === 'window')  // רק החלון פתוח: חלק עליון וחלק תחתון של הקיר
     { const ovw = b => pb.l < b.r && pb.r > b.l && pb.t < b.b && pb.b > b.t;   // בלי מרווח סלחנות – רק זינוק עובר בחלון
       return ovw({ l: o.x, r: o.x + WINDOW.w, t: -1e6, b: WINDOW.top }) || ovw({ l: o.x, r: o.x + WINDOW.w, t: WINDOW.bot, b: GROUND + 1 }); }
-  if (o.type === 'bramble')   // קוצים נמוכים: רק זחילה עוברת (גם התכופפות רגילה גבוהה מדי)
-    return pb.l < o.x + o.w - m && pb.r > o.x + m && pb.t < GROUND - BRAMBLE.gap;
+  if (o.type === 'bramble') {  // מערה: התקרה יורדת בהדרגה. רק זחילה עוברת בחלק הנמוך (גם התכופפות גבוהה מדי)
+    for (let k = 0; k <= 6; k++) { const xx = pb.l + m + (pb.r - pb.l - 2 * m) * k / 6; if (pb.t < caveCeiling(o, xx)) return true; }
+    return false;
+  }
   if (o.type === 'pond') { const nx = netX(o); return ov({ l: nx, r: nx + POND.net, t: -1e6, b: GROUND + 1 }); }   // הרשת יורדת עד המים
   if (o.type === 'river') {
     const cx = (pb.l + pb.r) / 2;
@@ -292,6 +294,16 @@ function overWide(type, pb) {           // הנינג'ה מעל אגם / גשר 
 function netX(o) { return o.x + o.w / 2 - POND.net / 2; }
 function inPond() { const cx = PLAYER.x + PLAYER.w / 2; return obstacles.find(o => o.type === 'pond' && cx > o.x + 1 && cx < o.x + o.w - 1); }
 function diving() { return act.dive > 0 && py <= 0 && !!inPond(); }
+// גובה תקרת המערה בנקודה x (מספר קטן = גבוה במסך). מחוץ למערה – אין תקרה
+function caveCeiling(o, x) {
+  const r = x - o.x, low = GROUND - BRAMBLE.gap, high = GROUND - BRAMBLE.mouth;
+  if (r < 0 || r > o.w) return -1e6;
+  const ease = q => q * q * (3 - 2 * q);
+  const ramp = Math.min(BRAMBLE.ramp, o.w * 0.4), exit = Math.min(BRAMBLE.exit, o.w * 0.2);
+  if (r < ramp) return high + (low - high) * ease(r / ramp);                 // הכניסה: התקרה יורדת
+  if (r > o.w - exit) return low + (high - low) * ease((r - (o.w - exit)) / exit);   // היציאה: עולה שוב
+  return low;
+}
 function inBramble() { const cx = PLAYER.x + PLAYER.w / 2; return obstacles.find(o => o.type === 'bramble' && cx > o.x - 4 && cx < o.x + o.w + 4); }
 function crawling() { return act.crawl > 0 && py <= 0 && act.leap <= 0; }
 let leapWin = null;          // החלון שמזנקים דרכו עכשיו
@@ -454,7 +466,7 @@ function update(dt) {
       // אי אפשר לחצות אגם בלי לשחות (גם לא בריצה או בקפיצה לתוך המים)
       if (o.wet && !o.swam && !o.hit && cx >= o.x + o.w - 2) o.drown = drownTime();
     }
-    // CRAWL: זוחלים עד סוף מנהרת הקוצים (אם התחילו לזחול לפני שנכנסו)
+    // CRAWL: זוחלים עד סוף המערה (אם התחילו לזחול לפני שהתקרה נעשתה נמוכה)
     if (o.type === 'bramble') {
       const near = pb.r > o.x - 3 && PLAYER.x < o.x + o.w + 1;
       if (near && py <= 0 && (act.crawlWant > 0 || act.crawl > 0)) act.crawl = Math.max(act.crawl, 0.25);

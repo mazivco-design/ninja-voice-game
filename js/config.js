@@ -92,6 +92,6 @@ const ARROWS = { w: 7, speed: 30 }, BLOCK_TIME = 0.8;                 // BLOCK �
 const WINDOW = { w: 10, top: GROUND - 15, bot: GROUND - 3, range: 4 }; // LEAP – קיר עבה עם מעבר צר באמצע הגובה
 const LEAP = { y: 4.5, h: 5, w: 12, want: 0.9, free: 0.45 };           // זינוק אופקי דרך החלון
 const POND = { factor: 1.6, net: 3 }, DIVE_TIME = 1.2;                  // DIVE – מים עם רשת עד פני המים, צוללים מתחת
-const BRAMBLE = { factor: 1.3, gap: 6.5, want: 1.0, slow: 0.6 };        // CRAWL – מנהרת קוצים נמוכה וארוכה, זוחלים מתחתיה
+const BRAMBLE = { factor: 1.3, gap: 6.5, want: 1.0, slow: 0.6, ramp: 28, exit: 7, mouth: 30 };   // CRAWL – מערה שהתקרה שלה יורדת בהדרגה עד שחייבים לזחוליה
 const ARROW_HEIGHTS = [GROUND - 3, GROUND - 8, GROUND - 13, GROUND - 18, GROUND - 22];   // גבוה מדי לקפוץ מעליו, נמוך מדי להתכופף
 

@@ -247,7 +247,7 @@ function setupDemo(w) {
   if (w === 'pull')  obstacles.push({ type: 'gate',  x: near + GATE.rope + 0.5 });
   if (w === 'leap')  obstacles.push({ type: 'window', x: near + 3 });
   if (w === 'dive')  obstacles.push({ type: 'pond', x: PLAYER.x - 10, w: 40 });
-  if (w === 'crawl') obstacles.push({ type: 'bramble', x: PLAYER.x + 6, w: 30 });
+  if (w === 'crawl') obstacles.push({ type: 'bramble', x: PLAYER.x - 6, w: 60 });
   if (w === 'hide')  obstacles.push({ type: 'guard', x: near + 14 });
   if (w === 'block') obstacles.push({ type: 'arrows', x: near + 28 });
   obstacles.forEach(o => { o.passed = false; o.hit = false; o.demo = true; });   // בהדגמה – בלי פגיעות

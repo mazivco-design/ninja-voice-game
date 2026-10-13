@@ -444,25 +444,34 @@ function drawObstacle(o, top) {
       ctx.beginPath(); ctx.moveTo(lx, ly - 1); ctx.lineTo(lx - 30, ly - 14); ctx.lineTo(lx - 30, GROUND); ctx.lineTo(lx - 6, GROUND); ctx.closePath(); ctx.fill();
     }
     if (!o.passed) label('HIDE', x + GUARD.span / 2, GROUND - GUARD.h - 9, 4, '#fde047', '#1e293b');
-  } else if (o.type === 'bramble') {             // CRAWL: סבך קוצים נמוך וארוך – זוחלים מתחת
-    const w = o.w, bot = GROUND - BRAMBLE.gap, topY = GROUND - 40;
-    ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(x, bot, w, GROUND - bot);                       // צל במנהרה
-    ctx.fillStyle = '#14532d';
-    ctx.beginPath(); ctx.moveTo(x, topY + 6);
-    for (let k = 0; k <= w; k += 4) ctx.lineTo(x + k, topY + 3 + Math.sin(k * 0.7 + x * 0.1) * 2.5);   // גבול עליון גלי
-    ctx.lineTo(x + w, bot); 
-    for (let k = w; k >= 0; k -= 2) ctx.lineTo(x + k, bot + (k % 4 === 0 ? 1.3 : 0));             // קוצים למטה
+  } else if (o.type === 'bramble') {             // CRAWL: מערה שהולכת ונעשית צרה עד שחייבים לזחול
+    const w = o.w, topY = GROUND - 46, now = performance.now() / 1000;
+    const ceil = xx => caveCeiling(o, xx);
+    const back = ctx.createLinearGradient(0, GROUND - BRAMBLE.mouth, 0, GROUND);          // חלל המערה – חשוך מאחור
+    back.addColorStop(0, '#0c0a09'); back.addColorStop(1, '#292524');
+    ctx.fillStyle = back;
+    ctx.beginPath(); ctx.moveTo(x, GROUND); for (let k = 0; k <= w; k += 1.5) ctx.lineTo(x + k, ceil(x + k) - 0.5); ctx.lineTo(x + w, GROUND); ctx.closePath(); ctx.fill();
+    const rock = ctx.createLinearGradient(0, topY, 0, GROUND);                               // גוש הסלע מעל
+    rock.addColorStop(0, '#a8a29e'); rock.addColorStop(1, '#57534e');
+    ctx.fillStyle = rock;
+    ctx.beginPath(); ctx.moveTo(x - 3, GROUND - BRAMBLE.mouth + 2);
+    for (let k = 0; k <= w; k += 4) ctx.lineTo(x + k, topY + Math.sin(k * 0.45 + x * 0.05) * 2.2 + (k < 6 ? 6 - k : 0));   // גבעה משוננת
+    ctx.lineTo(x + w + 3, GROUND - BRAMBLE.mouth + 2);
+    for (let k = w; k >= 0; k -= 1.5) ctx.lineTo(x + k, ceil(x + k));                       // התקרה מבפנים
     ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = '#78350f'; ctx.lineWidth = 0.6;                                               // ענפים
-    for (let k = 3; k < w; k += 7) { ctx.beginPath(); ctx.moveTo(x + k, bot); ctx.quadraticCurveTo(x + k + 3, bot - 12, x + k - 1, topY + 8); ctx.stroke(); }
-    ctx.fillStyle = '#d6d3d1';                                                                       // קוצים
-    for (let k = 1; k < w - 1; k += 3) for (let yy = bot - 4; yy > topY + 6; yy -= 7) {
-      const xx = x + k + hash(k * 3.7 + yy) * 2.4, y2 = yy + hash(k + yy * 1.3) * 4;   // קוצים מפוזרים
-      if (hash(k * 1.9 + yy * 0.7) < 0.35) continue;
-      ctx.beginPath(); ctx.moveTo(xx, y2); ctx.lineTo(xx + 0.5, y2 - 1.6); ctx.lineTo(xx + 1, y2); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.18)';                                                        // סדקים ושכבות בסלע
+    for (let k = 4; k < w - 4; k += 9) ctx.fillRect(x + k, topY + 8 + (k % 7), 5, 0.6);
+    ctx.fillStyle = '#78716c';                                                                // נטיפים קטנים מהתקרה
+    for (let k = 3; k < w - 2; k += 4.5) { const c = ceil(x + k); ctx.beginPath(); ctx.moveTo(x + k - 0.8, c); ctx.lineTo(x + k, c + 1 + hash(k) * 0.8); ctx.lineTo(x + k + 0.8, c); ctx.fill(); }
+    ctx.fillStyle = '#65a30d'; for (let k = 0; k < w; k += 3) ctx.fillRect(x + k, topY - 1 + Math.sin(k * 0.45 + x * 0.05) * 2.2, 2.4, 1.4);   // טחב למעלה
+    ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 1.2;                                  // צל מתחת לתקרה – נותן עומק
+    ctx.beginPath(); for (let k = 0; k <= w; k += 1.5) ctx.lineTo(x + k, ceil(x + k) + 0.8); ctx.stroke();
+    for (let i = 0; i < 3; i++) {                                                             // גבישים קטנים שנוצצים בחושך
+      const gx = x + 4 + i * 6, gy = GROUND - 4 - i * 3; if (gy < ceil(gx) + 2) continue;
+      ctx.fillStyle = 'rgba(125,211,252,' + (0.45 + 0.35 * Math.sin(now * 3 + i * 2)) + ')';
+      ctx.beginPath(); ctx.moveTo(gx, gy - 1.4); ctx.lineTo(gx + 0.8, gy); ctx.lineTo(gx, gy + 1.4); ctx.lineTo(gx - 0.8, gy); ctx.fill();
     }
-    ctx.fillStyle = '#dc2626'; for (let k = 5; k < w; k += 9) circle(x + k, bot - 6 - (k % 5), 0.7);   // פירות יער
-    label('CRAWL', x + Math.min(w / 2, 14), topY - 4, 4, '#fde047', '#1e293b');
+    label('CRAWL', x + 12, topY - 6, 4, '#fde047', '#1e293b');
   } else if (o.type === 'window') {              // LEAP: קיר עבה עם מעבר צר וזוהר – רק זינוק עובר
     const wtop = GROUND - 48, w = WINDOW.w, now = performance.now() / 1000;
     const part = (y0, y1) => {
@@ -574,29 +583,56 @@ function drawBridge(o, bottom) {
 }
 
 function drawRiver(o, bottom) {                  // FLY: בור לבה רותחת – קופצים ועפים מעליו
-  const x = o.x, w = o.w, t = performance.now() / 1000;
-  const glow = ctx.createLinearGradient(0, GROUND - 14, 0, GROUND);           // זוהר חם מעל הלבה
-  glow.addColorStop(0, 'rgba(249,115,22,0)'); glow.addColorStop(1, 'rgba(249,115,22,.4)');
-  ctx.fillStyle = glow; ctx.fillRect(x, GROUND - 14, w, 14);
-  ctx.fillStyle = '#292524'; ctx.fillRect(x, GROUND - 0.2, w, bottom - GROUND);   // סלע כהה מסביב
+  const x = o.x, w = o.w, t = performance.now() / 1000, cx = x + w / 2;
+  ctx.save(); ctx.translate(cx, GROUND); ctx.scale(w / 2 + 22, 50);                       // זוהר חם רחב, עולה גבוה ונמתח מעבר לשפות
+  const halo = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+  halo.addColorStop(0, 'rgba(251,146,60,.75)'); halo.addColorStop(0.45, 'rgba(249,115,22,.35)'); halo.addColorStop(1, 'rgba(249,115,22,0)');
+  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(0, 0, 1, Math.PI, 0); ctx.fill();
+  ctx.restore();
+  for (let i = 0; i < 6; i++) {                                                              // אוויר חם מרצד שעולה מהלבה
+    const hx = x + 4 + (i + 0.5) * (w - 8) / 6 + Math.sin(t * 1.3 + i) * 2;
+    const grd = ctx.createLinearGradient(0, GROUND, 0, GROUND - 40);
+    grd.addColorStop(0, 'rgba(251,146,60,.55)'); grd.addColorStop(0.5, 'rgba(253,186,116,.25)'); grd.addColorStop(1, 'rgba(254,215,170,0)');
+    ctx.strokeStyle = grd; ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(hx, GROUND);
+    for (let yy = 0; yy <= 40; yy += 2) ctx.lineTo(hx + Math.sin(t * 5 + yy * 0.35 + i * 2) * (1 + yy * 0.06), GROUND - yy);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#292524'; ctx.fillRect(x, GROUND - 0.2, w, bottom - GROUND);          // סלע כהה מסביב
   const g = ctx.createLinearGradient(0, GROUND + 1, 0, GROUND + 12);
-  g.addColorStop(0, '#fde047'); g.addColorStop(0.35, '#f97316'); g.addColorStop(1, '#991b1b');
+  g.addColorStop(0, '#fef08a'); g.addColorStop(0.3, '#f97316'); g.addColorStop(1, '#991b1b');
   ctx.fillStyle = g;
   ctx.beginPath(); ctx.moveTo(x + 1.5, bottom);
-  for (let i = 0; i <= w - 3; i += 2) ctx.lineTo(x + 1.5 + i, GROUND + 1.6 + Math.sin(t * 3 + i * 0.5) * 0.5);
+  for (let i = 0; i <= w - 3; i += 2) ctx.lineTo(x + 1.5 + i, GROUND + 1.4 + Math.sin(t * 3 + i * 0.5) * 0.6);
   ctx.lineTo(x + w - 1.5, bottom); ctx.closePath(); ctx.fill();
-  for (let i = 0; i < 5; i++) {                                                // בועות שמתפוצצות
-    const ph = (t * 0.8 + i * 0.37) % 1, bx = x + 4 + ((i * 37) % Math.max(6, w - 8));
-    ctx.fillStyle = 'rgba(254,240,138,' + (1 - ph) + ')'; circle(bx, GROUND + 2.2 - ph * 1.2, 0.6 + ph * 1.1);
+  ctx.fillStyle = 'rgba(127,29,29,.55)';                                                     // קרום כהה שצף ונמס
+  for (let i = 0; i < 4; i++) { const px = x + 3 + ((i * 41 + t * 4) % Math.max(6, w - 8)); ctx.beginPath(); ctx.ellipse(px, GROUND + 3.2 + (i % 2), 2.2, 0.6, 0, 0, Math.PI * 2); ctx.fill(); }
+  for (let i = 0; i < 7; i++) {                                                              // בועות גדולות: גדלות, מתפוצצות ומתיזות
+    const per = 1.1 + (i % 3) * 0.35, ph = ((t + i * 0.53) % per) / per;
+    const bx = x + 3 + ((i * 29 + Math.floor((t + i * 0.53) / per) * 13) % Math.max(6, w - 6));
+    if (ph < 0.75) {
+      const r = 0.7 + ph * 3.6;
+      ctx.fillStyle = '#fb923c'; ctx.beginPath(); ctx.arc(bx, GROUND + 1.8, r, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = 'rgba(254,240,138,.85)'; circle(bx - r * 0.35, GROUND + 1.8 - r * 0.45, r * 0.25);
+    } else {
+      const k = (ph - 0.75) / 0.25;
+      ctx.strokeStyle = 'rgba(254,240,138,' + (1 - k) + ')'; ctx.lineWidth = 0.35;
+      ctx.beginPath(); ctx.ellipse(bx, GROUND + 1.8, 1.5 + k * 4.5, 0.5 + k * 1, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = 'rgba(253,186,116,' + (1 - k) + ')';
+      for (let d = -1; d <= 1; d++) circle(bx + d * k * 3, GROUND + 1.5 - k * 5 + k * k * 4, 0.35);
+    }
   }
-  ctx.fillStyle = '#fb923c';                                                    // ניצוצות עולים
-  for (let i = 0; i < 6; i++) { const ph = (t * 0.6 + i * 0.29) % 1; circle(x + 3 + ((i * 53) % Math.max(6, w - 6)) + Math.sin(t * 4 + i) * 1.2, GROUND - ph * 12, 0.35 * (1 - ph) + 0.1); }
-  ctx.fillStyle = '#44403c';                                                    // שפות סלע משוננות
+  for (let i = 0; i < 12; i++) {                                                             // גצים שעולים גבוה ומהבהבים
+    const ph = (t * 0.45 + i * 0.137) % 1, ex = x + 2 + ((i * 53) % Math.max(6, w - 4)) + Math.sin(t * 3 + i) * (1 + ph * 3);
+    ctx.fillStyle = 'rgba(' + (ph < 0.5 ? '254,215,170' : '251,146,60') + ',' + (1 - ph) * (0.6 + 0.4 * Math.sin(t * 20 + i)) + ')';
+    circle(ex, GROUND - ph * 30, 0.45 * (1 - ph) + 0.15);
+  }
+  ctx.fillStyle = '#44403c';                                                                 // שפות סלע משוננות
   for (const side of [0, 1]) {
     const ex = side ? x + w : x, d = side ? -1 : 1;
     ctx.beginPath(); ctx.moveTo(ex, GROUND); for (let k = 1; k <= 6; k++) ctx.lineTo(ex + d * (k % 2 ? 2 : 0.7), GROUND + k * 3); ctx.lineTo(ex, GROUND + 20); ctx.closePath(); ctx.fill();
   }
-  label('JUMP + FLY', x + w / 2, GROUND - 8, 4, '#fde047', '#1e293b');
+  label('JUMP + FLY', cx, GROUND - 10, 4, '#fde047', '#1e293b');
 }
 
 function drawPond(o, bottom) {                   // DIVE: מים עמוקים – רשת תלויה עד פני המים
