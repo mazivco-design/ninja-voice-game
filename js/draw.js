@@ -624,13 +624,13 @@ function drawFlame(fx, h, wd, t, a) {             // לשון אש: בסיס צ�
 function drawBridge(o, bottom) {                  // RUN: שדה שהאדמה בו נסדקת, עשן נמוך, ושרשרת התפרצויות אש שהולכת ומאיצה
   const x = o.x, w = o.w, now = performance.now() / 1000, st = o.stepT, cT = o.cT || 0;
   const near = Math.max(0, Math.min(1, (PLAYER.x + 75 - x) / 55));             // האדמה נסדקת ככל שמתקרבים
-  const heat = st === undefined ? 0 : Math.min(1, st / BRIDGE.collapse);
+  const front = o.front, heat = front === undefined ? 0 : Math.min(1, front / w);
   const sc = ctx.createLinearGradient(x - 4, 0, x + w + 4, 0);                 // אדמה חרוכה – נכהית בהדרגה מהקצוות
   const e = Math.min(0.25, 10 / w);
   sc.addColorStop(0, 'rgba(28,25,23,0)'); sc.addColorStop(e, 'rgba(28,25,23,.78)'); sc.addColorStop(1 - e, 'rgba(28,25,23,.78)'); sc.addColorStop(1, 'rgba(28,25,23,0)');
   ctx.fillStyle = sc; ctx.fillRect(x - 4, GROUND - 0.3, w + 8, bottom - GROUND);
   const glow = ctx.createLinearGradient(0, GROUND - 14, 0, GROUND);            // זוהר חם מעל האדמה כשהאש מתקרבת
-  glow.addColorStop(0, 'rgba(249,115,22,0)'); glow.addColorStop(1, 'rgba(249,115,22,' + (0.12 + 0.4 * Math.max(heat, o.collapsed ? 1 - Math.min(1, cT / 3) : 0)) * near + ')');
+  glow.addColorStop(0, 'rgba(249,115,22,0)'); glow.addColorStop(1, 'rgba(249,115,22,' + (0.12 + 0.4 * heat * (1 - Math.min(1, cT / 3))) * near + ')');
   ctx.fillStyle = glow; ctx.fillRect(x, GROUND - 14, w, 14);
   const vents = bridgeVents(o), n = vents.length;
   vents.forEach((vx, i) => {                                                   // סדקים זוהרים שנפערים באדמה ככל שמתקרבים
@@ -650,11 +650,11 @@ function drawBridge(o, bottom) {                  // RUN: שדה שהאדמה ב
     ctx.beginPath(); pts.slice(0, 4).forEach(([px, py], k) => k ? ctx.lineTo(px, py) : ctx.moveTo(px, py)); ctx.stroke();
   });
   const flameH = i => {                                                        // גובה האש בכל סדק: מתחילה מהצד הרחוק, מתקרבת ומאיצה
-    if (st === undefined) return 0;
-    const f = (i + 0.5) / n, start = 0.05 + BRIDGE.collapse * 0.85 * (1 - f * f);
-    let h = 0;
-    if (o.collapsed) h = (24 + hash(i * 5.1) * 8) * Math.max(0, 1 - Math.max(0, cT - 2.2) / 1.2);
-    else if (st > start) h = 5 + 9 * Math.min(1, (st - start) / 0.35);
+    if (front === undefined) return 0;
+    const behind = front - (vents[i] - x);                                      // כמה החזית כבר עברה את הסדק הזה
+    if (behind < -3) return 0;
+    let h = behind < 0 ? 3 * (1 + behind / 3) : 8 + 20 * Math.min(1, behind / 10) + hash(i * 5.1) * 6;
+    h *= Math.max(0, 1 - Math.max(0, cT - 1.6) / 1.2);
     return h * (0.88 + 0.12 * Math.sin(now * 14 + i * 2));
   };
   vents.forEach((vx, i) => {                                                   // עשן כהה מאחורי האש – נותן ניגוד על כל רקע
@@ -669,17 +669,17 @@ function drawBridge(o, bottom) {                  // RUN: שדה שהאדמה ב
   });
   vents.forEach((vx, i) => {
     const h = flameH(i);
-    drawFlame(vx, h, o.collapsed ? 4.2 : 2.6, now + i, 0.95);
+    drawFlame(vx, h, h > 16 ? 4.2 : 3, now + i, 0.95);
     if (h > 6) { drawFlame(vx - 2, h * 0.6, 2, now + i + 3, 0.8); drawFlame(vx + 2.2, h * 0.5, 1.8, now + i + 7, 0.8); }
     if (h > 2 && Math.random() < 0.18) particles.push({ x: vx + (Math.random() - 0.5) * 2, y: GROUND - h * 0.7, vx: (Math.random() - 0.5) * 6, vy: -14, g: 6, life: 0.6, color: Math.random() < 0.5 ? '#fde047' : '#fb923c', size: 0.7 });
   });
-  if (!o.collapsed) label('RUN', x + w / 2, GROUND - 16, 4, '#fde047', '#1e293b');
+  if (!(front >= w)) label('RUN', x + w / 2, GROUND - 16, 4, '#fde047', '#1e293b');
 }
 function drawFieldSmoke(o) {                      // עשן נמוך מעל שדה האש – מצויר מעל הנינג'ה, אז הרגליים נראות דהויות
   const x = o.x, w = o.w, now = performance.now() / 1000;
   const near = Math.max(0, Math.min(1, (PLAYER.x + 75 - x) / 55));
   if (near <= 0) return;
-  const heat = o.stepT === undefined ? 0 : Math.min(1, o.stepT / BRIDGE.collapse), fade = o.collapsed ? Math.max(0, 1 - Math.max(0, (o.cT || 0) - 2.5) / 1.5) : 1;
+  const heat = o.front === undefined ? 0 : Math.min(1, o.front / w), fade = Math.max(0, 1 - Math.max(0, (o.cT || 0) - 2.5) / 1.5);
   const hgt = 3.5 + 2 * heat;
   for (let layer = 0; layer < 2; layer++)
     for (let k = -4; k < w + 4; k += 6) {

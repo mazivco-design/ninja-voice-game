@@ -208,7 +208,7 @@ function collides(o, pb) {
   const m = cfg.forgive || 0;
   const cx = (pb.l + pb.r) / 2;
   if (o.type === 'lake')   return (o.drown || 0) >= drownTime();                // שקע עד הסוף בלי SWIM
-  if (o.type === 'bridge') return o.collapsed && act.climb <= 0 && cx > o.x + 1 && cx < o.x + o.w - 1;   // שדה האש התפרץ – נשרף גם בקפיצה
+  if (o.type === 'bridge') return o.front !== undefined && act.climb <= 0 && cx > o.x + 1 && cx < o.x + o.w - 1 && o.x + o.front >= cx - 1;   // האש השיגה אותו – נשרף גם בקפיצה
   const ov = (b) => pb.l < b.r - m && pb.r > b.l + m && pb.t < b.b - m && pb.b > b.t + m;
   if (o.type === 'window')  // רק החלון פתוח: חלק עליון וחלק תחתון של הקיר
     { const ovw = b => pb.l < b.r && pb.r > b.l && pb.t < b.b && pb.b > b.t;   // בלי מרווח סלחנות – רק זינוק עובר בחלון
@@ -429,11 +429,11 @@ function update(dt) {
         }
       }
     }
-    // RUN: שדה האש מתפרץ כולו זמן קצר אחרי שנכנסים אליו
+    // RUN: אש שמתחילה בכניסה לשדה ורודפת אחרי הנינג'ה
     if (o.type === 'bridge') {
       if (o.stepT === undefined && cx > o.x && cx < o.x + o.w) o.stepT = 0;
-      if (o.stepT !== undefined && !o.collapsed && (o.stepT += dt) >= BRIDGE.collapse) o.collapsed = true;
-      if (o.collapsed) o.cT = (o.cT || 0) + dt;
+      if (o.stepT !== undefined && (o.stepT += dt) > BRIDGE.delay) o.front = Math.min(o.w + 6, (o.front || 0) + speed * BRIDGE.chase * dt);   // חזית האש מתקדמת
+      if (o.front >= o.w) o.cT = (o.cT || 0) + dt;
     }
     // CLIMB: מתחיל לטפס כשהצוק בטווח
     if (o.type === 'cliff' && !o.climbed && act.climbWant > 0 && act.climb <= 0) {
