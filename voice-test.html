@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>בדיקת קול</title>
+<style>
+* { box-sizing: border-box; margin: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, system-ui, Arial, sans-serif; background: #0f172a; color: #e2e8f0; padding: max(16px, env(safe-area-inset-top)) 16px 24px; }
+h1 { font-size: 24px; margin-bottom: 4px; }
+p { color: #94a3b8; font-size: 14px; line-height: 1.5; margin-bottom: 12px; }
+.card { background: #1e293b; border-radius: 14px; padding: 14px; margin-bottom: 14px; }
+label { display: block; font-weight: 700; font-size: 14px; margin: 8px 0 6px; }
+select { width: 100%; font-size: 17px; padding: 10px; border-radius: 10px; border: 0; background: #0b1220; color: #e2e8f0; direction: ltr; }
+.row { display: flex; align-items: center; gap: 10px; }
+.row input[type=range] { flex: 1; accent-color: #6366f1; height: 28px; }
+.row span { width: 46px; font: 14px ui-monospace, monospace; direction: ltr; text-align: left; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; direction: ltr; }
+.w { border: 0; border-radius: 12px; background: #4f46e5; color: #fff; font-size: 18px; font-weight: 900; padding: 16px 6px; }
+.w:active, .w.on { background: #16a34a; }
+.b { border: 0; border-radius: 10px; background: #334155; color: #e2e8f0; font-weight: 800; font-size: 15px; padding: 10px 14px; }
+#info { font-size: 13px; color: #94a3b8; margin-top: 8px; direction: ltr; text-align: left; }
+#sentence { width: 100%; font-size: 17px; padding: 10px; border-radius: 10px; border: 0; background: #0b1220; color: #e2e8f0; direction: ltr; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<h1>🔊 בדיקת הקול של המכשיר</h1>
+<p>לוחצים על מילה ושומעים איך הקול המובנה של המכשיר אומר אותה. אפשר לבחור קול אחר מהרשימה ולשמוע את ההבדל.
+   המשחק משתמש היום בקול הראשון באנגלית־אמריקאית שהמכשיר מוצא (מסומן ⭐ ברשימה).</p>
+
+<div class="card">
+  <label for="voice">קול</label>
+  <select id="voice"></select>
+  <label>מהירות</label>
+  <div class="row"><input type="range" id="rate" min="0.5" max="1.3" step="0.05" value="0.85"><span id="rateV">0.85</span></div>
+  <label>גובה הקול</label>
+  <div class="row"><input type="range" id="pitch" min="0.6" max="1.6" step="0.05" value="1"><span id="pitchV">1.00</span></div>
+  <div class="row" style="margin-top:10px"><button class="b" id="all">▶ להשמיע את כל המילים</button><button class="b" id="stop">■ עצור</button></div>
+  <div id="info"></div>
+</div>
+
+<div class="card">
+  <div class="grid" id="words"></div>
+</div>
+
+<div class="card">
+  <label for="sentence">משפט לבדיקה</label>
+  <input id="sentence" value="Jump over the box!" autocomplete="off" autocorrect="off" spellcheck="false">
+  <button class="b" id="say">▶ להשמיע משפט</button>
+</div>
+
+<p>טיפ: באייפד אפשר להוריד קולות איכותיים יותר בחינם: הגדרות ← נגישות ← תוכן מדובר ← קולות ← English.
+   קולות עם "(Enhanced)" או "(Premium)" נשמעים הרבה יותר טבעיים. אחרי ההורדה, טוענים מחדש את הדף.</p>
+
+<script>
+// המילים של המשחק (כמו ב-js/config.js)
+const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive', 'crawl'];
+const $ = id => document.getElementById(id);
+let voices = [];
+
+// אותו כלל כמו במשחק: הקול הראשון ב-en-US, ואם אין – אנגלית כלשהי
+function gameVoice(list) { return list.find(v => /^en[-_]US/i.test(v.lang)) || list.find(v => /^en/i.test(v.lang)); }
+
+function loadVoices() {
+  const all = speechSynthesis.getVoices();
+  voices = all.filter(v => /^en/i.test(v.lang));
+  const g = gameVoice(all), sel = $('voice'), prev = sel.value;
+  sel.innerHTML = '';
+  voices.forEach((v, i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = (v === g ? '⭐ ' : '') + v.name + ' (' + v.lang + ')' + (v.localService ? '' : ' · online');
+    sel.appendChild(o);
+  });
+  if (prev && voices[prev]) sel.value = prev; else if (g) sel.value = voices.indexOf(g);
+  $('info').textContent = voices.length ? voices.length + ' English voices on this device' : 'No English voices found yet…';
+}
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices(); setTimeout(loadVoices, 500); setTimeout(loadVoices, 1500);
+
+function say(text, onend) {
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  const v = voices[$('voice').value];
+  if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-US';
+  u.rate = parseFloat($('rate').value); u.pitch = parseFloat($('pitch').value);
+  if (onend) u.onend = onend;
+  speechSynthesis.speak(u);
+}
+
+WORDS.forEach(w => {
+  const b = document.createElement('button');
+  b.className = 'w'; b.textContent = w.toUpperCase(); b.dataset.w = w;
+  b.onclick = () => { mark(w); say(w, () => mark(null)); };
+  $('words').appendChild(b);
+});
+function mark(w) { document.querySelectorAll('.w').forEach(b => b.classList.toggle('on', b.dataset.w === w)); }
+
+$('rate').oninput = () => $('rateV').textContent = (+$('rate').value).toFixed(2);
+$('pitch').oninput = () => $('pitchV').textContent = (+$('pitch').value).toFixed(2);
+$('say').onclick = () => say($('sentence').value);
+$('stop').onclick = () => { playingAll = false; speechSynthesis.cancel(); mark(null); };
+let playingAll = false;
+$('all').onclick = () => {
+  playingAll = true;
+  let i = 0;
+  const next = () => {
+    if (!playingAll || i >= WORDS.length) { playingAll = false; mark(null); return; }
+    const w = WORDS[i++]; mark(w);
+    say(w, () => setTimeout(next, 450));
+  };
+  next();
+};
+</script>
+</body>
+</html>
