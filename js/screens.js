@@ -156,7 +156,7 @@ function renderDict() {
 }
 
 function resetDemo() {
-  obstacles = []; shurikens = []; particles = []; flag = null; banner = null; flash = null; heard = null;
+  obstacles = []; shurikens = []; fireballs = []; particles = []; flag = null; banner = null; flash = null; heard = null;
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   demoSteps = []; demoClock = 0;
 }
@@ -233,7 +233,7 @@ let introWords = [], introT = 0, runSpeed = 0;
 
 // מציב חפץ קטן ליד הנינג'ה ומתזמן את הפעולה (משותף למילון ולהדגמה)
 function setupDemo(w) {
-  obstacles = []; shurikens = []; flash = null; invulnT = 0;
+  obstacles = []; shurikens = []; fireballs = []; flash = null; invulnT = 0;
   py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0; resetAct();
   demoSteps = []; demoClock = 0;
   const near = PLAYER.x + PLAYER.w;
@@ -250,6 +250,7 @@ function setupDemo(w) {
   if (w === 'crawl') obstacles.push({ type: 'bramble', x: PLAYER.x - 6, w: 60 });
   if (w === 'hide')  obstacles.push({ type: 'guard', x: near + 14 });
   if (w === 'block') obstacles.push({ type: 'arrows', x: near + 28 });
+  if (w === 'fire')  obstacles.push({ type: 'ice', x: near + 30 });
   obstacles.forEach(o => { o.passed = false; o.hit = false; o.demo = true; });   // בהדגמה – בלי פגיעות
   demoSteps = w === 'fly' ? [{ at: 0.9, w: 'jump' }, { at: 1.3, w: 'fly' }]
             : w === 'swim' ? [{ at: 0.5, w }]
@@ -283,7 +284,7 @@ function introNext() {
 
 function finishIntro() {
   if (state !== 'intro') return;
-  obstacles = []; shurikens = []; demoSteps = []; flash = null; invulnT = 0;
+  obstacles = []; shurikens = []; fireballs = []; demoSteps = []; flash = null; invulnT = 0;
   py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0; resetAct();
   speed = runSpeed; distSinceSpawn = 0; nextGap = speed * 2.4;
   seenWords = [];

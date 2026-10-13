@@ -32,7 +32,7 @@ function startGame(m, idx) {
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0;
   world = m === 'stage' ? PAIR_WORLD[Math.floor((idx || 0) / 3)] : 0;
   speed = cfg.speed; score = 0; lives = m === 'stage' ? cfg.lives : ENDLESS.lives; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0;
-  obstacles = []; shurikens = []; particles = []; flag = null;
+  obstacles = []; shurikens = []; fireballs = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
@@ -175,6 +175,7 @@ function obstacleBox(o) {
     case 'box':   return { l: o.x, r: o.x + BOX.w, t: GROUND - BOX.h, b: GROUND };
     case 'beam':  return { l: o.x, r: o.x + BEAM.w, t: -1e6, b: GROUND - BEAM.clear };
     case 'wall':  return { l: o.x, r: o.x + WALL.w, t: GROUND - WALL.h, b: GROUND };
+    case 'ice':   return { l: o.x, r: o.x + ICE.w, t: GROUND - ICE.h, b: GROUND };
     case 'enemy': return { l: o.x, r: o.x + ENEMY.w, t: GROUND - ENEMY.h, b: GROUND };
     case 'river': return { l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 20 };
     case 'coin':return { l: o.x, r: o.x + 6, t: COIN.y - 3, b: COIN.y + 3 };
@@ -349,6 +350,7 @@ function update(dt) {
   if (catchT > 0) catchT -= dt;
   if (throwT > 0) throwT -= dt;
   if (throwCd > 0) throwCd -= dt;
+  if (act.fireCd > 0) act.fireCd -= dt;
   for (const k of ['stop', 'run', 'swim', 'climbWant', 'push', 'pull', 'pullWant', 'hide', 'block', 'leapWant', 'dive', 'crawl', 'crawlWant']) if (act[k] > 0) act[k] = Math.max(0, act[k] - dt);
   if (flash && (flash.t -= dt) <= 0) flash = null;
   if (heard && (heard.t -= dt) <= 0) heard = null;
@@ -382,6 +384,22 @@ function update(dt) {
     }
   }
   shurikens = shurikens.filter(s => !s.dead && s.x < W + 10);
+  for (const f of fireballs) {                                              // כדורי אש – מנפצים קיר קרח
+    f.x += FIREBALL.speed * dt; f.t += dt;
+    if (Math.random() < 0.7) particles.push({ x: f.x - 2, y: f.y + (Math.random() - 0.5) * 2, vx: -20, vy: -4, g: -6, life: 0.35, color: Math.random() < 0.5 ? '#fb923c' : '#fde047', size: 0.9 });
+    for (const o of obstacles) {
+      if (o.type !== 'ice' || o.broken) continue;
+      if (f.x + 2 >= o.x && f.x - 2 <= o.x + ICE.w) {
+        o.broken = true; f.dead = true; sfx('hit');
+        for (let i = 0; i < 26; i++) particles.push({ x: o.x + Math.random() * ICE.w, y: GROUND - Math.random() * ICE.h, vx: 15 + Math.random() * 45, vy: -10 - Math.random() * 35,
+          g: 90, life: 0.9 + Math.random() * 0.5, color: ['#e0f2fe', '#bae6fd', '#7dd3fc', '#ffffff'][i % 4], size: 1 + Math.random() * 1.6, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 14 });
+        burst(o.x + ICE.w / 2, GROUND - ICE.h / 2, '#fb923c', 8);
+        cleared(o);
+        break;
+      }
+    }
+  }
+  fireballs = fireballs.filter(f => !f.dead && f.x < W + 10);
 
   const cx = (pb.l + pb.r) / 2;
   drownK = 0;

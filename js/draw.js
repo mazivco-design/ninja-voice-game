@@ -291,6 +291,14 @@ function draw() {
     if (o.type === 'pond') drawNet(o, true);                                  // הרשת לפני הצולל
   }
   for (const s of shurikens) star4(s.x, s.y, 2, s.rot, '#475569');
+  for (const f of fireballs) {                                                // כדור אש: הילה, גוף כתום, לב צהוב
+    const r = 2.2 + Math.sin(f.t * 30) * 0.2;
+    ctx.fillStyle = 'rgba(251,146,60,.35)'; circle(f.x, f.y, r * 2);
+    ctx.fillStyle = '#f97316'; ctx.beginPath(); ctx.moveTo(f.x - r * 3, f.y); ctx.quadraticCurveTo(f.x - r, f.y - r * 1.3, f.x + r, f.y - r * 0.2); ctx.lineTo(f.x + r, f.y + r * 0.2); ctx.quadraticCurveTo(f.x - r, f.y + r * 1.3, f.x - r * 3, f.y); ctx.fill();
+    ctx.fillStyle = '#f97316'; circle(f.x, f.y, r);
+    ctx.fillStyle = '#fde047'; circle(f.x + 0.3, f.y, r * 0.6);
+    ctx.fillStyle = '#fffbeb'; circle(f.x + 0.6, f.y - 0.2, r * 0.25);
+  }
   for (const p of particles) {
     ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 2)); ctx.fillStyle = p.color;
     if (p.rot !== undefined) { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2); ctx.restore(); }
@@ -360,6 +368,23 @@ function drawObstacle(o, top) {
     }
     ctx.fillStyle = '#44403c'; ctx.fillRect(x - 0.8, y - 1, WALL.w + 1.6, 1.4);
     label('KICK', x + WALL.w / 2, y - 5.5, 4, '#fde047', '#1e293b');
+  } else if (o.type === 'ice') {                // FIRE: קיר קרח עבה ושקוף למחצה
+    if (o.broken) return;
+    const y = GROUND - ICE.h, w = ICE.w, now = performance.now() / 1000;
+    const g = ctx.createLinearGradient(x, 0, x + w, 0);
+    g.addColorStop(0, 'rgba(224,242,254,.95)'); g.addColorStop(0.5, 'rgba(125,211,252,.85)'); g.addColorStop(1, 'rgba(56,189,248,.9)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(x, GROUND); ctx.lineTo(x + 0.4, y + 3); ctx.lineTo(x + 1.6, y + 0.8); ctx.lineTo(x + 3.5, y + 1.8); ctx.lineTo(x + 5.2, y - 0.6); ctx.lineTo(x + w - 0.4, y + 1.4); ctx.lineTo(x + w, GROUND); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(12,74,110,.55)'; ctx.lineWidth = 0.35; ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 0.35;                // סדקים ופאות בקרח
+    ctx.beginPath(); ctx.moveTo(x + 1.5, y + 6); ctx.lineTo(x + 4, y + 11); ctx.lineTo(x + 2.5, y + 17); ctx.moveTo(x + 6, y + 9); ctx.lineTo(x + 4.5, y + 21); ctx.lineTo(x + 6.5, y + 27); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(x + 1, y + 3, 0.9, ICE.h - 6);   // ברק
+    const sh = 0.5 + 0.5 * Math.sin(now * 2.2 + x * 0.1);                                    // נצנוץ שעובר על הקרח
+    ctx.fillStyle = 'rgba(255,255,255,' + 0.5 * sh + ')'; ctx.beginPath(); ctx.moveTo(x + 2, y + 4 + sh * 18); ctx.lineTo(x + w - 1, y + 1 + sh * 18); ctx.lineTo(x + w - 1, y + 3 + sh * 18); ctx.lineTo(x + 2, y + 6 + sh * 18); ctx.fill();
+    ctx.fillStyle = 'rgba(224,242,254,.95)';                                                  // נטיפי קרח בצד
+    for (let k = 0; k < 3; k++) { const iy = y + 6 + k * 8; ctx.beginPath(); ctx.moveTo(x + w, iy); ctx.lineTo(x + w + 1.4, iy + 0.6); ctx.lineTo(x + w, iy + 2.6); ctx.fill(); }
+    ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.ellipse(x + w / 2, y + 0.4, w / 2 + 0.8, 1.2, 0, 0, Math.PI * 2); ctx.fill();   // שלג למעלה
+    label('FIRE', x + w / 2, y - 6, 4, '#fde047', '#1e293b');
   } else if (o.type === 'enemy') {
     drawEnemy(o);
   } else if (o.type === 'rock') {                // STOP: סלע תלוי בחבל, נופל כשמגיעים

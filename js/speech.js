@@ -162,12 +162,15 @@ function command(word, source) {
     duckT = 0;
   }
   else if (word === 'dive')  { act.dive = DIVE_TIME; duckT = 0; }
+  else if (word === 'fire') {                                            // כדור אש קדימה – שובר קיר קרח
+    if (!(act.fireCd > 0)) { const pb = playerBox(); fireballs.push({ x: pb.r + 1, y: pb.t + 5, t: 0 }); act.fireCd = FIREBALL.cooldown; throwT = 0.25; duckT = 0; sfx('jump'); }
+  }
   else if (word === 'crawl') { act.crawlWant = BRAMBLE.want; act.crawl = BRAMBLE.want; duckT = 0; }   // נשכב וזוחל מיד
 }
 
 // מקלדת – לבדיקה במחשב
 const KEYS = { KeyX: 'crawl', KeyA: 'leap', KeyV: 'dive', Space: 'jump', ArrowUp: 'jump', ArrowDown: 'down', KeyK: 'kick', KeyT: 'throw', KeyC: 'catch', KeyF: 'fly',
-               KeyS: 'stop', KeyR: 'run', KeyW: 'swim', KeyL: 'climb', KeyO: 'push', KeyU: 'pull', KeyH: 'hide', KeyB: 'block' };
+               KeyS: 'stop', KeyR: 'run', KeyW: 'swim', KeyL: 'climb', KeyO: 'push', KeyU: 'pull', KeyH: 'hide', KeyB: 'block', KeyE: 'fire' };
 window.addEventListener('keydown', e => {
   const tag = e.target && e.target.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;      // כותבים שם – לא מפעילים פקודות
