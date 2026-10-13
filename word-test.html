@@ -41,8 +41,8 @@ td.w{direction:ltr;font-weight:800}
 
 <div class="card">
   <button id="loadBtn">טען מודל</button>
-  <button id="startBtn" disabled>BOUNCE · CRAWL · LEAP · DIVE · JUMP · FLY (6 × 3 = 18 סבבים)</button>
-  <button id="startAllBtn" disabled>כל המילים (18 × 2 = 36 סבבים)</button>
+  <button id="startBtn" disabled>CRAWL · LEAP · DIVE · JUMP · FLY (5 × 3 = 15 סבבים)</button>
+  <button id="startAllBtn" disabled>כל המילים (17 × 2 = 34 סבבים)</button>
   <button id="stopBtn" class="stop" disabled>עצור</button>
   <div class="status" id="status"></div>
 </div>
@@ -66,7 +66,7 @@ td.w{direction:ltr;font-weight:800}
 // כל המילים שהמשחק יכיר – הזיהוי תמיד מקשיב לכולן, כדי לגלות בלבולים ביניהן
 const OLD_WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive'];
 // המילים החדשות נבדקות יחד עם המילים שהן עלולות להתבלבל איתן
-const NEW_WORDS = ['bounce', 'crawl', 'leap', 'dive', 'jump', 'fly'];
+const NEW_WORDS = ['crawl', 'leap', 'dive', 'jump', 'fly'];
 const WORDS = [...new Set([...OLD_WORDS, ...NEW_WORDS])];
 const WINDOW = 3500;
 let testWords = NEW_WORDS, PER_WORD = 3;
