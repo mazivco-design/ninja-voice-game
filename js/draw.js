@@ -445,33 +445,56 @@ function drawObstacle(o, top) {
     }
     if (!o.passed) label('HIDE', x + GUARD.span / 2, GROUND - GUARD.h - 9, 4, '#fde047', '#1e293b');
   } else if (o.type === 'bramble') {             // CRAWL: מערה שהולכת ונעשית צרה עד שחייבים לזחול
-    const w = o.w, topY = GROUND - 46, now = performance.now() / 1000;
+    const w = o.w, now = performance.now() / 1000;
     const ceil = xx => caveCeiling(o, xx);
-    const back = ctx.createLinearGradient(0, GROUND - BRAMBLE.mouth, 0, GROUND);          // חלל המערה – חשוך מאחור
-    back.addColorStop(0, '#0c0a09'); back.addColorStop(1, '#292524');
-    ctx.fillStyle = back;
+    const peak = GROUND - 50;
+    const mound = k => {                                                                      // קו ההר מעל המערה – עולה מהפתח, גבשושי, ויורד ביציאה
+      const up = Math.min(1, k / (w * 0.35)), down = Math.min(1, (w - k) / (w * 0.18));
+      const h = Math.min(up, down), e = h * h * (3 - 2 * h);
+      return GROUND - BRAMBLE.mouth - 3 + (peak - (GROUND - BRAMBLE.mouth - 3)) * e + Math.sin(k * 0.21 + x * 0.03) * 2 * e;
+    };
+    const dark = ctx.createLinearGradient(x, 0, x + w, 0);                                    // החושך נבנה בהדרגה פנימה, ומתבהר ביציאה
+    const f = v => Math.max(0, Math.min(1, v / w));
+    dark.addColorStop(0, 'rgba(68,64,60,.25)'); dark.addColorStop(f(BRAMBLE.ramp * 0.35), 'rgba(41,37,36,.65)');
+    dark.addColorStop(f(BRAMBLE.ramp * 0.8), 'rgba(12,10,9,.97)'); dark.addColorStop(f(w - BRAMBLE.exit - 4), 'rgba(12,10,9,.97)');
+    dark.addColorStop(1, 'rgba(68,64,60,.35)');
+    ctx.fillStyle = dark;
     ctx.beginPath(); ctx.moveTo(x, GROUND); for (let k = 0; k <= w; k += 1.5) ctx.lineTo(x + k, ceil(x + k) - 0.5); ctx.lineTo(x + w, GROUND); ctx.closePath(); ctx.fill();
-    const rock = ctx.createLinearGradient(0, topY, 0, GROUND);                               // גוש הסלע מעל
-    rock.addColorStop(0, '#a8a29e'); rock.addColorStop(1, '#57534e');
-    ctx.fillStyle = rock;
-    ctx.beginPath(); ctx.moveTo(x - 3, GROUND - BRAMBLE.mouth + 2);
-    for (let k = 0; k <= w; k += 4) ctx.lineTo(x + k, topY + Math.sin(k * 0.45 + x * 0.05) * 2.2 + (k < 6 ? 6 - k : 0));   // גבעה משוננת
-    ctx.lineTo(x + w + 3, GROUND - BRAMBLE.mouth + 2);
-    for (let k = w; k >= 0; k -= 1.5) ctx.lineTo(x + k, ceil(x + k));                       // התקרה מבפנים
+    ctx.fillStyle = '#3f3a36';                                                                // גוף הסלע בין התקרה לקו ההר
+    ctx.beginPath(); ctx.moveTo(x, ceil(x));
+    for (let k = 0; k <= w; k += 2) ctx.lineTo(x + k, mound(k) + 3);
+    for (let k = w; k >= 0; k -= 1.5) ctx.lineTo(x + k, ceil(x + k));
     ctx.closePath(); ctx.fill();
-    ctx.fillStyle = 'rgba(0,0,0,.18)';                                                        // סדקים ושכבות בסלע
-    for (let k = 4; k < w - 4; k += 9) ctx.fillRect(x + k, topY + 8 + (k % 7), 5, 0.6);
-    ctx.fillStyle = '#78716c';                                                                // נטיפים קטנים מהתקרה
-    for (let k = 3; k < w - 2; k += 4.5) { const c = ceil(x + k); ctx.beginPath(); ctx.moveTo(x + k - 0.8, c); ctx.lineTo(x + k, c + 1 + hash(k) * 0.8); ctx.lineTo(x + k + 0.8, c); ctx.fill(); }
-    ctx.fillStyle = '#65a30d'; for (let k = 0; k < w; k += 3) ctx.fillRect(x + k, topY - 1 + Math.sin(k * 0.45 + x * 0.05) * 2.2, 2.4, 1.4);   // טחב למעלה
+    const rocks = [];                                                                         // סלעים עגולים בגדלים שונים, בשתי שכבות
+    for (let k = 1.5, n = 0; k < w - 1; k += 5.5 + hash(k + x * 0.01) * 2.5, n++) {      // ממלאים את כל הגוש בסלעים, שורה אחרי שורה
+      const c = ceil(x + k);
+      for (let cy = mound(k) + 2.5, j = 0; cy < c - 1.5; cy += 4.6 + hash(k * 2.3 + j) * 1.5, j++) {
+        const r = 2.6 + hash(k * 1.7 + j * 3.3) * 2.6;
+        rocks.push({ cx: x + k + (j % 2) * 2.2, cy: Math.min(cy, c - r * 0.55), r, s: hash(k * 3.1 + j * 5) });
+      }
+    }
+    rocks.sort((p, q) => q.cy - p.cy);
+    for (const rk of rocks) {
+      const g = ctx.createRadialGradient(rk.cx - rk.r * 0.35, rk.cy - rk.r * 0.4, rk.r * 0.1, rk.cx, rk.cy, rk.r * 1.1);
+      const base = rk.s < 0.33 ? ['#d6d3d1', '#78716c'] : rk.s < 0.66 ? ['#c4b5a5', '#6b5e52'] : ['#b8b2ac', '#5b5551'];
+      g.addColorStop(0, base[0]); g.addColorStop(1, base[1]);
+      ctx.fillStyle = g; ctx.beginPath();
+      for (let a = 0; a < 9; a++) { const an = a / 9 * Math.PI * 2, rr = rk.r * (0.82 + hash(rk.cx * 2 + a) * 0.25); ctx.lineTo(rk.cx + Math.cos(an) * rr * 1.15, rk.cy + Math.sin(an) * rr * 0.85); }
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = 'rgba(41,37,36,.45)'; ctx.lineWidth = 0.35; ctx.stroke();
+    }
+    ctx.fillStyle = '#65a30d';                                                                // טחב ודשא קטן על חלק מהסלעים
+    for (const rk of rocks) if (rk.s > 0.55 && rk.cy < mound(rk.cx - x) + 4) { ctx.beginPath(); ctx.ellipse(rk.cx - 0.5, rk.cy - rk.r * 0.75, rk.r * 0.55, 0.9, 0, 0, Math.PI * 2); ctx.fill(); }
     ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 1.2;                                  // צל מתחת לתקרה – נותן עומק
     ctx.beginPath(); for (let k = 0; k <= w; k += 1.5) ctx.lineTo(x + k, ceil(x + k) + 0.8); ctx.stroke();
-    for (let i = 0; i < 3; i++) {                                                             // גבישים קטנים שנוצצים בחושך
-      const gx = x + 4 + i * 6, gy = GROUND - 4 - i * 3; if (gy < ceil(gx) + 2) continue;
+    ctx.fillStyle = '#57534e';                                                                // נטיפים קטנים מהתקרה
+    for (let k = 3; k < w - 2; k += 4.5) { const c = ceil(x + k); ctx.beginPath(); ctx.moveTo(x + k - 0.8, c); ctx.lineTo(x + k, c + 1 + hash(k) * 0.8); ctx.lineTo(x + k + 0.8, c); ctx.fill(); }
+    for (let i = 0; i < 4; i++) {                                                             // גבישים קטנים שנוצצים בחושך
+      const gx = x + BRAMBLE.ramp * 0.5 + i * 9, gy = GROUND - 2 - (i % 2) * 2; if (gx > x + w - 10 || gy < ceil(gx) + 2) continue;
       ctx.fillStyle = 'rgba(125,211,252,' + (0.45 + 0.35 * Math.sin(now * 3 + i * 2)) + ')';
       ctx.beginPath(); ctx.moveTo(gx, gy - 1.4); ctx.lineTo(gx + 0.8, gy); ctx.lineTo(gx, gy + 1.4); ctx.lineTo(gx - 0.8, gy); ctx.fill();
     }
-    label('CRAWL', x + 12, topY - 6, 4, '#fde047', '#1e293b');
+    label('CRAWL', x + 14, mound(14) - 8, 4, '#fde047', '#1e293b');
   } else if (o.type === 'window') {              // LEAP: קיר עבה עם מעבר צר וזוהר – רק זינוק עובר
     const wtop = GROUND - 48, w = WINDOW.w, now = performance.now() / 1000;
     const part = (y0, y1) => {

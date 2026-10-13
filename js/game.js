@@ -299,7 +299,7 @@ function caveCeiling(o, x) {
   const r = x - o.x, low = GROUND - BRAMBLE.gap, high = GROUND - BRAMBLE.mouth;
   if (r < 0 || r > o.w) return -1e6;
   const ease = q => q * q * (3 - 2 * q);
-  const ramp = Math.min(BRAMBLE.ramp, o.w * 0.4), exit = Math.min(BRAMBLE.exit, o.w * 0.2);
+  const ramp = Math.min(BRAMBLE.ramp, o.w * 0.5), exit = Math.min(BRAMBLE.exit, o.w * 0.18);
   if (r < ramp) return high + (low - high) * ease(r / ramp);                 // הכניסה: התקרה יורדת
   if (r > o.w - exit) return low + (high - low) * ease((r - (o.w - exit)) / exit);   // היציאה: עולה שוב
   return low;
