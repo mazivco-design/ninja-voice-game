@@ -296,8 +296,9 @@ function inPond() { const cx = PLAYER.x + PLAYER.w / 2; return obstacles.find(o 
 function diving() { return act.dive > 0 && py <= 0 && !!inPond(); }
 // גובה תקרת המערה בנקודה x (מספר קטן = גבוה במסך). מחוץ למערה – אין תקרה
 function caveCeiling(o, x) {
-  const r = x - o.x, low = GROUND - BRAMBLE.gap, high = GROUND - BRAMBLE.mouth;
-  if (r < 0 || r > o.w) return -1e6;
+  let r = x - o.x; const low = GROUND - BRAMBLE.gap, high = GROUND - BRAMBLE.mouth;
+  if (r < -0.01 || r > o.w + 0.01) return -1e6;
+  r = Math.max(0, Math.min(o.w, r));                                         // סטייה זעירה של חישוב לא תזרוק את התקרה לשמיים
   const ease = q => q * q * (3 - 2 * q);
   const ramp = Math.min(BRAMBLE.ramp, o.w * 0.5), exit = Math.min(BRAMBLE.exit, o.w * 0.18);
   if (r < ramp) return high + (low - high) * ease(r / ramp);                 // הכניסה: התקרה יורדת
