@@ -285,6 +285,7 @@ function draw() {
   }
 
   drawNinja();
+  for (const o of obstacles) if (o.type === 'bridge') drawFieldSmoke(o);
   for (const o of obstacles) if (o.type === 'lake' || o.type === 'pond') {   // מים מעל השחיין – נראה חצי שקוע / צולל
     ctx.fillStyle = o.type === 'lake' ? 'rgba(20,184,166,.55)' : 'rgba(14,116,144,.6)'; ctx.fillRect(o.x, GROUND + 0.3, o.w, bottom - GROUND);
     if (o.type === 'pond') drawNet(o, true);                                  // הרשת לפני הצולל
@@ -602,24 +603,79 @@ function drawLake(o, bottom) {
   label('SWIM', x + w / 2, GROUND - 6, 4, '#fde047', '#1e293b');
 }
 
-function drawBridge(o, bottom) {
-  const x = o.x, w = o.w;
-  const g = ctx.createLinearGradient(0, GROUND, 0, bottom);
-  g.addColorStop(0, '#292524'); g.addColorStop(1, '#0c0a09');
-  ctx.fillStyle = g; ctx.fillRect(x, GROUND, w, bottom - GROUND);               // תהום
-  ctx.fillStyle = '#57534e'; ctx.fillRect(x - 1.5, GROUND - 7, 1.5, 7.5); ctx.fillRect(x + w, GROUND - 7, 1.5, 7.5);   // עמודים
-  const cT = o.cT || 0;
-  if (cT < 1.2) {
-    ctx.strokeStyle = '#a16207'; ctx.lineWidth = 0.4;                          // חבלים
-    if (!o.collapsed) { ctx.beginPath(); ctx.moveTo(x - 0.8, GROUND - 6.5); ctx.quadraticCurveTo(x + w / 2, GROUND - 2.5, x + w + 0.8, GROUND - 6.5); ctx.stroke(); }
-    for (let i = 0, k = 0; i < w; i += 3.6, k++) {                               // קרשים (נופלים כשמתמוטט)
-      const drop = o.collapsed ? Math.max(0, cT - k * 0.03) : 0;
-      ctx.save(); ctx.translate(x + i + 1.6, GROUND + 0.7 + drop * drop * 70); ctx.rotate(drop * (k % 2 ? 3 : -3));
-      ctx.fillStyle = k % 2 ? '#a16207' : '#92400e'; ctx.fillRect(-1.5, -0.7, 3, 1.4);
-      ctx.restore();
+function bridgeVents(o) {                         // מקומות הסדקים שמהם פורצת האש
+  const n = Math.max(4, Math.round(o.w / 9)), v = [];
+  for (let i = 0; i < n; i++) v.push(o.x + (i + 0.5) * o.w / n + (hash(i * 3.3 + 1) - 0.5) * 4);
+  return v;
+}
+function drawFlame(fx, h, wd, t, a) {             // לשון אש: בסיס צהוב, קצה אדום, מרצדת
+  if (h < 0.3) return;
+  const sway = Math.sin(t * 9 + fx) * wd * 0.35;
+  const g = ctx.createLinearGradient(0, GROUND, 0, GROUND - h);
+  g.addColorStop(0, 'rgba(254,240,138,' + a + ')'); g.addColorStop(0.35, 'rgba(251,146,60,' + a + ')'); g.addColorStop(0.8, 'rgba(220,38,38,' + a * 0.85 + ')'); g.addColorStop(1, 'rgba(127,29,29,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.moveTo(fx - wd, GROUND + 0.5);
+  ctx.quadraticCurveTo(fx - wd * 1.1, GROUND - h * 0.45, fx + sway, GROUND - h);
+  ctx.quadraticCurveTo(fx + wd * 1.1, GROUND - h * 0.45, fx + wd, GROUND + 0.5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,251,235,' + a * 0.8 + ')';                          // לב בהיר
+  ctx.beginPath(); ctx.moveTo(fx - wd * 0.4, GROUND + 0.5); ctx.quadraticCurveTo(fx, GROUND - h * 0.45, fx + wd * 0.4, GROUND + 0.5); ctx.fill();
+}
+function drawBridge(o, bottom) {                  // RUN: שדה שהאדמה בו נסדקת, עשן נמוך, ושרשרת התפרצויות אש שהולכת ומאיצה
+  const x = o.x, w = o.w, now = performance.now() / 1000, st = o.stepT, cT = o.cT || 0;
+  const near = Math.max(0, Math.min(1, (PLAYER.x + 75 - x) / 55));             // האדמה נסדקת ככל שמתקרבים
+  const heat = st === undefined ? 0 : Math.min(1, st / BRIDGE.collapse);
+  const sc = ctx.createLinearGradient(x - 4, 0, x + w + 4, 0);                 // אדמה חרוכה – נכהית בהדרגה מהקצוות
+  const e = Math.min(0.25, 10 / w);
+  sc.addColorStop(0, 'rgba(28,25,23,0)'); sc.addColorStop(e, 'rgba(28,25,23,.78)'); sc.addColorStop(1 - e, 'rgba(28,25,23,.78)'); sc.addColorStop(1, 'rgba(28,25,23,0)');
+  ctx.fillStyle = sc; ctx.fillRect(x - 4, GROUND - 0.3, w + 8, bottom - GROUND);
+  const glow = ctx.createLinearGradient(0, GROUND - 14, 0, GROUND);            // זוהר חם מעל האדמה כשהאש מתקרבת
+  glow.addColorStop(0, 'rgba(249,115,22,0)'); glow.addColorStop(1, 'rgba(249,115,22,' + (0.12 + 0.4 * Math.max(heat, o.collapsed ? 1 - Math.min(1, cT / 3) : 0)) * near + ')');
+  ctx.fillStyle = glow; ctx.fillRect(x, GROUND - 14, w, 14);
+  const vents = bridgeVents(o), n = vents.length;
+  vents.forEach((vx, i) => {                                                   // סדקים זוהרים שנפערים באדמה ככל שמתקרבים
+    const depth = near * (6 + hash(i * 1.7) * 9), pulse = 0.55 + 0.45 * Math.sin(now * 5 + i * 1.3);
+    const pts = [[vx, GROUND]];
+    for (let k = 1; k <= 5; k++) pts.push([vx + (hash(i * 7 + k * 1.9) - 0.5) * 3.2, GROUND + depth * k / 5]);
+    const br = pts[2], bl = 2 + hash(i * 4.4) * 3, bs = hash(i * 2.6) > 0.5 ? 1 : -1;    // ענף צדדי
+    const wd = 1.3 * near + heat * 0.6;
+    ctx.fillStyle = 'rgba(249,115,22,' + (0.45 + 0.4 * (heat * 0.6 + 0.4) * pulse) * near + ')';
+    ctx.beginPath(); ctx.moveTo(vx - wd, GROUND);                                // הסדק עצמו – רחב למעלה, מתחדד למטה
+    pts.forEach(([px, py], k) => ctx.lineTo(px - wd * (1 - k / 5), py));
+    for (let k = 5; k >= 0; k--) ctx.lineTo(pts[k][0] + wd * (1 - k / 5), pts[k][1]);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(249,115,22,' + 0.6 * near + ')'; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(br[0], br[1]); ctx.lineTo(br[0] + bs * bl, br[1] + bl * 0.8); ctx.lineTo(br[0] + bs * bl * 1.4, br[1] + bl * 1.5); ctx.stroke();
+    ctx.strokeStyle = 'rgba(254,240,138,' + (0.4 + 0.6 * heat) * near + ')'; ctx.lineWidth = 0.35;   // לב צהוב בוהק
+    ctx.beginPath(); pts.slice(0, 4).forEach(([px, py], k) => k ? ctx.lineTo(px, py) : ctx.moveTo(px, py)); ctx.stroke();
+  });
+  if (st !== undefined) vents.forEach((vx, i) => {                             // התפרצויות: מתחילות מהצד הרחוק, מתקרבות ומאיצות
+    const f = (i + 0.5) / n, start = 0.05 + BRIDGE.collapse * 0.85 * (1 - f * f);
+    let h = 0;
+    if (o.collapsed) h = (24 + hash(i * 5.1) * 8) * Math.max(0, 1 - Math.max(0, cT - 2.2) / 1.2);
+    else if (st > start) h = 5 + 9 * Math.min(1, (st - start) / 0.35);
+    h *= 0.88 + 0.12 * Math.sin(now * 14 + i * 2);
+    drawFlame(vx, h, o.collapsed ? 4.2 : 2.6, now + i, 0.95);
+    if (h > 6) { drawFlame(vx - 2, h * 0.6, 2, now + i + 3, 0.8); drawFlame(vx + 2.2, h * 0.5, 1.8, now + i + 7, 0.8); }
+    if (h > 2 && Math.random() < 0.18) particles.push({ x: vx + (Math.random() - 0.5) * 2, y: GROUND - h * 0.7, vx: (Math.random() - 0.5) * 6, vy: -14, g: 6, life: 0.6, color: Math.random() < 0.5 ? '#fde047' : '#fb923c', size: 0.7 });
+  });
+  if (!o.collapsed) label('RUN', x + w / 2, GROUND - 16, 4, '#fde047', '#1e293b');
+}
+function drawFieldSmoke(o) {                      // עשן נמוך מעל שדה האש – מצויר מעל הנינג'ה, אז הרגליים נראות דהויות
+  const x = o.x, w = o.w, now = performance.now() / 1000;
+  const near = Math.max(0, Math.min(1, (PLAYER.x + 75 - x) / 55));
+  if (near <= 0) return;
+  const heat = o.stepT === undefined ? 0 : Math.min(1, o.stepT / BRIDGE.collapse), fade = o.collapsed ? Math.max(0, 1 - Math.max(0, (o.cT || 0) - 2.5) / 1.5) : 1;
+  const hgt = 3.5 + 2 * heat;
+  for (let layer = 0; layer < 2; layer++)
+    for (let k = -4; k < w + 4; k += 6) {
+      const drift = Math.sin(now * (0.7 + layer * 0.4) + k * 0.3) * 2.5, cx = x + k + drift;
+      const r = 4 + hash(k * 1.3 + layer) * 2.5, cy = GROUND - hgt * (0.4 + layer * 0.45) + Math.sin(now + k) * 0.5;
+      const col = layer ? '168,162,158' : '120,113,108', a0 = (0.42 + 0.1 * heat) * near * fade;
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(1.6, 0.6);
+      const rg = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+      rg.addColorStop(0, 'rgba(' + col + ',' + a0 + ')'); rg.addColorStop(1, 'rgba(' + col + ',0)');
+      ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill(); ctx.restore();
     }
-  }
-  if (!o.collapsed) label('RUN', x + w / 2, GROUND - 11, 4, '#fde047', '#1e293b');
 }
 
 function drawRiver(o, bottom) {                  // FLY: בור לבה רותחת – קופצים ועפים מעליו
@@ -756,6 +812,13 @@ function drawNinja() {
   const duck = duckT > 0, fx = leap || dive || crawl ? PLAYER.x + 3 : pb.l + (duck ? 5.5 : swim ? 3 : 4);
   const fy = dive ? GROUND + 8 : leap ? GROUND - LEAP.y : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : pb.b;
   const now = performance.now() / 1000;
+  if (sinkT > 0 && sinkType === 'burn') {                                       // נשרף בשדה האש – מושחר ועשן עולה
+    const k = 1 - sinkT / SINK_TIME;
+    drawFigure({ fx, fy: GROUND, facing: 1, scale: 1, kind: 'ninja', accent: '#292524', pose: poseAir(false) });
+    if (k < 0.35) burst(fx, GROUND - 6, '#f97316', 2, 25);
+    if (Math.random() < 0.5) particles.push({ x: fx + (Math.random() - 0.5) * 5, y: GROUND - 10, vx: 0, vy: -10, g: -4, life: 0.9, color: 'rgba(68,64,60,.75)', size: 1.8 });
+    return;
+  }
   if (sinkT > 0) {                                                               // נופל לתהום או שוקע במים
     const k = 1 - sinkT / SINK_TIME;
     ctx.save();

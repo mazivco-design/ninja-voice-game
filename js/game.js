@@ -208,7 +208,7 @@ function collides(o, pb) {
   const m = cfg.forgive || 0;
   const cx = (pb.l + pb.r) / 2;
   if (o.type === 'lake')   return (o.drown || 0) >= drownTime();                // שקע עד הסוף בלי SWIM
-  if (o.type === 'bridge') return o.collapsed && py === 0 && act.climb <= 0 && cx > o.x + 1 && cx < o.x + o.w - 1;
+  if (o.type === 'bridge') return o.collapsed && act.climb <= 0 && cx > o.x + 1 && cx < o.x + o.w - 1;   // שדה האש התפרץ – נשרף גם בקפיצה
   const ov = (b) => pb.l < b.r - m && pb.r > b.l + m && pb.t < b.b - m && pb.b > b.t + m;
   if (o.type === 'window')  // רק החלון פתוח: חלק עליון וחלק תחתון של הקיר
     { const ovw = b => pb.l < b.r && pb.r > b.l && pb.t < b.b && pb.b > b.t;   // בלי מרווח סלחנות – רק זינוק עובר בחלון
@@ -229,7 +229,7 @@ function collides(o, pb) {
 function onHit(o) {
   o.hit = true;
   shakeT = 0.3; sfx('hit');
-  if (o.type === 'bridge' || o.type === 'river' || o.type === 'lake') { sinkT = SINK_TIME; sinkType = o.type === 'lake' ? 'lake' : o.type === 'river' ? 'lava' : 'fall'; }   // נופל לתהום / ללבה / שוקע במים
+  if (o.type === 'bridge' || o.type === 'river' || o.type === 'lake') { sinkT = SINK_TIME; sinkType = o.type === 'lake' ? 'lake' : o.type === 'river' ? 'lava' : 'burn'; }   // נשרף / נופל ללבה / שוקע במים
   if (state === 'demo' || state === 'intro') {   // בהדגמה – בלי עונש
     flash = { text: HIT_WORD[o.type], t: 1.2 }; invulnT = INVULN_TIME; return;
   }
@@ -429,7 +429,7 @@ function update(dt) {
         }
       }
     }
-    // RUN: הגשר מתמוטט זמן קצר אחרי שעולים עליו
+    // RUN: שדה האש מתפרץ כולו זמן קצר אחרי שנכנסים אליו
     if (o.type === 'bridge') {
       if (o.stepT === undefined && cx > o.x && cx < o.x + o.w) o.stepT = 0;
       if (o.stepT !== undefined && !o.collapsed && (o.stepT += dt) >= BRIDGE.collapse) o.collapsed = true;

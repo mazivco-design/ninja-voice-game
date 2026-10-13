@@ -35,7 +35,7 @@ const STAGES = [
   { name: 'JUMP + FLY',   words: ['fly'],            count: 8,  hint: 'Say JUMP, then FLY over the lava' },
   { name: 'CATCH + FLY',  words: ['catch', 'fly'],   count: 10, hint: 'Read the word!' },
   { name: 'STOP',         words: ['stop'],           count: 8,  hint: 'Say STOP before the rock falls' },
-  { name: 'RUN',          words: ['run'],            count: 8,  hint: 'Say RUN to cross the bridge' },
+  { name: 'RUN',          words: ['run'],            count: 8,  hint: 'Say RUN to cross the fire field' },
   { name: 'STOP + RUN',   words: ['stop', 'run'],    count: 10, hint: 'Read the word!' },
   { name: 'SWIM',         words: ['swim'],           count: 8,  hint: 'Say SWIM to cross the lake' },
   { name: 'CLIMB',        words: ['climb'],          count: 8,  hint: 'Say CLIMB to go up the cliff' },
@@ -80,7 +80,7 @@ const RIVER_FACTOR = 1.5;              // הנהר רחב פי 1.5 ממה שקפ
 const ROCK = { size: 8, hangY: GROUND - 40, fall: 0.9, warn: 0.75 };   // STOP – סלע נופל כשמגיעים אליו
 const STOP_TIME = 1.6;                                               // העולם עוצר לשנייה וחצי
 const RUN_BOOST = { mult: 2.2, time: 2.0 };                          // RUN – מהירות כפולה לשתי שניות
-const BRIDGE = { factor: 2.2, collapse: 1.15 };                      // גשר ארוך שמתמוטט אחרי 1.15 שניות – בהליכה לוקח 2.2
+const BRIDGE = { factor: 2.2, collapse: 1.15 };                      // שדה אש: 1.15 שניות אחרי שנכנסים כולו מתפרץ – בהליכה לוקח 2.2 לחצות
 const LAKE = { factor: 2.2 }, SWIM_TIME = 1.2;                       // SWIM – אגם ארוך. שוחים עד הסוף
 const DROWN = { easy: 1.1, other: 0.8 };                              // כמה זמן שוקעים במים לפני שנכשלים – אפשר עוד להציל עם SWIM
 const CLIFF = { w: 14, h: 40, range: 2.5, time: 1.3, ladder: 12 };  // CLIMB – צוק גבוה עם סולם נשען. מטפסים כשמגיעים לסולם
