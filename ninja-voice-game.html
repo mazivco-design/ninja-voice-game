@@ -19,7 +19,7 @@
   </div>
 
   <div id="hud">
-    <span id="hudFree"><span>Score: <span id="score">0</span></span>&nbsp;&nbsp;<span>Best: <span id="best">0</span></span></span>
+    <span id="hudFree"><span>Score: <span id="score">0</span></span>&nbsp;&nbsp;<span id="bestWrap">Best: <span id="best">0</span></span></span>
     <span id="hudStage" class="hide"><span id="stageName">Stage 1</span></span>
     <div id="progress" class="hide"><div id="progressBar"></div></div>
     <span id="catchHud" class="hide"><span class="coinIco"></span><span id="caught">0</span></span>
@@ -51,11 +51,22 @@
         <button class="diff hard" data-diff="hard">Hard<small>Fast · 2 lives</small></button>
       </div>
 
-      <div class="label">Stages</div>
-      <div class="stages" id="stages"></div>
+      <div class="jCard">
+        <div class="jHead"><span>🏔️ The Journey</span><span class="jSt" id="jSt"></span></div>
+        <div class="jTrack" id="jTrack"></div>
+        <div class="jMsg" id="jMsg"></div>
+        <div class="menuRow jRow">
+          <button class="free endless" id="jGo" disabled>▶ Continue</button>
+          <button class="free sec" id="jRestart" disabled>↺ From start</button>
+        </div>
+        <div class="board" id="jBoard"></div>
+      </div>
+
+      <div class="label trainLbl">🥋 Training <button class="hintTgl" id="hintTgl"></button></div>
+      <div class="stages lessons" id="stages"></div>
 
       <div class="menuRow">
-        <button class="free endless" id="freeBtn" disabled>∞ Endless Run</button>
+        <button class="free mix" id="freeBtn" disabled>🎛️ Free mix</button>
         <button class="free words" id="dictBtn">📖 Words</button>
       </div>
     </div>
@@ -64,8 +75,8 @@
   <!-- בחירת מילים ל-Free Play -->
   <div class="overlay" id="freePick">
     <div class="panel">
-      <h2>∞ Endless Run</h2>
-      <p>Run as far as you can! Choose the words. More words = a higher league.</p>
+      <h2>🎛️ Free mix</h2>
+      <p>Training: choose any words you've learned and practice them together.</p>
       <p id="freeInfo" style="font-weight:800;color:#4f46e5"></p>
       <div class="wordGrid" id="freeGrid" style="margin-top:10px"></div>
       <div class="err" id="freeErr"></div>
@@ -136,6 +147,7 @@
       <div class="board" id="board"></div>
       <div class="row">
         <button class="btn" id="primaryBtn">Play again</button>
+        <button class="btn sec hide" id="altBtn"></button>
         <button class="btn sec" id="menuBtn">Menu</button>
       </div>
     </div>
@@ -160,6 +172,7 @@
 <script src="js/sound.js?v=20261013e"></script>
 <script src="js/state.js?v=20261013e"></script>
 <script src="js/players.js?v=20261013e"></script>
+<script src="js/journey.js?v=20261013e"></script>
 <script src="js/menu.js?v=20261013e"></script>
 <script src="js/speech.js?v=20261013e"></script>
 <script src="js/game.js?v=20261013e"></script>

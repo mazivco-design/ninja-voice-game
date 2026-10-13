@@ -35,6 +35,7 @@ window.addEventListener('scroll', () => { if (window.scrollY || window.scrollX) 
 resize();
 
 function label(text, cx, cy, size, bg, fg) {
+  if (!labelsVisible()) return;                   // במסע אין רמזים – צריך לזהות את המכשול
   ctx.font = '900 ' + size + 'px -apple-system, system-ui, Arial, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const tw = ctx.measureText(text).width;

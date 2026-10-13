@@ -19,7 +19,7 @@ function stopAudio() {
 
 async function play(m, idx) {
   if (!model) return;
-  const words = m === 'stage' ? STAGES[idx || 0].words : freeWords();
+  const words = m === 'stage' ? STAGES[idx || 0].words : m === 'journey' ? journeyWords(WORDS.length) : freeWords();   // במסע מקשיבים לכל המילים שנלמדו
   listenWords = words.includes('fly') && !words.includes('jump') ? [...words, 'jump'] : [...words];   // FLY צריך גם JUMP
   stopAudio();                      // מתחילים מחדש עם רשימת המילים של המשחק הזה
   const ok = await ensureAudio();   // נקרא ישירות מהלחיצה
@@ -31,25 +31,27 @@ function startGame(m, idx) {
   playWords = mode === 'stage' ? STAGES[stageIdx].words : freeWords();
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0;
   world = m === 'stage' ? PAIR_WORLD[Math.floor((idx || 0) / 3)] : 0;
-  speed = cfg.speed; score = 0; lives = m === 'stage' ? cfg.lives : ENDLESS.lives; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0;
+  speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0;   // באימון אין פסילה
   obstacles = []; shurikens = []; fireballs = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
-  banner = mode === 'stage'
-    ? { text: 'Stage ' + (stageIdx + 1) + ': ' + STAGES[stageIdx].name, sub: STAGES[stageIdx].hint, t: 3 }
-    : { text: '∞ Endless Run', sub: LEAGUES[leagueOf(playWords.length)].icon + ' ' + LEAGUES[leagueOf(playWords.length)].name + ' · Record: ' + getBest(diffKey), t: 3 };
-  runBest = mode === 'free' ? getBest(diffKey) : 0; recordShown = false;
+  if (mode === 'journey') { jStation = stageIdx; startJourneySegment(true); }
+  banner = mode === 'stage' ? { text: '🥋 ' + STAGES[stageIdx].name, sub: STAGES[stageIdx].hint, t: 3 }
+         : mode === 'journey' ? { text: '🏔️ Station ' + jStation + ' → ' + (jStation + 1), sub: 'Record: ' + pLoad('jbest_' + diffKey, 0), t: 3 }
+         : { text: '🎛️ Free mix', sub: playWords.length + ' words · training', t: 3 };
+  runBest = 0; recordShown = false;
 
   hideAllOverlays();
   $('endBtn').classList.remove('hide');
   $('pauseBtn').classList.remove('hide');
-  $('hudFree').classList.toggle('hide', mode !== 'free');
-  $('hudStage').classList.toggle('hide', mode !== 'stage');
-  $('progress').classList.toggle('hide', mode !== 'stage');
+  $('hudFree').classList.toggle('hide', mode === 'stage');
+  $('hudStage').classList.toggle('hide', mode === 'free');
+  $('progress').classList.toggle('hide', mode === 'free');
   $('catchHud').classList.toggle('hide', !playWords.includes('catch'));
-  if (mode === 'stage') $('stageName').textContent = 'Stage ' + (stageIdx + 1);
-  else $('best').textContent = getBest(diffKey);
+  $('bestWrap').classList.toggle('hide', mode !== 'journey');
+  if (mode === 'stage') $('stageName').textContent = '🥋 ' + STAGES[stageIdx].name;
+  if (mode === 'journey') $('best').textContent = pLoad('jbest_' + diffKey, 0);
   renderHud();
   dbg('game', mode + (mode === 'stage' ? ' ' + (stageIdx + 1) : '') + ' / ' + diffKey);
   $('labBtn').classList.add('hide');
@@ -61,6 +63,7 @@ function renderHud() {
   $('score').textContent = score;
   $('caught').textContent = caught - coinsFlying;      // מטבע שעוד עף – נספר כשהוא מגיע
   if (mode === 'stage') $('progressBar').style.width = (100 * done / STAGES[stageIdx].count) + '%';
+  if (mode === 'journey') $('progressBar').style.width = (100 * Math.min(1, done / segLen(jStation))) + '%';
   if (!isFinite(lives)) $('lives').textContent = '';
   else $('lives').textContent = '❤️'.repeat(Math.max(0, lives)) + '🤍'.repeat(Math.max(0, cfg.lives - lives));
 }
@@ -69,6 +72,7 @@ function renderHud() {
 function showOver(title, big, sub, primaryLabel, primaryAction, starsStyle) {
   state = 'over';
   $('board').innerHTML = '';
+  $('altBtn').classList.add('hide');
   stopAudio();
   $('skipBtn').classList.add('hide');
   bankCoins();
@@ -85,17 +89,11 @@ function showOver(title, big, sub, primaryLabel, primaryAction, starsStyle) {
 
 function catchText() { return coins ? '  ·  🟡 ' + caught + ' / ' + coins : ''; }
 
-function endFree(byButton) {
-  const prev = getBest(diffKey), lg = leagueOf(playWords.length);
-  const isNew = score > prev;
-  if (isNew) pStore('best_' + diffKey + '_' + lg, score);
-  $('best').textContent = Math.max(prev, score);
-  sfx(isNew && score > 0 ? 'record' : 'over');
-  if (isNew && score > 0) confetti();
-  showOver(isNew && score > 0 ? '🏆 New record!' : byButton ? 'Well done!' : 'Great run!', '🏃 ' + score,
-           (isNew && score > 0 ? 'Your best ever!' : 'Your record: ' + prev) + catchText(),
-           'Run again', () => play('free'));
-  renderBoard(diffKey, lg);
+function endFree(byButton) {                     // סיום מיקס חופשי באימון – בלי שיאים
+  sfx('win');
+  showOver('Nice training!', '🥋 ' + score, (hits === 0 ? 'No misses!' : hits + (hits === 1 ? ' miss' : ' misses')) + catchText(),
+           'Train again', () => play('free'));
+  altButton('🏔️ Journey', () => { hideAllOverlays(); toMenu(); });
 }
 
 function stageComplete() {
@@ -104,11 +102,12 @@ function stageComplete() {
   const got = misses === 0 ? 3 : misses <= 2 ? 2 : 1;
   const stars = getStars();
   if (got > (stars[stageIdx] || 0)) { stars[stageIdx] = got; pStore('stars', stars); }
-  const hasNext = stageIdx + 1 < STAGES.length;
-  showOver('Stage ' + (stageIdx + 1) + ' complete!', '★'.repeat(got) + '☆'.repeat(3 - got),
-           (hits === 0 ? 'Perfect – no hits!' : hits === 1 ? '1 hit' : hits + ' hits') + catchText(),
-           hasNext ? 'Next stage ▶' : 'Play again',
-           hasNext ? () => play('stage', stageIdx + 1) : () => play('stage', stageIdx), true);
+  const w = STAGES[stageIdx].words[0], wasNew = !isLearned(w);
+  setLearned(w);                                    // עבר את השיעור – המילה מצטרפת למסע
+  const sub = (hits === 0 ? 'Perfect – no misses!' : hits === 1 ? '1 miss' : hits + ' misses') + catchText();
+  if (wasNew) showOver('🎓 ' + w.toUpperCase() + ' learned!', '★'.repeat(got) + '☆'.repeat(3 - got),
+                       sub + '  ·  ' + w.toUpperCase() + ' joins the journey', 'Back to the journey ▶', () => play('journey', getStation()), true);
+  else showOver(STAGES[stageIdx].name + ' – done!', '★'.repeat(got) + '☆'.repeat(3 - got), sub, 'Train again', () => play('stage', stageIdx), true);
 }
 
 function stageFailed() {
@@ -235,12 +234,13 @@ function onHit(o) {
     flash = { text: HIT_WORD[o.type], t: 1.2 }; invulnT = INVULN_TIME; return;
   }
   hits++; done++;
+  if (mode === 'journey') nextType = o.type;     // במסע: מכשול שפספסו חוזר מיד
   flash = { text: HIT_WORD[o.type], t: 1.2 };   // מראה את המילה הנכונה
   invulnT = INVULN_TIME;
   if (isFinite(lives)) {
     lives--;
     renderHud();
-    if (lives <= 0) { mode === 'stage' ? stageFailed() : endFree(false); return; }
+    if (lives <= 0) { mode === 'stage' ? stageFailed() : mode === 'journey' ? journeyOver(false) : endFree(false); return; }
   } else if (cfg.penalty && mode === 'free') {
     score = Math.max(0, score - cfg.penalty);
   }
@@ -317,8 +317,7 @@ function cliffTop() {                   // עומד על צוק שטיפס על�
 function swimmingNow() { return py <= 0 && ((act.swim > 0 && !!overWide('lake', playerBox())) || !!inPond()); }   // בבריכת DIVE שוחים לבד
 
 function update(dt) {
-  if (mode === 'free' && state === 'play') speed = Math.min(cfg.speed * ENDLESS.maxMult, cfg.speed * (1 + ENDLESS.ramp * score));   // ריצה אינסופית: מאיצה עם כל מכשול
-  else if (cfg.accel) speed = Math.min(cfg.maxSpeed, speed + cfg.accel * dt);
+  if (cfg.accel && mode === 'stage') speed = Math.min(cfg.maxSpeed, speed + cfg.accel * dt);
 
   // הנינג'ה
   const wasAir = py > 0;
@@ -361,7 +360,7 @@ function update(dt) {
   bgX += dx;
   distSinceSpawn += dx;
   if (state === 'play' && distSinceSpawn >= nextGap) {
-    if (mode === 'free' || spawned < STAGES[stageIdx].count) spawn();
+    if (mode === 'free' || spawned < (mode === 'journey' ? segLen(jStation) : STAGES[stageIdx].count)) spawn();
     else if (!flag) flag = { x: W + 2 };
   }
 
@@ -523,7 +522,7 @@ function update(dt) {
 
   if (flag) {
     flag.x -= dx;
-    if (flag.x <= PLAYER.x + PLAYER.w) { stageComplete(); return; }
+    if (flag.x <= PLAYER.x + PLAYER.w) { if (mode === 'journey') stationReached(); else stageComplete(); return; }
   }
   dbg('speed', v.toFixed(1));
 }

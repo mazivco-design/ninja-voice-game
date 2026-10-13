@@ -161,3 +161,36 @@ canvas { display: block; width: 100%; height: 100%; }
          color: #e2e8f0; font: 12px/1.55 ui-monospace, Menlo, monospace; padding: 10px 12px; border-radius: 10px;
          display: none; pointer-events: none; white-space: pre-wrap; }
 #debug.show { display: block; }
+
+/* המסע – כרטיס עם שורת תחנות */
+.jCard { margin-top: clamp(6px, 1.3vh, 12px); background: linear-gradient(135deg, #eef2ff, #fdf4ff); border-radius: 16px; padding: clamp(6px, 1.2vh, 12px) 10px; }
+.jHead { display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size: clamp(16px, 2.6vh, 22px); color: #312e81; }
+.jSt { font-size: clamp(12px, 1.8vh, 15px); color: #6366f1; }
+.jTrack { display: grid; grid-template-columns: repeat(18, 1fr); gap: 3px; margin: clamp(5px, 1vh, 9px) 0 4px; position: relative; }
+.jDot { border-radius: 9px; padding: 2px 0 1px; background: #4f46e5; color: #fff; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.jDot span { font-size: clamp(13px, 2.2vh, 19px); line-height: 1.15; }
+.jDot b { font-size: clamp(9px, 1.3vh, 11px); opacity: .85; }
+.jDot.done { background: #16a34a; }
+.jDot.wait { background: #f59e0b; }
+.jDot.far { background: #cbd5e1; color: #64748b; }
+.jDot.cur { outline: 3px solid #1e293b; outline-offset: 1px; }
+.jMsg { font-size: clamp(12px, 1.8vh, 15px); font-weight: 800; color: #b45309; min-height: 1.2em; }
+.jRow { margin-top: clamp(4px, 0.8vh, 8px); }
+.free.sec { background: #e2e8f0; color: #1e293b; }
+.free.mix { background: linear-gradient(135deg, #22c55e, #0ea5e9); color: #fff; }
+.jCard .board { margin-top: 6px; }
+.jCard .board .br { padding: 3px 12px; font-size: clamp(13px, 1.9vh, 16px); }
+.jCard .board .bt { display: none; }
+.board .br .sc small { color: #94a3b8; font-weight: 700; }
+
+/* אימון – שיעור לכל מילה */
+.trainLbl { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.hintTgl { border: 0; border-radius: 999px; padding: 3px 10px; font-weight: 800; font-size: clamp(11px, 1.6vh, 13px); background: #fef3c7; color: #92400e; text-transform: none; letter-spacing: 0; }
+.hintTgl.off { background: #e2e8f0; color: #64748b; }
+.stages.lessons { grid-template-columns: repeat(9, 1fr); }
+.stages.lessons .stage { background: #4f46e5; }
+.stages.lessons .stage.locked { background: #cbd5e1; }
+.stages.lessons .stage.pend { background: #f59e0b; animation: pulse 1.2s infinite; }
+@keyframes pulse { 50% { transform: scale(1.07); } }
+@media (max-aspect-ratio: 1/1) { .stages.lessons { grid-template-columns: repeat(6, 1fr); } .jTrack { grid-template-columns: repeat(9, 1fr); } }
+#menu .panel { width: min(760px, 100%); }

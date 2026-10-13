@@ -100,11 +100,7 @@ function isUnlocked(i, stars) { return isTester() || i === 0 || (stars[i - 1] ||
 
 // ב-Free Play משתמשים בכל המילים מהשלבים שכבר נפתחו
 // מילה נפתחת כשהשלב הראשון שמלמד אותה נפתח
-function unlockedWords() {
-  const stars = getStars(), set = new Set();
-  STAGES.forEach((s, i) => { if (isUnlocked(i, stars)) s.words.forEach(w => set.add(w)); });
-  return WORDS.filter(w => set.has(w));
-}
+function unlockedWords() { return WORDS.filter(w => isLearned(w)); }   // מיקס חופשי: רק מילים שכבר נלמדו
 // המילים שהשחקן בחר ל-Free Play (נשמר לכל שחקן). ברירת מחדל: כל המילים הפתוחות
 function freeWords() {
   const open = unlockedWords();
@@ -121,8 +117,7 @@ function openFreePick() {
 }
 function renderFreePick() {
   const open = unlockedWords(), grid = $('freeGrid');
-  const lg = LEAGUES[leagueOf(freeSel.length)];
-  $('freeInfo').textContent = lg.icon + ' ' + lg.name + ' · ' + freeSel.length + ' words · Record: ' + pLoad('best_' + diffKey + '_' + leagueOf(freeSel.length), 0);
+  $('freeInfo').textContent = '🥋 ' + freeSel.length + ' words · pick any mix you like';
   grid.innerHTML = '';
   WORDS.forEach(w => {
     const b = document.createElement('button');

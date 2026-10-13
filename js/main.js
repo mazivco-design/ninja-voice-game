@@ -40,14 +40,14 @@ function toMenu() {
   obstacles = []; shurikens = []; fireballs = []; particles = []; flag = null;
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; resetAct();
   renderMenu();
-  if (model) setStatus('Ready! Choose a stage');
+  if (model) setStatus('Ready!');
   $('menu').classList.add('show');
 }
 $('menuBtn').onclick = toMenu;
 $('endBtn').onclick = () => {
   if (state === 'intro') { try { speechSynthesis.cancel(); } catch (e) {} toMenu(); return; }
   if (state !== 'play') return;
-  if (mode === 'free') endFree(true); else { bankCoins(); toMenu(); }
+  if (mode === 'free') endFree(true); else if (mode === 'journey') journeyOver(true); else { bankCoins(); toMenu(); }
 };
 
 // עצירה: המשחק קופא במקום, ופקודות קוליות לא פועלות עד שממשיכים
