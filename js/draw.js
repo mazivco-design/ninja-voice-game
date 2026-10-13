@@ -393,10 +393,10 @@ function drawObstacle(o, top) {
     ctx.fillStyle = '#4ade80'; for (let k = 0; k < w + 1; k += 1.6) ctx.fillRect(x - 0.8 + k, y - 2.4 - (k % 3 ? 0 : 0.6), 0.5, 1.2);
     // סולם: מהקרקע לפני הצוק עד לראש הצוק
     const fx0 = x - CLIFF.ladder, fy0 = GROUND, tx = x + 0.6, ty = y - 1;
-    const dx = tx - fx0, dy = ty - fy0, L = Math.hypot(dx, dy), nx = -dy / L * 1.3, ny = dx / L * 1.3;
-    ctx.strokeStyle = '#a16207'; ctx.lineWidth = 0.7;
+    const dx = tx - fx0, dy = ty - fy0, L = Math.hypot(dx, dy), nx = -dy / L * 2.6, ny = dx / L * 2.6;   // סולם רחב
+    ctx.strokeStyle = '#a16207'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(fx0 + nx, fy0 + ny); ctx.lineTo(tx + nx, ty + ny); ctx.moveTo(fx0 - nx, fy0 - ny); ctx.lineTo(tx - nx, ty - ny); ctx.stroke();
-    ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 0.5;
+    ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 0.7;
     for (let k = 1; k < L / 3.4; k++) { const q = k * 3.4 / L, px = fx0 + dx * q, pyy = fy0 + dy * q; ctx.beginPath(); ctx.moveTo(px + nx, pyy + ny); ctx.lineTo(px - nx, pyy - ny); ctx.stroke(); }
     if (!o.climbed) label('CLIMB', x + w / 2, y - 7, 4, '#fde047', '#1e293b');
   } else if (o.type === 'boulder') {             // PUSH: סלע עגול גדול

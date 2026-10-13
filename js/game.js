@@ -435,6 +435,7 @@ function update(dt) {
       if (o.stepT === undefined && cx > o.x && cx < o.x + o.w) o.stepT = 0;
       if (o.stepT !== undefined && (o.stepT += dt) > BRIDGE.delay) o.front = Math.min(o.w + 6, (o.front || 0) + speed * BRIDGE.chase * dt);   // חזית האש מתקדמת
       if (o.front >= o.w) o.cT = (o.cT || 0) + dt;
+      if (act.run > 0 && cx > o.x - 2 && cx < o.x + o.w) act.run = Math.max(act.run, 0.3);   // בתוך השדה – ממשיך לרוץ עד שיוצאים
     }
     // CLIMB: מתחיל לטפס כשהצוק בטווח
     if (o.type === 'cliff' && !o.climbed && act.climbWant > 0 && act.climb <= 0) {

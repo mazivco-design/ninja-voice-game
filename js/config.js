@@ -80,7 +80,7 @@ const RIVER_FACTOR = 1.5;              // הנהר רחב פי 1.5 ממה שקפ
 const ROCK = { size: 8, hangY: GROUND - 40, fall: 0.9, warn: 0.75 };   // STOP – סלע נופל כשמגיעים אליו
 const STOP_TIME = 1.6;                                               // העולם עוצר לשנייה וחצי
 const RUN_BOOST = { mult: 2.2, time: 2.0 };                          // RUN – מהירות כפולה לשתי שניות
-const BRIDGE = { factor: 2.2, delay: 0.3, chase: 1.5 };            // שדה אש: האש מתחילה בכניסה ורודפת – מהירה מהליכה (1), איטית מריצה (2.2)
+const BRIDGE = { factor: 4.0, delay: 0.3, chase: 1.7 };            // שדה אש ארוך: האש מתחילה בכניסה ורודפת – מהירה מהליכה (1), איטית מריצה (2.2)
 const LAKE = { factor: 2.2 }, SWIM_TIME = 1.2;                       // SWIM – אגם ארוך. שוחים עד הסוף
 const DROWN = { easy: 1.1, other: 0.8 };                              // כמה זמן שוקעים במים לפני שנכשלים – אפשר עוד להציל עם SWIM
 const CLIFF = { w: 14, h: 40, range: 2.5, time: 1.3, ladder: 12 };  // CLIMB – צוק גבוה עם סולם נשען. מטפסים כשמגיעים לסולם
