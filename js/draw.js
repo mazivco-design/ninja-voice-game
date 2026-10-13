@@ -612,11 +612,13 @@ function drawFlame(fx, h, wd, t, a) {             // לשון אש: בסיס צ�
   if (h < 0.3) return;
   const sway = Math.sin(t * 9 + fx) * wd * 0.35;
   const g = ctx.createLinearGradient(0, GROUND, 0, GROUND - h);
-  g.addColorStop(0, 'rgba(254,240,138,' + a + ')'); g.addColorStop(0.35, 'rgba(251,146,60,' + a + ')'); g.addColorStop(0.8, 'rgba(220,38,38,' + a * 0.85 + ')'); g.addColorStop(1, 'rgba(127,29,29,0)');
+  g.addColorStop(0, 'rgba(254,249,195,' + a + ')'); g.addColorStop(0.3, 'rgba(253,224,71,' + a + ')'); g.addColorStop(0.6, 'rgba(234,88,12,' + a + ')'); g.addColorStop(1, 'rgba(153,27,27,' + a * 0.9 + ')');
   ctx.fillStyle = g;
   ctx.beginPath(); ctx.moveTo(fx - wd, GROUND + 0.5);
   ctx.quadraticCurveTo(fx - wd * 1.1, GROUND - h * 0.45, fx + sway, GROUND - h);
-  ctx.quadraticCurveTo(fx + wd * 1.1, GROUND - h * 0.45, fx + wd, GROUND + 0.5); ctx.closePath(); ctx.fill();
+  ctx.quadraticCurveTo(fx + wd * 1.1, GROUND - h * 0.45, fx + wd, GROUND + 0.5);
+  ctx.strokeStyle = 'rgba(69,10,10,' + a * 0.85 + ')'; ctx.lineWidth = 0.7; ctx.stroke();   // קו כהה – בולט גם על רקע כתום
+  ctx.closePath(); ctx.fill();
   ctx.fillStyle = 'rgba(255,251,235,' + a * 0.8 + ')';                          // לב בהיר
   ctx.beginPath(); ctx.moveTo(fx - wd * 0.4, GROUND + 0.5); ctx.quadraticCurveTo(fx, GROUND - h * 0.45, fx + wd * 0.4, GROUND + 0.5); ctx.fill();
 }
@@ -648,12 +650,26 @@ function drawBridge(o, bottom) {                  // RUN: שדה שהאדמה ב
     ctx.strokeStyle = 'rgba(254,240,138,' + (0.4 + 0.6 * heat) * near + ')'; ctx.lineWidth = 0.35;   // לב צהוב בוהק
     ctx.beginPath(); pts.slice(0, 4).forEach(([px, py], k) => k ? ctx.lineTo(px, py) : ctx.moveTo(px, py)); ctx.stroke();
   });
-  if (st !== undefined) vents.forEach((vx, i) => {                             // התפרצויות: מתחילות מהצד הרחוק, מתקרבות ומאיצות
+  const flameH = i => {                                                        // גובה האש בכל סדק: מתחילה מהצד הרחוק, מתקרבת ומאיצה
+    if (st === undefined) return 0;
     const f = (i + 0.5) / n, start = 0.05 + BRIDGE.collapse * 0.85 * (1 - f * f);
     let h = 0;
     if (o.collapsed) h = (24 + hash(i * 5.1) * 8) * Math.max(0, 1 - Math.max(0, cT - 2.2) / 1.2);
     else if (st > start) h = 5 + 9 * Math.min(1, (st - start) / 0.35);
-    h *= 0.88 + 0.12 * Math.sin(now * 14 + i * 2);
+    return h * (0.88 + 0.12 * Math.sin(now * 14 + i * 2));
+  };
+  vents.forEach((vx, i) => {                                                   // עשן כהה מאחורי האש – נותן ניגוד על כל רקע
+    const h = flameH(i); if (h < 4) return;
+    for (let k = 0; k < 3; k++) {
+      const py = GROUND - h * (0.55 + k * 0.3) - k * 2, r = h * 0.28 + k * 1.5 + 2, dx = Math.sin(now * 1.5 + i + k) * 1.5;
+      ctx.save(); ctx.translate(vx + dx, py); ctx.scale(1, 1.25);
+      const rg = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+      rg.addColorStop(0, 'rgba(41,37,36,' + (0.55 - k * 0.12) + ')'); rg.addColorStop(1, 'rgba(41,37,36,0)');
+      ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    }
+  });
+  vents.forEach((vx, i) => {
+    const h = flameH(i);
     drawFlame(vx, h, o.collapsed ? 4.2 : 2.6, now + i, 0.95);
     if (h > 6) { drawFlame(vx - 2, h * 0.6, 2, now + i + 3, 0.8); drawFlame(vx + 2.2, h * 0.5, 1.8, now + i + 7, 0.8); }
     if (h > 2 && Math.random() < 0.18) particles.push({ x: vx + (Math.random() - 0.5) * 2, y: GROUND - h * 0.7, vx: (Math.random() - 0.5) * 6, vy: -14, g: 6, life: 0.6, color: Math.random() < 0.5 ? '#fde047' : '#fb923c', size: 0.7 });
