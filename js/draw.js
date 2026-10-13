@@ -66,7 +66,7 @@ const WORLDS = [
   { sky: ['#a5f3fc', '#ecfeff'], ground: '#92400e', top: '#4ade80', mark: '#78350f', dust: '#d6d3d1' },
   { sky: ['#1e1b4b', '#4338ca'], ground: '#44403c', top: '#78716c', mark: '#292524', dust: '#a8a29e' },
   { sky: ['#bae6fd', '#f0f9ff'], ground: '#cbd5e1', top: '#f8fafc', mark: '#94a3b8', dust: '#ffffff' },
-  { sky: ['#fdba74', '#fff7ed'], ground: '#c2410c', top: '#fbbf24', mark: '#9a3412', dust: '#fde68a' },   // קניון במדבר
+  { sky: ['#2e3f73', '#d9a6c0'], ground: '#6b4430', top: '#b98a5e', mark: '#4a2e20', dust: '#d6bfa3' },   // קניון במדבר, בדמדומים – האש בולטת
   { sky: ['#6d28d9', '#fda4af'], ground: '#57534e', top: '#a8a29e', mark: '#44403c', dust: '#d6d3d1' }    // מקדש בשקיעה
 ];
 function hash(n) { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
@@ -166,10 +166,10 @@ function drawWorld(left, right, top, bottom) {
     hills(left, right, 0.12, 12, '#e2e8f0', 3);
     repeat(left, right, 0.32, 14, (x, i) => { if (hash(i + 1) > 0.3) pine(x + hash(i) * 6, i); });
   } else if (world === 3) {                                       // קניון: שמש גדולה, מסות שטוחות, קקטוסים
-    ctx.fillStyle = 'rgba(254,215,170,.6)'; circle(W * 0.78, 20, 14);
-    ctx.fillStyle = '#fff7ed'; circle(W * 0.78, 20, 8);
-    repeat(left, right, 0.05, 55, (x, i) => mesa(x, i, '#fb923c', 24));
-    repeat(left, right, 0.14, 38, (x, i) => mesa(x + 10, i + 20, '#ea580c', 14));
+    ctx.fillStyle = 'rgba(253,230,138,.25)'; circle(W * 0.78, 46, 14);             // שמש נמוכה בדמדומים
+    ctx.fillStyle = '#fde68a'; circle(W * 0.78, 46, 7);
+    repeat(left, right, 0.05, 55, (x, i) => mesa(x, i, '#7d5a78', 24));
+    repeat(left, right, 0.14, 38, (x, i) => mesa(x + 10, i + 20, '#5b3d55', 14));
     repeat(left, right, 0.35, 26, (x, i) => { if (hash(i + 2) > 0.4) cactus(x + hash(i) * 8, i); });
   } else {                                                        // מקדש: שקיעה סגולה, מקדשים מדורגים, עמודים עם לפידים
     ctx.fillStyle = 'rgba(254,205,211,.5)'; circle(W * 0.2, 30, 12);
@@ -617,7 +617,6 @@ function drawFlame(fx, h, wd, t, a) {             // לשון אש: בסיס צ�
   ctx.beginPath(); ctx.moveTo(fx - wd, GROUND + 0.5);
   ctx.quadraticCurveTo(fx - wd * 1.1, GROUND - h * 0.45, fx + sway, GROUND - h);
   ctx.quadraticCurveTo(fx + wd * 1.1, GROUND - h * 0.45, fx + wd, GROUND + 0.5);
-  ctx.strokeStyle = 'rgba(69,10,10,' + a * 0.85 + ')'; ctx.lineWidth = 0.7; ctx.stroke();   // קו כהה – בולט גם על רקע כתום
   ctx.closePath(); ctx.fill();
   ctx.fillStyle = 'rgba(255,251,235,' + a * 0.8 + ')';                          // לב בהיר
   ctx.beginPath(); ctx.moveTo(fx - wd * 0.4, GROUND + 0.5); ctx.quadraticCurveTo(fx, GROUND - h * 0.45, fx + wd * 0.4, GROUND + 0.5); ctx.fill();
