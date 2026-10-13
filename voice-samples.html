@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>דוגמאות קול</title>
+<style>
+* { box-sizing: border-box; margin: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, system-ui, Arial, sans-serif; background: #0f172a; color: #e2e8f0; padding: max(16px, env(safe-area-inset-top)) 16px 24px; }
+h1 { font-size: 24px; margin-bottom: 6px; }
+p { color: #94a3b8; font-size: 14px; line-height: 1.5; margin-bottom: 14px; }
+.card { background: #1e293b; border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+h2 { font-size: 20px; margin-bottom: 4px; }
+.sub { color: #94a3b8; font-size: 13px; margin-bottom: 12px; }
+.row { display: flex; gap: 10px; direction: ltr; }
+.w { flex: 1; border: 0; border-radius: 14px; background: #4f46e5; color: #fff; font-size: 22px; font-weight: 900; padding: 20px 8px; }
+.w.on { background: #16a34a; }
+</style>
+</head>
+<body>
+<h1>🎙️ דוגמאות קול לבחירה</h1>
+<p>שלושה קולות, כל אחד אומר JUMP ו-CLIMB. לוחצים ומשווים. הקבצים נשמעים אותו דבר בכל מכשיר ובכל דפדפן.</p>
+
+<div class="card">
+  <h2>🧒 קול ילד</h2>
+  <div class="sub">קול נשי צעיר ("Sky"), שהוגבה כדי להישמע כמו ילד</div>
+  <div class="row"><button class="w" data-f="child-jump">JUMP</button><button class="w" data-f="child-climb">CLIMB</button></div>
+</div>
+<div class="card">
+  <h2>👨 קול גבר</h2>
+  <div class="sub">אמריקאי ("Michael")</div>
+  <div class="row"><button class="w" data-f="man-jump">JUMP</button><button class="w" data-f="man-climb">CLIMB</button></div>
+</div>
+<div class="card">
+  <h2>👩 קול אישה</h2>
+  <div class="sub">אמריקאי ("Heart")</div>
+  <div class="row"><button class="w" data-f="woman-jump">JUMP</button><button class="w" data-f="woman-climb">CLIMB</button></div>
+</div>
+
+<script>
+const cache = {};
+document.querySelectorAll('.w').forEach(b => {
+  const f = b.dataset.f;
+  cache[f] = new Audio('audio/samples/' + f + '.mp3'); cache[f].preload = 'auto';
+  b.onclick = () => {
+    Object.values(cache).forEach(a => { a.pause(); a.currentTime = 0; });
+    document.querySelectorAll('.w').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    const a = cache[f]; a.onended = () => b.classList.remove('on'); a.play();
+  };
+});
+</script>
+</body>
+</html>
