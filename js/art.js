@@ -12,6 +12,7 @@ const ART_SLOTS = [
   { id: 'ice',     name: 'Ice · FIRE',         w: ICE.w,             h: ICE.h,       dx: 0,  dy: 0 },
   { id: 'boulder', name: 'Boulder · PUSH',     w: BOULDER.r * 2,     h: BOULDER.r * 2, dx: 0, dy: 0, spin: true },
   { id: 'window',  name: 'Window wall · LEAP', w: WINDOW.w,          h: 48,          dx: 0,  dy: 0 },
+  { id: 'hiderock', name: 'Hide rocks · HIDE', w: HIDE_ROCK.w,       h: HIDE_ROCK.h, dx: 0,  dy: 0 },
   { id: 'bramble', name: 'Cave · CRAWL',       w: 0,                 h: 60,          dx: -4, dy: -2, stretch: true }
 ];
 const ART_SLOT = Object.fromEntries(ART_SLOTS.map(s => [s.id, s]));

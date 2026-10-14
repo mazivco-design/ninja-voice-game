@@ -35,6 +35,33 @@ window.addEventListener('scroll', () => { if (window.scrollY || window.scrollX) 
 resize();
 
 // מדבקת נקודות מעל מכשול במסע – כמה הוא שווה
+// HIDE: ערימת סלעים בקדמת התמונה. הנינג'ה המכופף נעלם מאחוריה, ומהשומרים רואים ראש ופנס מעליה
+function drawHideRock(o) {
+  const x = o.rx, w = HIDE_ROCK.w, h = HIDE_ROCK.h;
+  const a = artFor('hiderock');
+  if (a) {
+    const m = ctx.getTransform(), px = Math.hypot(m.a, m.b), bmp = artBitmap(a, a.w * px, a.h * px);
+    if (bmp) { ctx.drawImage(bmp, x + a.dx, GROUND - a.dy - a.h, a.w, a.h); if (!o.passed) label('HIDE', x + w / 2, GROUND - a.dy - a.h - 5, 4, '#fde047', '#1e293b'); return; }
+  }
+  const rocks = [[0.5, 0.72, 0.62], [0.17, 0.36, 0.38], [0.84, 0.34, 0.34], [0.32, 0.26, 0.24]];   // [מרכז, רוחב יחסי, גובה יחסי] – סלע גדול באמצע וקטנים בצדדים
+  for (const [cx, rw, rh] of rocks.slice().sort((p, q) => q[2] - p[2])) {
+    const X = x + w * cx, R = w * rw / 2, Hh = h * rh / 0.62;
+    const g = ctx.createLinearGradient(X - R, GROUND - Hh, X + R, GROUND);
+    g.addColorStop(0, '#c8beac'); g.addColorStop(0.55, '#958a78'); g.addColorStop(1, '#5e5447');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(X - R, GROUND + 2.2);
+    ctx.lineTo(X - R * 0.95, GROUND - Hh * 0.45); ctx.lineTo(X - R * 0.55, GROUND - Hh * 0.92); ctx.lineTo(X + R * 0.05, GROUND - Hh);
+    ctx.lineTo(X + R * 0.6, GROUND - Hh * 0.85); ctx.lineTo(X + R, GROUND - Hh * 0.35); ctx.lineTo(X + R, GROUND + 2.2); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(52,45,38,.6)'; ctx.lineWidth = 0.35; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.22)';                                    // פאה מוארת
+    ctx.beginPath(); ctx.moveTo(X - R * 0.55, GROUND - Hh * 0.92); ctx.lineTo(X + R * 0.05, GROUND - Hh); ctx.lineTo(X - R * 0.1, GROUND - Hh * 0.6); ctx.lineTo(X - R * 0.8, GROUND - Hh * 0.5); ctx.fill();
+  }
+  ctx.fillStyle = WORLDS[world].top; ctx.globalAlpha = 0.8;                       // קצת עשב / שלג למטה
+  for (let k = 0; k < w; k += 1.6) ctx.fillRect(x + k, GROUND - 0.6 - (k % 3.2 ? 0 : 0.6), 0.5, 1.2);
+  ctx.globalAlpha = 1;
+  if (!o.passed) label('HIDE', x + w / 2, GROUND - h - 6, 4, '#fde047', '#1e293b');
+}
+
 // סימון קטן בתוך המכשול עצמו – כמה הוא שווה במסע (לא נראה כמו משהו שאוספים)
 function drawPoints(o) {
   if (o.type === 'coin') return;
@@ -251,7 +278,8 @@ function drawSnow(left, right, top, bottom) {
 function playerPose() {
   const now = performance.now() / 1000;
   let P;
-  if (act.climb > 0) P = poseClimb(now);
+  if (act.hiding > 0) P = poseDuck();                    // מתכופף מאחורי הסלעים
+  else if (act.climb > 0) P = poseClimb(now);
   else if (act.leap > 0) P = poseLeap();
   else if (diving()) P = poseDive(now);
   else if (crawling()) P = poseCrawl(now);
@@ -315,6 +343,7 @@ function draw() {
   }
 
   drawNinja();
+  for (const o of obstacles) if (o.type === 'guard' && o.rx !== undefined) drawHideRock(o);   // הסלעים בקדמת התמונה – מעל הנינג'ה והשומרים
   for (const o of obstacles) if (o.type === 'bridge') drawFieldSmoke(o);
   for (const o of obstacles) if (o.type === 'lake' || o.type === 'pond') {   // מים מעל השחיין – נראה חצי שקוע / צולל
     ctx.fillStyle = o.type === 'lake' ? 'rgba(20,184,166,.55)' : 'rgba(14,116,144,.6)'; ctx.fillRect(o.x, GROUND + 0.3, o.w, bottom - GROUND);
@@ -503,7 +532,7 @@ function drawObstacle(o, top) {
       ctx.fillStyle = cone;                                                         // אלומת אור קדימה
       ctx.beginPath(); ctx.moveTo(lx, ly - 1); ctx.lineTo(lx - 30, ly - 14); ctx.lineTo(lx - 30, GROUND); ctx.lineTo(lx - 6, GROUND); ctx.closePath(); ctx.fill();
     }
-    if (!o.passed) label('HIDE', x + GUARD.span / 2, GROUND - GUARD.h - 9, 4, '#fde047', '#1e293b');
+    if (!o.passed && o.rx === undefined) label('HIDE', x + GUARD.span / 2, GROUND - GUARD.h - 9, 4, '#fde047', '#1e293b');
   } else if (o.type === 'bramble') {             // CRAWL: מערת סלעים שהולכת ונעשית צרה עד שחייבים לזחול
     const w = o.w, now = performance.now() / 1000, ceil = xx => caveCeiling(o, xx);
     const m = ctx.getTransform(), px = Math.min(8, Math.hypot(m.a, m.b));          // מציירים את המערה פעם אחת לתמונה – בלי ריצוד בתנועה
@@ -923,10 +952,6 @@ function drawNinja() {
     ctx.restore();
     if (sinkType !== 'fall' && k < 0.4) burst(fx, GROUND, sinkType === 'lava' ? '#f97316' : '#bae6fd', 2, 25);   // התזה
     if (sinkType === 'lava' && Math.random() < 0.4) particles.push({ x: fx + (Math.random() - 0.5) * 6, y: GROUND - 2, vx: 0, vy: -10, g: -4, life: 0.8, color: 'rgba(120,113,108,.7)', size: 1.6 });   // עשן
-    return;
-  }
-  if ((act.hide > 0 || act.hiding > 0) && !(invulnT > 0 && Math.floor(invulnT * 10) % 2 === 0)) {   // מתחבא – שיח גדול עם עיניים
-    drawBush(fx + 0.5, GROUND, Math.min(1, hideT / 0.18), hideT, now);
     return;
   }
   if (act.run > 0) {                                                              // קווי מהירות

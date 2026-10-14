@@ -8,6 +8,7 @@ function studioObstacle() {
   const s = studio.slot, o = { type: s, x: 70, passed: false, hit: false };
   if (s === 'bramble') { o.x = 34; o.w = BRAMBLE.ramp + Math.max(30, LEVELS.medium.speed * BRAMBLE.factor) + BRAMBLE.exit; }
   if (s === 'beam') o.x = 60;
+  if (s === 'hiderock') { o.type = 'guard'; o.x = 100; o.rx = 60; }
   return o;
 }
 function openStudio() {
@@ -122,8 +123,8 @@ $('labDesign').onclick = openStudio;
 // הסצנה: העולם, הנינג'ה והמכשול. אפשר להזיז את המכשול כמו בריצה, ולראות את אזור הפגיעה
 function drawStudio(dt) {
   if (studio.move) {
-    const o = obstacles[0]; o.x -= 30 * dt; bgX += 30 * dt;
-    if (o.x + (o.w || 25) < -10) o.x = W + 4;
+    const o = obstacles[0]; o.x -= 30 * dt; bgX += 30 * dt; if (o.rx !== undefined) o.rx -= 30 * dt;
+    if (o.x + (o.w || 25) < -10) { if (o.rx !== undefined) o.rx += W + 4 - o.x; o.x = W + 4; }
   }
   const oy0 = oy, pan = $('studio').querySelector('.panel');      // מרימים את העולם מעל הפנל, כדי לראות את הקרקע ואת הנינג'ה
   oy = Math.min(oy, ch - pan.offsetHeight - 24 - (GROUND + 4) * scale);
@@ -137,8 +138,9 @@ function drawStudio(dt) {
   if (o.type === 'bramble') {
     ctx.beginPath(); for (let k = 0; k <= o.w; k += 1) ctx.lineTo(o.x + k, caveCeiling(o, o.x + k)); ctx.stroke();
   } else ctx.strokeRect(b.l, Math.max(b.t, GROUND - 70), b.r - b.l, Math.min(b.b, GROUND + 2) - Math.max(b.t, GROUND - 70));
-  const a = artFor(o.type);
-  if (a) { const R = artRect(o, a); ctx.strokeStyle = 'rgba(37,99,235,.9)'; ctx.strokeRect(R.l, R.t, R.w, R.h); }   // כחול = גבולות הציור
+  const a = artFor(o.type === 'guard' ? 'hiderock' : o.type);
+  if (a && o.type === 'guard') { ctx.strokeStyle = 'rgba(37,99,235,.9)'; ctx.strokeRect(o.rx + a.dx, GROUND - a.dy - a.h, a.w, a.h); }
+  else if (a) { const R = artRect(o, a); ctx.strokeStyle = 'rgba(37,99,235,.9)'; ctx.strokeRect(R.l, R.t, R.w, R.h); }   // כחול = גבולות הציור
   const pb = playerBox(); ctx.strokeStyle = 'rgba(22,163,74,.9)'; ctx.strokeRect(pb.l, pb.t, pb.r - pb.l, pb.b - pb.t);   // ירוק = הנינג'ה
   ctx.restore();
   }

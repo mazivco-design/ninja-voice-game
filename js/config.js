@@ -90,6 +90,7 @@ const BOULDER = { r: 10, range: 25 };                                // PUSH –
 const GATE = { w: 5, rope: 4, lift: 38, time: 1.4, want: 0.9 };     // PULL – עוצרים ליד החבל ומושכים עד שהסורג עולה למעלה
 const GUARD = { w: 9, h: 18, walk: 14, gap: 5 }, HIDE_TIME = 1.8;    // HIDE – שני שומרים עם פנסים
 GUARD.span = GUARD.w * 2 + GUARD.gap;                                 // רוחב הזוג
+const HIDE_ROCK = { w: 24, h: 12.5, lead: 25 };                        // HIDE – ערימת סלעים בקדמת התמונה. מתכופפים מאחוריה, השומרים עוברים מאחוריה (רואים אותם מעליה)
 const ARROWS = { w: 7, speed: 30 }, BLOCK_TIME = 0.8;                 // BLOCK – מטח חיצים בכל הגבהים
 const WINDOW = { w: 10, top: GROUND - 15, bot: GROUND - 3, range: 4 }; // LEAP – קיר עבה עם מעבר צר באמצע הגובה
 const LEAP = { y: 4.5, h: 5, w: 12, want: 0.9, free: 0.45 };           // זינוק אופקי דרך החלון

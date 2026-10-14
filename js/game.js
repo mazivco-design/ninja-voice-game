@@ -223,7 +223,7 @@ function collides(o, pb) {
   if (o.demo || o.type === 'coin' || o.broken || o.defeated) return false;
   if (o.climbed || o.pushed || o.open || o.deflected || o.landed) return false;
   if (o.type === 'rock' && o.fallK === undefined) return false;
-  if (o.type === 'guard' && (act.hide > 0 || act.hiding > 0)) return false;   // מתחבא – השומרים לא רואים
+  if (o.type === 'guard' && hidingFrom === o) return false;   // מתכופף מאחורי הסלעים – השומרים לא רואים
   const m = cfg.forgive || 0;
   const cx = (pb.l + pb.r) / 2;
   if (o.type === 'lake')   return (o.drown || 0) >= drownTime();                // שקע עד הסוף בלי SWIM
@@ -437,7 +437,15 @@ function update(dt) {
   for (const o of obstacles) {
     o.x -= dx;
     if (o.type === 'enemy' && !o.defeated) o.x -= speed * ENEMY.extra * dt;   // אויב רץ לקראתך
-    if (o.type === 'guard') o.x -= (hidingFrom === o ? GUARD_PASS : GUARD.walk) * dt;   // שומרים הולכים לקראתך (ועוברים מהר כשמתחבאים)
+    if (o.type === 'guard') {
+      if (o.rx === undefined) {                                          // הסלע: מגיע לנינג'ה כשהשומרים עוד 25 יחידות מאחוריו
+        const vv = Math.max(v, 0.001);
+        o.rx = v > 0 ? PLAYER.x + (o.x - PLAYER.x - HIDE_ROCK.lead) / (1 + GUARD.walk / vv) - HIDE_ROCK.w / 2 + PLAYER.w / 2 : PLAYER.x - HIDE_ROCK.w / 2 + PLAYER.w / 2;
+        o.rx += dx;
+      }
+      o.rx -= dx;
+      o.x -= (hidingFrom === o ? GUARD_PASS : GUARD.walk) * dt;          // שומרים הולכים לקראתך (ועוברים מהר כשמתחבאים)
+    }
     if (o.type === 'arrows' && !o.deflected) o.x -= ARROWS.speed * dt;       // חיצים עפים
     if (o.pushed) { o.x += (v + 60) * dt; o.rot = (o.rot || 0) + dt * 6; }   // סלע שנדחף מתגלגל קדימה
     if (o.defeated) o.ft += dt;
@@ -522,8 +530,9 @@ function update(dt) {
       const near = pb.r > o.x - 3 && PLAYER.x < o.x + o.w + 1;
       if (near && py <= 0 && (act.crawlWant > 0 || act.crawl > 0)) act.crawl = Math.max(act.crawl, 0.25);
     }
-    // HIDE: נכנס לשיח כשהשומרים קרובים, העולם עוצר, והשומרים עוברים לידו
-    if (o.type === 'guard' && !o.passed && !hidingFrom && act.hide > 0 && o.x - pb.r <= HIDE_RANGE && o.x + GUARD.span > PLAYER.x - 2) {
+    // HIDE: כשמגיעים לסלעים – מתכופפים מאחוריהם, העולם עוצר, והשומרים עוברים מאחורי הסלעים
+    const atRock = o.type === 'guard' && o.rx !== undefined && o.rx + HIDE_ROCK.w / 2 <= PLAYER.x + PLAYER.w / 2 + 1.5 && o.rx + HIDE_ROCK.w > PLAYER.x + 2;
+    if (o.type === 'guard' && !o.passed && !hidingFrom && act.hide > 0 && atRock && o.x + GUARD.span > PLAYER.x - 2) {
       hidingFrom = o; act.hiding = 1; duckT = 0;
     }
     if (o.type === 'guard' && hidingFrom === o) {
@@ -548,7 +557,7 @@ function update(dt) {
     }
   }
   obstacles = obstacles.filter(o => {
-    const r = o.w ? o.x + o.w : o.x + 25;
+    const r = o.w ? o.x + o.w : Math.max(o.x, o.rx === undefined ? -1e9 : o.rx) + 25;
     return r > -10 && o.x < W + 40 && !(o.caught && o.ct > 0.35);
   });
 
