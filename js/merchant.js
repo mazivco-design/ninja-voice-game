@@ -161,12 +161,21 @@ function drawDoor(o) {                                          // דלת עץ �
   const x = o.x, w = DOOR.w, h = DOOR.h, top = GROUND - h;
   ctx.fillStyle = '#78716c'; ctx.fillRect(x - 2, top - 3, w + 4, 3.2); ctx.fillRect(x - 2, top, 2, h); ctx.fillRect(x + w, top, 2, h);   // מסגרת
   ctx.fillStyle = '#57534e'; for (let y = top + 3; y < GROUND; y += 4) { ctx.fillRect(x - 2, y, 2, 0.4); ctx.fillRect(x + w, y, 2, 0.4); }
-  const open = o.unlocked ? Math.min(1, (o.uT || 0) / 0.5) : 0, dw = w * (1 - open * 0.85);   // נפתחת: מסתובבת על הציר
-  const dx = x + w - dw;                                        // הציר בצד הרחוק – הדלת נפתחת פנימה, והמנעול בצד של הנינג'ה
-  ctx.fillStyle = '#5b3416'; ctx.fillRect(x, top, w, h);        // החושך שמאחורי הדלת
-  ctx.fillStyle = '#92400e'; ctx.fillRect(dx, top, dw, h);
-  ctx.fillStyle = '#78350f'; for (let k = 1; k < 5; k++) ctx.fillRect(dx + dw * k / 5 - 0.2, top, 0.4, h);
-  ctx.fillStyle = '#44403c'; ctx.fillRect(dx, top + 5, dw, 1.2); ctx.fillRect(dx, GROUND - 7, dw, 1.2);   // חישוקי ברזל
+  // נפתחת: הדלת מסתובבת על הציר שבצד הרחוק, לכיוון הצופה – נהיית צרה, הקצה הקרוב גדל קצת (פרספקטיבה) ומתכהה
+  const open = o.unlocked ? Math.min(1, (o.uT || 0) / 0.6) : 0, e = open * (2 - open);   // האטה בסוף התנועה
+  if (open > 0) { ctx.fillStyle = 'rgba(255,247,214,' + (0.35 * e) + ')'; ctx.fillRect(x, top, w, h); }   // אור בפתח
+  const nx = x + w * 0.78 * e, nt = top - 2.2 * e, nb = GROUND + 0.6 * e, hx = x + w;
+  const P = (u, v) => [nx + (hx - nx) * u, (nt + (top - nt) * u) + ((nb + (GROUND - nb) * u) - (nt + (top - nt) * u)) * v];   // u: קרוב→ציר, v: למעלה→למטה
+  const quad = (u0, v0, u1, v1) => { const a = P(u0, v0), b = P(u1, v0), c = P(u1, v1), d = P(u0, v1);
+    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(c[0], c[1]); ctx.lineTo(d[0], d[1]); ctx.closePath(); ctx.fill(); };
+  ctx.fillStyle = '#92400e'; quad(0, 0, 1, 1);
+  ctx.fillStyle = '#78350f'; for (let k = 1; k < 5; k++) quad(k / 5 - 0.015, 0, k / 5 + 0.015, 1);   // קרשים
+  ctx.fillStyle = '#44403c'; quad(0, 5 / h, 1, 6.2 / h); quad(0, (h - 7) / h, 1, (h - 5.8) / h);    // חישוקי ברזל
+  if (open > 0) {
+    ctx.fillStyle = 'rgba(0,0,0,' + (0.35 * e) + ')'; quad(0, 0, 1, 1);                              // צד הדלת בצל
+    ctx.fillStyle = '#5b3416'; ctx.beginPath(); ctx.moveTo(nx, nt); ctx.lineTo(nx - 1.1 * e, nt + 0.4); ctx.lineTo(nx - 1.1 * e, nb - 0.3); ctx.lineTo(nx, nb); ctx.closePath(); ctx.fill();   // עובי הדלת
+    ctx.fillStyle = '#facc15'; const hd = P(0.12, 0.55); circle(hd[0], hd[1], 0.55);                 // ידית
+  }
   if (!o.unlocked) {                                            // מנעול זהב גדול
     ctx.strokeStyle = '#a16207'; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.arc(x + 2, GROUND - 15.6, 1.4, Math.PI, 0); ctx.stroke();
     ctx.fillStyle = '#facc15'; roundRect(x + 0.2, GROUND - 15.6, 3.6, 3.4, 0.6); ctx.fill();
