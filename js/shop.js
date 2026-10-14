@@ -3,17 +3,17 @@
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
 const SHOP = [
-  { id: 'suit_night',   cat: 'suit',   name: 'Night',   price: 0,  suit: null, swatch: '#1e293b' },
-  { id: 'suit_crimson', cat: 'suit',   name: 'Crimson', price: 30, suit: { body: '#7f1d1d', back: '#450a0a', front: '#991b1b', edge: '#2a0505' }, swatch: '#991b1b' },
-  { id: 'suit_forest',  cat: 'suit',   name: 'Forest',  price: 30, suit: { body: '#14532d', back: '#052e16', front: '#166534', edge: '#022c16' }, swatch: '#166534' },
-  { id: 'suit_ocean',   cat: 'suit',   name: 'Ocean',   price: 30, suit: { body: '#1e3a8a', back: '#172554', front: '#1d4ed8', edge: '#0b1640' }, swatch: '#1d4ed8' },
-  { id: 'suit_purple',  cat: 'suit',   name: 'Shadow',  price: 40, suit: { body: '#4c1d95', back: '#2e1065', front: '#6d28d9', edge: '#1e0a45' }, swatch: '#6d28d9' },
-  { id: 'suit_snow',    cat: 'suit',   name: 'Snow',    price: 50, suit: { body: '#e2e8f0', back: '#94a3b8', front: '#f8fafc', edge: '#64748b' }, swatch: '#f1f5f9' },
-  { id: 'suit_gold',    cat: 'suit',   name: 'Gold',    price: 80, suit: { body: '#a16207', back: '#713f12', front: '#ca8a04', edge: '#422006' }, swatch: '#ca8a04' },
-  { id: 'katana',   cat: 'weapon', name: 'Katana',        price: 60, icon: '🗡️', desc: 'On your back · KICK reaches farther' },
-  { id: 'goldstar', cat: 'weapon', name: 'Gold shuriken', price: 60, icon: '⭐', desc: 'THROW flies faster' },
-  { id: 'dragon',   cat: 'pet',    name: 'Baby dragon',   price: 150, icon: '🐉', desc: 'Flies with you · saves you once each journey run' },
-  { id: 'owl',      cat: 'pet',    name: 'Owl',           price: 100, icon: '🦉', desc: 'Flies with you · pulls coins to you, CATCH reaches farther' }
+  { id: 'suit_night', at: 0,   cat: 'suit',   name: 'Night',   price: 0,  suit: null, swatch: '#1e293b' },
+  { id: 'suit_crimson', at: 1, cat: 'suit',   name: 'Crimson', price: 30, suit: { body: '#7f1d1d', back: '#450a0a', front: '#991b1b', edge: '#2a0505' }, swatch: '#991b1b' },
+  { id: 'suit_forest', at: 2,  cat: 'suit',   name: 'Forest',  price: 30, suit: { body: '#14532d', back: '#052e16', front: '#166534', edge: '#022c16' }, swatch: '#166534' },
+  { id: 'suit_ocean', at: 3,   cat: 'suit',   name: 'Ocean',   price: 30, suit: { body: '#1e3a8a', back: '#172554', front: '#1d4ed8', edge: '#0b1640' }, swatch: '#1d4ed8' },
+  { id: 'suit_purple', at: 4,  cat: 'suit',   name: 'Shadow',  price: 40, suit: { body: '#4c1d95', back: '#2e1065', front: '#6d28d9', edge: '#1e0a45' }, swatch: '#6d28d9' },
+  { id: 'suit_snow', at: 5,    cat: 'suit',   name: 'Snow',    price: 50, suit: { body: '#e2e8f0', back: '#94a3b8', front: '#f8fafc', edge: '#64748b' }, swatch: '#f1f5f9' },
+  { id: 'suit_gold', at: 7,    cat: 'suit',   name: 'Gold',    price: 80, suit: { body: '#a16207', back: '#713f12', front: '#ca8a04', edge: '#422006' }, swatch: '#ca8a04' },
+  { id: 'katana', at: 4,   cat: 'weapon', name: 'Katana',        price: 60, icon: '🗡️', desc: 'On your back · KICK reaches farther' },
+  { id: 'goldstar', at: 5, cat: 'weapon', name: 'Gold shuriken', price: 60, icon: '⭐', desc: 'THROW flies faster' },
+  { id: 'dragon', at: 9,   cat: 'pet',    name: 'Baby dragon',   price: 150, icon: '🐉', desc: 'Flies with you · saves you once each journey run' },
+  { id: 'owl', at: 6,      cat: 'pet',    name: 'Owl',           price: 100, icon: '🦉', desc: 'Flies with you · pulls coins to you, CATCH reaches farther' }
 ];
 const SHOP_CATS = [['suit', '🥷 Suits'], ['weapon', '⚔️ Weapons'], ['pet', '🐉 Friends']];
 
@@ -77,7 +77,9 @@ function renderShop() {
     d.innerHTML = '<div class="shopPic">' + pic + '</div><div class="shopName">' + it.name + '</div>' +
                   (it.desc ? '<div class="shopDesc">' + it.desc + '</div>' : '') + '<button class="shopBtn"></button>';
     const b = d.querySelector('button');
-    if (!has) { b.innerHTML = '<span class="coinIco"></span> ' + it.price; b.className = 'shopBtn buy' + (coinsNow() < it.price ? ' poor' : ''); b.onclick = () => buyItem(it); }
+    const locked = !has && !isTester() && getStation() < (it.at || 0);
+    if (locked) { b.textContent = '🔒 Station ' + it.at; b.className = 'shopBtn lock'; d.classList.add('locked'); }
+    else if (!has) { b.innerHTML = '<span class="coinIco"></span> ' + it.price; b.className = 'shopBtn buy' + (coinsNow() < it.price ? ' poor' : ''); b.onclick = () => buyItem(it); }
     else if (on) { b.textContent = it.cat === 'suit' ? '✓ Wearing' : '✓ Equipped · tap to remove'; b.className = 'shopBtn eq'; b.onclick = () => equipItem(it); }
     else { b.textContent = it.cat === 'suit' ? 'Wear' : 'Equip'; b.className = 'shopBtn use'; b.onclick = () => equipItem(it); }
     grid.appendChild(d);

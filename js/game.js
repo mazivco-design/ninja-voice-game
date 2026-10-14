@@ -29,7 +29,7 @@ async function play(m, idx) {
 function startGame(m, idx) {
   mode = m; stageIdx = idx || 0; cfg = LEVELS[diffKey];
   playWords = mode === 'stage' ? STAGES[stageIdx].words : freeWords();
-  banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0;
+  banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
   world = m === 'stage' ? PAIR_WORLD[Math.floor((idx || 0) / 3)] : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
   obstacles = []; shurikens = []; fireballs = []; pickups = []; particles = []; flag = null;
@@ -48,7 +48,7 @@ function startGame(m, idx) {
   $('hudFree').classList.toggle('hide', mode === 'stage');
   $('hudStage').classList.toggle('hide', mode === 'free');
   $('progress').classList.toggle('hide', mode === 'free');
-  $('catchHud').classList.toggle('hide', !playWords.includes('catch') && mode !== 'journey');
+  $('catchHud').classList.toggle('hide', mode !== 'journey');   // מטבעות נאספים לקופה רק במסע
   $('bestWrap').classList.toggle('hide', mode !== 'journey');
   if (mode === 'stage') $('stageName').textContent = '🥋 ' + STAGES[stageIdx].name;
   if (mode === 'journey') $('best').textContent = pLoad('jbest_' + diffKey, 0);
@@ -293,6 +293,7 @@ function catchCoin(s) {
 let coinsFlying = 0;
 function flyCoinToHud(s, y) {
   const hud = $('catchHud'), r = hud.getBoundingClientRect();
+  if (hud.classList.contains('hide')) { setTimeout(() => { coinsFlying = Math.max(0, coinsFlying - 1); }, 300); return; }
   const c = document.createElement('span'); c.className = 'coinIco flyCoin';
   c.style.left = (ox + (s.x + 3) * scale) + 'px'; c.style.top = (oy + (y === undefined ? COIN.y : y) * scale) + 'px';
   $('app').appendChild(c);

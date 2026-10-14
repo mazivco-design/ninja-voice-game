@@ -85,11 +85,23 @@ function totalStars(p) {
 }
 
 // מטבעות שנאספו נכנסים לקופה של השחקן (פעם אחת לכל משחק)
-let banked = false;
-function bankCoins() {
-  if (banked || !(caught + picked)) return;
-  banked = true;
-  pStore('coins', pLoad('coins', 0) + caught + picked);
+// מטבעות נכנסים לקופה רק במסע, לפי קטעים: לכל קטע (תחנה → תחנה) נשמר השיא של מטבעות.
+// ריצה חוזרת לא מוסיפה – רק אם אספו בקטע יותר מהשיא, מקבלים את ההפרש.
+let banked = false, segStart = 0, segSettled = true, runGain = 0;
+function settleSegment() {
+  if (mode !== 'journey' || segSettled) return 0;
+  segSettled = true;
+  const got = caught + picked - segStart, best = pLoad('segc', {}), prev = best[jStation] || 0;
+  if (got <= prev) return 0;
+  best[jStation] = got; pStore('segc', best);
+  pStore('coins', pLoad('coins', 0) + got - prev);
+  runGain += got - prev;
+  return got - prev;
+}
+function bankCoins() { settleSegment(); }
+function coinText() {
+  if (mode !== 'journey') return '';
+  return runGain > 0 ? '  ·  🟡 +' + runGain + ' coins' : (caught + picked) ? '  ·  🟡 no new coins – beat your best here to earn more' : '';
 }
 
 // בודק מובנה – לא צריך ליצור אותו, ולא מופיע ברשימת השחקנים.

@@ -48,12 +48,13 @@ function startJourneySegment(first) {
   playWords = journeyWords(jStation);
   world = jStation % WORLDS.length;
   speed = cfg.speed * (1 + Math.min(JOURNEY.speedMax, jStation * JOURNEY.speedStep));
-  spawned = 0; done = 0; flag = null; distSinceSpawn = 0; nextType = pickType(); nextGap = speed * (first ? 2.4 : 1.6);
+  spawned = 0; done = 0; flag = null; segStart = caught + picked; segSettled = false; distSinceSpawn = 0; nextType = pickType(); nextGap = speed * (first ? 2.4 : 1.6);
   $('stageName').textContent = '🚩 ' + jStation + ' → ' + (jStation + 1);
 }
 
 // הגענו לדגל של התחנה
 function stationReached() {
+  settleSegment();                                               // מטבעות הקטע שהסתיים נכנסים לקופה (אם עברו את השיא)
   jStation++;
   if (jStation > getStation()) pStore('station', jStation);
   sfx('checkpoint'); confetti();
@@ -61,7 +62,7 @@ function stationReached() {
   if (w && !isLearned(w)) {                                      // מילה חדשה נפתחה – הולכים ללמוד אותה
     saveJourneyBest(); pushHistory();
     showOver('🚩 Station ' + jStation + '!', '🔓 ' + WORD_ICON[w] + ' ' + w.toUpperCase(),
-             'New word unlocked! Learn it in training, then come back to continue.', 'Learn ' + w.toUpperCase() + ' ▶',
+             'New word unlocked! Learn it in training, then come back to continue.' + coinText(), 'Learn ' + w.toUpperCase() + ' ▶',
              () => play('stage', lessonIdx(w)));
     return;
   }
@@ -77,13 +78,14 @@ function saveJourneyBest() {
 }
 
 function journeyOver(byButton) {
+  settleSegment();
   const { prev, isNew } = saveJourneyBest();
   pushHistory();
   sfx(isNew ? 'record' : 'over');
   if (isNew) confetti();
   const from = getStation();
   showOver(isNew ? '🏆 New record!' : byButton ? 'Well done!' : 'Out of lives!', '🚩 ' + jStation + '  ·  ' + score,
-           (isNew ? 'Your best journey run!' : 'Your record: ' + prev) + catchText(),
+           (isNew ? 'Your best journey run!' : 'Your record: ' + prev) + coinText(),
            'Try again from 🚩' + from, continueJourney);
   if (from > 0) altButton('↺ From start', () => play('journey', 0));
   renderJourneyBoard($('board'));
