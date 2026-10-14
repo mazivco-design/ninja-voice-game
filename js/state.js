@@ -29,8 +29,9 @@ function resetAct() { for (const k in act) act[k] = 0; climbK = 0; leapWin = nul
 let hideT = 0;               // כמה זמן הנינג'ה כבר בשיח (לאנימציה)
 // מהירות העולם בפועל: STOP ו-CLIMB עוצרים אותו, RUN מאיץ
 function curSpeed() {
+  if (merchant && merchant.phase === 'walk') return speed * MERCHANT_WALK;   // עם המפתח ביד – הולכים לאט אל הדלת
   if (act.climb > 0) return CLIFF.ladder / CLIFF.time;         // על הסולם – מתקדמים לאט באלכסון
-  if (act.stop > 0 || act.pulling > 0 || act.hiding > 0 || (merchant && merchant.phase !== 'done')) return 0;   // …או עומדים ליד הסוחר   // עוצרים / מושכים בחבל / מתחבאים בשיח
+  if (act.stop > 0 || act.pulling > 0 || act.hiding > 0 || (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk')) return 0;   // …או עומדים ליד הסוחר   // עוצרים / מושכים בחבל / מתחבאים בשיח
   return speed * (act.run > 0 ? RUN_BOOST.mult : 1) * (crawling() ? BRAMBLE.slow : 1);
 }
 let bgX = 0, lastT = 0;

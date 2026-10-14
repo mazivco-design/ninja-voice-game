@@ -3,7 +3,9 @@
    הילד אומר I WANT (העגלה נפתחת) ואז את שם החפץ. המפתח פותח את הדלת.
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-let merchant = null;          // { o, phase: 'ask' | 'choose' | 'give' | 'open' | 'done', t, hi, bubble, item, said }
+let merchant = null;          // { o, phase: 'ask' | 'choose' | 'give' | 'walk' | 'open' | 'done', t, hi, bubble, item, said }
+const MERCHANT_WALK = 0.4;    // מהירות ההליכה אל הדלת (חלק מהמהירות הרגילה)
+const KEY_HAND = { dx: 6, dy: 9 };   // איפה המפתח ביד הנינג'ה
 const MERCHANT_OFFER = ['key', 'rope', 'torch'];
 const SAY_ASK = [[0.3, -1, 'What do you want?'], [2.0, 0, 'I have ' + ITEMS.key.say], [3.3, 1, ITEMS.rope.say], [4.6, 2, 'and ' + ITEMS.torch.say], [5.9, -1, 'What do you want?']];
 
@@ -24,7 +26,9 @@ function merchantUpdate(dt, pb) {
     }
     if (m.t > 14) { m.t = 0; m.said = 0; }                      // אם הילד שותק – שואל שוב
   } else if (m.phase === 'give') {                              // החפץ עף מהעגלה לנינג'ה
-    if (m.t > 0.7) { m.phase = 'open'; m.t = 0; }
+    if (m.t > 0.7) { m.phase = 'walk'; m.t = 0; }
+  } else if (m.phase === 'walk') {                              // הנינג'ה הולך עם המפתח עד הדלת
+    if (m.o.x - pb.r <= 1.5 || m.t > 6) { m.phase = 'open'; m.t = 0; }
   } else if (m.phase === 'open') {                              // המפתח נכנס למנעול והדלת נפתחת
     if (m.t > 0.35 && !m.o.unlocked) { m.o.unlocked = true; m.o.uT = 0; sfx('clear'); burst(m.o.x + 2, GROUND - 14, '#facc15', 12, 30); cleared(m.o); }
     if (m.t > 1.0) { m.phase = 'done'; m.bubble = 'Good luck!'; m.hi = -1; }
@@ -133,7 +137,7 @@ function drawMerchant(o) {
     ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(ix - 3.1, GROUND - 17.9, 6.2, 0.9);    // צל בחלק העליון של התא
   });
   MERCHANT_OFFER.forEach((w, i) => {                            // החפצים במגש, עם השם מתחת – קוראים ושומעים
-    if (m && m.item === w && (m.phase === 'give' || m.phase === 'open' || m.phase === 'done')) return;   // כבר נמסר
+    if (m && m.item === w && m.phase !== 'choose') return;   // כבר נמסר
     const ix = x + 3.5 + i * ITEM_GAP, lit = m && m.hi === i && m.phase !== 'done';
     const bob = lit ? -0.6 - Math.abs(Math.sin(now * 8)) * 0.6 : 0;
     ctx.font = '5.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -142,12 +146,13 @@ function drawMerchant(o) {
     ctx.fillText(w.toUpperCase(), ix, GROUND - 6.2);
   });
   if (m && m.item && m.phase === 'give') {                      // החפץ עף לנינג'ה
-    const k = Math.min(1, m.t / 0.7), sx = x + 3.5 + MERCHANT_OFFER.indexOf(m.item) * ITEM_GAP, sy = GROUND - 13.4, ex = PLAYER.x + 6, ey = GROUND - 9;
+    const k = Math.min(1, m.t / 0.7), sx = x + 3.5 + MERCHANT_OFFER.indexOf(m.item) * ITEM_GAP, sy = GROUND - 13.4, ex = PLAYER.x + KEY_HAND.dx, ey = GROUND - KEY_HAND.dy;
     ctx.font = '4.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     drawItem(m.item, sx + (ex - sx) * k, sy + (ey - sy) * k - Math.sin(Math.PI * k) * 10);
   }
+  if (m && m.item && m.phase === 'walk') drawItem(m.item, PLAYER.x + KEY_HAND.dx, GROUND - KEY_HAND.dy - Math.abs(Math.sin(now * 9)) * 0.5);   // המפתח ביד בזמן ההליכה
   if (m && m.item && m.phase === 'open') {                      // המפתח טס אל המנעול
-    const k = Math.min(1, m.t / 0.35), sx = PLAYER.x + 6, sy = GROUND - 9, ex = o.x + 2, ey = GROUND - 14;
+    const k = Math.min(1, m.t / 0.35), sx = PLAYER.x + KEY_HAND.dx, sy = GROUND - KEY_HAND.dy, ex = o.x + 2, ey = GROUND - 14;
     if (k < 1) { ctx.font = '4.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; drawItem(m.item, sx + (ex - sx) * k, sy + (ey - sy) * k); }
   }
   // הסוחר מצויר אחרי העגלה – כדי שהיד המצביעה תיראה מעל הדוכן
