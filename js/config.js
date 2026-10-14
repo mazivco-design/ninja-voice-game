@@ -8,9 +8,9 @@
 const MODEL_URL = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz';
 
 // כל המילים שהמשחק מכיר
-const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive', 'crawl', 'fire'];
+const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive', 'crawl', 'fire', 'want'];
 const WORD_ICON = { jump: '⬆️', down: '⬇️', kick: '🦶', throw: '✴️', catch: '🟡', fly: '🪁',
-                    stop: '✋', run: '💨', swim: '🌊', climb: '🧗', push: '🪨', pull: '⛓️', hide: '🌿', block: '🛡️', leap: '🤸', dive: '🤿', crawl: '🐛', fire: '🔥' };
+                    stop: '✋', run: '💨', swim: '🌊', climb: '🧗', push: '🪨', pull: '⛓️', hide: '🌿', block: '🛡️', leap: '🤸', dive: '🤿', crawl: '🐛', fire: '🔥', want: '🙋' };
 
 // רמות קושי – קובעות מהירות, לבבות וקפיצה.
 // gapT = הזמן (בשניות) בין מכשול למכשול. מוגדר בזמן ולא במרחק,
@@ -51,18 +51,19 @@ const STAGES = [
   { name: 'LEAP + DIVE',  words: ['leap', 'dive'],   count: 10, hint: 'Read the word!' },
   { name: 'CRAWL',        words: ['crawl'],          count: 8,  hint: 'Say CRAWL to go through the cave' },
   { name: 'FIRE',         words: ['fire'],           count: 8,  hint: 'Say FIRE to smash the ice wall' },
-  { name: 'CRAWL + FIRE', words: ['crawl', 'fire'],  count: 10, hint: 'Read the word!' }
+  { name: 'CRAWL + FIRE', words: ['crawl', 'fire'],  count: 10, hint: 'Read the word!' },
+  { name: 'I WANT',       words: ['want'],           count: 4,  hint: 'Say I WANT, then the thing you need' }
 ];
 // איזה עולם לכל זוג מילים (0 במבוק, 1 כפר בלילה, 2 שלג, 3 קניון, 4 מקדש)
-const PAIR_WORLD = [0, 1, 2, 3, 0, 4, 1, 2, 3];
+const PAIR_WORLD = [0, 1, 2, 3, 0, 4, 1, 2, 3, 0];
 
 // איזה מכשול מתאים לכל מילה
 const WORD_OBSTACLE = { jump: 'box', down: 'beam', kick: 'wall', throw: 'enemy', catch: 'coin', fly: 'river',
                         stop: 'rock', run: 'bridge', swim: 'lake', climb: 'cliff', push: 'boulder', pull: 'gate', hide: 'guard', block: 'arrows',
-                        leap: 'window', dive: 'pond', crawl: 'bramble', fire: 'ice' };
+                        leap: 'window', dive: 'pond', crawl: 'bramble', fire: 'ice', want: 'door' };
 const HIT_WORD = { box: 'JUMP!', beam: 'DOWN!', wall: 'KICK!', enemy: 'THROW!', river: 'JUMP + FLY!',
                    rock: 'STOP!', bridge: 'RUN!', lake: 'SWIM!', cliff: 'CLIMB!', boulder: 'PUSH!', gate: 'PULL!', guard: 'HIDE!', arrows: 'BLOCK!',
-                   window: 'LEAP!', pond: 'DIVE!', coin: 'CATCH!', bramble: 'CRAWL!', ice: 'FIRE!' };
+                   window: 'LEAP!', pond: 'DIVE!', coin: 'CATCH!', bramble: 'CRAWL!', ice: 'FIRE!', door: 'I WANT A KEY!' };
 
 // "העולם" של המשחק: 160 על 100 יחידות, מוגדל לגודל המסך
 const W = 160, H = 100, GROUND = 72;   // קרקע גבוהה יותר – מקום לעומק מתחתיה (בורות, צלילה, נתיב קדמי)
@@ -99,7 +100,11 @@ let CAVE_STYLE = 'boulders';   // מראה המערה: 'boulders' = סלעים �
 const BRAMBLE = { factor: 1.3, gap: 6.5, want: 1.0, slow: 0.6, ramp: 46, exit: 14, mouth: 34 };   // CRAWL – מערה שהתקרה שלה יורדת בהדרגה עד שחייבים לזחוליה
 // ניקוד במסע: ערך בסיס לפי קושי הפעולה, ועוד נקודה כל 3 תחנות. המספר מופיע על המכשול
 const WORD_POINTS = { jump: 1, down: 1, catch: 1, kick: 2, throw: 2, stop: 2, push: 2, hide: 2,
-                      fly: 3, run: 3, swim: 3, climb: 3, pull: 3, block: 3, crawl: 3, fire: 3, leap: 4, dive: 4 };
+                      fly: 3, run: 3, swim: 3, climb: 3, pull: 3, block: 3, crawl: 3, fire: 3, leap: 4, dive: 4, want: 4 };
+// I WANT: סוחר עם עגלה לפני דלת נעולה. אומרים I WANT ואז את שם החפץ
+const ITEMS = { key: { icon: '🔑', say: 'a key' }, rope: { icon: '🪢', say: 'a rope' }, torch: { icon: '🔦', say: 'a torch' } };
+const ITEM_WORDS = Object.keys(ITEMS);
+const DOOR = { w: 8, h: 30, stopAt: 40, needs: 'key' };
 const ICE = { w: 13, h: 42 };                                          // FIRE – קיר קרח עבה. רק כדור אש שובר אותו (בעיטה לא)
 const FIREBALL = { speed: 95, cooldown: 0.5 };
 const ARROW_HEIGHTS = [GROUND - 3, GROUND - 8, GROUND - 13, GROUND - 18, GROUND - 22];   // גבוה מדי לקפוץ מעליו, נמוך מדי להתכופף

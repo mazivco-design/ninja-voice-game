@@ -75,7 +75,7 @@ async function ensureAudio() {
 // כל מילה חדשה בסוף הרצף מפעילה פקודה מיד.
 // אם Vosk "מתקן" את המילה האחרונה (שמע down ואז הבין שזה jump) – מפעילים את המילה המתוקנת.
 function handleText(text, isFinal) {
-  const words = (text || '').toLowerCase().split(/\s+/).filter(w => WORDS.includes(w));
+  const words = (text || '').toLowerCase().split(/\s+/).filter(w => WORDS.includes(w) || ITEM_WORDS.includes(w));
   for (let i = 0; i < words.length; i++) {
     if (i >= seenWords.length) {
       seenWords.push(words[i]);
@@ -165,6 +165,8 @@ function command(word, source) {
   else if (word === 'fire') {                                            // כדור אש קדימה – שובר קיר קרח
     if (!(act.fireCd > 0)) { const pb = playerBox(); fireballs.push({ x: pb.r + 1, y: pb.t + 5, t: 0 }); act.fireCd = FIREBALL.cooldown; throwT = 0.25; duckT = 0; sfx('jump'); }
   }
+  else if (word === 'want') merchantWant();                              // I WANT – הסוחר שואל: איזה?
+  else if (ITEMS[word]) merchantItem(word);                              // שם חפץ – מבקשים אותו מהסוחר
   else if (word === 'crawl') { act.crawlWant = BRAMBLE.want; act.crawl = BRAMBLE.want; duckT = 0; }   // נשכב וזוחל מיד
 }
 

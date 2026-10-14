@@ -419,6 +419,7 @@ function draw() {
 function drawObstacle(o, top) {
   const x = o.x;
   if (artDraw(o)) return;                        // יש ציור SVG מהסטודיו – הוא מחליף את הציור הרגיל
+  if (o.type === 'door') { drawDoor(o); drawMerchant(o); return; }   // I WANT: סוחר ודלת נעולה
   if (o.type === 'box') {                       // ארגז עץ
     const y = GROUND - BOX.h;
     ctx.fillStyle = '#c2410c'; ctx.fillRect(x, y, BOX.w, BOX.h);

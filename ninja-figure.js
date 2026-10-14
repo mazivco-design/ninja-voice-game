@@ -313,7 +313,7 @@ function drawFigure(F) {
         if (!col) { ctx.fillStyle = accent; circle(e[0] + bx / bl * 0.4, e[1] + by / bl * 0.4, 0.75); }     // מגן יד
       }
       ctx.fillStyle = col || accent; circle(e[0], e[1], gloveR() + ex / 2);
-      if (style === 'guard') {                            // פנס נייר תלוי מהיד
+      if (style === 'guard' && !F.friendly) {            // פנס נייר תלוי מהיד (לא לסוחר)
         const lx = e[0], ly = e[1] + 2.2;
         if (!col) {
           ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 0.25; ctx.beginPath(); ctx.moveTo(e[0], e[1]); ctx.lineTo(lx, ly - 1.4); ctx.stroke();
@@ -361,7 +361,12 @@ function drawFigure(F) {
         }
       } else if (style === 'guard') {                    // פנים רחבות
         ctx.fillStyle = col || C.skin; roundRect(-1.4 - e, -1.0 - e, 4.5 + 2 * e, 2.6 + 2 * e, 0.8 + e); ctx.fill();
-        if (!col) {                                     // פנים כועסות: גבות משופעות, עיניים צרות, פה עקום ומסכה אדומה
+        if (!col && F.friendly) {                       // סוחר: פנים חייכניות ושפם
+          ctx.fillStyle = C.eyes; circle(0.9, -0.2, 0.42); circle(2.3, -0.2, 0.42);
+          ctx.strokeStyle = '#3f2a1d'; ctx.lineWidth = 0.5; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(0.4, 0.75); ctx.quadraticCurveTo(1.0, 0.45, 1.6, 0.7); ctx.quadraticCurveTo(2.2, 0.45, 2.8, 0.75); ctx.stroke();
+          ctx.lineWidth = 0.3; ctx.beginPath(); ctx.moveTo(0.9, 1.1); ctx.quadraticCurveTo(1.6, 1.6, 2.3, 1.1); ctx.stroke();
+        } else if (!col) {                              // פנים כועסות: גבות משופעות, עיניים צרות, פה עקום ומסכה אדומה
           ctx.fillStyle = C.eyes; ctx.fillRect(0.55, -0.3, 0.8, 0.38); ctx.fillRect(1.95, -0.3, 0.8, 0.38);
           ctx.strokeStyle = C.eyes; ctx.lineWidth = 0.42; ctx.lineCap = 'round';
           ctx.beginPath(); ctx.moveTo(0.2, -1.0); ctx.lineTo(1.45, -0.42); ctx.moveTo(1.85, -0.42); ctx.lineTo(3.1, -1.0); ctx.stroke();
