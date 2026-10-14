@@ -199,3 +199,23 @@ canvas { display: block; width: 100%; height: 100%; }
 .jCard .board { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; max-width: none; }
 .jCard .board .br .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 #menu .panel { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+/* טבלת שחקנים אנכית ליד התפריט */
+#menu.show { gap: 14px; }
+.sideBoard { background: rgba(255,255,255,.95); border-radius: 18px; padding: 10px 8px; width: min(230px, 24vw); max-height: 100%;
+             display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.3); align-self: center; }
+.sbT { font-weight: 900; font-size: clamp(15px, 2.3vh, 19px); color: #312e81; text-align: center; margin-bottom: 6px; }
+.sbList { overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 3px; }
+.sbR { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 10px; font-weight: 800; font-size: clamp(13px, 1.9vh, 16px); color: #1e293b; }
+.sbR:nth-child(odd) { background: #f1f5f9; }
+.sbR.me { background: #fef3c7; outline: 2px solid #f59e0b; }
+.sbR .rk { width: 1.6em; text-align: center; flex: none; }
+.sbR .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+.sbR .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sbR .st { color: #4f46e5; flex: none; }
+.sbR .pt { color: #94a3b8; font-size: .85em; flex: none; min-width: 1.6em; text-align: end; }
+@media (max-aspect-ratio: 1/1) {
+  #menu.show { flex-direction: column; }
+  .sideBoard { width: min(640px, 100%); max-height: 24vh; }
+}
+#menu .panel { min-height: 0; flex-shrink: 1; }

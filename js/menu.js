@@ -25,7 +25,7 @@ function renderMenu() {
   $('jGo').disabled = !model;
   $('jRestart').classList.toggle('hide', st === 0 || !!pend);
   $('jRestart').disabled = !model;
-  renderJourneyBoard($('jBoard'), 3);
+  renderSideBoard($('jBoard'));
   // אימון: שיעור לכל מילה שנפתחה במסע
   const stars = getStars(), box = $('stages'), open = openWords();
   box.innerHTML = '';

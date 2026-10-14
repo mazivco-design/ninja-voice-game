@@ -110,6 +110,15 @@ function renderJourneyBoard(box, max) {          // בתפריט: 3 הראשונ
   box.querySelectorAll('.nm').forEach((el, i) => el.textContent = rows[i].p.name);
 }
 
+// רשימה אנכית של כל השחקנים ליד התפריט – לפי המיקום
+function renderSideBoard(box) {
+  const all = players.map(p => ({ p, s: getStation(p), b: journeyBest(p, diffKey) })).sort((a, b) => b.s - a.s || b.b - a.b);
+  box.innerHTML = all.map((r, i) => '<div class="sbR' + (player && r.p.id === player.id ? ' me' : '') + '">' +
+    '<span class="rk">' + (['🥇', '🥈', '🥉'][i] || (i + 1)) + '</span><span class="dot" style="background:' + r.p.color + '"></span>' +
+    '<span class="nm"></span><span class="st">🚩' + r.s + '</span><span class="pt">' + r.b + '</span></div>').join('');
+  box.querySelectorAll('.nm').forEach((el, i) => el.textContent = all[i].p.name);
+}
+
 // רמזים (המילה על המכשול): באימון – לפי המתג. במסע – אין
 function hintsOn() { return pLoad('hints', true); }
 function labelsVisible() {
