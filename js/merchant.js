@@ -55,7 +55,7 @@ function drawItem(w, x, y) {
 
 // סליל חבל חום בהיר: ערימת ליפופים עם פיתולים אלכסוניים, וקצה שמשתלשל
 function drawRope(x, y) {
-  const fill = '#dcaa6e', line = '#3b2412', W = 4.9, rows = 4, rh = 1.3, top = y - 2.6;
+  const fill = '#d9a56a', line = '#3b2412', W = 4.9, rows = 4, rh = 1.3, top = y - 2.6;
   ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   // הקצה המשתלשל (מאחורי הסליל, יוצא לימין ולמטה)
   ctx.strokeStyle = line; ctx.lineWidth = 0.95;
@@ -63,7 +63,7 @@ function drawRope(x, y) {
   ctx.strokeStyle = fill; ctx.lineWidth = 0.6; ctx.stroke();
   for (let r = rows - 1; r >= 0; r--) {                         // ליפופים מלמטה למעלה
     const cy = top + 0.9 + r * rh, w = W - (r === 0 ? 0.3 : 0);
-    ctx.fillStyle = fill; ctx.strokeStyle = line; ctx.lineWidth = 0.22;
+    ctx.fillStyle = fill; ctx.strokeStyle = line; ctx.lineWidth = 0.3;
     roundRect(x - w / 2, cy - rh / 2 - 0.1, w, rh + 0.2, (rh + 0.2) / 2); ctx.fill(); ctx.stroke();
     ctx.lineWidth = 0.16; ctx.beginPath();                      // פיתולי החבל
     for (let k = x - w / 2 + 0.5; k < x + w / 2 - 0.3; k += 0.72) { ctx.moveTo(k, cy + rh / 2); ctx.lineTo(k + 0.5, cy - rh / 2); }
@@ -72,7 +72,8 @@ function drawRope(x, y) {
   ctx.fillStyle = fill; ctx.strokeStyle = line; ctx.lineWidth = 0.22;   // החלק העליון – ספירלה
   ctx.beginPath(); ctx.ellipse(x, top + 0.3, W / 2 - 0.1, 0.75, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   ctx.beginPath(); ctx.ellipse(x + 0.1, top + 0.3, 1.1, 0.38, 0, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = '#6b6259'; circle(x + 2.75, top + rows * rh + 0.9, 0.32);   // הקצה החתוך
+  ctx.fillStyle = '#159ed0'; ctx.fillRect(x - 0.9, top + 0.9 + 2 * rh - 0.45, 0.8, 0.9);   // סימון כחול כמו בתמונה
+  ctx.fillStyle = '#99978b'; ctx.strokeStyle = line; ctx.lineWidth = 0.15; ctx.beginPath(); ctx.arc(x + 2.75, top + rows * rh + 0.9, 0.36, 0, 7); ctx.fill(); ctx.stroke();   // הקצה החתוך
   ctx.restore();
 }
 function drawBubble(text, x, y) {                               // בועת דיבור עם זנב למטה
