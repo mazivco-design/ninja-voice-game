@@ -903,7 +903,7 @@ function drawNinja() {
   const drowning = drownK > 0 && !swim && py <= 0 && sinkT <= 0;     // במים בלי SWIM – שוקע
   const dive = diving(), leap = act.leap > 0, crawl = crawling() && !swim;
   const duck = duckT > 0, fx = leap || dive || crawl ? PLAYER.x + 3 : pb.l + (duck ? 5.5 : swim ? 3 : 4);
-  const fy = dive ? GROUND + 8 : leap ? GROUND - LEAP.y : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : pb.b;
+  const fy = dive ? GROUND + 15 : leap ? GROUND - LEAP.y : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : pb.b;
   const now = performance.now() / 1000;
   if (sinkT > 0 && sinkType === 'burn') {                                       // נשרף בשדה האש – מושחר ועשן עולה
     const k = 1 - sinkT / SINK_TIME;

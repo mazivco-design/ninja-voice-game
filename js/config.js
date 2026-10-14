@@ -65,7 +65,7 @@ const HIT_WORD = { box: 'JUMP!', beam: 'DOWN!', wall: 'KICK!', enemy: 'THROW!', 
                    window: 'LEAP!', pond: 'DIVE!', coin: 'CATCH!', bramble: 'CRAWL!', ice: 'FIRE!' };
 
 // "העולם" של המשחק: 160 על 100 יחידות, מוגדל לגודל המסך
-const W = 160, H = 100, GROUND = 85;
+const W = 160, H = 100, GROUND = 72;   // קרקע גבוהה יותר – מקום לעומק מתחתיה (בורות, צלילה, נתיב קדמי)
 const PLAYER = { x: 25, w: 8, h: 14, duckW: 10, duckH: 8 };
 const DUCK_TIME = 1.0;                 // כמה זמן הנינג'ה נשאר כפוף אחרי כל "down"
 const INVULN_TIME = 1.2;               // זמן חסינות אחרי פגיעה
