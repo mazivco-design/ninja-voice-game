@@ -30,8 +30,8 @@ const RIG_DEFAULT = {
              outline: '#ffffff', outlineAlpha: 0.6, accent: '' },          // accent ריק = צבע השחקן
     enemy: { body: '#7f1d1d', back: '#5b1313', front: '#a52a2a', edge: '#3b0a0a', skin: '#fcd9b6', eyes: '#000000',
              outline: '#ffffff', outlineAlpha: 0.45, accent: '#facc15' },
-    guard: { body: '#1e3a5f', back: '#13263f', front: '#2b4c75', edge: '#0f172a', skin: '#fcd9b6', eyes: '#000000',
-             outline: '#ffffff', outlineAlpha: 0.45, accent: '#ca8a04' }
+    guard: { body: '#26213a', back: '#16121f', front: '#342c4f', edge: '#07060b', skin: '#f1c7a1', eyes: '#000000',
+             outline: '#ffffff', outlineAlpha: 0.45, accent: '#92400e' }
   },
   shape: {
     thigh: 2.5, shin: 2.4, upper: 2.7, fore: 2.5,       // אורכי איברים
@@ -361,7 +361,13 @@ function drawFigure(F) {
         }
       } else if (style === 'guard') {                    // פנים רחבות
         ctx.fillStyle = col || C.skin; roundRect(-1.4 - e, -1.0 - e, 4.5 + 2 * e, 2.6 + 2 * e, 0.8 + e); ctx.fill();
-        if (!col) { ctx.fillStyle = C.eyes; circle(0.9, -0.1, 0.42); circle(2.3, -0.1, 0.42); ctx.fillRect(1.1, 0.9, 1.2, 0.25); }
+        if (!col) {                                     // פנים כועסות: גבות משופעות, עיניים צרות, פה עקום ומסכה אדומה
+          ctx.fillStyle = C.eyes; ctx.fillRect(0.55, -0.3, 0.8, 0.38); ctx.fillRect(1.95, -0.3, 0.8, 0.38);
+          ctx.strokeStyle = C.eyes; ctx.lineWidth = 0.42; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(0.2, -1.0); ctx.lineTo(1.45, -0.42); ctx.moveTo(1.85, -0.42); ctx.lineTo(3.1, -1.0); ctx.stroke();
+          ctx.fillStyle = '#991b1b'; roundRect(-1.4, 0.55, 4.5, 1.05, 0.35); ctx.fill();          // מסכת פה אדומה
+          ctx.strokeStyle = '#450a0a'; ctx.lineWidth = 0.3; ctx.beginPath(); ctx.moveTo(0.8, 1.25); ctx.quadraticCurveTo(1.7, 0.75, 2.6, 1.25); ctx.stroke();   // שיניים חשוקות
+        }
       } else {
         ctx.fillStyle = col || C.skin; roundRect(-1.7 - e, -0.85 - e, 4.6 + 2 * e, 1.8 + 2 * e, 0.6 + e); ctx.fill();
         if (!col) { ctx.fillStyle = C.eyes; ctx.fillRect(0.4, -0.45, 0.8, 0.9); ctx.fillRect(1.9, -0.45, 0.8, 0.9); }

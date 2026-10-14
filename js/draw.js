@@ -524,6 +524,13 @@ function drawObstacle(o, top) {
       P.arms[1] = [1.25, 1.05];                                                    // יד קדמית מחזיקה פנס קדימה
       const out = {};
       drawFigure({ fx, fy: GROUND, facing: -1, scale: sc, kind: 'guard', pose: P, out });
+      const hb = out.pts.armB[2], sx = fx - hb[0] * sc, sy = GROUND + out.bobY + hb[1] * sc;   // רומח ביד האחורית
+      ctx.strokeStyle = '#3f2a1d'; ctx.lineWidth = 0.75; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(sx + 2.2, sy + 7); ctx.lineTo(sx - 3.2, sy - 19); ctx.stroke();
+      ctx.fillStyle = '#b91c1c'; ctx.beginPath(); ctx.ellipse(sx - 2.9, sy - 17.4, 0.9, 1.4, -0.2, 0, Math.PI * 2); ctx.fill();   // ציצית אדומה
+      ctx.fillStyle = '#cbd5e1'; ctx.beginPath(); ctx.moveTo(sx - 2.6, sy - 18.6); ctx.lineTo(sx - 4.5, sy - 24.5); ctx.lineTo(sx - 3.6, sy - 18.4); ctx.closePath(); ctx.fill();   // להב
+      ctx.strokeStyle = '#64748b'; ctx.lineWidth = 0.25; ctx.stroke();
+      if (Math.sin(now * 3 + g * 2) > 0.85) star4(sx - 4.1, sy - 22.5, 1, 0, '#fff');                  // ברק על הלהב
       const h = out.pts.armF[2];
       const lx = fx - h[0] * sc, ly = GROUND + out.bobY + (h[1] + 2.2) * sc;   // מיקום הפנס בעולם
       const fl = 0.85 + Math.sin(now * 13 + g) * 0.08;
