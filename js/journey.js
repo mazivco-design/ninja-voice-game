@@ -96,12 +96,15 @@ function continueJourney() { const w = pendingWord(); if (w) play('stage', lesso
 function altButton(text, fn) { const b = $('altBtn'); b.textContent = text; b.onclick = fn; b.classList.remove('hide'); }
 
 // טבלת השחקנים: מי הגיע הכי רחוק, ואם שווה – מי צבר יותר בריצה אחת
-function renderJourneyBoard(box) {
-  const rows = players.map(p => ({ p, s: getStation(p), b: journeyBest(p, diffKey) }))
-                      .sort((a, b) => b.s - a.s || b.b - a.b).slice(0, 5);
+function renderJourneyBoard(box, max) {          // בתפריט: 3 הראשונים, ואם אני לא ביניהם – גם אני (כדי שהתפריט לא יגלוש)
+  const all = players.map(p => ({ p, s: getStation(p), b: journeyBest(p, diffKey) }))
+                     .sort((a, b) => b.s - a.s || b.b - a.b).map((r, i) => (r.rank = i, r));
+  let rows = all.slice(0, max || 5);
+  const me = player && all.find(r => r.p.id === player.id);
+  if (me && !rows.includes(me)) rows = [...rows, me];
   if (!rows.length) { box.innerHTML = ''; return; }
   box.innerHTML = '<div class="bt">🏔️ Journey · ' + diffKey + '</div>' +
-    rows.map((r, i) => '<div class="br' + (player && r.p.id === player.id ? ' me' : '') + '">' + (['🥇', '🥈', '🥉'][i] || (i + 1) + '.') +
+    rows.map(r => '<div class="br' + (player && r.p.id === player.id ? ' me' : '') + '">' + (['🥇', '🥈', '🥉'][r.rank] || (r.rank + 1) + '.') +
       ' <span class="dot" style="background:' + r.p.color + '"></span><span class="nm"></span><span class="sc">🚩' + r.s +
       ' <small>· ' + r.b + '</small></span></div>').join('');
   box.querySelectorAll('.nm').forEach((el, i) => el.textContent = rows[i].p.name);
