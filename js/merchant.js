@@ -73,18 +73,25 @@ function drawMerchant(o) {
   for (const wx of [x + 3, x + 18]) {                       // גלגלים
     ctx.fillStyle = '#3f2a1d'; circle(wx, GROUND - 1.8, 2.2); ctx.fillStyle = '#a16207'; circle(wx, GROUND - 1.8, 0.8);
   }
-  MERCHANT_OFFER.forEach((w, i) => {                            // החפצים על הדוכן, עם השם מתחת – קוראים ושומעים
+  // מגש תצוגה: תא חום לכל חפץ – החפצים בולטים על רקע כהה
+  ctx.fillStyle = '#5b3416'; roundRect(x - 0.6, GROUND - 18.6, 22.2, 9.4, 0.8); ctx.fill();
+  MERCHANT_OFFER.forEach((w, i) => {
+    const given = m && m.item === w && m.phase !== 'choose', lit = m && m.hi === i && m.phase !== 'done' && !given, ix = x + 3.5 + i * ITEM_GAP;
+    ctx.fillStyle = lit ? '#a8641f' : '#7a4520'; roundRect(ix - 3.1, GROUND - 17.9, 6.2, 8, 0.6); ctx.fill();
+    if (lit) { ctx.strokeStyle = '#fde047'; ctx.lineWidth = 0.5; ctx.stroke(); }
+    ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(ix - 3.1, GROUND - 17.9, 6.2, 0.9);    // צל בחלק העליון של התא
+  });
+  MERCHANT_OFFER.forEach((w, i) => {                            // החפצים במגש, עם השם מתחת – קוראים ושומעים
     if (m && m.item === w && (m.phase === 'give' || m.phase === 'open' || m.phase === 'done')) return;   // כבר נמסר
     const ix = x + 3.5 + i * ITEM_GAP, lit = m && m.hi === i && m.phase !== 'done';
-    const bob = lit ? -1.2 - Math.abs(Math.sin(now * 8)) * 0.8 : 0;
-    if (lit) { ctx.fillStyle = 'rgba(253,224,71,.55)'; circle(ix, GROUND - 13 + bob, 3.4); }
-    ctx.font = '4.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(ITEMS[w].icon, ix, GROUND - 12.6 + bob);
+    const bob = lit ? -0.6 - Math.abs(Math.sin(now * 8)) * 0.6 : 0;
+    ctx.font = '5.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#000'; ctx.fillText(ITEMS[w].icon, ix, GROUND - 13.4 + bob);
     ctx.font = '900 2px -apple-system, system-ui, Arial, sans-serif'; ctx.fillStyle = lit ? '#fde047' : '#fff';
     ctx.fillText(w.toUpperCase(), ix, GROUND - 6.2);
   });
   if (m && m.item && m.phase === 'give') {                      // החפץ עף לנינג'ה
-    const k = Math.min(1, m.t / 0.7), sx = x + 3.5 + MERCHANT_OFFER.indexOf(m.item) * ITEM_GAP, sy = GROUND - 13, ex = PLAYER.x + 6, ey = GROUND - 9;
+    const k = Math.min(1, m.t / 0.7), sx = x + 3.5 + MERCHANT_OFFER.indexOf(m.item) * ITEM_GAP, sy = GROUND - 13.4, ex = PLAYER.x + 6, ey = GROUND - 9;
     ctx.font = '4.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(ITEMS[m.item].icon, sx + (ex - sx) * k, sy + (ey - sy) * k - Math.sin(Math.PI * k) * 10);
   }
