@@ -162,9 +162,11 @@ function drawDoor(o) {                                          // דלת עץ �
   ctx.fillStyle = '#78716c'; ctx.fillRect(x - 2, top - 3, w + 4, 3.2); ctx.fillRect(x - 2, top, 2, h); ctx.fillRect(x + w, top, 2, h);   // מסגרת
   ctx.fillStyle = '#57534e'; for (let y = top + 3; y < GROUND; y += 4) { ctx.fillRect(x - 2, y, 2, 0.4); ctx.fillRect(x + w, y, 2, 0.4); }
   const open = o.unlocked ? Math.min(1, (o.uT || 0) / 0.5) : 0, dw = w * (1 - open * 0.85);   // נפתחת: מסתובבת על הציר
-  ctx.fillStyle = '#92400e'; ctx.fillRect(x, top, dw, h);
-  ctx.fillStyle = '#78350f'; for (let k = 1; k < 4; k++) ctx.fillRect(x + dw * k / 4 - 0.2, top, 0.4, h);
-  ctx.fillStyle = '#44403c'; ctx.fillRect(x, top + 5, dw, 1.2); ctx.fillRect(x, GROUND - 7, dw, 1.2);   // חישוקי ברזל
+  const dx = x + w - dw;                                        // הציר בצד הרחוק – הדלת נפתחת פנימה, והמנעול בצד של הנינג'ה
+  ctx.fillStyle = '#5b3416'; ctx.fillRect(x, top, w, h);        // החושך שמאחורי הדלת
+  ctx.fillStyle = '#92400e'; ctx.fillRect(dx, top, dw, h);
+  ctx.fillStyle = '#78350f'; for (let k = 1; k < 5; k++) ctx.fillRect(dx + dw * k / 5 - 0.2, top, 0.4, h);
+  ctx.fillStyle = '#44403c'; ctx.fillRect(dx, top + 5, dw, 1.2); ctx.fillRect(dx, GROUND - 7, dw, 1.2);   // חישוקי ברזל
   if (!o.unlocked) {                                            // מנעול זהב גדול
     ctx.strokeStyle = '#a16207'; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.arc(x + 2, GROUND - 15.6, 1.4, Math.PI, 0); ctx.stroke();
     ctx.fillStyle = '#facc15'; roundRect(x + 0.2, GROUND - 15.6, 3.6, 3.4, 0.6); ctx.fill();

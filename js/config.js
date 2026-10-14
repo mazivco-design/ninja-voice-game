@@ -104,7 +104,7 @@ const WORD_POINTS = { jump: 1, down: 1, catch: 1, kick: 2, throw: 2, stop: 2, pu
 // I WANT: סוחר עם עגלה לפני דלת נעולה. אומרים I WANT ואז את שם החפץ
 const ITEMS = { key: { icon: '🔑', say: 'a key' }, rope: { icon: '🪢', say: 'a rope' }, torch: { icon: '🔦', say: 'a torch' } };
 const ITEM_WORDS = Object.keys(ITEMS);
-const DOOR = { w: 8, h: 30, stopAt: 40, needs: 'key' };
+const DOOR = { w: 15, h: 30, stopAt: 40, needs: 'key' };
 const ICE = { w: 13, h: 42 };                                          // FIRE – קיר קרח עבה. רק כדור אש שובר אותו (בעיטה לא)
 const FIREBALL = { speed: 95, cooldown: 0.5 };
 const ARROW_HEIGHTS = [GROUND - 3, GROUND - 8, GROUND - 13, GROUND - 18, GROUND - 22];   // גבוה מדי לקפוץ מעליו, נמוך מדי להתכופף
