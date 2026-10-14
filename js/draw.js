@@ -35,7 +35,7 @@ window.addEventListener('scroll', () => { if (window.scrollY || window.scrollX) 
 resize();
 
 // מדבקת נקודות מעל מכשול במסע – כמה הוא שווה
-// HIDE: ערימת סלעים בקדמת התמונה. הנינג'ה המכופף נעלם מאחוריה, ומהשומרים רואים ראש ופנס מעליה
+// HIDE: ערימת סלעים. השומרים מאחוריה (רואים ראש ופנס מעליה), והנינג'ה מתכופף לפניה
 function drawHideRock(o) {
   const x = o.rx, w = HIDE_ROCK.w, h = HIDE_ROCK.h;
   const a = artFor('hiderock');
@@ -43,7 +43,7 @@ function drawHideRock(o) {
     const m = ctx.getTransform(), px = Math.hypot(m.a, m.b), bmp = artBitmap(a, a.w * px, a.h * px);
     if (bmp) { ctx.drawImage(bmp, x + a.dx, GROUND - a.dy - a.h, a.w, a.h); if (!o.passed) label('HIDE', x + w / 2, GROUND - a.dy - a.h - 5, 4, '#fde047', '#1e293b'); return; }
   }
-  const rocks = [[0.5, 0.72, 0.62], [0.17, 0.36, 0.38], [0.84, 0.34, 0.34], [0.32, 0.26, 0.24]];   // [מרכז, רוחב יחסי, גובה יחסי] – סלע גדול באמצע וקטנים בצדדים
+  const rocks = [[0.42, 0.42, 0.62], [0.68, 0.36, 0.55], [0.18, 0.3, 0.44], [0.88, 0.24, 0.36], [0.3, 0.22, 0.3], [0.55, 0.2, 0.26], [0.06, 0.14, 0.22], [0.78, 0.16, 0.22]];   // [מרכז, רוחב יחסי, גובה יחסי] – ערימה של הרבה סלעים
   for (const [cx, rw, rh] of rocks.slice().sort((p, q) => q[2] - p[2])) {
     const X = x + w * cx, R = w * rw / 2, Hh = h * rh / 0.62;
     const g = ctx.createLinearGradient(X - R, GROUND - Hh, X + R, GROUND);
@@ -342,8 +342,8 @@ function draw() {
     ctx.quadraticCurveTo(flag.x + 7, GROUND - 19 - wv, flag.x + 1.2, GROUND - 18); ctx.fill();
   }
 
+  for (const o of obstacles) if (o.type === 'guard' && o.rx !== undefined) drawHideRock(o);   // הסלעים: לפני השומרים, מאחורי הנינג'ה
   drawNinja();
-  for (const o of obstacles) if (o.type === 'guard' && o.rx !== undefined) drawHideRock(o);   // הסלעים בקדמת התמונה – מעל הנינג'ה והשומרים
   for (const o of obstacles) if (o.type === 'bridge') drawFieldSmoke(o);
   for (const o of obstacles) if (o.type === 'lake' || o.type === 'pond') {   // מים מעל השחיין – נראה חצי שקוע / צולל
     ctx.fillStyle = o.type === 'lake' ? 'rgba(20,184,166,.55)' : 'rgba(14,116,144,.6)'; ctx.fillRect(o.x, GROUND + 0.3, o.w, bottom - GROUND);
