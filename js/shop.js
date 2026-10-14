@@ -4,16 +4,16 @@
 
 const SHOP = [
   { id: 'suit_night',   cat: 'suit',   name: 'Night',   price: 0,  suit: null, swatch: '#1e293b' },
-  { id: 'suit_crimson', cat: 'suit',   name: 'Crimson', price: 8,  suit: { body: '#7f1d1d', back: '#450a0a', front: '#991b1b', edge: '#2a0505' }, swatch: '#991b1b' },
-  { id: 'suit_forest',  cat: 'suit',   name: 'Forest',  price: 8,  suit: { body: '#14532d', back: '#052e16', front: '#166534', edge: '#022c16' }, swatch: '#166534' },
-  { id: 'suit_ocean',   cat: 'suit',   name: 'Ocean',   price: 8,  suit: { body: '#1e3a8a', back: '#172554', front: '#1d4ed8', edge: '#0b1640' }, swatch: '#1d4ed8' },
-  { id: 'suit_purple',  cat: 'suit',   name: 'Shadow',  price: 10, suit: { body: '#4c1d95', back: '#2e1065', front: '#6d28d9', edge: '#1e0a45' }, swatch: '#6d28d9' },
-  { id: 'suit_snow',    cat: 'suit',   name: 'Snow',    price: 12, suit: { body: '#e2e8f0', back: '#94a3b8', front: '#f8fafc', edge: '#64748b' }, swatch: '#f1f5f9' },
-  { id: 'suit_gold',    cat: 'suit',   name: 'Gold',    price: 20, suit: { body: '#a16207', back: '#713f12', front: '#ca8a04', edge: '#422006' }, swatch: '#ca8a04' },
-  { id: 'katana',   cat: 'weapon', name: 'Katana',        price: 15, icon: '🗡️', desc: 'On your back · KICK reaches farther' },
-  { id: 'goldstar', cat: 'weapon', name: 'Gold shuriken', price: 15, icon: '⭐', desc: 'THROW flies faster' },
-  { id: 'dragon',   cat: 'pet',    name: 'Baby dragon',   price: 40, icon: '🐉', desc: 'Flies with you · saves you once each journey run' },
-  { id: 'owl',      cat: 'pet',    name: 'Owl',           price: 25, icon: '🦉', desc: 'Flies with you · CATCH reaches farther' }
+  { id: 'suit_crimson', cat: 'suit',   name: 'Crimson', price: 30, suit: { body: '#7f1d1d', back: '#450a0a', front: '#991b1b', edge: '#2a0505' }, swatch: '#991b1b' },
+  { id: 'suit_forest',  cat: 'suit',   name: 'Forest',  price: 30, suit: { body: '#14532d', back: '#052e16', front: '#166534', edge: '#022c16' }, swatch: '#166534' },
+  { id: 'suit_ocean',   cat: 'suit',   name: 'Ocean',   price: 30, suit: { body: '#1e3a8a', back: '#172554', front: '#1d4ed8', edge: '#0b1640' }, swatch: '#1d4ed8' },
+  { id: 'suit_purple',  cat: 'suit',   name: 'Shadow',  price: 40, suit: { body: '#4c1d95', back: '#2e1065', front: '#6d28d9', edge: '#1e0a45' }, swatch: '#6d28d9' },
+  { id: 'suit_snow',    cat: 'suit',   name: 'Snow',    price: 50, suit: { body: '#e2e8f0', back: '#94a3b8', front: '#f8fafc', edge: '#64748b' }, swatch: '#f1f5f9' },
+  { id: 'suit_gold',    cat: 'suit',   name: 'Gold',    price: 80, suit: { body: '#a16207', back: '#713f12', front: '#ca8a04', edge: '#422006' }, swatch: '#ca8a04' },
+  { id: 'katana',   cat: 'weapon', name: 'Katana',        price: 60, icon: '🗡️', desc: 'On your back · KICK reaches farther' },
+  { id: 'goldstar', cat: 'weapon', name: 'Gold shuriken', price: 60, icon: '⭐', desc: 'THROW flies faster' },
+  { id: 'dragon',   cat: 'pet',    name: 'Baby dragon',   price: 150, icon: '🐉', desc: 'Flies with you · saves you once each journey run' },
+  { id: 'owl',      cat: 'pet',    name: 'Owl',           price: 100, icon: '🦉', desc: 'Flies with you · pulls coins to you, CATCH reaches farther' }
 ];
 const SHOP_CATS = [['suit', '🥷 Suits'], ['weapon', '⚔️ Weapons'], ['pet', '🐉 Friends']];
 

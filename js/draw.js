@@ -292,6 +292,14 @@ function draw() {
   const WIDE = { river: drawRiver, lake: drawLake, bridge: drawBridge, pond: drawPond };
   for (const o of obstacles) if (WIDE[o.type]) WIDE[o.type](o, bottom);
   for (const o of obstacles) if (!WIDE[o.type]) drawObstacle(o, top);
+  const tc = performance.now() / 1000;
+  for (const c of pickups) {                                                  // מטבעות קטנים מסתובבים
+    const sx = Math.max(0.2, Math.abs(Math.cos(tc * 4 + c.x * 0.2)));
+    ctx.save(); ctx.translate(c.x, c.y + Math.sin(tc * 5 + c.x) * 0.4); ctx.scale(sx, 1);
+    ctx.fillStyle = '#b45309'; circle(0, 0, 2.2); ctx.fillStyle = '#facc15'; circle(0, 0, 1.8);
+    ctx.fillStyle = '#fef9c3'; ctx.fillRect(-0.9, -1, 0.5, 0.9);
+    ctx.restore();
+  }
   if (mode === 'journey' && (state === 'play' || state === 'paused')) for (const o of obstacles) if (!o.passed && !o.hit && o.pts) drawPoints(o);
 
   // דגל סיום

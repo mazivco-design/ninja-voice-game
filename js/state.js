@@ -13,6 +13,7 @@ let mode = 'free';            // free | stage
 let diffKey = 'easy', cfg = LEVELS[diffKey];
 let stageIdx = 0, playWords = ['jump', 'down'];
 let speed = 0, score = 0, lives = 0, hits = 0, done = 0, spawned = 0, caught = 0, coins = 0;
+let pickups = [], picked = 0;   // מטבעות קטנים לאורך המסע – נאספים בנגיעה
 let obstacles = [], shurikens = [], particles = [], fireballs = [];
 let distSinceSpawn = 0, nextGap = 0, nextType = null, flag = null;
 let py = 0, vy = 0, duckT = 0, invulnT = 0, kickT = 0, flyT = 0, catchT = 0, throwT = 0, throwCd = 0;

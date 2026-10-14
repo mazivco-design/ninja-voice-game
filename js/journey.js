@@ -50,7 +50,6 @@ function startJourneySegment(first) {
   speed = cfg.speed * (1 + Math.min(JOURNEY.speedMax, jStation * JOURNEY.speedStep));
   spawned = 0; done = 0; flag = null; distSinceSpawn = 0; nextType = pickType(); nextGap = speed * (first ? 2.4 : 1.6);
   $('stageName').textContent = '🚩 ' + jStation + ' → ' + (jStation + 1);
-  $('catchHud').classList.toggle('hide', !playWords.includes('catch'));
 }
 
 // הגענו לדגל של התחנה

@@ -31,8 +31,8 @@ function startGame(m, idx) {
   playWords = mode === 'stage' ? STAGES[stageIdx].words : freeWords();
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0;
   world = m === 'stage' ? PAIR_WORLD[Math.floor((idx || 0) / 3)] : 0;
-  speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0;   // באימון אין פסילה
-  obstacles = []; shurikens = []; fireballs = []; particles = []; flag = null;
+  speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
+  obstacles = []; shurikens = []; fireballs = []; pickups = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
@@ -48,7 +48,7 @@ function startGame(m, idx) {
   $('hudFree').classList.toggle('hide', mode === 'stage');
   $('hudStage').classList.toggle('hide', mode === 'free');
   $('progress').classList.toggle('hide', mode === 'free');
-  $('catchHud').classList.toggle('hide', !playWords.includes('catch'));
+  $('catchHud').classList.toggle('hide', !playWords.includes('catch') && mode !== 'journey');
   $('bestWrap').classList.toggle('hide', mode !== 'journey');
   if (mode === 'stage') $('stageName').textContent = '🥋 ' + STAGES[stageIdx].name;
   if (mode === 'journey') $('best').textContent = pLoad('jbest_' + diffKey, 0);
@@ -61,7 +61,7 @@ function startGame(m, idx) {
 
 function renderHud() {
   $('score').textContent = score;
-  $('caught').textContent = caught - coinsFlying;      // מטבע שעוד עף – נספר כשהוא מגיע
+  $('caught').textContent = caught + picked - coinsFlying;      // מטבע שעוד עף – נספר כשהוא מגיע
   if (mode === 'stage') $('progressBar').style.width = (100 * done / STAGES[stageIdx].count) + '%';
   if (mode === 'journey') $('progressBar').style.width = (100 * Math.min(1, done / segLen(jStation))) + '%';
   if (!isFinite(lives)) $('lives').textContent = '';
@@ -117,6 +117,16 @@ function stageFailed() {
 
 function rand(a, b) { return a + Math.random() * (b - a); }
 
+// מטבעות לאורך המסע: שורה ברווח שאחרי המכשול, ולפעמים קשת מעל ארגז (נאספת בקפיצה)
+const PICKUP = { chance: 0.55, arc: 0.4, max: 4, spacing: 5, y: GROUND - 6, catchBonus: 4 };   // מטבע CATCH גדול שווה 5
+function addPickups(o) {
+  if (o.type === 'box' && Math.random() < PICKUP.arc) for (const [dx, dy] of [[-5, 13], [3, 18], [11, 13]]) pickups.push({ x: o.x + dx, y: GROUND - dy });
+  if (Math.random() > PICKUP.chance) return;
+  const start = o.x + (o.w || 12) + speed * 0.45, end = o.x + (o.w || 0) + nextGap - speed * 0.5;
+  const n = Math.min(PICKUP.max, Math.floor((end - start) / PICKUP.spacing));
+  for (let i = 0; i < n; i++) pickups.push({ x: start + i * PICKUP.spacing, y: PICKUP.y - Math.sin(i / Math.max(1, n - 1) * Math.PI) * 2 });
+}
+
 // כמה נקודות שווה מכשול (במסע). באימון כל מכשול = 1
 function obstacleValue(type) {
   if (mode !== 'journey') return 1;
@@ -160,6 +170,7 @@ function spawn() {
   nextGap = speed * rand(cfg.gapT[0], cfg.gapT[1]) + (o.w || 0);
   if (type === 'river') nextGap += speed * FLY.time * 0.8;   // זמן לנחות מהגלישה לפני המכשול הבא
   if (type === 'bridge') nextGap += speed * 1.0;             // אחרי RUN העולם מהיר – עוד מרווח
+  if (mode === 'journey') addPickups(o);
   if (type === 'cliff') nextGap += speed * 1.3 + CLIFF.ladder;   // זמן לרדת מהצוק הגבוה
   if (nextType === 'enemy') nextGap *= 1.35;   // אויב רץ מהר יותר – נותנים לו יותר מרווח
   if (nextType === 'arrows') nextGap *= 1.4;   // חיצים מהירים
@@ -273,21 +284,22 @@ function catchCoin(s) {
   s.caught = true; s.ct = 0; caught++; coinsFlying++;
   cleared(s); sfx('coin');
   burst(s.x + 3, COIN.y, '#fde047', 16, 40);
-  floatText(s.x + 3, COIN.y - 6, '+1 🟡', '#ca8a04');
+  picked += PICKUP.catchBonus;                      // מטבע גדול שתפסו ב-CATCH שווה 5
+  floatText(s.x + 3, COIN.y - 6, '+' + (1 + PICKUP.catchBonus) + ' 🟡', '#ca8a04');
   if (py <= 0 && act.climb <= 0) { vy = cfg.jumpV * 0.45; py = 0.001; }   // קפיצה קטנה עם הידיים למעלה – רואים שהוא תפס
   flyCoinToHud(s);
 }
 // המטבע עף אל המונה למעלה – רואים שהוא נאסף ונכנס לקופה
 let coinsFlying = 0;
-function flyCoinToHud(s) {
+function flyCoinToHud(s, y) {
   const hud = $('catchHud'), r = hud.getBoundingClientRect();
   const c = document.createElement('span'); c.className = 'coinIco flyCoin';
-  c.style.left = (ox + (s.x + 3) * scale) + 'px'; c.style.top = (oy + COIN.y * scale) + 'px';
+  c.style.left = (ox + (s.x + 3) * scale) + 'px'; c.style.top = (oy + (y === undefined ? COIN.y : y) * scale) + 'px';
   $('app').appendChild(c);
   requestAnimationFrame(() => requestAnimationFrame(() => {
     c.style.left = (r.left + 18) + 'px'; c.style.top = (r.top + r.height / 2) + 'px'; c.style.transform = 'scale(.8)';
   }));
-  setTimeout(() => { c.remove(); coinsFlying = Math.max(0, coinsFlying - 1); $('caught').textContent = caught - coinsFlying; hud.classList.remove('pop'); void hud.offsetWidth; hud.classList.add('pop'); }, 620);
+  setTimeout(() => { c.remove(); coinsFlying = Math.max(0, coinsFlying - 1); $('caught').textContent = caught + picked - coinsFlying; hud.classList.remove('pop'); void hud.offsetWidth; hud.classList.add('pop'); }, 620);
 }
 
 /* ---------- חלקיקים (ניצוצות, שברי לבנים) ---------- */
@@ -410,6 +422,14 @@ function update(dt) {
     }
   }
   fireballs = fireballs.filter(f => !f.dead && f.x < W + 10);
+  for (const c of pickups) {                                                // מטבעות קטנים – נאספים בנגיעה
+    c.x -= curSpeed() * dt;
+    if (hasGear('owl') && !c.got && c.x - pb.r < 16 && c.x > pb.l - 2) { c.x += (pb.r - 2 - c.x) * 0.2; c.y += (pb.t + 6 - c.y) * 0.2; }   // הינשוף מושך מטבעות
+    if (!c.got && c.x + 1.5 > pb.l && c.x - 1.5 < pb.r && c.y + 1.5 > pb.t && c.y - 1.5 < pb.b) {
+      c.got = true; picked++; coinsFlying++; sfx('coin'); flyCoinToHud({ x: c.x - 3 }, c.y);
+    }
+  }
+  pickups = pickups.filter(c => !c.got && c.x > -10);
 
   const cx = (pb.l + pb.r) / 2;
   drownK = 0;

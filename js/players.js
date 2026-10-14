@@ -87,9 +87,9 @@ function totalStars(p) {
 // מטבעות שנאספו נכנסים לקופה של השחקן (פעם אחת לכל משחק)
 let banked = false;
 function bankCoins() {
-  if (banked || !caught) return;
+  if (banked || !(caught + picked)) return;
   banked = true;
-  pStore('coins', pLoad('coins', 0) + caught);
+  pStore('coins', pLoad('coins', 0) + caught + picked);
 }
 
 // בודק מובנה – לא צריך ליצור אותו, ולא מופיע ברשימת השחקנים.
