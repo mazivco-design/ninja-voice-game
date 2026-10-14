@@ -235,3 +235,44 @@ canvas { display: block; width: 100%; height: 100%; }
 .sbR .pt { width: 46px; }
 .sbR.sbH { letter-spacing: 0; font-size: 10px; }
 .sbR.sbH .pt { text-align: end; }
+
+/* מסלול המסע – תחנות עגולות על דרך, והנינג'ה עומד בתחנה הנוכחית */
+.jCard { background: linear-gradient(160deg, #e0e7ff, #fae8ff 60%, #fef3c7); border: 2px solid #c7d2fe; }
+.jHead { font-size: clamp(18px, 3vh, 26px); }
+.jTrack { display: grid; grid-template-columns: repeat(18, 1fr); gap: 0; margin: clamp(4px, 1vh, 8px) 0 2px; padding-top: clamp(30px, 5.2vh, 44px); }
+.jNode { position: relative; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.jNode .jLine { position: absolute; top: calc(clamp(24px, 3.6vh, 32px) / 2 - 3px); left: 50%; width: 100%; height: 6px; background: #cbd5e1; z-index: 0; }
+.jNode.passed .jLine { background: #22c55e; }
+.jNode.cur .jLine { background: repeating-linear-gradient(90deg, #f59e0b 0 6px, transparent 6px 10px); }
+.jCircle { position: relative; z-index: 1; width: clamp(24px, 3.6vh, 32px); height: clamp(24px, 3.6vh, 32px); border-radius: 50%; display: flex; align-items: center; justify-content: center;
+           font-size: clamp(12px, 1.9vh, 17px); background: #e2e8f0; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,.15); }
+.jNode.done .jCircle { background: #22c55e; }
+.jNode.wait .jCircle { background: #f59e0b; animation: pulse 1.2s infinite; }
+.jNode.cur .jCircle { border-color: #1e293b; transform: scale(1.18); }
+.jNode b { font-size: clamp(9px, 1.3vh, 11px); color: #64748b; margin-top: 2px; }
+.jNode.cur b { color: #1e293b; font-weight: 900; }
+.jNinja { position: absolute; bottom: calc(100% - clamp(24px, 3.6vh, 32px) * 0.15 - 14px); width: clamp(30px, 5vh, 42px); z-index: 2; animation: hop 1.4s ease-in-out infinite; }
+.jNinja svg { display: block; width: 100%; height: auto; }
+@keyframes hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.jDot { display: none; }
+@media (max-aspect-ratio: 1/1) {
+  .jTrack { grid-template-columns: repeat(9, 1fr); row-gap: clamp(30px, 4vh, 42px); }
+  .jNode:nth-child(9n) .jLine { display: none; }
+}
+
+/* גדלים סופיים למסלול */
+.jTrack { --c: clamp(28px, 4.4vh, 38px); --n: clamp(36px, 6vh, 50px); padding-top: calc(var(--n) * 0.95); }
+.jCircle { width: var(--c); height: var(--c); font-size: calc(var(--c) * 0.55); }
+.jNode .jLine { top: calc(var(--c) / 2 - 3px); }
+.jNinja { left: 50%; margin-left: calc(var(--n) / -2); bottom: 72%; width: var(--n); }
+@media (max-aspect-ratio: 1/1) {
+  .jTrack { row-gap: calc(var(--n) * 0.9); }
+  #menu .panel { max-height: calc(100% - 24vh - 14px); }
+}
+.jTrack { --c: clamp(26px, 4.2vh, 34px); }
+@media (max-aspect-ratio: 1/1) {
+  .stages.lessons { grid-template-columns: repeat(9, 1fr); }
+  .jTrack { row-gap: calc(var(--n) * 0.75); }
+  .sideBoard { max-height: 21vh; }
+  #menu .panel { max-height: calc(100% - 21vh - 14px); }
+}

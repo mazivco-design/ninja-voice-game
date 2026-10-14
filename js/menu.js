@@ -5,6 +5,20 @@
 /* ============================================================
    מסך פתיחה
    ============================================================ */
+// אייקון קטן של הנינג'ה עם סרט בצבע של השחקן – עומד בתחנה שהגיע אליה
+function ninjaIcon(color) {
+  return '<svg viewBox="0 0 44 46" aria-hidden="true">' +
+    '<ellipse cx="22" cy="43" rx="11" ry="2.6" fill="rgba(0,0,0,.25)"/>' +
+    '<path d="M12 9.5 q-7 -3 -10 1.5 M12 10.5 q-6 2 -8.5 7" stroke="' + color + '" stroke-width="3" fill="none" stroke-linecap="round"/>' +
+    '<rect x="13" y="23" width="18" height="17" rx="6" fill="#1e293b"/>' +
+    '<rect x="13" y="30" width="18" height="3" fill="' + color + '"/>' +
+    '<circle cx="22" cy="16" r="11.5" fill="#1e293b"/>' +
+    '<rect x="12.5" y="12" width="19" height="7.5" rx="3.7" fill="#fde2c4"/>' +
+    '<circle cx="18.5" cy="15.8" r="1.7" fill="#0f172a"/><circle cx="25.5" cy="15.8" r="1.7" fill="#0f172a"/>' +
+    '<rect x="10.5" y="7.5" width="23" height="4" rx="2" fill="' + color + '"/>' +
+    '<rect x="15" y="39" width="5" height="4" rx="1.5" fill="#1e293b"/><rect x="24" y="39" width="5" height="4" rx="1.5" fill="#1e293b"/></svg>';
+}
+
 function renderMenu() {
   if (player) { $('pchipName').textContent = (isTester() ? '🧪 ' : '') + player.name; $('pchipDot').style.background = player.color; }
   document.querySelectorAll('.diff').forEach(b => b.classList.toggle('sel', b.dataset.diff === diffKey));
@@ -14,8 +28,11 @@ function renderMenu() {
   const tr = $('jTrack'); tr.innerHTML = '';
   WORDS.forEach((w, i) => {
     const d = document.createElement('div');
-    d.className = 'jDot' + (i > st ? ' far' : learned.includes(w) ? ' done' : ' wait') + (i === st ? ' cur' : '');
-    d.innerHTML = '<span>' + (i > st ? '🔒' : WORD_ICON[w]) + '</span><b>' + i + '</b>';
+    const cls = i > st ? 'far' : learned.includes(w) ? 'done' : 'wait';
+    d.className = 'jNode ' + cls + (i === st ? ' cur' : '') + (i < st ? ' passed' : '');
+    d.innerHTML = (i < WORDS.length - 1 ? '<i class="jLine"></i>' : '') +
+                  '<div class="jCircle">' + (i > st ? '🔒' : WORD_ICON[w]) +
+                  (i === st ? '<div class="jNinja">' + ninjaIcon(player ? player.color : '#dc2626') + '</div>' : '') + '</div><b>' + (i === WORDS.length - 1 ? '🏁' : i) + '</b>';
     d.title = w.toUpperCase();
     tr.appendChild(d);
   });
