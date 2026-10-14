@@ -35,19 +35,22 @@ window.addEventListener('scroll', () => { if (window.scrollY || window.scrollX) 
 resize();
 
 // מדבקת נקודות מעל מכשול במסע – כמה הוא שווה
+// סימון קטן בתוך המכשול עצמו – כמה הוא שווה במסע (לא נראה כמו משהו שאוספים)
 function drawPoints(o) {
+  if (o.type === 'coin') return;
   const b = obstacleBox(o), wide = o.w && o.type !== 'bramble';
-  const cx = wide ? o.x + Math.min(o.w / 2, 14) : o.type === 'bramble' ? o.x + 14 : (b.l + b.r) / 2;
-  const cy = o.type === 'bramble' ? GROUND - 60 : Math.max(GROUND - 54, Math.min(GROUND - 16, b.t - 8));
-  const t = performance.now() / 1000, txt = '+' + o.pts;           // תגית סגולה – שונה מהמטבעות הצהובים
-  ctx.save(); ctx.translate(cx, cy + Math.sin(t * 3 + o.x * 0.05) * 0.6);
-  ctx.font = '900 4.6px -apple-system, system-ui, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const w = ctx.measureText(txt).width + 4.4, h = 6.4;
-  ctx.fillStyle = 'rgba(0,0,0,.25)'; roundRect(-w / 2 + 0.4, -h / 2 + 0.6, w, h, 3.2); ctx.fill();
-  const g = ctx.createLinearGradient(0, -h / 2, 0, h / 2); g.addColorStop(0, '#a78bfa'); g.addColorStop(1, '#6d28d9');
-  ctx.fillStyle = g; roundRect(-w / 2, -h / 2, w, h, 3.2); ctx.fill();
-  ctx.strokeStyle = '#fff'; ctx.lineWidth = 0.45; ctx.stroke();
-  ctx.fillStyle = '#fff'; ctx.fillText(txt, 0, 0.35);
+  let cx = (b.l + b.r) / 2, cy = b.b - 3.2;
+  if (wide) { cx = o.x + 5; cy = GROUND + 4; }                         // לבה / אגם / שדה אש / בריכה – בתוך פני השטח
+  else if (o.type === 'bramble') { cx = o.x + 6; cy = GROUND - 3.2; }
+  else if (o.type === 'beam') cy = b.b - BEAM.thick / 2;               // על המוט
+  else if (o.type === 'rock') cy = (b.t + b.b) / 2;
+  else if (o.type === 'boulder') cy = GROUND - BOULDER.r;
+  const txt = String(o.pts);
+  ctx.save();
+  ctx.font = '900 3.2px -apple-system, system-ui, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = Math.max(4, ctx.measureText(txt).width + 2), h = 4;
+  ctx.fillStyle = 'rgba(15,23,42,.72)'; roundRect(cx - w / 2, cy - h / 2, w, h, 1.2); ctx.fill();
+  ctx.fillStyle = '#e9d5ff'; ctx.fillText(txt, cx, cy + 0.2);
   ctx.restore();
 }
 

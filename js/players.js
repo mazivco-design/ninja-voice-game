@@ -139,7 +139,6 @@ function renderFreePick() {
     b.innerHTML = '<span class="ic">' + (isOpen ? WORD_ICON[w] : '🔒') + '</span>' + w.toUpperCase() +
                   (isOpen ? '' : '<span class="lock">locked</span>');
     b.onclick = () => {
-      if (on && freeSel.length === 1) { $('freeErr').textContent = 'Choose at least one word'; return; }
       freeSel = on ? freeSel.filter(x => x !== w) : [...freeSel, w];
       $('freeErr').textContent = '';
       renderFreePick();
@@ -147,6 +146,8 @@ function renderFreePick() {
     grid.appendChild(b);
   });
 }
-$('freeStart').onclick = () => { pStore('freeSel', freeSel); play('free'); };
+$('freeStart').onclick = () => { if (!freeSel.length) { $('freeErr').textContent = 'Choose at least one word'; return; } pStore('freeSel', freeSel); play('free'); };
+$('freeAll').onclick = () => { freeSel = unlockedWords(); $('freeErr').textContent = ''; renderFreePick(); };   // הכל דולק
+$('freeNone').onclick = () => { freeSel = []; renderFreePick(); };                                            // הכל כבוי – ואז בוחרים
 $('freeBack').onclick = () => { hideAllOverlays(); $('menu').classList.add('show'); };
 
