@@ -55,26 +55,47 @@ function drawItem(w, x, y) {
 
 // סליל חבל חום בהיר: ערימת ליפופים עם פיתולים אלכסוניים, וקצה שמשתלשל
 function drawRope(x, y) {
-  const fill = '#d9a56a', line = '#3b2412', W = 4.9, rows = 4, rh = 1.3, top = y - 2.6;
+  const fill = '#d9a56a', line = '#3b2412', W = 4.9, rows = 4, rh = 1.3, top = y - 2.6, bot = top + 0.9 + (rows - 1) * rh + rh / 2;
   ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-  // הקצה המשתלשל (מאחורי הסליל, יוצא לימין ולמטה)
-  ctx.strokeStyle = line; ctx.lineWidth = 0.95;
-  ctx.beginPath(); ctx.moveTo(x + 1.6, top + 0.3); ctx.quadraticCurveTo(x + 3.3, top + 0.8, x + 2.75, top + rows * rh + 0.8); ctx.stroke();
-  ctx.strokeStyle = fill; ctx.lineWidth = 0.6; ctx.stroke();
+  // הקצה המשתלשל – חבל עם פיתולים, יוצא מהסליל למעלה ונופל לימין
+  const tail = []; for (let k = 0; k <= 16; k++) { const t = k / 16, u = 1 - t;
+    tail.push([u * u * (x + 1.5) + 2 * u * t * (x + 3.6) + t * t * (x + 2.75), u * u * (top + 0.2) + 2 * u * t * (top + 0.4) + t * t * (bot + 0.3)]); }
+  ropeStroke(tail, 0.72, fill, line);
+  ctx.fillStyle = '#99978b'; ctx.strokeStyle = line; ctx.lineWidth = 0.15; ctx.beginPath(); ctx.arc(tail[16][0], tail[16][1], 0.36, 0, 7); ctx.fill(); ctx.stroke();   // הקצה החתוך
   for (let r = rows - 1; r >= 0; r--) {                         // ליפופים מלמטה למעלה
-    const cy = top + 0.9 + r * rh, w = W - (r === 0 ? 0.3 : 0);
+    const cy = top + 0.9 + r * rh;
     ctx.fillStyle = fill; ctx.strokeStyle = line; ctx.lineWidth = 0.3;
-    roundRect(x - w / 2, cy - rh / 2 - 0.1, w, rh + 0.2, (rh + 0.2) / 2); ctx.fill(); ctx.stroke();
+    roundRect(x - W / 2, cy - rh / 2 - 0.1, W, rh + 0.2, (rh + 0.2) / 2); ctx.fill(); ctx.stroke();
     ctx.lineWidth = 0.16; ctx.beginPath();                      // פיתולי החבל
-    for (let k = x - w / 2 + 0.5; k < x + w / 2 - 0.3; k += 0.72) { ctx.moveTo(k, cy + rh / 2); ctx.lineTo(k + 0.5, cy - rh / 2); }
+    for (let k = x - W / 2 + 0.5; k < x + W / 2 - 0.3; k += 0.72) { ctx.moveTo(k, cy + rh / 2); ctx.lineTo(k + 0.5, cy - rh / 2); }
     ctx.stroke();
   }
-  ctx.fillStyle = fill; ctx.strokeStyle = line; ctx.lineWidth = 0.22;   // החלק העליון – ספירלה
-  ctx.beginPath(); ctx.ellipse(x, top + 0.3, W / 2 - 0.1, 0.75, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.ellipse(x + 0.1, top + 0.3, 1.1, 0.38, 0, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = '#159ed0'; ctx.fillRect(x - 0.9, top + 0.9 + 2 * rh - 0.45, 0.8, 0.9);   // סימון כחול כמו בתמונה
-  ctx.fillStyle = '#99978b'; ctx.strokeStyle = line; ctx.lineWidth = 0.15; ctx.beginPath(); ctx.arc(x + 2.75, top + rows * rh + 0.9, 0.36, 0, 7); ctx.fill(); ctx.stroke();   // הקצה החתוך
+  // החלק העליון: הליפוף האחרון מתעגל פנימה – שתי טבעות חבל עם פיתולים וחור באמצע
+  const ring = (rx, ry, cy) => { const pts = []; for (let k = 0; k <= 28; k++) { const a = k / 28 * Math.PI * 2; pts.push([x + Math.cos(a) * rx, cy + Math.sin(a) * ry]); } return pts; };
+  ctx.fillStyle = fill; ctx.beginPath(); ctx.ellipse(x, top + 0.25, W / 2 - 0.2, 0.95, 0, 0, Math.PI * 2); ctx.fill();
+  ropeStroke(ring(W / 2 - 0.55, 0.62, top + 0.25), 0.7, fill, line);
+  ropeStroke(ring(W / 2 - 1.35, 0.3, top + 0.25), 0.5, fill, line);
+  ctx.fillStyle = '#5b3416'; ctx.beginPath(); ctx.ellipse(x, top + 0.25, 0.42, 0.13, 0, 0, Math.PI * 2); ctx.fill();   // החור במרכז
   ctx.restore();
+}
+
+// חבל לאורך נקודות: קו מתאר כהה, מילוי בהיר, ופסים אלכסוניים לאורכו (הפיתולים)
+function ropeStroke(pts, w, fill, line) {
+  ctx.beginPath(); pts.forEach(([px, py], k) => k ? ctx.lineTo(px, py) : ctx.moveTo(px, py));
+  ctx.strokeStyle = line; ctx.lineWidth = w + 0.3; ctx.stroke();
+  ctx.strokeStyle = fill; ctx.lineWidth = w; ctx.stroke();
+  ctx.strokeStyle = line; ctx.lineWidth = 0.13; ctx.beginPath();
+  let acc = 0.3; const step = Math.max(0.6, w * 1.05);
+  for (let k = 1; k < pts.length; k++) {
+    const [ax, ay] = pts[k - 1], [bx, by] = pts[k], len = Math.hypot(bx - ax, by - ay); if (!len) continue;
+    const tx = (bx - ax) / len, ty = (by - ay) / len, nx = -ty, ny = tx;
+    for (; acc < len; acc += step) {
+      const px = ax + tx * acc, py = ay + ty * acc, h = w / 2 - 0.05;
+      ctx.moveTo(px - nx * h - tx * 0.22, py - ny * h - ty * 0.22); ctx.lineTo(px + nx * h + tx * 0.22, py + ny * h + ty * 0.22);
+    }
+    acc -= len;
+  }
+  ctx.stroke();
 }
 function drawBubble(text, x, y) {                               // בועת דיבור עם זנב למטה
   ctx.font = '800 3.4px -apple-system, system-ui, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
