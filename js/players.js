@@ -10,7 +10,7 @@ function load(key, def) {
   try { const v = localStorage.getItem('ninjaVoice_' + key); return v === null ? def : JSON.parse(v); } catch (e) { return def; }
 }
 
-const COLORS = ['#dc2626', '#2563eb', '#16a34a', '#ea580c', '#9333ea', '#db2777', '#ca8a04', '#0d9488'];
+const COLORS = ['#dc2626', '#f97316', '#facc15', '#84cc16', '#16a34a', '#0d9488', '#0ea5e9', '#2563eb', '#9333ea', '#db2777', '#f472b6', '#92400e', '#1e293b'];
 let players = load('players', []);   // [{ id, name, color }]
 let player = null;                    // השחקן שמשחק עכשיו
 

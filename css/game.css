@@ -219,3 +219,19 @@ canvas { display: block; width: 100%; height: 100%; }
   .sideBoard { width: min(640px, 100%); max-height: 24vh; }
 }
 #menu .panel { min-height: 0; flex-shrink: 1; }
+
+/* לשוניות בטבלה, כותרות עמודות, ובמצב אופקי – הטבלה משמאל */
+.sbTabs { display: flex; gap: 4px; margin-bottom: 6px; }
+.sbTab { flex: 1; border: 0; border-radius: 10px; padding: 6px 4px; font-weight: 900; font-size: clamp(12px, 1.8vh, 15px); background: #e2e8f0; color: #475569; }
+.sbTab.sel { background: #4f46e5; color: #fff; }
+.sbR.sbH { background: none !important; color: #94a3b8; font-size: clamp(10px, 1.5vh, 12px); text-transform: uppercase; letter-spacing: .04em; padding-top: 0; padding-bottom: 2px; }
+.sbR.sbH .st { color: #94a3b8; } .sbR.sbH .pt { color: #94a3b8; font-size: 1em; }
+.sbSub { font-size: clamp(10px, 1.4vh, 12px); font-weight: 900; color: #a5b4fc; text-transform: uppercase; letter-spacing: .06em; margin: 6px 4px 1px; }
+@media (min-aspect-ratio: 1/1) { .sideBoard { order: -1; width: min(270px, 26vw); } }
+.swatches { flex-wrap: wrap; }
+.sbR .st { width: 3.6em; text-align: center; }
+.sbR .pt { width: 3em; }
+.sbR .st { width: 54px; }
+.sbR .pt { width: 46px; }
+.sbR.sbH { letter-spacing: 0; font-size: 10px; }
+.sbR.sbH .pt { text-align: end; }

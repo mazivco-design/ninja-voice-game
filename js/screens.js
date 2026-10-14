@@ -62,7 +62,7 @@ function openEdit(p) {
   $('pName').value = p ? p.name : '';
   $('pErr').textContent = '';
   $('pDelete').classList.toggle('hide', !p);
-  $('pReset').classList.toggle('hide', !p); resetArmed = false; $('pReset').textContent = '↺ Reset progress (stars)';
+  $('pReset').classList.toggle('hide', !p); resetArmed = false; $('pReset').textContent = '↺ Reset all progress';
   $('pCancel').classList.toggle('hide', !players.length);
   disarmDelete();
   renderSwatches();
@@ -99,13 +99,13 @@ $('pSave').onclick = () => {
   }
 };
 $('pCancel').onclick = showPlayers;
-// איפוס התקדמות: מוחק כוכבים ושיאים (המטבעות נשארים). לחיצה שנייה מאשרת
+// איפוס התקדמות: מוחק את כל ההתקדמות של השחקן (חוץ מרמת הקושי). לחיצה שנייה מאשרת
 let resetArmed = false;
 $('pReset').onclick = () => {
   if (!editing) return;
-  if (!resetArmed) { resetArmed = true; $('pReset').textContent = '⚠️ Tap again to reset ' + editing.name; setTimeout(() => { resetArmed = false; $('pReset').textContent = '↺ Reset progress (stars)'; }, 3000); return; }
+  if (!resetArmed) { resetArmed = true; $('pReset').textContent = '⚠️ Tap again to reset ' + editing.name; setTimeout(() => { resetArmed = false; $('pReset').textContent = '↺ Reset all progress'; }, 3000); return; }
   const pre = 'ninjaVoice_p' + editing.id + '_';
-  try { Object.keys(localStorage).filter(k => k.startsWith(pre) && (k.endsWith('_stars') || k.includes('_best_') || k.endsWith('_freeSel'))).forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  try { Object.keys(localStorage).filter(k => k.startsWith(pre) && !k.endsWith('_difficulty')).forEach(k => localStorage.removeItem(k)); } catch (e) {}   // הכל מתאפס: כוכבים, מילים, תחנות, שיאים ומטבעות
   resetArmed = false; showPlayers();
 };
 $('pDelete').onclick = () => {

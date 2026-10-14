@@ -70,8 +70,9 @@
       </div>
     </div>
     <div class="sideBoard" id="sideBoard">
-      <div class="sbT">🏆 Players</div>
+      <div class="sbTabs"><button class="sbTab sel" id="tabAll">🏆 Players</button><button class="sbTab" id="tabMe">⭐ My records</button></div>
       <div class="sbList" id="jBoard"></div>
+      <div class="sbList hide" id="meBoard"></div>
     </div>
   </div>
 
@@ -123,7 +124,7 @@
         <button class="btn" id="pSave">Save</button>
         <button class="btn sec" id="pCancel">Cancel</button>
       </div>
-      <button class="del" id="pReset" style="color:#b45309">↺ Reset progress (stars)</button>
+      <button class="del" id="pReset" style="color:#b45309">↺ Reset all progress</button>
       <button class="del" id="pDelete">🗑 Delete player</button>
     </div>
     <button class="testerBtn" aria-label="Tester">🧪</button>

@@ -60,7 +60,7 @@ function stationReached() {
   sfx('checkpoint'); confetti();
   const w = WORDS[jStation];
   if (w && !isLearned(w)) {                                      // מילה חדשה נפתחה – הולכים ללמוד אותה
-    saveJourneyBest();
+    saveJourneyBest(); pushHistory();
     showOver('🚩 Station ' + jStation + '!', '🔓 ' + WORD_ICON[w] + ' ' + w.toUpperCase(),
              'New word unlocked! Learn it in training, then come back to continue.', 'Learn ' + w.toUpperCase() + ' ▶',
              () => play('stage', lessonIdx(w)));
@@ -79,6 +79,7 @@ function saveJourneyBest() {
 
 function journeyOver(byButton) {
   const { prev, isNew } = saveJourneyBest();
+  pushHistory();
   sfx(isNew ? 'record' : 'over');
   if (isNew) confetti();
   const from = getStation();
@@ -113,14 +114,39 @@ function renderJourneyBoard(box, max) {          // בתפריט: 3 הראשונ
 // רשימה אנכית של כל השחקנים ליד התפריט – לפי המיקום
 function renderSideBoard(box) {
   const all = players.map(p => ({ p, s: getStation(p), b: journeyBest(p, diffKey) })).sort((a, b) => b.s - a.s || b.b - a.b);
-  box.innerHTML = all.map((r, i) => '<div class="sbR' + (player && r.p.id === player.id ? ' me' : '') + '">' +
+  box.innerHTML = '<div class="sbR sbH"><span class="rk">#</span><span class="nm">Player</span><span class="st">Station</span><span class="pt">Points</span></div>' +
+    '<div class="sbSub">' + diffKey + '</div>' + all.map((r, i) => '<div class="sbR' + (player && r.p.id === player.id ? ' me' : '') + '">' +
     '<span class="rk">' + (['🥇', '🥈', '🥉'][i] || (i + 1)) + '</span><span class="dot" style="background:' + r.p.color + '"></span>' +
     '<span class="nm"></span><span class="st">🚩' + r.s + '</span><span class="pt">' + r.b + '</span></div>').join('');
-  box.querySelectorAll('.nm').forEach((el, i) => el.textContent = all[i].p.name);
+  box.querySelectorAll('.sbR:not(.sbH) .nm').forEach((el, i) => el.textContent = all[i].p.name);
+}
+
+// היסטוריית ריצות במסע – 3 האחרונות
+function pushHistory() { const h = pLoad('jhist', []); h.unshift({ d: diffKey, s: jStation, p: score, t: Date.now() }); pStore('jhist', h.slice(0, 3)); }
+
+// לשונית "השיאים שלי"
+function renderMyBoard(box) {
+  if (!player) { box.innerHTML = ''; return; }
+  const st = getStation(), learned = getLearned().length, stars = Object.values(getStars()).reduce((a, b) => a + b, 0);
+  const row = (k, v) => '<div class="sbR"><span class="nm">' + k + '</span><span class="st">' + v + '</span></div>';
+  const hist = pLoad('jhist', []);
+  const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 60 ? m + 'm ago' : m < 1440 ? Math.round(m / 60) + 'h ago' : Math.round(m / 1440) + 'd ago'; };
+  box.innerHTML =
+    '<div class="sbSub">Journey</div>' + row('🚩 Farthest station', st) + row('📚 Words learned', learned + ' / ' + WORDS.length) +
+    '<div class="sbSub">Best run</div>' + ['easy', 'medium', 'hard'].map(d => row(d[0].toUpperCase() + d.slice(1), journeyBest(player, d))).join('') +
+    '<div class="sbSub">Last runs</div>' + (hist.length ? hist.map(h => '<div class="sbR"><span class="nm">' + h.d + ' · ' + ago(h.t) + '</span><span class="st">🚩' + h.s + '</span><span class="pt">' + h.p + '</span></div>').join('') : '<div class="sbR"><span class="nm" style="color:#94a3b8">No runs yet</span></div>') +
+    '<div class="sbSub">Training</div>' + row('★ Stars', stars) + row('🟡 Coins', pLoad('coins', 0));
+}
+let sbTab = 'all';
+$('tabAll').onclick = () => { sbTab = 'all'; showSbTab(); };
+$('tabMe').onclick = () => { sbTab = 'me'; showSbTab(); };
+function showSbTab() {
+  $('tabAll').classList.toggle('sel', sbTab === 'all'); $('tabMe').classList.toggle('sel', sbTab === 'me');
+  $('jBoard').classList.toggle('hide', sbTab !== 'all'); $('meBoard').classList.toggle('hide', sbTab !== 'me');
 }
 
 // רמזים (המילה על המכשול): באימון – לפי המתג. במסע – אין
-function hintsOn() { return pLoad('hints', true); }
+function hintsOn() { return pLoad('hints', false); }   // ברירת מחדל: בלי רמז
 function labelsVisible() {
   if (state === 'intro' || state === 'demo' || state === 'menu') return true;
   return mode === 'journey' ? false : hintsOn();
