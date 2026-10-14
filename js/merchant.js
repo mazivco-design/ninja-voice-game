@@ -46,6 +46,35 @@ function merchantItem(w) {
 }
 
 /* ---------- ציור ---------- */
+// חפץ במרכז (x, y): חבל מצויר בקוד, השאר אמוג'י
+function drawItem(w, x, y) {
+  if (w === 'rope') return drawRope(x, y);
+  ctx.font = '5.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#000'; ctx.fillText(ITEMS[w].icon, x, y);       // צבע אטום – אחרת האמוג'י יוצא שקוף
+}
+
+// סליל חבל חום בהיר: ערימת ליפופים עם פיתולים אלכסוניים, וקצה שמשתלשל
+function drawRope(x, y) {
+  const fill = '#dcaa6e', line = '#3b2412', W = 4.9, rows = 4, rh = 1.3, top = y - 2.6;
+  ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  // הקצה המשתלשל (מאחורי הסליל, יוצא לימין ולמטה)
+  ctx.strokeStyle = line; ctx.lineWidth = 0.95;
+  ctx.beginPath(); ctx.moveTo(x + 1.6, top + 0.3); ctx.quadraticCurveTo(x + 3.3, top + 0.8, x + 2.75, top + rows * rh + 0.8); ctx.stroke();
+  ctx.strokeStyle = fill; ctx.lineWidth = 0.6; ctx.stroke();
+  for (let r = rows - 1; r >= 0; r--) {                         // ליפופים מלמטה למעלה
+    const cy = top + 0.9 + r * rh, w = W - (r === 0 ? 0.3 : 0);
+    ctx.fillStyle = fill; ctx.strokeStyle = line; ctx.lineWidth = 0.22;
+    roundRect(x - w / 2, cy - rh / 2 - 0.1, w, rh + 0.2, (rh + 0.2) / 2); ctx.fill(); ctx.stroke();
+    ctx.lineWidth = 0.16; ctx.beginPath();                      // פיתולי החבל
+    for (let k = x - w / 2 + 0.5; k < x + w / 2 - 0.3; k += 0.72) { ctx.moveTo(k, cy + rh / 2); ctx.lineTo(k + 0.5, cy - rh / 2); }
+    ctx.stroke();
+  }
+  ctx.fillStyle = fill; ctx.strokeStyle = line; ctx.lineWidth = 0.22;   // החלק העליון – ספירלה
+  ctx.beginPath(); ctx.ellipse(x, top + 0.3, W / 2 - 0.1, 0.75, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(x + 0.1, top + 0.3, 1.1, 0.38, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = '#6b6259'; circle(x + 2.75, top + rows * rh + 0.9, 0.32);   // הקצה החתוך
+  ctx.restore();
+}
 function drawBubble(text, x, y) {                               // בועת דיבור עם זנב למטה
   ctx.font = '800 3.4px -apple-system, system-ui, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const w = ctx.measureText(text).width + 4, h = 6;
@@ -86,18 +115,18 @@ function drawMerchant(o) {
     const ix = x + 3.5 + i * ITEM_GAP, lit = m && m.hi === i && m.phase !== 'done';
     const bob = lit ? -0.6 - Math.abs(Math.sin(now * 8)) * 0.6 : 0;
     ctx.font = '5.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#000'; ctx.fillText(ITEMS[w].icon, ix, GROUND - 13.4 + bob);
+    drawItem(w, ix, GROUND - 13.4 + bob);
     ctx.font = '900 2px -apple-system, system-ui, Arial, sans-serif'; ctx.fillStyle = lit ? '#fde047' : '#fff';
     ctx.fillText(w.toUpperCase(), ix, GROUND - 6.2);
   });
   if (m && m.item && m.phase === 'give') {                      // החפץ עף לנינג'ה
     const k = Math.min(1, m.t / 0.7), sx = x + 3.5 + MERCHANT_OFFER.indexOf(m.item) * ITEM_GAP, sy = GROUND - 13.4, ex = PLAYER.x + 6, ey = GROUND - 9;
     ctx.font = '4.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(ITEMS[m.item].icon, sx + (ex - sx) * k, sy + (ey - sy) * k - Math.sin(Math.PI * k) * 10);
+    drawItem(m.item, sx + (ex - sx) * k, sy + (ey - sy) * k - Math.sin(Math.PI * k) * 10);
   }
   if (m && m.item && m.phase === 'open') {                      // המפתח טס אל המנעול
     const k = Math.min(1, m.t / 0.35), sx = PLAYER.x + 6, sy = GROUND - 9, ex = o.x + 2, ey = GROUND - 14;
-    if (k < 1) { ctx.font = '4.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ITEMS[m.item].icon, sx + (ex - sx) * k, sy + (ey - sy) * k); }
+    if (k < 1) { ctx.font = '4.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; drawItem(m.item, sx + (ex - sx) * k, sy + (ey - sy) * k); }
   }
   // הסוחר מצויר אחרי העגלה – כדי שהיד המצביעה תיראה מעל הדוכן
   drawFigure({ fx: mx, fy: GROUND, facing: -1, scale: 1.15, kind: 'guard', friendly: true, pose: P,
