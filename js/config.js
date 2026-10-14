@@ -93,7 +93,7 @@ GUARD.span = GUARD.w * 2 + GUARD.gap;                                 // רוח�
 const HIDE_ROCK = { w: 34, h: 12, lead: 25 };                          // HIDE – ערימת סלעים: הנינג'ה מתכופף לפניה, השומרים עוברים מאחוריה (רואים אותם מעליה)
 const ARROWS = { w: 7, speed: 30 }, BLOCK_TIME = 0.8;                 // BLOCK – מטח חיצים בכל הגבהים
 const WINDOW = { w: 10, top: GROUND - 18, bot: GROUND - 5, range: 4 }; // LEAP – קיר עבה עם מעבר צר באמצע הגובה
-const LEAP = { y: 6.5, h: 5, w: 12, want: 0.9, free: 0.45, arc: 3 };   // זינוק בקשת קלה דרך טבעת האש
+const LEAP = { y: 6.5, h: 5, w: 12, want: 0.9, free: 0.45, arc: 3, roll: 0.5 };   // אחרי הזינוק – גלגול על הקרקע   // זינוק בקשת קלה דרך טבעת האש
 const POND = { factor: 1.6, net: 3, deep: 8 }, DIVE_TIME = 1.2;        // DIVE – רשת שיורדת עמוק לתוך המים, צוללים מתחתיה
 let CAVE_STYLE = 'boulders';   // מראה המערה: 'boulders' = סלעים גדולים כמו ב-HIDE, 'chunks' = הגושים הקודמים
 const BRAMBLE = { factor: 1.3, gap: 6.5, want: 1.0, slow: 0.6, ramp: 46, exit: 14, mouth: 34 };   // CRAWL – מערה שהתקרה שלה יורדת בהדרגה עד שחייבים לזחוליה

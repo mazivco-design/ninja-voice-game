@@ -355,7 +355,7 @@ function update(dt) {
     u = Math.max(0, Math.min(1, u));
     py = LEAP.y + LEAP.arc * Math.sin(Math.PI * u);                       // קשת קלה – הכי גבוה בתוך הטבעת
     if (leapWin && PLAYER.x - 2 > leapWin.x + WINDOW.w + 0.5) act.leap = 0;
-    if (act.leap <= 0) { act.leap = 0; leapWin = null; vy = 6; }
+    if (act.leap <= 0) { act.leap = 0; leapWin = null; vy = -30; act.rollWant = 1; }   // נוחת מהר – ומתגלגל
   } else if (vy <= 0 && py >= CLIFF.h - 0.5 && cliffTop()) {
     py = CLIFF.h; vy = 0;                  // הולך על ראש הצוק
   } else if (flyT > 0) {
@@ -369,6 +369,7 @@ function update(dt) {
     if (py <= 0) { py = 0; vy = 0; }
   }
   if (wasAir && py === 0) burst(PLAYER.x + 4, GROUND - 0.5, WORLDS[world].dust, 7, 14);   // אבק בנחיתה
+  if (py === 0 && act.rollWant > 0 && act.leap <= 0) { act.roll = LEAP.roll; act.rollWant = 0; }   // גלגול אחרי נחיתה מזינוק
   if (duckT > 0) duckT -= dt;
   hideT = act.hide > 0 || act.hiding > 0 ? hideT + dt : 0;
   if (invulnT > 0) invulnT -= dt;
@@ -377,7 +378,7 @@ function update(dt) {
   if (throwT > 0) throwT -= dt;
   if (throwCd > 0) throwCd -= dt;
   if (act.fireCd > 0) act.fireCd -= dt;
-  for (const k of ['stop', 'run', 'swim', 'climbWant', 'push', 'pull', 'pullWant', 'hide', 'block', 'leapWant', 'dive', 'crawl', 'crawlWant']) if (act[k] > 0) act[k] = Math.max(0, act[k] - dt);
+  for (const k of ['stop', 'run', 'swim', 'climbWant', 'push', 'pull', 'pullWant', 'hide', 'block', 'leapWant', 'dive', 'crawl', 'crawlWant', 'roll']) if (act[k] > 0) act[k] = Math.max(0, act[k] - dt);
   if (flash && (flash.t -= dt) <= 0) flash = null;
   if (heard && (heard.t -= dt) <= 0) heard = null;
   if (banner && (banner.t -= dt) <= 0) banner = null;

@@ -1031,15 +1031,13 @@ function drawNinja() {
     ctx.beginPath(); ctx.moveTo(gx - 6, gy - 4.5); ctx.lineTo(gx, gy - 7.5); ctx.lineTo(gx, gy - 3.5); ctx.closePath(); ctx.fill();
   }
 
-  if (leap) {                                                     // זינוק: צללים מאחור וקווי מהירות
-    const PL = poseLeap();
-    for (let k = 3; k >= 1; k--) {
-      ctx.globalAlpha = 0.12 * (4 - k);
-      drawFigure({ fx: fx - k * 4, fy, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: PL, suit: playerSuit() });
-    }
-    ctx.globalAlpha = 1;
-    ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 0.5;
-    for (let k = 0; k < 4; k++) { const yy = fy - 3 - k * 1.6, o2 = (now * 80 + k * 5) % 8; ctx.beginPath(); ctx.moveTo(fx - 8 - o2, yy); ctx.lineTo(fx - 16 - o2, yy); ctx.stroke(); }
+  if (act.roll > 0 && py <= 0 && !leap) {                         // גלגול אחרי הזינוק: מכווץ ומסתובב סיבוב שלם
+    const k = 1 - act.roll / LEAP.roll, P = Object.assign(poseAir(false), { hipY: -3, lean: 0.9, legs: [[1.9, -1.2], [2.1, -1.0]], arms: [[1.6, -1.0], [1.8, -0.8]], bob: 0 });
+    ctx.save(); ctx.translate(fx + 1, GROUND - 3.6); ctx.rotate(k * Math.PI * 2);
+    drawFigure({ fx: 0, fy: 3.6, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
+    ctx.restore();
+    drawPet(fx, fy);
+    return;
   }
   const P = drowning ? poseFly(now * 4) : playerPose();          // שוקע – מנופף בידיים
   if (hasGear('katana')) drawKatana(fx, fy, P);                  // קטאנה על הגב – מאחורי הגוף
