@@ -117,6 +117,13 @@ function stageFailed() {
 
 function rand(a, b) { return a + Math.random() * (b - a); }
 
+// כמה נקודות שווה מכשול (במסע). באימון כל מכשול = 1
+function obstacleValue(type) {
+  if (mode !== 'journey') return 1;
+  const w = Object.keys(WORD_OBSTACLE).find(k => WORD_OBSTACLE[k] === type);
+  return (WORD_POINTS[w] || 1) + Math.floor(jStation / 3);
+}
+
 // בוחר את המכשול הבא. לא יותר מ-3 מאותו סוג ברצף
 function pickType() {
   let w = playWords[Math.floor(Math.random() * playWords.length)];
@@ -143,6 +150,7 @@ function spawn() {
   if (type === 'pond') o.w = Math.max(40, speed * POND.factor);   // הרשת באמצע
   if (type === 'bramble') o.w = BRAMBLE.ramp + Math.max(30, speed * BRAMBLE.factor) + BRAMBLE.exit;   // כניסה שהולכת ונעשית צרה + החלק הנמוך + יציאה
   if (type === 'coin') coins++;
+  o.pts = obstacleValue(type);
   obstacles.push(o);
   spawned++;
   distSinceSpawn = 0;
@@ -250,7 +258,8 @@ function onHit(o) {
 // הצלחה במכשול (בעיטה, שוריקן, תפיסה, או מעבר)
 function cleared(o) {
   if (o.passed) return;
-  o.passed = true; done++; score++;
+  o.passed = true; done++; score += o.pts || 1;
+  if (mode === 'journey' && state === 'play') floatText(PLAYER.x + 4, GROUND - 24, '+' + (o.pts || 1), '#7c3aed');
   if (o.type !== 'coin') sfx('clear');
   if (mode === 'free' && state === 'play') endlessProgress();
   renderHud();

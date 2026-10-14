@@ -34,6 +34,23 @@ document.addEventListener('touchmove', e => { if (!e.target.closest('.playerGrid
 window.addEventListener('scroll', () => { if (window.scrollY || window.scrollX) window.scrollTo(0, 0); });
 resize();
 
+// מדבקת נקודות מעל מכשול במסע – כמה הוא שווה
+function drawPoints(o) {
+  const b = obstacleBox(o), wide = o.w && o.type !== 'bramble';
+  const cx = wide ? o.x + Math.min(o.w / 2, 14) : o.type === 'bramble' ? o.x + 14 : (b.l + b.r) / 2;
+  const cy = o.type === 'bramble' ? GROUND - 60 : Math.max(GROUND - 54, Math.min(GROUND - 16, b.t - 8));
+  const t = performance.now() / 1000, txt = '+' + o.pts;           // תגית סגולה – שונה מהמטבעות הצהובים
+  ctx.save(); ctx.translate(cx, cy + Math.sin(t * 3 + o.x * 0.05) * 0.6);
+  ctx.font = '900 4.6px -apple-system, system-ui, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = ctx.measureText(txt).width + 4.4, h = 6.4;
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; roundRect(-w / 2 + 0.4, -h / 2 + 0.6, w, h, 3.2); ctx.fill();
+  const g = ctx.createLinearGradient(0, -h / 2, 0, h / 2); g.addColorStop(0, '#a78bfa'); g.addColorStop(1, '#6d28d9');
+  ctx.fillStyle = g; roundRect(-w / 2, -h / 2, w, h, 3.2); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 0.45; ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.fillText(txt, 0, 0.35);
+  ctx.restore();
+}
+
 function label(text, cx, cy, size, bg, fg) {
   if (!labelsVisible()) return;                   // במסע אין רמזים – צריך לזהות את המכשול
   ctx.font = '900 ' + size + 'px -apple-system, system-ui, Arial, sans-serif';
@@ -275,6 +292,7 @@ function draw() {
   const WIDE = { river: drawRiver, lake: drawLake, bridge: drawBridge, pond: drawPond };
   for (const o of obstacles) if (WIDE[o.type]) WIDE[o.type](o, bottom);
   for (const o of obstacles) if (!WIDE[o.type]) drawObstacle(o, top);
+  if (mode === 'journey' && (state === 'play' || state === 'paused')) for (const o of obstacles) if (!o.passed && !o.hit && o.pts) drawPoints(o);
 
   // דגל סיום
   if (flag) {

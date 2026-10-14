@@ -95,6 +95,9 @@ const WINDOW = { w: 10, top: GROUND - 15, bot: GROUND - 3, range: 4 }; // LEAP �
 const LEAP = { y: 4.5, h: 5, w: 12, want: 0.9, free: 0.45 };           // זינוק אופקי דרך החלון
 const POND = { factor: 1.6, net: 3 }, DIVE_TIME = 1.2;                  // DIVE – מים עם רשת עד פני המים, צוללים מתחת
 const BRAMBLE = { factor: 1.3, gap: 6.5, want: 1.0, slow: 0.6, ramp: 46, exit: 14, mouth: 34 };   // CRAWL – מערה שהתקרה שלה יורדת בהדרגה עד שחייבים לזחוליה
+// ניקוד במסע: ערך בסיס לפי קושי הפעולה, ועוד נקודה כל 3 תחנות. המספר מופיע על המכשול
+const WORD_POINTS = { jump: 1, down: 1, catch: 1, kick: 2, throw: 2, stop: 2, push: 2, hide: 2,
+                      fly: 3, run: 3, swim: 3, climb: 3, pull: 3, block: 3, crawl: 3, fire: 3, leap: 4, dive: 4 };
 const ICE = { w: 13, h: 42 };                                          // FIRE – קיר קרח עבה. רק כדור אש שובר אותו (בעיטה לא)
 const FIREBALL = { speed: 95, cooldown: 0.5 };
 const ARROW_HEIGHTS = [GROUND - 3, GROUND - 8, GROUND - 13, GROUND - 18, GROUND - 22];   // גבוה מדי לקפוץ מעליו, נמוך מדי להתכופף
