@@ -178,8 +178,8 @@ function spawn() {
 }
 
 function playerBox() {
-  if (act.leap > 0) return { l: PLAYER.x - 2, r: PLAYER.x + LEAP.w - 2, t: GROUND - LEAP.y - LEAP.h, b: GROUND - LEAP.y };   // גוף אופקי
-  if (diving()) return { l: PLAYER.x - 2, r: PLAYER.x + 10, t: GROUND + 2, b: GROUND + 8 };                                   // מתחת למים
+  if (act.leap > 0) return { l: PLAYER.x - 2, r: PLAYER.x + LEAP.w - 2, t: GROUND - py - LEAP.h, b: GROUND - py };   // גוף אופקי, בגובה הקשת
+  if (diving()) return { l: PLAYER.x - 2, r: PLAYER.x + 10, t: GROUND + POND.deep + 2, b: GROUND + POND.deep + 8 };           // עמוק מתחת למים – מתחת לרשת
   if (crawling()) return { l: PLAYER.x - 2, r: PLAYER.x + 10, t: GROUND - 5, b: GROUND };                                       // זוחל
   const ducking = duckT > 0;
   const w = ducking ? PLAYER.duckW : PLAYER.w;
@@ -236,7 +236,7 @@ function collides(o, pb) {
     for (let k = 0; k <= 6; k++) { const xx = pb.l + m + (pb.r - pb.l - 2 * m) * k / 6; if (pb.t < caveCeiling(o, xx)) return true; }
     return false;
   }
-  if (o.type === 'pond') { const nx = netX(o); return ov({ l: nx, r: nx + POND.net, t: -1e6, b: GROUND + 1 }); }   // הרשת יורדת עד המים
+  if (o.type === 'pond') { const nx = netX(o); return ov({ l: nx, r: nx + POND.net, t: -1e6, b: GROUND + POND.deep + 1 }); }   // הרשת יורדת עמוק לתוך המים
   if (o.type === 'river') {
     const cx = (pb.l + pb.r) / 2;
     return py === 0 && cx > o.x + 2 + m * 2 && cx < o.x + o.w - 2 - m * 2;   // עומד על הקרקע מעל המים
@@ -350,7 +350,10 @@ function update(dt) {
     py = CLIFF.h * climbK; vy = 0;
     if (climbK >= 1) { act.climb = 0; py = CLIFF.h; vy = 0; }           // למעלה – הולך על הצוק ואז קופץ למטה
   } else if (act.leap > 0) {               // זינוק אופקי: מרחף בגובה החלון עד שעבר אותו
-    act.leap -= dt; py = LEAP.y; vy = 0;
+    act.leap -= dt; vy = 0;
+    let u = leapWin ? (leapWin.leapFrom - leapWin.x) / Math.max(1, leapWin.leapFrom - (PLAYER.x - 2.5 - WINDOW.w)) : 1 - act.leap / LEAP.free;   // 0 → 1 לאורך הזינוק
+    u = Math.max(0, Math.min(1, u));
+    py = LEAP.y + LEAP.arc * Math.sin(Math.PI * u);                       // קשת קלה – הכי גבוה בתוך הטבעת
     if (leapWin && PLAYER.x - 2 > leapWin.x + WINDOW.w + 0.5) act.leap = 0;
     if (act.leap <= 0) { act.leap = 0; leapWin = null; vy = 6; }
   } else if (vy <= 0 && py >= CLIFF.h - 0.5 && cliffTop()) {
@@ -541,7 +544,7 @@ function update(dt) {
     }
     // LEAP: מזנק כשהחלון ממש לפניו
     if (o.type === 'window' && !o.leapt && act.leapWant > 0 && act.leap <= 0 && o.x - pb.r <= WINDOW.range && o.x + WINDOW.w > PLAYER.x) {
-      o.leapt = true; leapWin = o; act.leap = 1.2; act.leapWant = 0; duckT = 0; flyT = 0; py = LEAP.y; vy = 0;
+      o.leapt = true; o.leapFrom = o.x; leapWin = o; act.leap = 1.2; act.leapWant = 0; duckT = 0; flyT = 0; py = LEAP.y; vy = 0;
     }
     // BLOCK: המגן הודף את החיצים
     if (o.type === 'arrows' && !o.deflected && act.block > 0) {
