@@ -149,6 +149,6 @@ function showSbTab() {
 // רמזים (המילה על המכשול): באימון – לפי המתג. במסע – אין
 function hintsOn() { return pLoad('hints', false); }   // ברירת מחדל: בלי רמז
 function labelsVisible() {
-  if (state === 'intro' || state === 'demo' || state === 'menu') return true;
+  if (state === 'intro' || state === 'demo' || state === 'menu' || state === 'studio') return true;
   return mode === 'journey' ? false : hintsOn();
 }

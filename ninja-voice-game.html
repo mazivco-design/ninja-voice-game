@@ -176,8 +176,30 @@
       <div class="labRow"><span class="lbl">Speed</span><span id="labSpeeds"></span>
         <button class="lb" id="labPlay">⏸</button><button class="lb" id="labStep">Step ▶|</button>
         <button class="lb" id="labSkel">Skeleton</button><button class="lb" id="labEnemy">Enemy</button>
-        <button class="lb" id="labClose">✕ Close</button></div>
+        <button class="lb" id="labDesign">🎨 Design</button><button class="lb" id="labClose">✕ Close</button></div>
       <div id="labInfo"></div>
+    </div>
+  </div>
+
+  <!-- סטודיו עיצוב – SVG למכשולים -->
+  <div id="studio">
+    <div class="panel">
+      <div class="labRow"><span class="lbl">Element</span><span id="stSlots" class="stSlots"></span></div>
+      <div class="labRow"><span class="lbl">Drawing</span>
+        <label class="lb file">📂 Upload SVG<input type="file" id="stFile" accept=".svg,image/svg+xml"></label>
+        <button class="lb" id="stRemove">🗑 Remove</button>
+        <button class="lb" id="stCompare">👁 Show original</button>
+        <button class="lb" id="stHit">▭ Hit areas</button>
+        <button class="lb" id="stMove">▶ Move</button></div>
+      <div class="labRow"><span class="lbl">Fit</span>
+        <button class="lb" data-a="size-">－ Size</button><button class="lb" data-a="size+">＋ Size</button>
+        <button class="lb onlyStretch" data-a="wide-">－ Width</button><button class="lb onlyStretch" data-a="wide+">＋ Width</button>
+        <button class="lb" data-a="left">←</button><button class="lb" data-a="right">→</button><button class="lb" data-a="up">↑</button><button class="lb" data-a="down">↓</button>
+        <button class="lb" data-a="flip">⇋ Flip</button><button class="lb" data-a="fit">↺ Fit</button></div>
+      <div class="labRow"><button class="lb" id="stExport">⬇ Export pack</button>
+        <label class="lb file">⬆ Import pack<input type="file" id="stImport" accept=".json,application/json"></label>
+        <button class="lb" id="stClose">✕ Close</button></div>
+      <div id="stInfo"></div>
     </div>
   </div>
 
@@ -190,12 +212,14 @@
 <script src="js/players.js?v=20261014f"></script>
 <script src="js/journey.js?v=20261014f"></script>
 <script src="js/shop.js?v=20261014f"></script>
+<script src="js/art.js?v=20261014f"></script>
 <script src="js/menu.js?v=20261014f"></script>
 <script src="js/speech.js?v=20261014f"></script>
 <script src="js/game.js?v=20261014f"></script>
 <script src="js/draw.js?v=20261014f"></script>
 <script src="js/screens.js?v=20261014f"></script>
 <script src="js/lab.js?v=20261014f"></script>
+<script src="js/studio.js?v=20261014f"></script>
 <script src="js/main.js?v=20261014f"></script>
 </body>
 </html>

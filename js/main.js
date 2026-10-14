@@ -12,7 +12,7 @@ function loop(t) {
   if (state === 'play' || state === 'demo' || state === 'intro') update(dt);
   updateEffects(dt);
   updateMic();
-  if (state === 'lab') drawLab(dt); else draw();
+  if (state === 'lab') drawLab(dt); else if (state === 'studio') drawStudio(dt); else draw();
   $('introBar').classList.toggle('hide', state !== 'intro');   // כפתורי Again / START רק בתחילת שלב
   requestAnimationFrame(loop);
 }

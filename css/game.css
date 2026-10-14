@@ -322,3 +322,13 @@ canvas { display: block; width: 100%; height: 100%; }
 @media (max-aspect-ratio: 1/1) { .shopGrid { grid-template-columns: repeat(3, 1fr); } }
 .shopBtn.lock { background: #e2e8f0; color: #64748b; }
 .shopItem.locked .shopPic { filter: grayscale(1) opacity(.45); }
+
+/* סטודיו עיצוב */
+#studio { position: absolute; left: 0; right: 0; bottom: 0; display: none; justify-content: center; padding: 0 10px max(10px, env(safe-area-inset-bottom)); z-index: 15; }
+#studio.show { display: flex; }
+#studio .panel { width: min(980px, 100%); padding: 10px 12px; text-align: start; }
+#studio .lb.has { box-shadow: inset 0 -3px 0 #16a34a; }
+#studio .lb:disabled { opacity: .4; }
+.lb.file { position: relative; overflow: hidden; cursor: pointer; display: inline-block; }
+.lb.file input { position: absolute; inset: 0; opacity: 0; font-size: 100px; cursor: pointer; }
+#stInfo { font: 13px ui-monospace, Menlo, monospace; color: #475569; margin-top: 4px; }
