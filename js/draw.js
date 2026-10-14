@@ -309,7 +309,7 @@ function draw() {
     ctx.fillStyle = o.type === 'lake' ? 'rgba(20,184,166,.55)' : 'rgba(14,116,144,.6)'; ctx.fillRect(o.x, GROUND + 0.3, o.w, bottom - GROUND);
     if (o.type === 'pond') drawNet(o, true);                                  // הרשת לפני הצולל
   }
-  for (const s of shurikens) star4(s.x, s.y, 2, s.rot, '#475569');
+  for (const s of shurikens) star4(s.x, s.y, hasGear('goldstar') ? 2.6 : 2, s.rot, hasGear('goldstar') ? '#facc15' : '#475569');
   for (const f of fireballs) {                                                // כדור אש: הילה, גוף כתום, לב צהוב
     const r = 2.2 + Math.sin(f.t * 30) * 0.2;
     ctx.fillStyle = 'rgba(251,146,60,.35)'; circle(f.x, f.y, r * 2);
@@ -547,7 +547,7 @@ function drawObstacle(o, top) {
     if (o.caught) return;                         // עף אל המונה למעלה
     const now = performance.now() / 1000;
     let cx = x + 3, cy = COIN.y + Math.sin(now * 4 + x) * 1.6;
-    const reach = !o.hit && !o.passed && x + 3 >= PLAYER.x - COIN.reachBack && x <= PLAYER.x + COIN.reachFwd;
+    const reach = !o.hit && !o.passed && x + 3 >= PLAYER.x - COIN.reachBack && x <= PLAYER.x + COIN.reachFwd * reachMul();
     if (o.hit) { o.ft = (o.ft || 0) + 1 / 60; cy += o.ft * o.ft * 60; ctx.globalAlpha = Math.max(0, 1 - o.ft * 1.5); }   // הוחמץ – נופל
     if (reach) {                                                                  // בטווח! טבעת ירוקה פועמת
       const pr = 5.5 + Math.sin(now * 12) * 0.8;
@@ -907,7 +907,7 @@ function drawNinja() {
     if (sinkType !== 'fall') { ctx.beginPath(); ctx.rect(fx - 20, GROUND - 40, 40, 40.5); ctx.clip(); }   // במים – נעלם מתחת לפני המים
     ctx.translate(fx, GROUND + k * k * (sinkType === 'fall' ? 45 : 16));
     ctx.rotate(sinkType === 'fall' ? k * 2.5 : 0);
-    drawFigure({ fx: 0, fy: 0, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: poseAir(false) });
+    drawFigure({ fx: 0, fy: 0, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: poseAir(false), suit: playerSuit() });
     ctx.restore();
     if (sinkType !== 'fall' && k < 0.4) burst(fx, GROUND, sinkType === 'lava' ? '#f97316' : '#bae6fd', 2, 25);   // התזה
     if (sinkType === 'lava' && Math.random() < 0.4) particles.push({ x: fx + (Math.random() - 0.5) * 6, y: GROUND - 2, vx: 0, vy: -10, g: -4, life: 0.8, color: 'rgba(120,113,108,.7)', size: 1.6 });   // עשן
@@ -942,14 +942,16 @@ function drawNinja() {
     const PL = poseLeap();
     for (let k = 3; k >= 1; k--) {
       ctx.globalAlpha = 0.12 * (4 - k);
-      drawFigure({ fx: fx - k * 4, fy, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: PL });
+      drawFigure({ fx: fx - k * 4, fy, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: PL, suit: playerSuit() });
     }
     ctx.globalAlpha = 1;
     ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 0.5;
     for (let k = 0; k < 4; k++) { const yy = fy - 3 - k * 1.6, o2 = (now * 80 + k * 5) % 8; ctx.beginPath(); ctx.moveTo(fx - 8 - o2, yy); ctx.lineTo(fx - 16 - o2, yy); ctx.stroke(); }
   }
   const P = drowning ? poseFly(now * 4) : playerPose();          // שוקע – מנופף בידיים
-  drawFigure({ fx, fy, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: P });
+  if (hasGear('katana')) drawKatana(fx, fy, P);                  // קטאנה על הגב – מאחורי הגוף
+  drawFigure({ fx, fy, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
+  drawPet(fx, fy);
   if (drowning) {
     if (Math.random() < 0.25) particles.push({ x: fx + (Math.random() - 0.5) * 4, y: GROUND, vx: 0, vy: -8, g: 0, life: 0.5, color: '#e0f2fe', size: 0.9 });
     label('SWIM!', fx, GROUND - 22, 4.4, '#dc2626', '#fff');

@@ -29,7 +29,7 @@ async function play(m, idx) {
 function startGame(m, idx) {
   mode = m; stageIdx = idx || 0; cfg = LEVELS[diffKey];
   playWords = mode === 'stage' ? STAGES[stageIdx].words : freeWords();
-  banked = false; resetAct(); sinkT = 0; coinsFlying = 0;
+  banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0;
   world = m === 'stage' ? PAIR_WORLD[Math.floor((idx || 0) / 3)] : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0;   // באימון אין פסילה
   obstacles = []; shurikens = []; fireballs = []; particles = []; flag = null;
@@ -241,6 +241,7 @@ function onHit(o) {
   if (state === 'demo' || state === 'intro') {   // בהדגמה – בלי עונש
     flash = { text: HIT_WORD[o.type], t: 1.2 }; invulnT = INVULN_TIME; return;
   }
+  if (dragonSave()) { invulnT = INVULN_TIME; sinkT = 0; o.pts = 0; cleared(o); return; }   // הדרקון חוסם את הפגיעה – בלי לאבד לב
   hits++; done++;
   if (mode === 'journey') nextType = o.type;     // במסע: מכשול שפספסו חוזר מיד
   flash = { text: HIT_WORD[o.type], t: 1.2 };   // מראה את המילה הנכונה
@@ -258,8 +259,9 @@ function onHit(o) {
 // הצלחה במכשול (בעיטה, שוריקן, תפיסה, או מעבר)
 function cleared(o) {
   if (o.passed) return;
-  o.passed = true; done++; score += o.pts || 1;
-  if (mode === 'journey' && state === 'play') floatText(PLAYER.x + 4, GROUND - 24, '+' + (o.pts || 1), '#7c3aed');
+  const v = o.pts === undefined ? 1 : o.pts;
+  o.passed = true; done++; score += v;
+  if (mode === 'journey' && state === 'play' && v > 0) floatText(PLAYER.x + 4, GROUND - 24, '+' + v, '#7c3aed');
   if (o.type !== 'coin') sfx('clear');
   if (mode === 'free' && state === 'play') endlessProgress();
   renderHud();
@@ -379,7 +381,7 @@ function update(dt) {
 
   // שוריקנים
   for (const s of shurikens) {
-    s.x += SHURIKEN.speed * dt; s.rot += dt * 18;
+    s.x += SHURIKEN.speed * throwMul() * dt; s.rot += dt * 18;
     for (const o of obstacles) {
       if (o.type !== 'enemy' || o.defeated) continue;
       const b = obstacleBox(o);
@@ -423,7 +425,7 @@ function update(dt) {
     if (o.open) o.oT = (o.oT || 0) + dt;
 
     // בעיטה שוברת קיר שקרוב מספיק
-    if (o.type === 'wall' && !o.broken && kickT > 0 && o.x - pb.r <= KICK.range && o.x + WALL.w > pb.l) {
+    if (o.type === 'wall' && !o.broken && kickT > 0 && o.x - pb.r <= KICK.range * kickMul() && o.x + WALL.w > pb.l) {
       o.broken = true;
       for (let i = 0; i < 14; i++) burst(o.x + 2.5, GROUND - Math.random() * WALL.h, '#94a3b8', 1, 45);
       cleared(o);

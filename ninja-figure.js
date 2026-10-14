@@ -265,7 +265,8 @@ function figureJoints(P) {
 
 function drawFigure(F) {
   const P = F.pose, S = RIG.shape, now = performance.now() / 1000;
-  const C = RIG.colors[F.kind || 'ninja'] || RIG.colors.ninja;
+  const C0 = RIG.colors[F.kind || 'ninja'] || RIG.colors.ninja;
+  const C = F.suit ? Object.assign({}, C0, F.suit) : C0;      // חליפה מהחנות – מחליפה את צבעי הגוף
   const accent = C.accent || F.accent || '#dc2626';
   const halo = hexA(C.outline, C.outlineAlpha);
   const EL = RIG.elements || {};

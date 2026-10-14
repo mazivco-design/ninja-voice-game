@@ -139,7 +139,7 @@ function command(word, source) {
   } else if (word === 'catch') {
     catchT = 0.4;                          // תופס מטבע שקרוב מספיק
     const s = obstacles.find(o => o.type === 'coin' && !o.caught && !o.passed &&
-                                  o.x + 3 >= PLAYER.x - COIN.reachBack && o.x <= PLAYER.x + COIN.reachFwd);
+                                  o.x + 3 >= PLAYER.x - COIN.reachBack && o.x <= PLAYER.x + COIN.reachFwd * reachMul());
     if (s) catchCoin(s);
   } else if (word === 'fly') {
     if (py > 0 && flyT <= 0) {             // FLY עובד רק באוויר – אחרי קפיצה
