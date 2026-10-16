@@ -157,8 +157,14 @@ function hills(left, right, par, amp, color, seed) {
   ctx.lineTo(right + 4, GROUND); ctx.closePath(); ctx.fill();
 }
 
-function bamboo(x, h, seed) {
-  const top = GROUND - h, w = 2.2;
+function bamboo(x, h, seed, far) {
+  const top = GROUND - h, w = far ? 1.4 : 1.8 + seed * 0.9;
+  if (far) {                                                     // שכבה רחוקה: דהויה, בלי פרטים – עומק
+    ctx.fillStyle = '#9bd3a0'; ctx.fillRect(x, top, w, h);
+    ctx.fillStyle = '#b7e4b9';
+    for (let k = 0; k < 2; k++) { const ly = top + 5 + k * 8, dir = (k + Math.floor(seed * 10)) % 2 ? 1 : -1; ctx.beginPath(); ctx.ellipse(x + w / 2 + dir * 2.4, ly, 2.6, 0.7, dir * 0.4, 0, Math.PI * 2); ctx.fill(); }
+    return;
+  }
   ctx.fillStyle = seed > 0.5 ? '#65a30d' : '#4d7c0f'; ctx.fillRect(x, top, w, h);
   ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(x + 0.3, top, 0.5, h);
   ctx.fillStyle = '#365314';
@@ -167,6 +173,70 @@ function bamboo(x, h, seed) {
   for (let k = 0; k < 3; k++) {
     const ly = top + 4 + k * 6, dir = (k + Math.floor(seed * 10)) % 2 ? 1 : -1;
     ctx.beginPath(); ctx.ellipse(x + w / 2 + dir * 3, ly, 3.2, 0.9, dir * 0.4, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+// עננים רכים – זזים לאט מאוד (הכי רחוק)
+function clouds(left, right, alpha) {
+  ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
+  repeat(left, right, 0.02, 75, (x, i) => {
+    const y = 10 + hash(i + 11) * 16, r = 3.5 + hash(i + 12) * 2.5;
+    circle(x, y, r); circle(x + r * 1.1, y - r * 0.5, r * 1.25); circle(x + r * 2.4, y, r * 0.95); circle(x + r * 1.3, y + r * 0.45, r * 0.9);
+  });
+}
+// ערפל בקו האופק – מה שרחוק מתבהר (פרספקטיבה אווירית)
+function haze(color, h) {
+  const g = ctx.createLinearGradient(0, GROUND - h, 0, GROUND);
+  g.addColorStop(0, color.replace('A', '0')); g.addColorStop(1, color.replace('A', '0.35'));
+  ctx.fillStyle = g; ctx.fillRect(-W, GROUND - h, W * 3, h);
+}
+
+// קרקע בשכבות: דשא עם קצה לא ישר, אדמה שמתכהה לעומק, שכבות, אבנים ושורשים
+function drawLayeredGround(left, right, bottom, G) {
+  const g = ctx.createLinearGradient(0, GROUND, 0, GROUND + 36);
+  g.addColorStop(0, G.dirt[0]); g.addColorStop(1, G.dirt[1]);
+  ctx.fillStyle = g; ctx.fillRect(left, GROUND, right - left, bottom - GROUND);
+  ctx.strokeStyle = G.strata; ctx.lineWidth = 0.6;                            // שכבות אדמה דקות
+  for (const [y0, sp] of [[9, 0.07], [17, 0.05]]) {
+    ctx.beginPath();
+    for (let x = left; x <= right; x += 5) ctx.lineTo(x, GROUND + y0 + Math.sin((x + bgX) * sp) * 1.2 + Math.sin((x + bgX) * sp * 2.7) * 0.5);
+    ctx.stroke();
+  }
+  repeat(left, right, 1, 9, (x, i) => {                                       // אבנים קטנות
+    if (hash(i + 21) < 0.45) return;
+    const y = GROUND + 5 + hash(i + 22) * 22, w = 1.1 + hash(i + 23) * 1.6;
+    ctx.fillStyle = G.stone[Math.floor(hash(i + 24) * G.stone.length)]; ctx.beginPath(); ctx.ellipse(x, y, w, w * 0.6, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.beginPath(); ctx.ellipse(x - w * 0.25, y - w * 0.2, w * 0.4, w * 0.2, 0, 0, Math.PI * 2); ctx.fill();
+  });
+  ctx.fillStyle = G.grass[1]; ctx.beginPath(); ctx.moveTo(left, GROUND);      // דשא: קצה תחתון גלי
+  for (let x = left; x <= right + 3; x += 3) ctx.lineTo(x, GROUND + 2.4 + Math.sin((x + bgX) * 0.6) * 0.5 + Math.sin((x + bgX) * 1.7) * 0.3);
+  ctx.lineTo(right + 3, GROUND); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = G.grass[0]; ctx.fillRect(left, GROUND - 0.2, right - left, 1.3);
+  repeat(left, right, 1, 6, (x, i) => {                                       // ציצות עשב על קו הקרקע
+    if (hash(i + 41) < 0.35) return;
+    const h = 1.4 + hash(i + 42) * 1.6, sw = Math.sin(performance.now() / 700 + i) * 0.25;
+    ctx.fillStyle = hash(i + 43) > 0.5 ? G.grass[1] : G.grass[2];
+    for (const [dx, hh] of [[-0.9, 0.75], [0, 1.1], [0.9, 0.85]]) {                           // שלושה עלים מלאים, רחבים בבסיס וחדים למעלה
+      ctx.beginPath(); ctx.moveTo(x + dx - 0.45, GROUND + 0.6); ctx.quadraticCurveTo(x + dx + dx * 0.4 + sw, GROUND - h * hh * 0.5, x + dx + dx * 0.9 + sw, GROUND - h * hh);
+      ctx.quadraticCurveTo(x + dx + 0.2, GROUND - h * hh * 0.5, x + dx + 0.45, GROUND + 0.6); ctx.closePath(); ctx.fill();
+    }
+  });
+}
+const GROUND_STYLE = {
+  0: { dirt: ['#a3542a', '#5c2a0c'], strata: 'rgba(0,0,0,.08)', stone: ['#7c3f1d', '#b86a3c', '#8d5a3b'], grass: ['#4ade80', '#22c55e', '#86efac'] }
+};
+
+// עלי במבוק נושרים – מרחפים לאט, מסתובבים
+function drawLeaves(left, right, top, bottom) {
+  const now = performance.now() / 1000, hgt = GROUND + 1 - top;      // נושרים עד הקרקע ולא לתוכה
+  for (let i = 0; i < 16; i++) {
+    const sp = 3 + hash(i + 3) * 3, ph = now * (0.8 + hash(i + 5));
+    const y = top + (((hash(i + 2) * hgt + now * sp) % hgt) + hgt) % hgt;
+    const x = left + ((((hash(i) * 200 - now * (2 + hash(i + 1) * 3) - bgX * 0.5) % 200) + 200) % 200) * ((right - left) / 200) + Math.sin(ph) * 3;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(ph * 1.3) * 0.9 + 0.4);
+    ctx.fillStyle = hash(i + 7) > 0.5 ? '#84cc16' : '#4d7c0f'; ctx.beginPath(); ctx.ellipse(0, 0, 1.9, 0.55, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.lineWidth = 0.15; ctx.beginPath(); ctx.moveTo(-1.6, 0); ctx.lineTo(1.6, 0); ctx.stroke();
+    ctx.restore();
   }
 }
 
@@ -217,8 +287,12 @@ function drawWorld(left, right, top, bottom) {
   if (world === 0) {
     ctx.fillStyle = 'rgba(254,240,138,.35)'; circle(W * 0.82, 16, 11);
     ctx.fillStyle = 'rgba(254,240,138,.9)'; circle(W * 0.82, 16, 6);
-    hills(left, right, 0.05, 30, '#bbf7d0', 0);
-    hills(left, right, 0.12, 20, '#86efac', 2);
+    clouds(left, right, 0.75);
+    hills(left, right, 0.04, 34, '#c6f0d4', 0);                                            // רחוק: הרים בהירים
+    hills(left, right, 0.09, 22, '#9fe0b4', 2);
+    repeat(left, right, 0.16, 10, (x, i) => { if (hash(i + 40) > 0.3) bamboo(x + hash(i + 45) * 4, 22 + hash(i + 49) * 26, hash(i + 43), true); });   // במבוק רחוק ודהוי
+    haze('rgba(236,254,255,A)', 26);                                                        // ערפל על מה שרחוק
+    hills(left, right, 0.22, 11, '#4ade80', 5);                                             // גבעה קרובה
     repeat(left, right, 0.35, 15, (x, i) => { if (hash(i) > 0.25) bamboo(x + hash(i + 5) * 5, 34 + hash(i + 9) * 40, hash(i + 3)); });
   } else if (world === 1) {
     for (let i = 0; i < 45; i++) {                              // כוכבים מנצנצים
@@ -249,6 +323,7 @@ function drawWorld(left, right, top, bottom) {
   }
 
   // קרקע
+  if (GROUND_STYLE[world]) { drawLayeredGround(left, right, bottom, GROUND_STYLE[world]); return; }
   ctx.fillStyle = wd.ground; ctx.fillRect(left, GROUND, right - left, bottom - GROUND);
   ctx.fillStyle = wd.top; ctx.fillRect(left, GROUND, right - left, 2);
   ctx.fillStyle = wd.mark;
@@ -394,6 +469,7 @@ function draw() {
   }
   ctx.globalAlpha = 1;
   drawSnow(left, right, top, bottom);
+  if (world === 0) drawLeaves(left, right, top, bottom);
 
   // מה הנינג'ה שמע
   if (heard && (state === 'play' || state === 'demo' || state === 'intro')) {
