@@ -1041,6 +1041,7 @@ function drawNinja() {
     return;
   }
   const P = drowning ? poseFly(now * 4) : playerPose();          // שוקע – מנופף בידיים
+  P.eyes = invulnT > 0 || drowning ? 'wide' : (py > 0 || kickT > 0 || act.push > 0 || act.pulling > 0 || act.leap > 0) ? 'squint' : null;   // הבעה: בהלה אחרי פגיעה, מאמץ בפעולה
   if (hasGear('katana')) drawKatana(fx, fy, P);                  // קטאנה על הגב – מאחורי הגוף
   drawFigure({ fx, fy, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
   drawPet(fx, fy);
