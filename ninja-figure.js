@@ -210,7 +210,7 @@ function poseClimb(t) {         // מטפס: ידיים למעלה לסירוג�
   return tune('climb', { hipY: -4.6, torso: RIG.shape.torso, lean: 0.3, bob: 0, legs: [[0.9 + 0.45 * s, -0.3], [0.9 - 0.45 * s, -0.3]], arms: [[2.7 + 0.35 * s, 2.95], [2.7 - 0.35 * s, 2.95]] }, timePhase('climb', t));
 }
 function posePush() {           // דוחף: נוטה קדימה, שתי ידיים ישרות, רגל אחורית נמתחת
-  return tune('push', { hipY: -4.2, torso: RIG.shape.torso, lean: 0.75, bob: 0, legs: [[-0.7, -0.5], [0.55, 0.1]], arms: [[1.45, 1.55], [1.55, 1.6]], openHand: true }, timePhase('push', poseClock()));
+  return tune('push', { hipY: -4.0, torso: RIG.shape.torso, lean: 0.75, spine: 0.35, headTilt: -0.35, bob: 0, legs: [[-1.0, -0.75], [0.7, -0.05]], arms: [[1.45, 1.55], [1.55, 1.6]], openHand: true }, timePhase('push', poseClock()));
 }
 function posePull(t) {          // מושך חבל: יד אחרי יד – מושיט למעלה, מושך עד המותניים, הגוף מתכופף עם המאמץ
   const ph = frac(t / 0.7), sm = q => (1 - Math.cos(2 * Math.PI * q)) / 2;
@@ -226,7 +226,7 @@ function poseLeap() {          // זינוק אופקי – הגוף ישר קד
 }
 function poseCrawl(t) {        // זוחל על הבטן: גוף כמעט אופקי, ידיים ורגליים זזות לסירוגין
   const s = Math.sin(t * 9);
-  return tune('crawl', { hipY: -1.6, torso: RIG.shape.torso, lean: 1.4, bob: Math.abs(s) * -0.15, headTilt: -1.1,
+  return tune('crawl', { hipY: -1.6, torso: RIG.shape.torso, lean: 1.4, spine: -0.4, bob: Math.abs(s) * -0.15, headTilt: -0.75,
                          legs: [[-1.2 + 0.35 * s, -1.9], [-1.2 - 0.35 * s, -1.9]], arms: [[1.0 - 0.45 * s, 0.2], [1.0 + 0.45 * s, 0.2]] }, timePhase('crawl', t));
 }
 function poseDive(t) {         // צולל מתחת למים – גוף אופקי ונוטה מטה, ידיים קדימה, רגליים בועטות
