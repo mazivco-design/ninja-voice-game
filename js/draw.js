@@ -165,7 +165,7 @@ function bamboo(x, h, seed, far) {
     for (let k = 0; k < 2; k++) { const ly = top + 5 + k * 8, dir = (k + Math.floor(seed * 10)) % 2 ? 1 : -1; ctx.beginPath(); ctx.ellipse(x + w / 2 + dir * 2.4, ly, 2.6, 0.7, dir * 0.4, 0, Math.PI * 2); ctx.fill(); }
     return;
   }
-  ctx.fillStyle = seed > 0.5 ? '#65a30d' : '#4d7c0f'; ctx.fillRect(x, top, w, h);
+  ctx.fillStyle = seed > 0.5 ? '#7ab319' : '#5f8f16'; ctx.fillRect(x, top, w, h);
   ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(x + 0.3, top, 0.5, h);
   ctx.fillStyle = '#365314';
   for (let y = GROUND - 6; y > top; y -= 7) ctx.fillRect(x - 0.2, y, w + 0.4, 0.6);
@@ -291,8 +291,8 @@ function drawWorld(left, right, top, bottom) {
     hills(left, right, 0.04, 34, '#c6f0d4', 0);                                            // רחוק: הרים בהירים
     hills(left, right, 0.09, 22, '#9fe0b4', 2);
     repeat(left, right, 0.16, 22, (x, i) => { if (hash(i + 40) > 0.4) bamboo(x + hash(i + 45) * 6, 20 + hash(i + 49) * 22, hash(i + 43), true); });   // במבוק רחוק ודהוי
-    haze('rgba(236,254,255,A)', 26);                                                        // ערפל על מה שרחוק
-    hills(left, right, 0.22, 11, '#4ade80', 5);                                             // גבעה קרובה
+    hills(left, right, 0.22, 9, '#86efac', 5);                                              // גבעה קרובה – בהירה, כדי שהמכשולים יבלטו עליה
+    haze('rgba(236,254,255,A)', 26);                                                        // ערפל על כל הרקע – המכשולים והנינג'ה נשארים חדים
     repeat(left, right, 0.35, 19, (x, i) => { if (hash(i) > 0.35) bamboo(x + hash(i + 5) * 6, 34 + hash(i + 9) * 40, hash(i + 3)); });
   } else if (world === 1) {
     for (let i = 0; i < 45; i++) {                              // כוכבים מנצנצים
