@@ -61,6 +61,11 @@ const PAIR_WORLD = [0, 1, 2, 3, 0, 4, 1, 2, 3, 0];
 const WORD_OBSTACLE = { jump: 'box', down: 'beam', kick: 'wall', throw: 'enemy', catch: 'coin', fly: 'river',
                         stop: 'rock', run: 'bridge', swim: 'lake', climb: 'cliff', push: 'boulder', pull: 'gate', hide: 'guard', block: 'arrows',
                         leap: 'window', dive: 'pond', crawl: 'bramble', fire: 'ice', want: 'door' };
+// זיהוי קולי: מילה שמתאימה למכשול שעל המסך מופעלת מיד. מילה אחרת מחכה לתוצאה הסופית, ומופעלת רק בביטחון גבוה
+const VOICE = { confMin: 0.8, logMax: 200 };
+// אילו מילים "מצופות" ליד כל מכשול (ההפך של WORD_OBSTACLE, ועוד מילים שעובדות יחד)
+const OBSTACLE_WORDS = Object.fromEntries(Object.entries(WORD_OBSTACLE).map(([w, t]) => [t, [w]]));
+OBSTACLE_WORDS.river = ['jump', 'fly'];
 const HIT_WORD = { box: 'JUMP!', beam: 'DOWN!', wall: 'KICK!', enemy: 'THROW!', river: 'JUMP + FLY!',
                    rock: 'STOP!', bridge: 'RUN!', lake: 'SWIM!', cliff: 'CLIMB!', boulder: 'PUSH!', gate: 'PULL!', guard: 'HIDE!', arrows: 'BLOCK!',
                    window: 'LEAP!', pond: 'DIVE!', coin: 'CATCH!', bramble: 'CRAWL!', ice: 'FIRE!', door: 'I WANT A KEY!' };

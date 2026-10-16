@@ -48,9 +48,10 @@ async function ensureAudio() {
     // רשימת מילים סגורה – רק המילים של המשחק. כל השאר "לא מוכר"
     // מקשיבים רק למילים של השלב / של ה-Free Play – פחות מילים = פחות טעויות
     const rec = new model.KaldiRecognizer(ac.sampleRate, JSON.stringify([...listenWords, '[unk]']));
+    try { rec.setWords(true); } catch (e) {}                    // ציון ביטחון לכל מילה (בתוצאה הסופית)
     dbg('listening', listenWords.join(', '));
     rec.on('partialresult', m => handleText(m.result.partial, false));
-    rec.on('result', m => handleText(m.result.text, true));
+    rec.on('result', m => handleText(m.result.text, true, m.result.result));
 
     const src = ac.createMediaStreamSource(stream);
     const node = ac.createScriptProcessor(2048, 1, 1);
@@ -71,34 +72,71 @@ async function ensureAudio() {
   }
 }
 
-// עוקבים אחרי רצף המילים ששמענו (למשל "down down jump").
-// כל מילה חדשה בסוף הרצף מפעילה פקודה מיד.
-// אם Vosk "מתקן" את המילה האחרונה (שמע down ואז הבין שזה jump) – מפעילים את המילה המתוקנת.
-function handleText(text, isFinal) {
-  const words = (text || '').toLowerCase().split(/\s+/).filter(w => WORDS.includes(w) || ITEM_WORDS.includes(w));
+// עוקבים אחרי רצף המילים ששמענו (למשל "down down jump"). seenWords: [{ w, fired }]
+// מילה שמתאימה למכשול שעל המסך ("מצופה") מופעלת מיד מהזיהוי החלקי – מהר.
+// מילה אחרת מחכה לתוצאה הסופית, שמגיעה עם ציון ביטחון: ציון גבוה – מופעלת (וזו טעות, כמו היום). ציון נמוך – כנראה בלבול עם מילה דומה, מתעלמים.
+// אם Vosk "מתקן" את המילה האחרונה (שמע down ואז הבין שזה jump) – מטפלים במילה המתוקנת.
+function handleText(text, isFinal, detail) {
+  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w);
+  const words = (text || '').toLowerCase().split(/\s+/).filter(ok);
+  const confs = detail && detail.length ? detail.filter(d => ok(d.word)).map(d => d.conf) : null;   // ציונים (רק בסופית)
+  const exp = expectedWords();
   for (let i = 0; i < words.length; i++) {
-    if (i >= seenWords.length) {
-      seenWords.push(words[i]);
-      voiceCommand(words[i]);
-    } else if (i === words.length - 1 && words[i] !== seenWords[i]) {
-      seenWords[i] = words[i];
-      voiceCommand(words[i]);
+    const w = words[i], conf = confs ? confs[i] : undefined, fresh = i >= seenWords.length || (i === words.length - 1 && w !== seenWords[i].w);
+    if (!isFinal) {
+      if (!fresh) continue;
+      seenWords[i] = { w, fired: false };
+      if (exp.includes(w)) { seenWords[i].fired = true; voiceCommand(w, 'go'); }
+      else voiceLog(w, 'wait', undefined, text);                // לא מתאימה למכשול – מחכים לציון
+    } else {
+      if (seenWords[i] && seenWords[i].fired && !fresh) continue;   // כבר הופעלה מהזיהוי החלקי
+      if (conf === undefined || conf >= VOICE.confMin || exp.includes(w)) voiceCommand(w, conf === undefined ? 'go' : 'late', conf);
+      else voiceLog(w, 'low', conf, text);                      // ביטחון נמוך – כנראה מילה דומה
     }
   }
   if (text) dbg('heard', '"' + text + '"' + (isFinal ? ' (final)' : ''));
-  if (isFinal) seenWords = [];
+  if (isFinal) {
+    if (!words.length && /\[unk\]/.test(text || '')) voiceLog('?', 'unk', undefined, text);   // דיבר, ולא זוהתה אף מילה
+    seenWords = [];
+  }
+}
+
+// המילים שמתאימות למכשולים שעל המסך לפני הנינג'ה (ולסוחר). אם אין כלום – כל המילים של השלב
+function expectedWords() {
+  if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? ['want'] : merchant.phase === 'choose' ? [...ITEM_WORDS] : [];
+  const pb = playerBox(), out = [];
+  for (const o of obstacles) {
+    if (o.passed || o.hit || o.caught || o.x + (o.w || 0) < pb.l || o.x > W + 10) continue;
+    for (const w of OBSTACLE_WORDS[o.type] || []) if (!out.includes(w)) out.push(w);
+  }
+  return out.length ? out : [...listenWords];
 }
 
 // בזמן שהמילון מקריא מילה, המיקרופון שומע אותה – לא מפעילים אותה פעמיים
 let ignoreVoiceUntil = 0, lastLoudT = -1e9;
 let listenWords = [...WORDS];          // המילים שהזיהוי מקשיב להן במשחק הנוכחי
-function voiceCommand(w) {
-  if (performance.now() < ignoreVoiceUntil) { dbg('heard', w + ' (ignored – speaker)'); return; }
-  if (!listenWords.includes(w)) { dbg('heard', w + ' (ignored – not in this stage)'); return; }
+function voiceCommand(w, how, conf) {
+  if (performance.now() < ignoreVoiceUntil) { dbg('heard', w + ' (ignored – speaker)'); voiceLog(w, 'speaker', conf); return; }
+  if (!listenWords.includes(w)) { dbg('heard', w + ' (ignored – not in this stage)'); voiceLog(w, 'off', conf); return; }
   // מילה מתקבלת רק אם המיקרופון קלט קול ברור בשנייה וחצי האחרונות – לא רעש חלש ברקע
-  if (performance.now() - lastLoudT > 1500) { dbg('heard', w + ' (ignored – too quiet)'); return; }
+  if (performance.now() - lastLoudT > 1500) { dbg('heard', w + ' (ignored – too quiet)'); voiceLog(w, 'quiet', conf); return; }
+  voiceLog(w, how, conf);
   command(w, 'voice');
 }
+
+/* ---------- יומן שמיעה – מה האייפד שמע ומה המשחק עשה עם זה. נשמר באייפד, רואים בחלונית הדיבאג ---------- */
+// go = הופעלה מיד | late = הופעלה אחרי ציון | wait = מחכה לציון | low = נזרקה (ציון נמוך) | unk = דיבור לא מזוהה | quiet/speaker/off = סוננה
+let voiceLogRows = load('vlog', []);
+function voiceLog(w, how, conf, text) {
+  const near = obstacles.find(o => !o.passed && !o.hit && o.x > PLAYER.x - 5);
+  const d = new Date(), hh = n => String(n).padStart(2, '0');
+  voiceLogRows.push({ t: hh(d.getHours()) + ':' + hh(d.getMinutes()) + ':' + hh(d.getSeconds()), w, how, c: conf === undefined ? '' : conf.toFixed(2),
+                      st: mode === 'journey' ? 'journey' : (STAGES[stageIdx] || {}).name || mode, ob: merchant ? 'merchant' : near ? near.type : '-', h: text || '' });
+  if (voiceLogRows.length > VOICE.logMax) voiceLogRows.splice(0, voiceLogRows.length - VOICE.logMax);
+  store('vlog', voiceLogRows);
+  if ($('debug').classList.contains('show')) renderDebug();
+}
+function voiceLogText() { return voiceLogRows.map(r => [r.t, r.st, r.ob, r.w, r.how, r.c, r.h].join('\t')).join('\n'); }
 
 // מד עוצמה – הנורית נדלקת ברגע שמתחילים לדבר
 function updateMic() {
