@@ -232,7 +232,7 @@ function poseCrawl(t) {        // זוחל על הבטן: גוף כמעט אופ
 function poseHide(t) {         // מתחבא: כריעה מכווצת מאחורי הסלע – ברכיים לחזה, ידיים מחבקות את הברכיים, הראש מציץ מעל הסלע
   const pk = Math.sin(t * 2.2) * 0.08;
   // ברך אחת על הקרקע, הרגל השנייה כפופה קדימה, יד קדמית נשענת על הסלע – כמו מרגל שמציץ
-  return tune('hide', { hipY: -2.6, torso: RIG.shape.torso, lean: 0.3, spine: 0.15, bob: 0, headTilt: -0.45 + pk,
+  return tune('hide', { hipY: -2.35, torso: RIG.shape.torso, lean: 0.3, spine: 0.15, bob: 0, headTilt: -0.45 + pk,
                         legs: [[-0.35, -1.75], [1.35, -0.05]], arms: [[-0.15, 0.1], [1.35, 1.6]] }, timePhase('hide', t));
 }
 function poseDive(t) {         // צולל מתחת למים – גוף אופקי ונוטה מטה, ידיים קדימה, רגליים בועטות

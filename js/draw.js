@@ -1093,7 +1093,7 @@ function drawNinja() {
     for (let k = 0; k < 3; k++) { const yy = fy - 4 - k * 3.5, o2 = ((now * 60 + k * 7) % 10); ctx.beginPath(); ctx.moveTo(fx - 6 - o2, yy); ctx.lineTo(fx - 13 - o2, yy); ctx.stroke(); }
   }
   // צל על הקרקע
-  if (!swim && !drowning && !dive) ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';
+  if (!swim && !drowning && !dive && !(act.hiding > 0)) ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';   // כשכורעים – בלי צל (הברך על הקרקע)
   else ctx.fillStyle = 'rgba(0,0,0,0)';
   ctx.beginPath(); ctx.ellipse(fx + 0.5, GROUND + 0.6, Math.max(1.5, 4.5 - py * 0.08), 0.9, 0, 0, Math.PI * 2); ctx.fill();
   if (invulnT > 0 && Math.floor(invulnT * 10) % 2 === 0) return;   // הבהוב אחרי פגיעה
