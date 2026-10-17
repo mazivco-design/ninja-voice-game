@@ -378,7 +378,7 @@ function drawSnow(left, right, top, bottom) {
 function playerPose() {
   const now = performance.now() / 1000;
   let P;
-  if (act.hiding > 0) P = poseDuck();                    // מתכופף מאחורי הסלעים
+  if (act.hiding > 0) P = poseHide(now);                 // כורע מכווץ מאחורי הסלעים
   else if (act.climb > 0) P = poseClimb(now);
   else if (act.leap > 0) P = poseLeap();
   else if (diving()) P = poseDive(now);

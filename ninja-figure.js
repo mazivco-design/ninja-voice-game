@@ -59,7 +59,7 @@ const RIG_DEFAULT = {
   offsets: {}   // { run: { lean, hipY, head, legB:[ירך,ברך], legF:[...], armB:[כתף,מרפק], armF:[...] }, kick: {...}, ... }
 };
 
-const MOVES = ['idle', 'run', 'jump', 'duck', 'fly', 'swim', 'climb', 'push', 'pull', 'kick', 'throw', 'catch', 'block', 'stop', 'leap', 'dive', 'crawl'];
+const MOVES = ['idle', 'run', 'jump', 'duck', 'fly', 'swim', 'climb', 'push', 'pull', 'kick', 'throw', 'catch', 'block', 'stop', 'leap', 'dive', 'crawl', 'hide'];
 
 function rigClone(o) { return JSON.parse(JSON.stringify(o)); }
 // מיזוג עמוק: שדות חדשים שנוספו בעתיד מקבלים ערך ברירת מחדל
@@ -228,6 +228,11 @@ function poseCrawl(t) {        // זוחל על הבטן: גוף כמעט אופ
   const s = Math.sin(t * 9);
   return tune('crawl', { hipY: -1.6, torso: RIG.shape.torso, lean: 1.4, spine: -0.4, bob: Math.abs(s) * -0.15, headTilt: -0.75,
                          legs: [[-1.2 + 0.35 * s, -1.9], [-1.2 - 0.35 * s, -1.9]], arms: [[1.0 - 0.45 * s, 0.2], [1.0 + 0.45 * s, 0.2]] }, timePhase('crawl', t));
+}
+function poseHide(t) {         // מתחבא: כריעה מכווצת מאחורי הסלע – ברכיים לחזה, ידיים מחבקות את הברכיים, הראש מציץ מעל הסלע
+  const pk = Math.sin(t * 2.2) * 0.08;
+  return tune('hide', { hipY: -3.3, torso: RIG.shape.torso, lean: 0.3, spine: 0.3, bob: 0, headTilt: -0.55 + pk,
+                        legs: [[1.3, -0.25], [1.5, -0.1]], arms: [[0.85, 1.35], [1.0, 1.5]] }, timePhase('hide', t));
 }
 function poseDive(t) {         // צולל מתחת למים – גוף אופקי ונוטה מטה, ידיים קדימה, רגליים בועטות
   const f = Math.sin(t * 12) * 0.3;
@@ -500,6 +505,7 @@ function movePose(move, t) {
     case 'leap':  P = poseLeap(); lift = 4; break;
     case 'dive':  P = poseDive(t); break;
     case 'crawl': P = poseCrawl(t); break;
+    case 'hide':  P = poseHide(t); break;
     default: P = poseIdle(t);
   }
   POSE_CLOCK = null;
