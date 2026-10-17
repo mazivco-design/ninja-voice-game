@@ -86,11 +86,11 @@ function handleText(text, isFinal, detail) {
     if (!isFinal) {
       if (!fresh) continue;
       seenWords[i] = { w, fired: false };
-      if (exp.includes(w)) { seenWords[i].fired = true; voiceCommand(w, 'go'); }
+      if (exp.includes(w)) { seenWords[i].fired = true; voiceCommand(w, 'go', undefined, text); }
       else voiceLog(w, 'wait', undefined, text);                // לא מתאימה למכשול – מחכים לציון
     } else {
       if (seenWords[i] && seenWords[i].fired && !fresh) continue;   // כבר הופעלה מהזיהוי החלקי
-      if (conf === undefined || conf >= VOICE.confMin || exp.includes(w)) voiceCommand(w, conf === undefined ? 'go' : 'late', conf);
+      if (conf === undefined || conf >= VOICE.confMin || exp.includes(w)) voiceCommand(w, conf === undefined ? 'go' : 'late', conf, text);
       else voiceLog(w, 'low', conf, text);                      // ביטחון נמוך – כנראה מילה דומה
     }
   }
@@ -115,12 +115,12 @@ function expectedWords() {
 // בזמן שהמילון מקריא מילה, המיקרופון שומע אותה – לא מפעילים אותה פעמיים
 let ignoreVoiceUntil = 0, lastLoudT = -1e9;
 let listenWords = [...WORDS];          // המילים שהזיהוי מקשיב להן במשחק הנוכחי
-function voiceCommand(w, how, conf) {
-  if (performance.now() < ignoreVoiceUntil) { dbg('heard', w + ' (ignored – speaker)'); voiceLog(w, 'speaker', conf); return; }
-  if (!listenWords.includes(w)) { dbg('heard', w + ' (ignored – not in this stage)'); voiceLog(w, 'off', conf); return; }
+function voiceCommand(w, how, conf, text) {
+  if (performance.now() < ignoreVoiceUntil) { dbg('heard', w + ' (ignored – speaker)'); voiceLog(w, 'speaker', conf, text); return; }
+  if (!listenWords.includes(w)) { dbg('heard', w + ' (ignored – not in this stage)'); voiceLog(w, 'off', conf, text); return; }
   // מילה מתקבלת רק אם המיקרופון קלט קול ברור בשנייה וחצי האחרונות – לא רעש חלש ברקע
-  if (performance.now() - lastLoudT > 1500) { dbg('heard', w + ' (ignored – too quiet)'); voiceLog(w, 'quiet', conf); return; }
-  voiceLog(w, how, conf);
+  if (performance.now() - lastLoudT > 1500) { dbg('heard', w + ' (ignored – too quiet)'); voiceLog(w, 'quiet', conf, text); return; }
+  voiceLog(w, how, conf, text);
   command(w, 'voice');
 }
 
@@ -137,6 +137,47 @@ function voiceLog(w, how, conf, text) {
   if ($('debug').classList.contains('show')) renderDebug();
 }
 function voiceLogText() { return voiceLogRows.map(r => [r.t, r.st, r.ob, r.w, r.how, r.c, r.h].join('\t')).join('\n'); }
+
+// דוח מלא לשיתוף: כותרת עם פרטי הגרסה, סיכום (כמה מכל סוג, לפי מילה), ואז כל השורות כטבלה
+function voiceLogReport() {
+  const ver = (document.querySelector('script[src*="speech.js"]') || {}).src || ''; const v = (ver.match(/v=([\w]+)/) || [])[1] || '?';
+  const rows = voiceLogRows, cnt = {}, byWord = {}, drops = {};
+  for (const r of rows) {
+    cnt[r.how] = (cnt[r.how] || 0) + 1;
+    const W = byWord[r.w] = byWord[r.w] || { go: 0, late: 0, low: 0, wait: 0, other: 0 };
+    W[r.how in W ? r.how : 'other']++;
+    if (r.how === 'low') { const k = r.w + ' near ' + r.ob; drops[k] = (drops[k] || 0) + 1; }   // מה נזרק ליד איזה מכשול – רמז לבלבולים
+  }
+  const L = [];
+  L.push('# Ninja Voice – heard log');
+  L.push('version: ' + v + ' · exported: ' + new Date().toISOString() + ' · player: ' + (player ? player.name : '-') + ' · difficulty: ' + diffKey);
+  L.push('confMin: ' + VOICE.confMin + ' · rows: ' + rows.length + ' · device: ' + navigator.userAgent);
+  L.push('');
+  L.push('## Legend');
+  L.push('go = fired at once (expected word) · late = fired after final result with confidence · wait = deferred, waiting for confidence · low = dropped (confidence < confMin)');
+  L.push('unk = speech heard but no word recognized · quiet / speaker / off = filtered (too quiet / game speaker / not in this stage)');
+  L.push('');
+  L.push('## Summary by outcome');
+  Object.entries(cnt).sort((a, b) => b[1] - a[1]).forEach(([k, n]) => L.push(k.padEnd(8) + n));
+  L.push('');
+  L.push('## Summary by word (go / late / low / wait / other)');
+  Object.entries(byWord).sort((a, b) => a[0].localeCompare(b[0])).forEach(([w, W]) => L.push(w.padEnd(8) + [W.go, W.late, W.low, W.wait, W.other].join(' / ')));
+  if (Object.keys(drops).length) { L.push(''); L.push('## Dropped (low confidence) – word near obstacle'); Object.entries(drops).sort((a, b) => b[1] - a[1]).forEach(([k, n]) => L.push(k.padEnd(22) + n)); }
+  L.push('');
+  L.push('## Rows (time, stage, obstacle, word, outcome, confidence, heard text)');
+  L.push(['time', 'stage', 'obstacle', 'word', 'outcome', 'conf', 'heard'].join('\t'));
+  L.push(voiceLogText());
+  return L.join('\n');
+}
+async function voiceLogShare() {                               // שיתוף דרך חלון השיתוף של אייפד (Claude / קבצים / מייל), ואם אין – הורדה
+  const text = voiceLogReport(), name = 'ninja-voice-heard-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.txt';
+  try {
+    const file = new File([text], name, { type: 'text/plain' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Ninja Voice heard log' }); return; }
+    if (navigator.share) { await navigator.share({ text, title: 'Ninja Voice heard log' }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = name; a.click();
+}
 
 // מד עוצמה – הנורית נדלקת ברגע שמתחילים לדבר
 function updateMic() {
