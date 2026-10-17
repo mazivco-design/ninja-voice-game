@@ -197,9 +197,11 @@ function drawLayeredGround(left, right, bottom, G) {
   g.addColorStop(0, G.dirt[0]); g.addColorStop(1, G.dirt[1]);
   ctx.fillStyle = g; ctx.fillRect(left, GROUND, right - left, bottom - GROUND);
   ctx.strokeStyle = G.strata; ctx.lineWidth = 0.6;                            // שכבות אדמה דקות
+  // הנקודות של הקווים הגליים "מודבקות" לקרקע וזזות איתה – אחרת הגל נדגם מחדש בכל פריים ומרצד
+  const x0 = Math.floor((left + bgX) / 4) * 4 - bgX;
   for (const [y0, sp] of [[9, 0.07], [17, 0.05]]) {
     ctx.beginPath();
-    for (let x = left; x <= right; x += 5) ctx.lineTo(x, GROUND + y0 + Math.sin((x + bgX) * sp) * 1.2 + Math.sin((x + bgX) * sp * 2.7) * 0.5);
+    for (let x = x0; x <= right + 4; x += 4) ctx.lineTo(x, GROUND + y0 + Math.sin((x + bgX) * sp) * 1.2 + Math.sin((x + bgX) * sp * 2.7) * 0.5);
     ctx.stroke();
   }
   repeat(left, right, 1, 9, (x, i) => {                                       // אבנים קטנות
@@ -208,13 +210,13 @@ function drawLayeredGround(left, right, bottom, G) {
     ctx.fillStyle = G.stone[Math.floor(hash(i + 24) * G.stone.length)]; ctx.beginPath(); ctx.ellipse(x, y, w, w * 0.6, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.beginPath(); ctx.ellipse(x - w * 0.25, y - w * 0.2, w * 0.4, w * 0.2, 0, 0, Math.PI * 2); ctx.fill();
   });
-  ctx.fillStyle = G.grass[1]; ctx.beginPath(); ctx.moveTo(left, GROUND);      // דשא: קצה תחתון גלי
-  for (let x = left; x <= right + 3; x += 3) ctx.lineTo(x, GROUND + 2.4 + Math.sin((x + bgX) * 0.6) * 0.5 + Math.sin((x + bgX) * 1.7) * 0.3);
-  ctx.lineTo(right + 3, GROUND); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = G.grass[1]; ctx.beginPath(); ctx.moveTo(x0 - 2, GROUND);     // דשא: קצה תחתון גלי (גל רחב, נדגם צפוף)
+  for (let x = x0 - 2; x <= right + 4; x += 2) ctx.lineTo(x, GROUND + 2.4 + Math.sin((x + bgX) * 0.35) * 0.5 + Math.sin((x + bgX) * 0.9) * 0.3);
+  ctx.lineTo(right + 4, GROUND); ctx.closePath(); ctx.fill();
   ctx.fillStyle = G.grass[0]; ctx.fillRect(left, GROUND - 0.2, right - left, 1.3);
   repeat(left, right, 1, 6, (x, i) => {                                       // ציצות עשב על קו הקרקע
     if (hash(i + 41) < 0.35) return;
-    const h = 1.4 + hash(i + 42) * 1.6, sw = Math.sin(performance.now() / 700 + i) * 0.25;
+    const h = 1.4 + hash(i + 42) * 1.6, sw = 0;
     ctx.fillStyle = hash(i + 43) > 0.5 ? G.grass[1] : G.grass[2];
     for (const [dx, hh] of [[-0.9, 0.75], [0, 1.1], [0.9, 0.85]]) {                           // שלושה עלים מלאים, רחבים בבסיס וחדים למעלה
       ctx.beginPath(); ctx.moveTo(x + dx - 0.45, GROUND + 0.6); ctx.quadraticCurveTo(x + dx + dx * 0.4 + sw, GROUND - h * hh * 0.5, x + dx + dx * 0.9 + sw, GROUND - h * hh);
@@ -469,7 +471,6 @@ function draw() {
   }
   ctx.globalAlpha = 1;
   drawSnow(left, right, top, bottom);
-  if (world === 0) drawLeaves(left, right, top, bottom);
 
   // מה הנינג'ה שמע
   if (heard && (state === 'play' || state === 'demo' || state === 'intro')) {
