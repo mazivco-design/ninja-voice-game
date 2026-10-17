@@ -727,7 +727,7 @@ function drawLake(o, bottom) {
   label('SWIM', x + w / 2, GROUND - 6, 4, '#fde047', '#1e293b');
 }
 
-const CAVE_PAD = 4;
+const CAVE_PAD = 10;
 function buildCave(o, px) {                       // מצייר את גוף המערה לקנבס נפרד, פעם אחת לכל מכשול
   const top = GROUND - 58, wu = o.w + CAVE_PAD * 2, hu = GROUND + 2 - top;
   const canvas = document.createElement('canvas');
@@ -748,7 +748,7 @@ function drawCaveBody(ctx, o) {                   // ctx כאן הוא הקנב�
       return lip + (peak - lip) * arc + (ceil(x + w) - 6 - lip) * q * (1 - arc);
     };
     const top = [];                                                                           // קו העליון שבור לפאות גדולות, כמו סלע אמיתי
-    for (let k = -2; k <= w + 2; k += 8 + hash(k * 0.7 + 3) * 4) top.push([x + k, dome(k) - hash(k * 1.3 + 1) * 2.2]);
+    for (let k = -2; k <= w + 2; k += 6 + hash(k * 0.7 + 3) * 5) top.push([x + k, dome(k) - hash(k * 1.3 + 1) * 3.4]);
     top.push([x + w + 2, ceil(x + w) - 4]);
     const massPath = () => {
       ctx.beginPath(); ctx.moveTo(x - 2, ceil(x) + 0.5);
@@ -771,9 +771,18 @@ function drawCaveBody(ctx, o) {                   // ctx כאן הוא הקנב�
     if (CAVE_STYLE === 'cave') {
       // --- 1. הקיר הפנימי: אבן כהה עם מרקם של גושים, מתכהה פנימה. זה מה שנותן תחושה של "בתוך מערה" ---
       const wallG = ctx.createLinearGradient(x, 0, x + w, 0);
-      wallG.addColorStop(0, '#5a4d41'); wallG.addColorStop(f(BRAMBLE.ramp * 0.45), '#2e2621'); wallG.addColorStop(f(BRAMBLE.ramp), '#19140f');
+      wallG.addColorStop(0, '#4a3f35'); wallG.addColorStop(f(BRAMBLE.ramp * 0.45), '#2e2621'); wallG.addColorStop(f(BRAMBLE.ramp), '#19140f');
       wallG.addColorStop(f(w - BRAMBLE.exit), '#19140f'); wallG.addColorStop(1, '#4a3f35');
-      const wallPath = () => { ctx.beginPath(); ctx.moveTo(x, GROUND + 2); for (let k = 0; k <= w; k += 1.5) ctx.lineTo(x + k, ceil(x + k) - 0.5); ctx.lineTo(x + w, GROUND + 2); ctx.closePath(); };
+      const edge = (side, k) => (side === 'L' ? x - 3 : x + w + 3) + (side === 'L' ? -1 : 1) * (1.5 + Math.sin(k * 0.9 + (side === 'L' ? 0 : 2)) * 1.6 + hash(k * 2.3 + (side === 'L' ? 1 : 7)) * 2.2);   // שפה מחוספסת ולא קו ישר
+      const wallPath = () => {
+        ctx.beginPath(); ctx.moveTo(edge('L', 0), GROUND + 2);
+        for (let k = 3; k < ceil(x) * -1 + GROUND; k += 3) ctx.lineTo(edge('L', k), GROUND - k);           // צד שמאל, מלמטה למעלה
+        ctx.lineTo(x - 2, ceil(x) - 0.5);
+        for (let k = 0; k <= w; k += 1.5) ctx.lineTo(x + k, ceil(x + k) - 0.5);
+        ctx.lineTo(x + w + 2, ceil(x + w) - 0.5);
+        for (let k = GROUND - ceil(x + w); k > 0; k -= 3) ctx.lineTo(edge('R', k), GROUND - k);           // צד ימין, מלמעלה למטה
+        ctx.lineTo(edge('R', 0), GROUND + 2); ctx.closePath();
+      };
       wallPath(); ctx.fillStyle = wallG; ctx.fill();
       ctx.save(); wallPath(); ctx.clip();
       const depthAt = xx => { const r = (xx - x) / w; return Math.min(1, Math.min(r, 1 - r) * w / BRAMBLE.ramp); };   // 0 בפתח → 1 עמוק
@@ -807,20 +816,23 @@ function drawCaveBody(ctx, o) {                   // ctx כאן הוא הקנב�
       const massG = ctx.createLinearGradient(0, peak, 0, GROUND);
       massG.addColorStop(0, '#b8ab98'); massG.addColorStop(0.5, '#948778'); massG.addColorStop(1, '#5f544a');
       ctx.save(); massPath(); ctx.fillStyle = massG; ctx.fill(); ctx.clip();
-      for (let d = 7; d < 40; d += 8 + hash(d) * 5) {                                           // שכבות סלע – קווים שעוקבים אחרי הכיפה
-        ctx.strokeStyle = 'rgba(40,32,26,.14)'; ctx.lineWidth = 1.6; ctx.beginPath();
-        for (let k = -2; k <= w + 2; k += 3) ctx.lineTo(x + k, dome(k) + d + Math.sin(k * 0.21 + d) * 1.4);
-        ctx.stroke();
+      // פאות גדולות כמו סלע אמיתי (low-poly): כל פאה בגוון אחר – מוארת, בינונית או מוצלת – עם תפר דק ביניהן
+      const tones = ['#c4b7a3', '#ad9f8c', '#978a7a', '#7d7064', '#6a5e53'];
+      const cells = [];
+      for (let k = -4, i = 0; k < w + 6; k += 9 + hash(i * 2.9) * 7, i++) {
+        const d = dome(Math.max(0, Math.min(w, k))), c = ceil(x + Math.max(0, Math.min(w, k)));
+        for (let yy = d - 2, j = 0; yy < c + 4; yy += 8 + hash(i * 5 + j * 3) * 6, j++) cells.push([x + k + (hash(i * 7 + j) - 0.5) * 6, yy + (hash(i + j * 11) - 0.5) * 4, 6 + hash(i * 3 + j) * 6, 5 + hash(j * 9 + i) * 5, hash(i * 13 + j * 17)]);
       }
-      for (let k = 2, i = 0; k < w - 2; k += 10 + hash(i * 3.3) * 8, i++) {                     // סלעים גדולים משובצים בגוש
-        const d = dome(k), c = ceil(x + Math.min(w, k)); if (c - d < 8) continue;
-        const R = 4 + hash(i * 2.7) * 4, cy = d + 5 + hash(i * 4.9) * Math.max(1, c - d - 12), cx2 = x + k;
-        const g = ctx.createRadialGradient(cx2 - R * 0.4, cy - R * 0.5, R * 0.1, cx2, cy, R * 1.25); g.addColorStop(0, '#cbbfad'); g.addColorStop(0.55, '#8f8375'); g.addColorStop(1, '#514740');
-        ctx.fillStyle = g; ctx.beginPath();
-        for (let a = 0; a < 9; a++) { const an = a / 9 * Math.PI * 2, rr = R * (0.85 + hash(i * 9 + a) * 0.3); ctx.lineTo(cx2 + Math.cos(an) * rr, cy + Math.sin(an) * rr * 0.8); }
-        ctx.closePath(); ctx.fill();
+      for (const [cx2, cy, rw, rh, sd] of cells) {
+        const pts = [];
+        for (let a2 = 0; a2 < 6; a2++) { const an = (a2 / 6 + (hash(sd * 50 + a2) - 0.5) * 0.12) * Math.PI * 2, rr = 0.85 + hash(sd * 31 + a2) * 0.35; pts.push([cx2 + Math.cos(an) * rw * rr, cy + Math.sin(an) * rh * rr]); }
+        const up = Math.max(0, -Math.sin(Math.atan2(cy - (dome(cx2 - x) + 6), 1)));          // פאות קרובות לקצה העליון בהירות יותר
+        const tone = tones[Math.min(4, Math.floor(hash(sd * 3.3) * 3 + (cy - dome(Math.max(0, Math.min(w, cx2 - x)))) / 14))];
+        ctx.fillStyle = tone; ctx.beginPath(); pts.forEach(([px, py], i2) => i2 ? ctx.lineTo(px, py) : ctx.moveTo(px, py)); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = 'rgba(40,32,26,.35)'; ctx.lineWidth = 0.45; ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,.14)';                                                  // פאה מוארת בחלק העליון-שמאלי של כל אבן
+        ctx.beginPath(); ctx.moveTo(pts[3][0], pts[3][1]); ctx.lineTo(pts[4][0], pts[4][1]); ctx.lineTo(cx2 - rw * 0.1, cy - rh * 0.15); ctx.closePath(); ctx.fill();
       }
-      ctx.strokeStyle = 'rgba(30,24,20,.35)'; ctx.lineWidth = 5; ctx.beginPath(); for (let k = 0; k <= w; k += 1.5) ctx.lineTo(x + k, ceil(x + k) - 3.5); ctx.stroke();   // צל מתחת לשפת הפתח
       ctx.strokeStyle = 'rgba(40,32,26,.5)'; ctx.lineWidth = 0.55; ctx.lineCap = 'round';          // סדקים
       for (let i = 0; i < 4; i++) { const k = 6 + hash(i * 7.1) * (w - 12), d = dome(k) + 3 + hash(i * 2.2) * 6; ctx.beginPath(); ctx.moveTo(x + k, d);
         ctx.lineTo(x + k + 2 + hash(i) * 3, d + 4 + hash(i * 3) * 4); ctx.lineTo(x + k + 1 + hash(i * 5) * 2, d + 9 + hash(i * 4) * 5); ctx.stroke(); }
