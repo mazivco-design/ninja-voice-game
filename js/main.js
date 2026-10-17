@@ -28,6 +28,7 @@ function toMenu() {
   $('labBtn').classList.remove('hide');
   $('pause').classList.remove('show');
   $('pauseBtn').classList.add('hide');
+  renderTester();
   $('dict').classList.remove('show');
   try { speechSynthesis.cancel(); } catch (e) {}
   $('over').classList.remove('show');

@@ -156,6 +156,12 @@ canvas { display: block; width: 100%; height: 100%; }
 .lb.on { background: #4f46e5; color: #fff; }
 #labInfo { font: 13px ui-monospace, Menlo, monospace; color: #475569; }
 
+/* כפתור 👆 של הבודק */
+#tapBtn { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); width: 104px; height: 104px; border-radius: 50%; border: 4px solid #fff;
+          background: rgba(250,204,21,.9); font-size: 46px; box-shadow: 0 6px 18px rgba(0,0,0,.3); touch-action: manipulation; z-index: 5; }
+#tapBtn:active { transform: translateX(-50%) scale(.94); background: #fbbf24; }
+#tapBtn.hide { display: none; }
+
 /* חלונית דיבאג */
 #debug { position: absolute; left: 10px; bottom: 10px; max-width: min(440px, calc(100% - 20px)); background: rgba(15,23,42,.88);
          color: #e2e8f0; font: 12px/1.55 ui-monospace, Menlo, monospace; padding: 10px 12px; border-radius: 10px;

@@ -46,6 +46,7 @@ function startGame(m, idx) {
   hideAllOverlays();
   $('endBtn').classList.remove('hide');
   $('pauseBtn').classList.remove('hide');
+  autoSt.t = 0; autoSt.flyAt = null; renderTester();
   $('hudFree').classList.toggle('hide', mode === 'stage');
   $('hudStage').classList.toggle('hide', mode === 'free');
   $('progress').classList.toggle('hide', mode === 'free');
@@ -72,6 +73,7 @@ function renderHud() {
 // חלון סיום – משותף לכל המצבים
 function showOver(title, big, sub, primaryLabel, primaryAction, starsStyle) {
   state = 'over';
+  renderTester();
   $('board').innerHTML = '';
   $('altBtn').classList.add('hide');
   stopAudio();
@@ -397,6 +399,7 @@ function update(dt) {
 
   const pb = playerBox();
   merchantUpdate(dt, pb);
+  if (state === 'play' && testerMode === 'auto' && isTester()) testerAuto(pb, dt);   // מצב בודק: משחק אוטומטי
   if (state === 'demo' || state === 'intro') demoAuto(pb, dt);
   if (state === 'intro' && (introT -= dt) <= 0) introNext();
 

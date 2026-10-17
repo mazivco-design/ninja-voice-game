@@ -49,7 +49,7 @@ function selectPlayer(p) {
   diffKey = loadDiff(); cfg = LEVELS[diffKey];
   managing = false;
   hideAllOverlays();
-  renderMenu();
+  renderMenu(); renderTester();
   if (model) setStatus('Ready! Choose a stage');
   $('menu').classList.add('show');
 }
@@ -294,6 +294,7 @@ function finishIntro() {
   $('skipBtn').classList.add('hide');
   $('pauseBtn').classList.remove('hide');
   state = 'play';
+  renderTester();
 }
 $('skipBtn').onclick = () => { try { speechSynthesis.cancel(); } catch (e) {} finishIntro(); };
 $('startBtn').onclick = () => { try { speechSynthesis.cancel(); } catch (e) {} finishIntro(); };
