@@ -78,3 +78,11 @@ dbg('model', '—'); dbg('mic', 'off'); dbg('heard', '—'); dbg('command', '—
 renderMenu();
 showPlayers();
 loadModel();
+
+// ספארי באייפד מתעלם מ-user-scalable=no – חוסמים זום בצביטה ובהקשה כפולה, כדי שהמסך לא "ייתקע" מוגדל בלי הכפתורים
+['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
+document.addEventListener('touchmove', e => { if (e.touches.length > 1 || e.scale !== undefined && e.scale !== 1) e.preventDefault(); }, { passive: false });
+let lastTapT = 0;
+document.addEventListener('touchend', e => {                     // הקשה כפולה מהירה = זום בספארי – מבטלים
+  const t = performance.now(); if (t - lastTapT < 300) e.preventDefault(); lastTapT = t;
+}, { passive: false });
