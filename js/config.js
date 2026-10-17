@@ -101,7 +101,7 @@ const ARROWS = { w: 7, speed: 30 }, BLOCK_TIME = 0.8;                 // BLOCK �
 const WINDOW = { w: 10, top: GROUND - 18, bot: GROUND - 5, range: 4 }; // LEAP – קיר עבה עם מעבר צר באמצע הגובה
 const LEAP = { y: 6.5, h: 5, w: 12, want: 0.9, free: 0.45, arc: 3, roll: 0.5 };   // אחרי הזינוק – גלגול על הקרקע   // זינוק בקשת קלה דרך טבעת האש
 const POND = { factor: 1.6, net: 3, deep: 8 }, DIVE_TIME = 1.2;        // DIVE – רשת שיורדת עמוק לתוך המים, צוללים מתחתיה
-let CAVE_STYLE = 'boulders';   // מראה המערה: 'boulders' = סלעים גדולים כמו ב-HIDE, 'chunks' = הגושים הקודמים
+let CAVE_STYLE = 'cave';       // מראה המערה: 'cave' = גוש סלע אחד עם קיר פנימי כהה, 'boulders' = סלעים גדולים, 'chunks' = הגושים הישנים
 const BRAMBLE = { factor: 1.3, gap: 6.5, want: 1.0, slow: 0.6, ramp: 46, exit: 14, mouth: 34 };   // CRAWL – מערה שהתקרה שלה יורדת בהדרגה עד שחייבים לזחוליה
 // ניקוד במסע: ערך בסיס לפי קושי הפעולה, ועוד נקודה כל 3 תחנות. המספר מופיע על המכשול
 const WORD_POINTS = { jump: 1, down: 1, catch: 1, kick: 2, throw: 2, stop: 2, push: 2, hide: 2,
