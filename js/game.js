@@ -76,6 +76,7 @@ function showOver(title, big, sub, primaryLabel, primaryAction, starsStyle) {
   renderTester();
   $('board').innerHTML = '';
   $('altBtn').classList.add('hide');
+  $('primaryBtn').classList.remove('hide');
   stopAudio();
   $('skipBtn').classList.add('hide');
   bankCoins();
@@ -109,14 +110,31 @@ function stageComplete() {
   setLearned(w);                                    // עבר את השיעור – המילה מצטרפת למסע
   const sub = (hits === 0 ? 'Perfect – no misses!' : hits === 1 ? '1 miss' : hits + ' misses') + catchText();
   const again = () => play('stage', stageIdx), journey = () => play('journey', getStation());
-  if (wasNew) {
-    showOver('🎓 ' + w.toUpperCase() + ' learned!', '★'.repeat(got) + '☆'.repeat(3 - got),
-             sub + '  ·  ' + w.toUpperCase() + ' joins the journey', 'Back to the journey ▶', journey, true);
-    altButton('🔁 Train again', again);              // אפשר גם לתרגל שוב את המילה לפני שחוזרים למסע
-  } else {
-    showOver(STAGES[stageIdx].name + ' – done!', '★'.repeat(got) + '☆'.repeat(3 - got), sub, 'Train again', again, true);
-    altButton('🏔️ Journey ▶', journey);              // או לחזור ישר למסע עם כל המכשולים
+  const starTxt = '★'.repeat(got) + '☆'.repeat(3 - got);
+  if (wasNew) showOver('🎓 ' + w.toUpperCase() + ' learned!', starTxt, sub + '  ·  ' + w.toUpperCase() + ' joins the journey', '', journey, true);
+  else showOver(STAGES[stageIdx].name + ' – done!', starTxt, sub, '', again, true);
+  lessonChoices(w, again, journey, wasNew);
+}
+
+// שתי בחירות: משמאל כפתור תרגול עם הסמל של הפעולה, מימין כרטיס המסלול עם עיגול על התחנה שחוזרים אליה
+function lessonChoices(w, again, journey, toJourney) {
+  $('primaryBtn').classList.add('hide');
+  const st = getStation(), last = WORDS.length - 1, learned = getLearned();
+  const from = Math.max(0, Math.min(st - 2, last - 4)), to = Math.min(last, from + 4);
+  let track = '';
+  for (let i = from; i <= to; i++) {
+    const cls = i === st ? 'cur' : i < st || learned.includes(WORDS[i]) ? 'done' : 'far';
+    track += (i > from ? '<i class="mLine' + (i <= st ? ' on' : '') + '"></i>' : '') +
+             '<span class="mNode ' + cls + '">' + (i > st ? '🔒' : WORD_ICON[WORDS[i]]) +
+             (i === st ? '<span class="mNinja">' + ninjaIcon(player ? player.color : '#dc2626', (shopItem(getEquip().suit) || {}).swatch) + '</span>' : '') +
+             '<b>' + (i === last ? '🏁' : i) + '</b></span>';
   }
+  $('board').innerHTML = '<div class="choices">' +
+    '<button class="choice train' + (toJourney ? '' : ' main') + '" id="chTrain"><span class="ci">' + (WORD_ICON[w] || '🥋') + '</span>' +
+      '<span class="ct">Train again</span><span class="cs">' + w.toUpperCase() + '</span></button>' +
+    '<button class="choice journey' + (toJourney ? ' main' : '') + '" id="chJourney"><span class="mTrack">' + track + '</span>' +
+      '<span class="ct">Journey ▶</span><span class="cs">Back to 🚩 ' + st + '</span></button></div>';
+  $('chJourney').onclick = journey; $('chTrain').onclick = again;
 }
 
 function stageFailed() {
