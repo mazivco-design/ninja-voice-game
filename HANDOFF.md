@@ -53,6 +53,7 @@
 - **מצב בודק** Voice/Auto/Tap.
 - **חסימת זום** בספארי.
 - **אב־טיפוס הכפר** (village.html).
+- **סנכרון בין מכשירים (ls-sync):** שיחה אחרת הוסיפה ל־`ninja-voice-game.html` שלושה סקריפטים מהריפו `Ziviz-Projects-` (`firebase-config.js`, `ls-sync.js` עם data-prefix `ninjaVoice` ו־exclude ל־mute/vlog/current, `sync.js`). זה מסנכרן את ה־localStorage של השחקנים בין מכשירים דרך Firebase. **לא לדרוס** את השורות האלה כשמעדכנים את ה־`?v=`.
 
 ## 5. שאלות פתוחות / מה זיו רצה לבדוק
 
