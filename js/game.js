@@ -108,9 +108,15 @@ function stageComplete() {
   const w = STAGES[stageIdx].words[0], wasNew = !isLearned(w);
   setLearned(w);                                    // עבר את השיעור – המילה מצטרפת למסע
   const sub = (hits === 0 ? 'Perfect – no misses!' : hits === 1 ? '1 miss' : hits + ' misses') + catchText();
-  if (wasNew) showOver('🎓 ' + w.toUpperCase() + ' learned!', '★'.repeat(got) + '☆'.repeat(3 - got),
-                       sub + '  ·  ' + w.toUpperCase() + ' joins the journey', 'Back to the journey ▶', () => play('journey', getStation()), true);
-  else showOver(STAGES[stageIdx].name + ' – done!', '★'.repeat(got) + '☆'.repeat(3 - got), sub, 'Train again', () => play('stage', stageIdx), true);
+  const again = () => play('stage', stageIdx), journey = () => play('journey', getStation());
+  if (wasNew) {
+    showOver('🎓 ' + w.toUpperCase() + ' learned!', '★'.repeat(got) + '☆'.repeat(3 - got),
+             sub + '  ·  ' + w.toUpperCase() + ' joins the journey', 'Back to the journey ▶', journey, true);
+    altButton('🔁 Train again', again);              // אפשר גם לתרגל שוב את המילה לפני שחוזרים למסע
+  } else {
+    showOver(STAGES[stageIdx].name + ' – done!', '★'.repeat(got) + '☆'.repeat(3 - got), sub, 'Train again', again, true);
+    altButton('🏔️ Journey ▶', journey);              // או לחזור ישר למסע עם כל המכשולים
+  }
 }
 
 function stageFailed() {
