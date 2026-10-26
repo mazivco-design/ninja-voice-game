@@ -200,7 +200,8 @@ function spawn() {
   if (type === 'river') nextGap += speed * FLY.time * 0.8;   // זמן לנחות מהגלישה לפני המכשול הבא
   if (type === 'bridge') nextGap += speed * 1.0;             // אחרי RUN העולם מהיר – עוד מרווח
   if (type === 'door') nextGap += speed * 0.6;
-  if (type === 'chasm') nextGap += speed * 0.8;
+  if (type === 'chasm') nextGap += speed * 0.8 + CHASM.top + CHASM.slope;   // מקום לרדת מהגבעה
+  if (nextType === 'chasm') nextGap += CHASM.top + CHASM.slope;                  // מקום לעלות על הגבעה לפני התהום
   if (mode === 'journey') addPickups(o);
   if (type === 'cliff') nextGap += speed * 1.3 + CLIFF.ladder;   // זמן לרדת מהצוק הגבוה
   if (nextType === 'enemy') nextGap *= 1.35;   // אויב רץ מהר יותר – נותנים לו יותר מרווח

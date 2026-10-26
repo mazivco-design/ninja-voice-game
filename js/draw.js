@@ -1142,7 +1142,13 @@ function drawBush(x, y, grow, t, now) {         // שיח מעלים מצויר�
   ctx.restore();
 }
 
-function drawNinja() {
+function drawNinja() {                                           // הנינג'ה מורם לפי גובה הקרקע (גבעה לפני תהום)
+  const L = terrainLift(PLAYER.x + PLAYER.w / 2);
+  if (L) { ctx.save(); ctx.translate(0, -L); }
+  drawNinjaBody();
+  if (L) ctx.restore();
+}
+function drawNinjaBody() {
   if (ropeHanging()) return;                                                      // תלוי על החבל – מצויר ב-drawRopeSwing
   const pb = playerBox();
   const swim = swimmingNow();
