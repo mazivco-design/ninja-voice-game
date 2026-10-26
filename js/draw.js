@@ -420,7 +420,7 @@ function draw() {
   ctx.save();
   ctx.beginPath(); ctx.rect(0, top, W, bottom - top); ctx.clip();
 
-  const WIDE = { river: drawRiver, lake: drawLake, bridge: drawBridge, pond: drawPond };
+  const WIDE = { river: drawRiver, lake: drawLake, bridge: drawBridge, pond: drawPond, chasm: drawChasm };
   for (const o of obstacles) if (WIDE[o.type]) WIDE[o.type](o, bottom);
   for (const o of obstacles) if (!WIDE[o.type]) drawObstacle(o, top);
   const tc = performance.now() / 1000;
@@ -444,6 +444,7 @@ function draw() {
 
   for (const o of obstacles) if (o.type === 'guard' && o.rx !== undefined) drawHideRock(o);   // הסלעים: לפני השומרים, מאחורי הנינג'ה
   drawNinja();
+  for (const o of obstacles) if (o.type === 'chasm') drawRopeSwing(o);        // החבל (והנינג'ה התלוי עליו) – לפני הכול
   for (const o of obstacles) if (o.type === 'window') drawFireRing(o, true);   // החצי הקדמי של הטבעת – מעל הנינג'ה, נראה שהוא עובר דרכה
   for (const o of obstacles) if (o.type === 'bridge') drawFieldSmoke(o);
   for (const o of obstacles) if (o.type === 'lake' || o.type === 'pond') {   // מים מעל השחיין – נראה חצי שקוע / צולל
@@ -1142,11 +1143,12 @@ function drawBush(x, y, grow, t, now) {         // שיח מעלים מצויר�
 }
 
 function drawNinja() {
+  if (ropeHanging()) return;                                                      // תלוי על החבל – מצויר ב-drawRopeSwing
   const pb = playerBox();
   const swim = swimmingNow();
   const drowning = drownK > 0 && !swim && py <= 0 && sinkT <= 0;     // במים בלי SWIM – שוקע
   const dive = diving(), leap = act.leap > 0, crawl = crawling() && !swim;
-  const duck = duckT > 0, fx = leap || dive || crawl ? PLAYER.x + 3 : pb.l + (duck ? 5.5 : swim ? 3 : 4);
+  const duck = duckT > 0, fx = rope && rope.phase === 'fall' && rope.fallX !== undefined ? rope.fallX : leap || dive || crawl ? PLAYER.x + 3 : pb.l + (duck ? 5.5 : swim ? 3 : 4);
   const fy = dive ? GROUND + POND.deep + 7 : leap ? GROUND - py : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : pb.b;
   const now = performance.now() / 1000;
   if (sinkT > 0 && sinkType === 'burn') {                                       // נשרף בשדה האש – מושחר ועשן עולה

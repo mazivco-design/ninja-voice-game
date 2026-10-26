@@ -78,8 +78,7 @@ async function ensureAudio() {
 // אם Vosk "מתקן" את המילה האחרונה (שמע down ואז הבין שזה jump) – מטפלים במילה המתוקנת.
 function handleText(text, isFinal, detail) {
   const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w);
-  const words = (text || '').toLowerCase().split(/\s+/).filter(ok);
-  const confs = detail && detail.length ? detail.filter(d => ok(d.word)).map(d => d.conf) : null;   // ציונים (רק בסופית)
+  const { words, confs } = tokenize(text, detail);
   const exp = expectedWords();
   for (let i = 0; i < words.length; i++) {
     const w = words[i], conf = confs ? confs[i] : undefined, fresh = i >= seenWords.length || (i === words.length - 1 && w !== seenWords[i].w);
@@ -107,9 +106,23 @@ function handleText(text, isFinal, detail) {
   }
 }
 
+// מפרק את הטקסט למילים של המשחק. "let go" (שתי מילים אצל Vosk) הופך למילה אחת 'let go', עם הציון הנמוך מבין השתיים
+function tokenize(text, detail) {
+  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w);
+  const toks = (text || '').toLowerCase().split(/\s+/).filter(Boolean);
+  const dconf = detail && detail.length ? detail.map(d => d.conf) : null;
+  const words = [], confs = [];
+  for (let i = 0; i < toks.length; i++) {
+    if (toks[i] === 'let' && toks[i + 1] === 'go') { words.push('let go'); confs.push(dconf ? Math.min(dconf[i], dconf[i + 1]) : undefined); i++; }
+    else if (ok(toks[i])) { words.push(toks[i]); confs.push(dconf ? dconf[i] : undefined); }
+  }
+  return { words, confs: dconf ? confs : null };
+}
+
 // המילים שמתאימות למכשולים שעל המסך לפני הנינג'ה (ולסוחר). אם אין כלום – כל המילים של השלב
 function expectedWords() {
   if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? ['want'] : merchant.phase === 'choose' ? [...ITEM_WORDS] : [];
+  if (rope && rope.phase !== 'done') return rope.phase === 'wait' ? ['catch'] : rope.phase === 'hang' ? ['let go'] : [];
   const pb = playerBox(), out = [];
   for (const o of obstacles) {
     if (o.passed || o.hit || o.caught || o.x + (o.w || 0) < pb.l || o.x > W + 10) continue;
@@ -234,6 +247,7 @@ function command(word, source) {
       throwCd = SHURIKEN.cooldown; throwT = 0.25;
     }
   } else if (word === 'catch') {
+    if (ropeCatch()) return;               // תופס את החבל מעל התהום
     catchT = 0.4;                          // תופס מטבע שקרוב מספיק
     const s = obstacles.find(o => o.type === 'coin' && !o.caught && !o.passed &&
                                   o.x + 3 >= PLAYER.x - COIN.reachBack && o.x <= PLAYER.x + COIN.reachFwd * reachMul());
@@ -262,6 +276,7 @@ function command(word, source) {
   else if (word === 'fire') {                                            // כדור אש קדימה – שובר קיר קרח
     if (!(act.fireCd > 0)) { const pb = playerBox(); fireballs.push({ x: pb.r + 1, y: pb.t + 5, t: 0 }); act.fireCd = FIREBALL.cooldown; throwT = 0.25; duckT = 0; sfx('jump'); }
   }
+  else if (word === 'let go') ropeLetGo();                               // LET GO – משחררים את החבל
   else if (word === 'want') merchantWant();                              // I WANT – הסוחר שואל: איזה?
   else if (ITEMS[word]) merchantItem(word);                              // שם חפץ – מבקשים אותו מהסוחר
   else if (word === 'crawl') { act.crawlWant = BRAMBLE.want; act.crawl = BRAMBLE.want; duckT = 0; }   // נשכב וזוחל מיד
@@ -269,7 +284,7 @@ function command(word, source) {
 
 // מקלדת – לבדיקה במחשב
 const KEYS = { KeyX: 'crawl', KeyA: 'leap', KeyV: 'dive', Space: 'jump', ArrowUp: 'jump', ArrowDown: 'down', KeyK: 'kick', KeyT: 'throw', KeyC: 'catch', KeyF: 'fly',
-               KeyS: 'stop', KeyR: 'run', KeyW: 'swim', KeyL: 'climb', KeyO: 'push', KeyU: 'pull', KeyH: 'hide', KeyB: 'block', KeyE: 'fire' };
+               KeyS: 'stop', KeyR: 'run', KeyW: 'swim', KeyL: 'climb', KeyO: 'push', KeyU: 'pull', KeyH: 'hide', KeyB: 'block', KeyE: 'fire', KeyG: 'let go' };
 window.addEventListener('keydown', e => {
   const tag = e.target && e.target.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;      // כותבים שם – לא מפעילים פקודות

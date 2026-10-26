@@ -21,7 +21,8 @@ async function play(m, idx) {
   if (!model) return;
   const words = m === 'stage' ? STAGES[idx || 0].words : m === 'journey' ? journeyWords(WORDS.length) : freeWords();   // במסע מקשיבים לכל המילים שנלמדו
   listenWords = words.includes('fly') && !words.includes('jump') ? [...words, 'jump'] : [...words];   // FLY צריך גם JUMP
-  if (words.includes('want')) listenWords.push('i', ...ITEM_WORDS);                              // I WANT + שמות החפצים
+  if (words.includes('want')) listenWords.push('i', ...ITEM_WORDS);
+  if (words.includes('let go') && !words.includes('catch')) listenWords.push('catch');   // LET GO צריך גם CATCH                              // I WANT + שמות החפצים
   stopAudio();                      // מתחילים מחדש עם רשימת המילים של המשחק הזה
   const ok = await ensureAudio();   // נקרא ישירות מהלחיצה
   if (ok) startGame(m, idx);
@@ -33,7 +34,7 @@ function startGame(m, idx) {
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
   world = m === 'stage' ? PAIR_WORLD[Math.floor((idx || 0) / 3)] : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
-  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; particles = []; flag = null;
+  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
@@ -182,6 +183,7 @@ function spawn() {
   const type = nextType;
   const o = { type, x: W + 2, passed: false, hit: false };
   if (type === 'river') o.w = riverWidth();
+  if (type === 'chasm') o.w = CHASM.w;
   if (type === 'lake') o.w = speed * LAKE.factor;        // רחב מדי לקפיצה
   if (type === 'bridge') o.w = speed * BRIDGE.factor;    // רחב מדי לקפיצה, ארוך מדי להליכה
   if (type === 'pond') o.w = Math.max(40, speed * POND.factor);   // הרשת באמצע
@@ -198,6 +200,7 @@ function spawn() {
   if (type === 'river') nextGap += speed * FLY.time * 0.8;   // זמן לנחות מהגלישה לפני המכשול הבא
   if (type === 'bridge') nextGap += speed * 1.0;             // אחרי RUN העולם מהיר – עוד מרווח
   if (type === 'door') nextGap += speed * 0.6;
+  if (type === 'chasm') nextGap += speed * 0.8;
   if (mode === 'journey') addPickups(o);
   if (type === 'cliff') nextGap += speed * 1.3 + CLIFF.ladder;   // זמן לרדת מהצוק הגבוה
   if (nextType === 'enemy') nextGap *= 1.35;   // אויב רץ מהר יותר – נותנים לו יותר מרווח
@@ -223,6 +226,7 @@ function obstacleBox(o) {
     case 'wall':  return { l: o.x, r: o.x + WALL.w, t: GROUND - WALL.h, b: GROUND };
     case 'ice':   return { l: o.x, r: o.x + ICE.w, t: GROUND - ICE.h, b: GROUND };
     case 'door':  return { l: o.x, r: o.x + DOOR.w, t: GROUND - DOOR.h, b: GROUND };
+    case 'chasm': return { l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 40 };
     case 'enemy': return { l: o.x, r: o.x + ENEMY.w, t: GROUND - ENEMY.h, b: GROUND };
     case 'river': return { l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 20 };
     case 'coin':return { l: o.x, r: o.x + 6, t: COIN.y - 3, b: COIN.y + 3 };
@@ -250,7 +254,7 @@ function rockY(o) {   // הסלע נופל בתאוצה מהחבל עד הקרק
 // ברמה הקלה (forgive) מכווצים את אזור הפגיעה – נגיעה בקצה לא נחשבת
 function collides(o, pb) {
   if (o.demo || o.type === 'coin' || o.broken || o.defeated) return false;
-  if (o.climbed || o.pushed || o.open || o.deflected || o.landed || o.unlocked) return false;
+  if (o.climbed || o.pushed || o.open || o.deflected || o.landed || o.unlocked || o.type === 'chasm') return false;   // תהום: העולם עוצר לפניה, הנפילה מטופלת ב-rope.js
   if (o.type === 'rock' && o.fallK === undefined) return false;
   if (o.type === 'guard' && hidingFrom === o) return false;   // מתכופף מאחורי הסלעים – השומרים לא רואים
   const m = cfg.forgive || 0;
@@ -425,6 +429,7 @@ function update(dt) {
 
   const pb = playerBox();
   merchantUpdate(dt, pb);
+  ropeUpdate(dt, pb);
   if (state === 'play' && testerMode === 'auto' && isTester()) testerAuto(pb, dt);   // מצב בודק: משחק אוטומטי
   if (state === 'demo' || state === 'intro') demoAuto(pb, dt);
   if (state === 'intro' && (introT -= dt) <= 0) introNext();
