@@ -52,7 +52,7 @@ function renderDebug() {
   const rows = (typeof voiceLogRows !== 'undefined' ? voiceLogRows : []).slice(-25).reverse();
   $('debug').innerHTML = '<div class="dbgText">' + esc(Object.entries(dbgLines).map(([k, v]) => k + ': ' + v).join('\n')) + '</div>' +
     '<div class="dbgHead">Heard log · ' + (typeof voiceLogRows !== 'undefined' ? voiceLogRows.length : 0) + ' <button id="vlogShare">Share</button><button id="vlogCopy">Copy</button><button id="vlogClear">Clear</button></div>' +
-    '<div class="dbgText">' + (rows.length ? rows.map(r => esc(r.t + ' ' + r.st + ' @' + r.ob + '  ' + r.w + ' → ' + r.how + (r.c ? ' ' + r.c : ''))).join('\n') : '(nothing yet)') + '</div>';
+    '<div class="dbgText">' + (rows.length ? rows.map(r => esc(r.t + ' ' + r.st + ' @' + r.ob + '  ' + r.w + ' → ' + r.how + (r.c ? ' ' + r.c : '') + (r.res ? ' · ' + r.res : ''))).join('\n') : '(nothing yet)') + '</div>';
   $('vlogShare').onclick = () => voiceLogShare();
   $('vlogCopy').onclick = () => { try { navigator.clipboard.writeText(voiceLogReport()); } catch (e) {} };
   $('vlogClear').onclick = () => { voiceLogRows = []; store('vlog', []); renderDebug(); };

@@ -283,6 +283,7 @@ function onHit(o) {
   }
   if (dragonSave()) { invulnT = INVULN_TIME; sinkT = 0; o.pts = 0; cleared(o); return; }   // הדרקון חוסם את הפגיעה – בלי לאבד לב
   hits++; done++;
+  if (typeof voiceMark === 'function') voiceMark('hit');
   if (mode === 'journey') nextType = o.type;     // במסע: מכשול שפספסו חוזר מיד
   flash = { text: HIT_WORD[o.type], t: 1.2 };   // מראה את המילה הנכונה
   invulnT = INVULN_TIME;
@@ -299,6 +300,7 @@ function onHit(o) {
 // הצלחה במכשול (בעיטה, שוריקן, תפיסה, או מעבר)
 function cleared(o) {
   if (o.passed) return;
+  if (typeof voiceMark === 'function') voiceMark('ok');
   const v = o.pts === undefined ? 1 : o.pts;
   o.passed = true; done++; score += v;
   if (mode === 'journey' && state === 'play' && v > 0) floatText(PLAYER.x + 4, GROUND - 24, '+' + v, '#7c3aed');

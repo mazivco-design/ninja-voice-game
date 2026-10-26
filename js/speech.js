@@ -85,11 +85,16 @@ function handleText(text, isFinal, detail) {
     const w = words[i], conf = confs ? confs[i] : undefined, fresh = i >= seenWords.length || (i === words.length - 1 && w !== seenWords[i].w);
     if (!isFinal) {
       if (!fresh) continue;
-      seenWords[i] = { w, fired: false };
-      if (exp.includes(w)) { seenWords[i].fired = true; voiceCommand(w, 'go', undefined, text); }
-      else voiceLog(w, 'wait', undefined, text);                // לא מתאימה למכשול – מחכים לציון
+      if (seenWords[i] && seenWords[i].timer) clearTimeout(seenWords[i].timer);   // Vosk תיקן את המילה האחרונה – הישנה מתבטלת
+      const entry = seenWords[i] = { w, fired: false, timer: null };
+      if (exp.includes(w)) { entry.fired = true; voiceCommand(w, 'go', undefined, text); }
+      else {                                                       // לא מתאימה למכשול – מחכים לציון, אבל לא יותר מ-waitMs (ילד שמדבר ברצף לא מקבל "סופי" בזמן)
+        voiceLog(w, 'wait', undefined, text);
+        entry.timer = setTimeout(() => { if (!entry.fired) { entry.fired = true; voiceCommand(w, 'late', undefined, text); } }, VOICE.waitMs);
+      }
     } else {
-      if (seenWords[i] && seenWords[i].fired && !fresh) continue;   // כבר הופעלה מהזיהוי החלקי
+      if (seenWords[i] && seenWords[i].fired && !fresh) continue;   // כבר הופעלה מהזיהוי החלקי (או מהטיימר)
+      if (seenWords[i] && seenWords[i].timer) clearTimeout(seenWords[i].timer);
       if (conf === undefined || conf >= VOICE.confMin || exp.includes(w)) voiceCommand(w, conf === undefined ? 'go' : 'late', conf, text);
       else voiceLog(w, 'low', conf, text);                      // ביטחון נמוך – כנראה מילה דומה
     }
@@ -97,6 +102,7 @@ function handleText(text, isFinal, detail) {
   if (text) dbg('heard', '"' + text + '"' + (isFinal ? ' (final)' : ''));
   if (isFinal) {
     if (!words.length && /\[unk\]/.test(text || '')) voiceLog('?', 'unk', undefined, text);   // דיבר, ולא זוהתה אף מילה
+    seenWords.forEach(e => { if (e && e.timer) clearTimeout(e.timer); });
     seenWords = [];
   }
 }
@@ -119,7 +125,7 @@ function voiceCommand(w, how, conf, text) {
   if (performance.now() < ignoreVoiceUntil) { dbg('heard', w + ' (ignored – speaker)'); voiceLog(w, 'speaker', conf, text); return; }
   if (!listenWords.includes(w)) { dbg('heard', w + ' (ignored – not in this stage)'); voiceLog(w, 'off', conf, text); return; }
   // מילה מתקבלת רק אם המיקרופון קלט קול ברור בשנייה וחצי האחרונות – לא רעש חלש ברקע
-  if (performance.now() - lastLoudT > 1500) { dbg('heard', w + ' (ignored – too quiet)'); voiceLog(w, 'quiet', conf, text); return; }
+  if (performance.now() - lastLoudT > 2500) { dbg('heard', w + ' (ignored – too quiet)'); voiceLog(w, 'quiet', conf, text); return; }
   voiceLog(w, how, conf, text);
   command(w, 'voice');
 }
@@ -133,17 +139,25 @@ function voiceLog(w, how, conf, text) {
   voiceLogRows.push({ t: hh(d.getHours()) + ':' + hh(d.getMinutes()) + ':' + hh(d.getSeconds()), w, how, c: conf === undefined ? '' : conf.toFixed(2),
                       st: mode === 'journey' ? 'journey' : (STAGES[stageIdx] || {}).name || mode, ob: merchant ? 'merchant' : near ? near.type : '-', h: text || '' });
   if (voiceLogRows.length > VOICE.logMax) voiceLogRows.splice(0, voiceLogRows.length - VOICE.logMax);
+  if (how === 'go' || how === 'late') lastFired = { row: voiceLogRows[voiceLogRows.length - 1], at: performance.now() };
   store('vlog', voiceLogRows);
   if ($('debug').classList.contains('show')) renderDebug();
 }
-function voiceLogText() { return voiceLogRows.map(r => [r.t, r.st, r.ob, r.w, r.how, r.c, r.h].join('\t')).join('\n'); }
+function voiceLogText() { return voiceLogRows.map(r => [r.t, r.st, r.ob, r.w, r.how, r.c, r.res || '', r.h].join('\t')).join('\n'); }
+// תוצאה: אחרי שמילה הופעלה, האם המכשול הקרוב עבר (ok) או פגע (hit)? מסומן על השורה האחרונה שהופעלה ב-4 השניות האחרונות
+let lastFired = null;
+function voiceMark(res) {
+  if (!lastFired || performance.now() - lastFired.at > 4000 || lastFired.row.res) return;
+  lastFired.row.res = res; store('vlog', voiceLogRows);
+}
 
 // דוח מלא לשיתוף: כותרת עם פרטי הגרסה, סיכום (כמה מכל סוג, לפי מילה), ואז כל השורות כטבלה
 function voiceLogReport() {
   const ver = (document.querySelector('script[src*="speech.js"]') || {}).src || ''; const v = (ver.match(/v=([\w]+)/) || [])[1] || '?';
-  const rows = voiceLogRows, cnt = {}, byWord = {}, drops = {};
+  const rows = voiceLogRows, cnt = {}, byWord = {}, drops = {}, res = { ok: 0, hit: 0, none: 0 };
   for (const r of rows) {
     cnt[r.how] = (cnt[r.how] || 0) + 1;
+    if (r.how === 'go' || r.how === 'late') res[r.res || 'none']++;
     const W = byWord[r.w] = byWord[r.w] || { go: 0, late: 0, low: 0, wait: 0, other: 0 };
     W[r.how in W ? r.how : 'other']++;
     if (r.how === 'low') { const k = r.w + ' near ' + r.ob; drops[k] = (drops[k] || 0) + 1; }   // מה נזרק ליד איזה מכשול – רמז לבלבולים
@@ -151,7 +165,7 @@ function voiceLogReport() {
   const L = [];
   L.push('# Ninja Voice – heard log');
   L.push('version: ' + v + ' · exported: ' + new Date().toISOString() + ' · player: ' + (player ? player.name : '-') + ' · difficulty: ' + diffKey);
-  L.push('confMin: ' + VOICE.confMin + ' · rows: ' + rows.length + ' · device: ' + navigator.userAgent);
+  L.push('confMin: ' + VOICE.confMin + ' · waitMs: ' + VOICE.waitMs + ' · rows: ' + rows.length + ' · device: ' + navigator.userAgent);
   L.push('');
   L.push('## Legend');
   L.push('go = fired at once (expected word) · late = fired after final result with confidence · wait = deferred, waiting for confidence · low = dropped (confidence < confMin)');
@@ -160,12 +174,16 @@ function voiceLogReport() {
   L.push('## Summary by outcome');
   Object.entries(cnt).sort((a, b) => b[1] - a[1]).forEach(([k, n]) => L.push(k.padEnd(8) + n));
   L.push('');
+  L.push('## Fired words – what happened next (within 4 s)');
+  L.push('ok = next obstacle cleared · hit = got hit · none = nothing nearby / unknown');
+  L.push('ok      ' + res.ok); L.push('hit     ' + res.hit); L.push('none    ' + res.none);
+  L.push('');
   L.push('## Summary by word (go / late / low / wait / other)');
   Object.entries(byWord).sort((a, b) => a[0].localeCompare(b[0])).forEach(([w, W]) => L.push(w.padEnd(8) + [W.go, W.late, W.low, W.wait, W.other].join(' / ')));
   if (Object.keys(drops).length) { L.push(''); L.push('## Dropped (low confidence) – word near obstacle'); Object.entries(drops).sort((a, b) => b[1] - a[1]).forEach(([k, n]) => L.push(k.padEnd(22) + n)); }
   L.push('');
-  L.push('## Rows (time, stage, obstacle, word, outcome, confidence, heard text)');
-  L.push(['time', 'stage', 'obstacle', 'word', 'outcome', 'conf', 'heard'].join('\t'));
+  L.push('## Rows (time, stage, obstacle, word, outcome, confidence, result, heard text)');
+  L.push(['time', 'stage', 'obstacle', 'word', 'outcome', 'conf', 'result', 'heard'].join('\t'));
   L.push(voiceLogText());
   return L.join('\n');
 }
@@ -186,7 +204,7 @@ function updateMic() {
   let s = 0;
   for (let i = 0; i < audio.buf.length; i++) s += audio.buf[i] * audio.buf[i];
   const rms = Math.sqrt(s / audio.buf.length);
-  const loud = rms > Math.max(0.02, noise * 4);
+  const loud = rms > Math.max(0.012, noise * 3);
   if (loud) lastLoudT = performance.now();
   if (!loud) noise = noise * 0.97 + rms * 0.03;
   $('mic').className = loud ? 'loud' : 'on';
