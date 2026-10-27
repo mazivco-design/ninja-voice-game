@@ -369,7 +369,7 @@ canvas { display: block; width: 100%; height: 100%; }
 @keyframes mPulse { 50% { box-shadow: 0 0 0 4px #fff, 0 0 20px 10px rgba(253,224,71,.95); } }
 
 /* 🧭 סדר התחנות (tester) */
-#orderList { display: flex; flex-direction: column; gap: 4px; max-height: min(56vh, 520px); overflow: auto; margin: 8px 0; }
+#orderList { display: flex; flex-direction: column; gap: 4px; max-height: min(56vh, 520px); overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior: contain; margin: 8px 0; }
 #orderList .orow { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background: #eef2ff; font-weight: 800; color: #1e293b; }
 #orderList .orow.lock { background: #f1f5f9; color: #94a3b8; }
 #orderList .orow .n { width: 26px; text-align: right; color: #64748b; font-variant-numeric: tabular-nums; }

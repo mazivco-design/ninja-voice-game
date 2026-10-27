@@ -30,7 +30,7 @@ window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', () => setTimeout(resize, 300));
 if (window.visualViewport) { window.visualViewport.addEventListener('resize', resize); window.visualViewport.addEventListener('scroll', resize); }
 // אין גלילה של הדף: גרירה עובדת רק בתוך רשימות שבאמת צריך לגלול (רשימת שחקנים)
-document.addEventListener('touchmove', e => { if (!e.target.closest('.playerGrid')) e.preventDefault(); }, { passive: false });
+document.addEventListener('touchmove', e => { if (!e.target.closest('.playerGrid, #orderList')) e.preventDefault(); }, { passive: false });
 window.addEventListener('scroll', () => { if (window.scrollY || window.scrollX) window.scrollTo(0, 0); });
 resize();
 
@@ -1149,10 +1149,13 @@ function drawBush(x, y, grow, t, now) {         // שיח מעלים מצויר�
 }
 
 function drawNinja() {                                           // הנינג'ה מורם לפי גובה הקרקע (גבעה לפני תהום)
-  const L = terrainLift(PLAYER.x + PLAYER.w / 2);
+  const off = rope && rope.phase === 'land' ? rope.drawOff || 0 : 0;   // נוחת מהחבל – מצויר במקום שבו נחת
+  const L = terrainLift(PLAYER.x + PLAYER.w / 2 + off);
+  if (off) { ctx.save(); ctx.translate(off, 0); }
   if (L) { ctx.save(); ctx.translate(0, -L); }
   drawNinjaBody();
   if (L) ctx.restore();
+  if (off) ctx.restore();
 }
 function drawNinjaBody() {
   if (ropeHanging()) return;                                                      // תלוי על החבל – מצויר ב-drawRopeSwing

@@ -35,15 +35,20 @@ function ropeUpdate(dt, pb) {
   if (!obstacles.includes(r.o)) { rope = null; return; }
   if (r.phase === 'wait') {                                      // מחכים ל-CATCH כשהחבל קרוב
     if (r.grabWant > 0) { r.grabWant -= dt; if (r.theta <= -ROPE.amp * ROPE.nearAt) { r.phase = 'hang'; r.grabWant = 0; sfx('coin'); } }
-  } else if (r.phase === 'land') {                               // שוחרר בצד הרחוק – העולם "קופץ" כך שהקצה הרחוק מתחת לנינג'ה
-    if (r.t > 0.25) { ropeShift(r.o); r.o.unlocked = true; cleared(r.o); r.phase = 'done'; r.t = 0; }
+  } else if (r.phase === 'land') {                               // שוחרר בצד הרחוק: קפיצה קטנה אל הצוק, והמצלמה זזה איתו חזרה למקום הרגיל
+    const D = 0.55, k = Math.min(1, r.t / D), hop = 1 - (1 - k) * (1 - k);
+    const figX = r.fromX + (r.landX - r.fromX) * hop;                // איפה הנינג'ה בעולם (לפני ההזזה)
+    const pan = (r.landX - (PLAYER.x + 4)) * (k * k * (3 - 2 * k));  // כמה העולם זז עד עכשיו
+    ropeShiftBy(pan - r.panned); r.panned = pan;
+    r.drawOff = figX - pan - (PLAYER.x + 4);                         // הנינג'ה מצויר במקום שלו בעולם, לא במקום הרגיל
+    if (k >= 1) { r.drawOff = 0; r.o.unlocked = true; cleared(r.o); r.phase = 'done'; r.t = 0; }
   } else if (r.phase === 'fall') {                               // נפל לתהום – למים. אחרי האנימציה ממשיכים מהצד הרחוק
     if (!r.splash && r.t > 0.74) { r.splash = true; burst(r.fallX, GROUND + ROPE.water, '#bae6fd', 14, 40); burst(r.fallX, GROUND + ROPE.water, '#ffffff', 8, 30); sfx('hit'); }
     if (sinkT <= 0) { ropeShift(r.o); r.o.unlocked = true; r.phase = 'done'; r.t = 0; }
   } else if (r.phase === 'done' && r.t > 0.4) rope = null;
 }
-function ropeShift(o) {                                          // מזיזים את כל העולם כך שהקצה הרחוק של התהום נמצא מאחורי הנינג'ה
-  const shift = (o.x + o.w) - (PLAYER.x - 1);
+function ropeShift(o) { ropeShiftBy((o.x + o.w) - (PLAYER.x - 1)); }   // הקצה הרחוק של התהום – מאחורי הנינג'ה
+function ropeShiftBy(shift) {                                    // מזיזים את כל העולם שמאלה
   for (const ob of obstacles) { ob.x -= shift; if (ob.rx !== undefined) ob.rx -= shift; }
   for (const p of pickups) p.x -= shift;
   bgX += shift; distSinceSpawn += shift;
@@ -54,10 +59,15 @@ function ropeCatch() {                                           // CATCH: תו�
 }
 function ropeLetGo() {                                           // LET GO: בצד הרחוק – נוחתים. מוקדם מדי – נופלים
   if (!rope || rope.phase !== 'hang') return;
-  if (rope.theta >= ROPE.amp * ROPE.farAt) { rope.phase = 'land'; rope.t = 0; sfx('jump'); }
+  if (rope.theta >= ROPE.amp * ROPE.farAt) {
+    const f = ropeFeet(rope.o, rope.theta), farX = rope.o.x + rope.o.w + 5;
+    rope.phase = 'land'; rope.t = 0; rope.panned = 0; rope.fromX = f[0]; rope.landX = Math.max(f[0], farX) + 14; rope.drawOff = f[0] - (PLAYER.x + 4);
+    py = Math.max(0.5, (GROUND - CHASM.h) - f[1]); vy = 8; sfx('jump');           // נופל מהחבל אל הצוק
+  }
   else { rope.fallX = ropeEnd(rope.o, rope.theta)[0] - 1; rope.phase = 'fall'; rope.t = 0; onHit(rope.o); sinkT = SINK_TIME; sinkType = 'fall'; }   // נופל מהמקום שבו שחרר
 }
 function ropeHanging() { return !!rope && rope.phase === 'hang'; }
+function ropeFeet(o, th) { const [ex, ey] = ropeEnd(o, th); return [ex - Math.sin(th * 0.45) * 13.5, ey + Math.cos(th * 0.45) * 13.5]; }   // איפה כפות הרגליים של הנינג'ה התלוי
 
 /* ---------- ציור ---------- */
 function drawChasm(o, bottom) {                                  // גבעה עם שיפוע, צוק, תהום עמוק, צוק שני ושיפוע למטה
@@ -91,14 +101,14 @@ function drawChasm(o, bottom) {                                  // גבעה ע�
   };
   hill(a, x, x, -1); hill(x + w, d, x + w, 1);
   // קירות הצוקים: סלע עם שכבות וקצה מחוספס, שיורד עמוק לתוך התהום
-  for (const [ex, dir] of [[x, 1], [x + w, -1]]) {
+  for (const [ex, dir, sd] of [[x, 1, 3], [x + w, -1, 11]]) {          // sd קבוע לכל צד – הצורה לא משתנה כשהעולם זז
     const rg = ctx.createLinearGradient(0, T, 0, GROUND + ROPE.water);
     rg.addColorStop(0, '#8a7a68'); rg.addColorStop(0.5, '#6b5d50'); rg.addColorStop(1, '#4a3f36');
     ctx.fillStyle = rg; ctx.beginPath(); ctx.moveTo(ex - dir * 0.5, T);
-    for (let k = 0; k < 10; k++) ctx.lineTo(ex + dir * (1.2 + hash(k * 3.1 + ex) * 3), T + 2 + k * 5);
+    for (let k = 0; k < 10; k++) ctx.lineTo(ex + dir * (1.2 + hash(k * 3.1 + sd) * 3), T + 2 + k * 5);
     ctx.lineTo(ex - dir * 0.5, bottom); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 0.5;
-    for (let k = 1; k < 8; k++) { ctx.beginPath(); ctx.moveTo(ex - dir * 0.5, T + k * 6); ctx.lineTo(ex + dir * (1.5 + hash(k + ex) * 2), T + k * 6 + 1); ctx.stroke(); }
+    for (let k = 1; k < 8; k++) { ctx.beginPath(); ctx.moveTo(ex - dir * 0.5, T + k * 6); ctx.lineTo(ex + dir * (1.5 + hash(k + sd) * 2), T + k * 6 + 1); ctx.stroke(); }
     ctx.fillStyle = grass; ctx.fillRect(dir > 0 ? ex - 3 : ex, T - 0.4, 3, 1.6);               // שפת הדשא על קצה הצוק
   }
 }
@@ -116,7 +126,7 @@ function drawRopeSwing(o) {                                      // החבל (ו
   if (rope && rope.o === o && rope.phase === 'hang') {                                          // הנינג'ה תלוי: ידיים למעלה, רגליים מתנדנדות
     const P = poseIdle(performance.now() / 1000);
     P.arms = [[2.95, 3.05], [2.95, 3.05]]; P.legs = [[-0.25 - th * 0.3, -0.15], [0.2 - th * 0.3, 0.25]]; P.lean = th * 0.45; P.bob = 0; P.eyes = 'squint';
-    const hx = ex - Math.sin(th * 0.45) * 13.5, hy = ey + Math.cos(th * 0.45) * 13.5;             // כף הרגל – 13.5 יחידות מתחת לידיים, לאורך קו הגוף
+    const [hx, hy] = ropeFeet(o, th);                                                             // כף הרגל – 13.5 יחידות מתחת לידיים, לאורך קו הגוף
     drawFigure({ fx: hx, fy: hy, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
   }
   if (rope && rope.o === o && rope.phase === 'wait' && labelsVisible()) label('CATCH', ax, ay - 8, 4, '#fde047', '#1e293b');
