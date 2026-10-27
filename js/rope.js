@@ -83,6 +83,12 @@ function drawChasm(o, bottom) {                                  // גבעה ע�
   ctx.fillStyle = g; ctx.fillRect(x, GROUND - 2, w, WY - GROUND + 2);
   ctx.strokeStyle = 'rgba(70,100,90,.18)'; ctx.lineWidth = 0.8;                                   // שכבות סלע רחוקות
   for (let yy = GROUND + 4; yy < WY - 1; yy += 5) { ctx.beginPath(); for (let xx = x; xx <= x + w; xx += 3) ctx.lineTo(xx, yy + Math.sin(xx * 0.18 + yy) * 0.8); ctx.stroke(); }
+  if (world === 5) {                                                                            // בערוץ: מפל קטן נופל מהקיר האחורי אל המים
+    const fx = x + w * 0.62, fw = 4;
+    ctx.fillStyle = 'rgba(240,249,255,.9)'; ctx.fillRect(fx, GROUND - 2, fw, WY - GROUND + 2);
+    ctx.fillStyle = 'rgba(125,180,205,.6)';
+    for (let k = 0; k < 3; k++) ctx.fillRect(fx + 0.6 + k * 1.2, GROUND - 2 + ((t * 26 + k * 7) % (WY - GROUND)), 0.5, 4);
+  }
   const wg = ctx.createLinearGradient(0, WY, 0, bottom);
   wg.addColorStop(0, '#38bdf8'); wg.addColorStop(0.4, '#0284c7'); wg.addColorStop(1, '#075985');
   ctx.fillStyle = wg; ctx.beginPath(); ctx.moveTo(x, bottom);
@@ -92,6 +98,7 @@ function drawChasm(o, bottom) {                                  // גבעה ע�
   for (let xx = x; xx <= x + w; xx += 2) ctx.lineTo(xx, WY + Math.sin(xx * 0.35 + t * 2.5) * 0.6); ctx.stroke();
   ctx.fillStyle = 'rgba(255,255,255,.35)';
   for (let k = 0; k < 5; k++) { const xx = x + 4 + ((k * 11 + t * 6) % (w - 8)); ctx.fillRect(xx, WY + 3 + (k % 2) * 3, 3, 0.4); }
+  if (world === 5) { ctx.fillStyle = 'rgba(255,255,255,.75)'; for (let k = 0; k < 3; k++) circle(x + w * 0.62 + 2 + (k - 1) * 2.5, WY + Math.sin(t * 3 + k) * 0.4, 1.8); }   // קצף בתחתית המפל
   // שתי הגבעות: מילוי באדמה, ופס דשא לאורך הקו העליון
   const hill = (from, to, edgeX, side) => {
     ctx.fillStyle = dirt; ctx.beginPath(); ctx.moveTo(from, GROUND + 0.5);

@@ -32,7 +32,7 @@ function startGame(m, idx) {
   mode = m; stageIdx = idx || 0; cfg = LEVELS[diffKey];
   playWords = mode === 'stage' ? STAGES[stageIdx].words : freeWords();
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
-  world = m === 'stage' ? PAIR_WORLD[Math.floor((idx || 0) / 3)] : 0;
+  world = m === 'stage' ? (STAGES[idx || 0].world ?? PAIR_WORLD[Math.floor((idx || 0) / 3)]) : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
   obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
@@ -179,7 +179,7 @@ function riverWidth() {
 }
 
 function spawn() {
-  if (mode === 'free') world = Math.floor(spawned / 12) % WORLDS.length;   // ב-Free Play העולם מתחלף כל 12 מכשולים
+  if (mode === 'free') world = Math.floor(spawned / 12) % RUN_WORLDS;   // ב-Free Play העולם מתחלף כל 12 מכשולים
   const type = nextType;
   const o = { type, x: W + 2, passed: false, hit: false };
   if (type === 'river') o.w = riverWidth();

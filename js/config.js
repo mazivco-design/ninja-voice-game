@@ -65,7 +65,7 @@ const STAGES = [
   { name: 'FIRE',         words: ['fire'],           count: 4,  hint: 'Say FIRE to smash the ice wall' },
   { name: 'CRAWL + FIRE', words: ['crawl', 'fire'],  count: 10, hint: 'Read the word!' },
   { name: 'I WANT',       words: ['want'],           count: 4,  hint: 'Say I WANT, then the thing you need' },
-  { name: 'LET GO',       words: ['let go'],         count: 4,  hint: 'Say CATCH to grab the rope, then LET GO' }
+  { name: 'LET GO',       words: ['let go'],         count: 4,  hint: 'Say CATCH to grab the rope, then LET GO', world: 5 }
 ];
 // איזה עולם לכל זוג מילים (0 במבוק, 1 כפר בלילה, 2 שלג, 3 קניון, 4 מקדש)
 const PAIR_WORLD = [0, 1, 2, 3, 0, 4, 1, 2, 3, 0, 3];

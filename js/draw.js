@@ -138,8 +138,10 @@ const WORLDS = [
   { sky: ['#1e1b4b', '#4338ca'], ground: '#44403c', top: '#78716c', mark: '#292524', dust: '#a8a29e' },
   { sky: ['#bae6fd', '#f0f9ff'], ground: '#cbd5e1', top: '#f8fafc', mark: '#94a3b8', dust: '#ffffff' },
   { sky: ['#2e3f73', '#d9a6c0'], ground: '#6b4430', top: '#b98a5e', mark: '#4a2e20', dust: '#d6bfa3' },   // קניון במדבר, בדמדומים – האש בולטת
-  { sky: ['#6d28d9', '#fda4af'], ground: '#57534e', top: '#a8a29e', mark: '#44403c', dust: '#d6d3d1' }    // מקדש בשקיעה
+  { sky: ['#6d28d9', '#fda4af'], ground: '#57534e', top: '#a8a29e', mark: '#44403c', dust: '#d6d3d1' },   // מקדש בשקיעה
+  { sky: ['#7dd3fc', '#e0f2fe'], ground: '#6b5a4a', top: '#22c55e', mark: '#4a3f36', dust: '#d6d3d1' }    // ערוץ עם מפל (שלב LET GO)
 ];
+const RUN_WORLDS = 5;      // העולמות שמתחלפים במסע ובמשחק חופשי (הערוץ שמור לשלב החבל)
 function hash(n) { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
 
 // מצייר אלמנט שחוזר על עצמו ברקע, זז לאט יותר מהקרקע (parallax)
@@ -225,7 +227,8 @@ function drawLayeredGround(left, right, bottom, G) {
   });
 }
 const GROUND_STYLE = {
-  0: { dirt: ['#a3542a', '#5c2a0c'], strata: 'rgba(0,0,0,.08)', stone: ['#7c3f1d', '#b86a3c', '#8d5a3b'], grass: ['#4ade80', '#22c55e', '#86efac'] }
+  0: { dirt: ['#a3542a', '#5c2a0c'], strata: 'rgba(0,0,0,.08)', stone: ['#7c3f1d', '#b86a3c', '#8d5a3b'], grass: ['#4ade80', '#22c55e', '#86efac'] },
+  5: { dirt: ['#7a6552', '#3f342b'], strata: 'rgba(0,0,0,.10)', stone: ['#6b6460', '#9a928b', '#57504b'], grass: ['#4ade80', '#16a34a', '#86efac'] }
 };
 
 // עלי במבוק נושרים – מרחפים לאט, מסתובבים
@@ -284,6 +287,31 @@ function pine(x, i) {
   }
 }
 
+function fir(x, h, color) {                                      // עץ אורן ירוק (בלי שלג)
+  const w = h * 0.45;
+  ctx.fillStyle = '#4a3528'; ctx.fillRect(x - 0.6, GROUND - 2.5, 1.2, 2.5);
+  ctx.fillStyle = color;
+  for (let k = 0; k < 3; k++) {
+    const ty = GROUND - 2 - k * h * 0.27, tw = w * (1 - k * 0.25);
+    ctx.beginPath(); ctx.moveTo(x - tw / 2, ty); ctx.lineTo(x, ty - h * 0.42); ctx.lineTo(x + tw / 2, ty); ctx.fill();
+  }
+}
+function falls(x, i) {                                           // צוק רחוק ומפל שיורד ממנו לבריכה עם ערפל
+  const w = 34 + hash(i + 90) * 10, h = 44 + hash(i + 91) * 8, top = GROUND - h, t = performance.now() / 1000;
+  ctx.fillStyle = '#9db8b4';
+  ctx.beginPath(); ctx.moveTo(x - 6, GROUND); ctx.lineTo(x, top + 4); ctx.lineTo(x + 5, top); ctx.lineTo(x + w - 6, top + 2); ctx.lineTo(x + w, top + 8); ctx.lineTo(x + w + 6, GROUND); ctx.fill();
+  ctx.fillStyle = '#8aa9a4'; ctx.fillRect(x + 2, top + 10, w - 2, 1); ctx.fillRect(x + 1, top + 22, w, 1);
+  ctx.fillStyle = '#6f9c87'; ctx.fillRect(x + 4, top - 1.5, w - 8, 2.5);                   // ירוק על ראש הצוק
+  const fx = x + w * 0.45, fw = 5;
+  const g = ctx.createLinearGradient(0, top, 0, GROUND);
+  g.addColorStop(0, 'rgba(240,249,255,.95)'); g.addColorStop(1, 'rgba(224,242,254,.75)');
+  ctx.fillStyle = g; ctx.fillRect(fx, top + 1, fw, GROUND - top - 1);
+  ctx.fillStyle = 'rgba(148,190,210,.55)';                                                   // פסים זורמים במים
+  for (let k = 0; k < 3; k++) { const yy = top + ((t * 22 + k * 15 + i * 7) % (GROUND - top)); ctx.fillRect(fx + 1 + k * 1.3, yy, 0.6, 5); }
+  ctx.fillStyle = 'rgba(255,255,255,.7)';                                                    // ערפל למטה
+  for (let k = 0; k < 4; k++) circle(fx + fw / 2 + (k - 1.5) * 3, GROUND - 1.5 + Math.sin(t * 2 + k) * 0.4, 2.6);
+}
+
 function drawWorld(left, right, top, bottom) {
   const wd = WORLDS[world], now = performance.now() / 1000;
   if (world === 0) {
@@ -318,6 +346,15 @@ function drawWorld(left, right, top, bottom) {
     repeat(left, right, 0.05, 55, (x, i) => mesa(x, i, '#7d5a78', 24));
     repeat(left, right, 0.14, 38, (x, i) => mesa(x + 10, i + 20, '#5b3d55', 14));
     repeat(left, right, 0.35, 26, (x, i) => { if (hash(i + 2) > 0.4) cactus(x + hash(i) * 8, i); });
+  } else if (world === 5) {                                       // ערוץ: רכסים בערפל, מפל גדול מצוק רחוק, עצי אורן ירוקים
+    clouds(left, right, 0.7);
+    hills(left, right, 0.03, 40, '#b7d7d8', 7);                                             // רכס רחוק מאוד
+    repeat(left, right, 0.06, 150, (x, i) => { if (hash(i + 95) > 0.3) falls(x + 30 + hash(i + 96) * 40, i); });                             // צוק רחוק עם מפל
+    hills(left, right, 0.1, 22, '#8fbfae', 4);
+    repeat(left, right, 0.18, 16, (x, i) => { if (hash(i + 70) > 0.35) fir(x + hash(i + 71) * 6, 10 + hash(i + 72) * 8, '#5f9c84'); });   // יער רחוק
+    hills(left, right, 0.24, 10, '#7fb895', 9);
+    repeat(left, right, 0.36, 21, (x, i) => { if (hash(i + 80) > 0.4) fir(x + hash(i + 81) * 6, 22 + hash(i + 82) * 18, '#2f6b4f'); });
+    haze('rgba(224,242,254,A)', 40);
   } else {                                                        // מקדש: שקיעה סגולה, מקדשים מדורגים, עמודים עם לפידים
     ctx.fillStyle = 'rgba(254,205,211,.5)'; circle(W * 0.2, 30, 12);
     repeat(left, right, 0.06, 70, (x, i) => ziggurat(x, i));

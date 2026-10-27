@@ -46,7 +46,7 @@ let jStation = 0;          // התחנה שממנה יצאנו לקטע הנוכ
 
 function startJourneySegment(first) {
   playWords = journeyWords(jStation);
-  world = jStation % WORLDS.length;
+  world = jStation % RUN_WORLDS;
   speed = cfg.speed * (1 + Math.min(JOURNEY.speedMax, jStation * JOURNEY.speedStep));
   spawned = 0; done = 0; flag = null; segStart = caught + picked; segSettled = false; distSinceSpawn = 0; nextType = pickType(); nextGap = speed * (first ? 2.4 : 1.6);
   $('stageName').textContent = '🚩 ' + jStation + ' → ' + (jStation + 1);
