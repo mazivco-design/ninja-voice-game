@@ -101,7 +101,9 @@ function drawChasm(o, bottom) {                                  // גבעה ע�
   if (world === 5) { ctx.fillStyle = 'rgba(255,255,255,.75)'; for (let k = 0; k < 3; k++) circle(x + w * 0.62 + 2 + (k - 1) * 2.5, WY + Math.sin(t * 3 + k) * 0.4, 1.8); }   // קצף בתחתית המפל
   // שתי הגבעות: מילוי באדמה, ופס דשא לאורך הקו העליון
   const hill = (from, to, edgeX, side) => {
-    ctx.fillStyle = dirt; ctx.beginPath(); ctx.moveTo(from, GROUND + 0.5);
+    if (G) { const dg = ctx.createLinearGradient(0, GROUND, 0, GROUND + 36); dg.addColorStop(0, G.dirt[0]); dg.addColorStop(1, G.dirt[1]); ctx.fillStyle = dg; }   // אותו צבע כמו האדמה
+    else ctx.fillStyle = dirt;
+    ctx.beginPath(); ctx.moveTo(from, GROUND + 0.5);
     for (let xx = from; side < 0 ? xx <= to : xx <= to; xx += 1) ctx.lineTo(xx, GROUND - terrainLift(xx));
     ctx.lineTo(to, bottom); ctx.lineTo(side < 0 ? to : from, bottom); ctx.lineTo(from, bottom); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = grass; ctx.lineWidth = 2; ctx.beginPath();
