@@ -132,18 +132,18 @@ function drawDragon(x, y, mode) {
   ctx.strokeStyle = '#15803d'; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.moveTo(x - 6, bodyY + 0.5); ctx.quadraticCurveTo(x - 14, bodyY + (lie ? 3 : 2) + sw * 0.4, x - 20, bodyY + (lie ? 2.5 : -1) + sw); ctx.stroke();
   ctx.fillStyle = '#f97316'; ctx.beginPath(); ctx.moveTo(x - 20, bodyY + (lie ? 2.5 : -1) + sw - 1.8); ctx.lineTo(x - 23.5, bodyY + (lie ? 2.5 : -1) + sw); ctx.lineTo(x - 20, bodyY + (lie ? 2.5 : -1) + sw + 1.8); ctx.fill();
-  // רגליים
-  ctx.fillStyle = '#15803d';
-  if (lie) { ctx.beginPath(); ctx.ellipse(x - 4, y + 6.6, 2.6, 1.1, 0, 0, Math.PI * 2); ctx.ellipse(x + 6, y + 6.6, 2.6, 1.1, 0, 0, Math.PI * 2); ctx.fill(); }
-  else if (fly) {                                                  // רגליים מקופלות לאחור, עם טפרים
-    ctx.strokeStyle = '#15803d'; ctx.lineWidth = 1.7;
-    for (const lx of [-3.5, 5.5]) { ctx.beginPath(); ctx.moveTo(x + lx, bodyY + 2.6); ctx.lineTo(x + lx - 3.2, bodyY + 4.6); ctx.lineTo(x + lx - 5.2, bodyY + 4.2); ctx.stroke(); }
-    ctx.fillStyle = '#fde68a'; for (const lx of [-3.5, 5.5]) { circle(x + lx - 5.6, bodyY + 4.1, 0.5); }
-  }
-  else { ctx.fillRect(x - 5, bodyY + 2, 2.2, 4.6); ctx.fillRect(x + 4.5, bodyY + 2, 2.2, 4.6); }
   // גוף ובטן
   ctx.fillStyle = '#22c55e'; ctx.beginPath(); ctx.ellipse(x, bodyY, 9.5, 4.3 + breathe, 0, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#fde68a'; ctx.beginPath(); ctx.ellipse(x + 1, bodyY + 2.2, 7, 1.9, 0, 0, Math.PI * 2); ctx.fill();
+  // רגליים – מעל הגוף, כדי שרואים אותן
+  ctx.fillStyle = '#166534';
+  if (lie) { ctx.beginPath(); ctx.ellipse(x - 4, y + 6.6, 2.6, 1.1, 0, 0, Math.PI * 2); ctx.ellipse(x + 6, y + 6.6, 2.6, 1.1, 0, 0, Math.PI * 2); ctx.fill(); }
+  else if (fly) {                                                  // רגליים מקופלות לאחור, עם טפרים
+    ctx.strokeStyle = '#166534'; ctx.lineWidth = 2.1;
+    for (const lx of [-3.5, 5.5]) { ctx.beginPath(); ctx.moveTo(x + lx, bodyY + 1.4); ctx.lineTo(x + lx - 3.2, bodyY + 4.6); ctx.lineTo(x + lx - 5.2, bodyY + 4.2); ctx.stroke(); }
+    ctx.fillStyle = '#fde68a'; for (const lx of [-3.5, 5.5]) { circle(x + lx - 5.6, bodyY + 4.1, 0.5); }
+  }
+  else { ctx.fillRect(x - 5, bodyY + 2, 2.2, 4.6); ctx.fillRect(x + 4.5, bodyY + 2, 2.2, 4.6); }
   ctx.fillStyle = '#f97316';                                                       // קוצים על הגב
   for (const sx of [-7, -3.5, 7.5]) { ctx.beginPath(); ctx.moveTo(x + sx - 1.2, bodyY - 3.6); ctx.lineTo(x + sx, bodyY - 6); ctx.lineTo(x + sx + 1.2, bodyY - 3.6); ctx.fill(); }
   ctx.fillStyle = '#b91c1c'; ctx.beginPath(); ctx.ellipse(x, y + 0.2, 3.4, 1.3, 0, 0, Math.PI * 2); ctx.fill();   // אוכף
