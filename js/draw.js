@@ -458,7 +458,17 @@ function draw() {
   if (shakeT > 0) ctx.translate((Math.random() - 0.5) * 2.4 * shakeT * 3, (Math.random() - 0.5) * 2.4 * shakeT * 3);
   const left = -ox / scale - 3, right = (cw - ox) / scale + 3, top = -oy / scale - 3, bottom = (ch - oy) / scale + 3;
 
-  drawWorld(left, right, top, bottom);
+  const sk = typeof skyAmount === 'function' ? skyAmount() : 0;
+  if (sk > 0) {                                                               // רכיבה על דרקון: השמיים מתכהים למעלה, והנוף מתרחק למטה
+    const sg = ctx.createLinearGradient(0, top, 0, bottom);
+    sg.addColorStop(0, 'rgba(37,99,235,' + sk * 0.75 + ')'); sg.addColorStop(1, 'rgba(219,234,254,' + sk * 0.4 + ')');
+    ctx.fillStyle = sg; ctx.fillRect(left, top, right - left, bottom - top);
+    const s = 1 - 0.5 * sk, drop = 42 * sk;
+    ctx.save(); ctx.translate(W / 2, GROUND + drop); ctx.scale(s, s); ctx.translate(-W / 2, -GROUND);
+    drawWorld(W / 2 + (left - W / 2) / s, W / 2 + (right - W / 2) / s, GROUND + (top - GROUND - drop) / s, GROUND + (bottom - GROUND - drop) / s);
+    ctx.restore();
+    drawSkyClouds(left, right, top, sk);
+  } else drawWorld(left, right, top, bottom);
 
   // מכאן – רק בתוך שטח העולם
   ctx.save();
@@ -468,7 +478,7 @@ function draw() {
   for (const o of obstacles) if (WIDE[o.type]) WIDE[o.type](o, bottom);
   for (const o of obstacles) if (!WIDE[o.type]) drawObstacle(o, top);
   const tc = performance.now() / 1000;
-  for (const c of pickups) {                                                  // מטבעות קטנים מסתובבים
+  if (sk < 0.3) for (const c of pickups) {                                    // מטבעות קטנים מסתובבים (בשמיים – לא רואים אותם)
     const sx = Math.max(0.2, Math.abs(Math.cos(tc * 4 + c.x * 0.2)));
     ctx.save(); ctx.translate(c.x, c.y + Math.sin(tc * 5 + c.x) * 0.4); ctx.scale(sx, 1);
     ctx.fillStyle = '#b45309'; circle(0, 0, 2.2); ctx.fillStyle = '#facc15'; circle(0, 0, 1.8);
@@ -1235,6 +1245,7 @@ function drawNinjaBody() {
   // צל על הקרקע
   if (!swim && !drowning && !dive && !(act.hiding > 0)) ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';   // כשכורעים – בלי צל (הברך על הקרקע)
   else ctx.fillStyle = 'rgba(0,0,0,0)';
+  if (riding) ctx.fillStyle = 'rgba(0,0,0,0)';                       // על הדרקון – בלי צל על הקרקע
   ctx.beginPath(); ctx.ellipse(fx + 0.5, GROUND + 0.6, Math.max(1.5, 4.5 - py * 0.08), 0.9, 0, 0, Math.PI * 2); ctx.fill();
   if (invulnT > 0 && Math.floor(invulnT * 10) % 2 === 0) return;   // הבהוב אחרי פגיעה
 

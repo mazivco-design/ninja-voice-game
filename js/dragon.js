@@ -9,6 +9,31 @@ const DRAGON = { w: 34, saddle: 20, stopAt: 4, lie: 6, hi: 34, lo: 12, climb: 60
 const SKY_TYPES = ['skyrock', 'storm'];
 const SKYROCK = { w: 11 }, STORM = { w: 22 };
 
+// כמה "גבוה" המצלמה: 0 על הקרקע, 1 בשמיים (הקרקע וההרים מתרחקים למטה)
+function skyAmount() {
+  if (!ride) return 0;
+  const e = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
+  if (ride.phase === 'takeoff') return e(ride.t / DRAGON.takeoff);
+  if (ride.phase === 'fly') return 1;
+  if (ride.phase === 'land') return 1 - e(ride.t / (DRAGON.land * 0.9));
+  return 0;
+}
+// עננים שחולפים מהר ליד הדרקון – תחושת מהירות וגובה
+function drawSkyClouds(left, right, top, k) {
+  ctx.save(); ctx.globalAlpha = k;
+  repeat(left, right, 0.3, 26, (x, i) => {                         // ים עננים רחוק מעל ההרים
+    const y = GROUND + 14 + hash(i + 320) * 8, r = 4 + hash(i + 321) * 4;
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; circle(x, y, r); circle(x + r, y - r * 0.4, r * 1.1); circle(x + r * 2, y, r * 0.8);
+  });
+  repeat(left, right, 0.9, 32, (x, i) => {
+    const y = top + 8 + hash(i + 300) * (GROUND + 18 - top), r = 2.5 + hash(i + 301) * 3.5;
+    if (hash(i + 302) < 0.35) return;
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    circle(x, y, r); circle(x + r * 1.2, y - r * 0.5, r * 1.2); circle(x + r * 2.5, y, r * 0.9); ctx.fillRect(x, y - 0.1, r * 2.5, r * 0.9);
+  });
+  ctx.restore();
+}
+
 function rideCtl() { return !!ride && ['mount', 'takeoff', 'fly', 'land'].includes(ride.phase); }   // הנינג'ה על הדרקון – הגובה נקבע כאן
 function rideFlying() { return !!ride && (ride.phase === 'takeoff' || ride.phase === 'fly'); }
 function rideHolds() { return !!ride && (ride.phase === 'wait' || ride.phase === 'mount'); }          // העולם עומד
@@ -110,7 +135,11 @@ function drawDragon(x, y, mode) {
   // רגליים
   ctx.fillStyle = '#15803d';
   if (lie) { ctx.beginPath(); ctx.ellipse(x - 4, y + 6.6, 2.6, 1.1, 0, 0, Math.PI * 2); ctx.ellipse(x + 6, y + 6.6, 2.6, 1.1, 0, 0, Math.PI * 2); ctx.fill(); }
-  else if (fly) { ctx.beginPath(); ctx.ellipse(x - 4, bodyY + 3.6, 1.2, 2.2, 0.7, 0, Math.PI * 2); ctx.ellipse(x + 5, bodyY + 3.6, 1.2, 2.2, 0.7, 0, Math.PI * 2); ctx.fill(); }
+  else if (fly) {                                                  // רגליים מקופלות לאחור, עם טפרים
+    ctx.strokeStyle = '#15803d'; ctx.lineWidth = 1.7;
+    for (const lx of [-3.5, 5.5]) { ctx.beginPath(); ctx.moveTo(x + lx, bodyY + 2.6); ctx.lineTo(x + lx - 3.2, bodyY + 4.6); ctx.lineTo(x + lx - 5.2, bodyY + 4.2); ctx.stroke(); }
+    ctx.fillStyle = '#fde68a'; for (const lx of [-3.5, 5.5]) { circle(x + lx - 5.6, bodyY + 4.1, 0.5); }
+  }
   else { ctx.fillRect(x - 5, bodyY + 2, 2.2, 4.6); ctx.fillRect(x + 4.5, bodyY + 2, 2.2, 4.6); }
   // גוף ובטן
   ctx.fillStyle = '#22c55e'; ctx.beginPath(); ctx.ellipse(x, bodyY, 9.5, 4.3 + breathe, 0, 0, Math.PI * 2); ctx.fill();
@@ -151,14 +180,15 @@ function drawSky(o) {
     label(o.lane ? 'DOWN' : 'UP', cx, (o.lane ? b.b + 5 : b.t - 4) + bob, 3.4, '#fde047', '#1e293b');
   } else if (o.type === 'storm' && !o.broken) {                    // ענן סערה – גוש עננים כהה מהשמיים עד הקרקע, גשם וברקים
     const t = performance.now() / 1000, cx = o.x + o.w / 2;
-    const rg = ctx.createLinearGradient(0, GROUND - 56, 0, GROUND);                          // מסך גשם כהה מהענן עד הקרקע – חוסם את שני הגבהים
-    rg.addColorStop(0, 'rgba(71,85,105,.85)'); rg.addColorStop(1, 'rgba(100,116,139,.35)');
+    const bot = GROUND + 40;                                                                   // מסך גשם כהה מהענן ומטה – חוסם את שני הגבהים, ונעלם בהדרגה למטה
+    const rg = ctx.createLinearGradient(0, GROUND - 56, 0, bot);
+    rg.addColorStop(0, 'rgba(71,85,105,.85)'); rg.addColorStop(0.7, 'rgba(100,116,139,.5)'); rg.addColorStop(1, 'rgba(100,116,139,0)');
     ctx.fillStyle = rg; ctx.beginPath(); ctx.moveTo(o.x - 1, GROUND - 56);
-    for (let yy = GROUND - 56; yy <= GROUND; yy += 4) ctx.lineTo(o.x + 1 + Math.sin(yy * 0.3 + t * 2) * 1.2 + (yy - GROUND + 56) * 0.04, yy);
-    for (let yy = GROUND; yy >= GROUND - 56; yy -= 4) ctx.lineTo(o.x + o.w - 1 + Math.sin(yy * 0.27 + t * 2 + 1) * 1.2 - (yy - GROUND + 56) * 0.04, yy);
+    for (let yy = GROUND - 56; yy <= bot; yy += 4) ctx.lineTo(o.x + 1 + Math.sin(yy * 0.3 + t * 2) * 1.2 + (yy - GROUND + 56) * 0.04, yy);
+    for (let yy = bot; yy >= GROUND - 56; yy -= 4) ctx.lineTo(o.x + o.w - 1 + Math.sin(yy * 0.27 + t * 2 + 1) * 1.2 - (yy - GROUND + 56) * 0.04, yy);
     ctx.closePath(); ctx.fill();
     ctx.strokeStyle = 'rgba(226,232,240,.7)'; ctx.lineWidth = 0.35;
-    for (let k = 0; k < 10; k++) { const xx = o.x + 2 + k * 2, yy = GROUND - 52 + ((t * 45 + k * 13) % 50); ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx - 0.9, yy + 3); ctx.stroke(); }
+    for (let k = 0; k < 10; k++) { const xx = o.x + 2 + k * 2, yy = GROUND - 52 + ((t * 45 + k * 13) % 82); ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx - 0.9, yy + 3); ctx.stroke(); }
     const puffs = [];
     for (let k = 0; k < 13; k++) {                                 // ענן גדול ורחב למעלה
       const u = hash(k + o.seed), v = hash(k * 2.7 + o.seed);
