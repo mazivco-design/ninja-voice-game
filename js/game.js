@@ -22,7 +22,8 @@ async function play(m, idx) {
   const words = m === 'stage' ? STAGES[idx || 0].words : m === 'journey' ? journeyWords(WORDS.length) : freeWords();   // במסע מקשיבים לכל המילים שנלמדו
   listenWords = words.includes('fly') && !words.includes('jump') ? [...words, 'jump'] : [...words];   // FLY צריך גם JUMP
   if (words.includes('want')) listenWords.push('i', ...ITEM_WORDS);
-  if (words.includes('let go') && !words.includes('catch')) listenWords.push('catch');   // LET GO צריך גם CATCH                              // I WANT + שמות החפצים
+  if (words.includes('let go') && !words.includes('catch')) listenWords.push('catch');
+  if (words.includes('ride')) for (const w of ['up', 'down', 'fire']) if (!listenWords.includes(w)) listenWords.push(w);   // RIDE: בשמיים צריך UP / DOWN / FIRE   // LET GO צריך גם CATCH                              // I WANT + שמות החפצים
   stopAudio();                      // מתחילים מחדש עם רשימת המילים של המשחק הזה
   const ok = await ensureAudio();   // נקרא ישירות מהלחיצה
   if (ok) startGame(m, idx);
@@ -34,7 +35,7 @@ function startGame(m, idx) {
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
   world = m === 'stage' ? (STAGES[idx || 0].world ?? PAIR_WORLD[Math.floor((idx || 0) / 3)]) : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
-  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; particles = []; flag = null;
+  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
@@ -65,7 +66,7 @@ function startGame(m, idx) {
 function renderHud() {
   $('score').textContent = score;
   $('caught').textContent = caught + picked - coinsFlying;      // מטבע שעוד עף – נספר כשהוא מגיע
-  if (mode === 'stage') $('progressBar').style.width = (100 * done / STAGES[stageIdx].count) + '%';
+  if (mode === 'stage') $('progressBar').style.width = (100 * Math.min(1, done / STAGES[stageIdx].count)) + '%';
   if (mode === 'journey') $('progressBar').style.width = (100 * Math.min(1, done / segLen(jStation))) + '%';
   if (!isFinite(lives)) $('lives').textContent = '';
   else $('lives').textContent = '❤️'.repeat(Math.max(0, lives)) + '🤍'.repeat(Math.max(0, cfg.lives - lives));
@@ -184,6 +185,7 @@ function spawn() {
   const o = { type, x: W + 2, passed: false, hit: false };
   if (type === 'river') o.w = riverWidth();
   if (type === 'chasm') o.w = CHASM.w;
+  if (type === 'dragon') o.w = DRAGON.w;
   if (type === 'lake') o.w = speed * LAKE.factor;        // רחב מדי לקפיצה
   if (type === 'bridge') o.w = speed * BRIDGE.factor;    // רחב מדי לקפיצה, ארוך מדי להליכה
   if (type === 'pond') o.w = Math.max(40, speed * POND.factor);   // הרשת באמצע
@@ -211,6 +213,7 @@ function spawn() {
 
 function playerBox() {
   if (act.leap > 0) return { l: PLAYER.x - 2, r: PLAYER.x + LEAP.w - 2, t: GROUND - py - LEAP.h, b: GROUND - py };   // גוף אופקי, בגובה הקשת
+  if (rideCtl()) return rideBox();                                                                                             // על הדרקון
   if (diving()) return { l: PLAYER.x - 2, r: PLAYER.x + 10, t: GROUND + POND.deep + 2, b: GROUND + POND.deep + 8 };           // עמוק מתחת למים – מתחת לרשת
   if (crawling()) return { l: PLAYER.x - 2, r: PLAYER.x + 10, t: GROUND - 5, b: GROUND };                                       // זוחל
   const ducking = duckT > 0;
@@ -227,6 +230,8 @@ function obstacleBox(o) {
     case 'wall':  return { l: o.x, r: o.x + WALL.w, t: GROUND - WALL.h, b: GROUND };
     case 'ice':   return { l: o.x, r: o.x + ICE.w, t: GROUND - ICE.h, b: GROUND };
     case 'door':  return { l: o.x, r: o.x + DOOR.w, t: GROUND - DOOR.h, b: GROUND };
+    case 'skyrock': case 'storm': return skyBox(o);
+    case 'dragon': return { l: o.x, r: o.x + o.w, t: GROUND - 10, b: GROUND };
     case 'chasm': return { l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 40 };
     case 'enemy': return { l: o.x, r: o.x + ENEMY.w, t: GROUND - ENEMY.h, b: GROUND };
     case 'river': return { l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 20 };
@@ -255,7 +260,7 @@ function rockY(o) {   // הסלע נופל בתאוצה מהחבל עד הקרק
 // ברמה הקלה (forgive) מכווצים את אזור הפגיעה – נגיעה בקצה לא נחשבת
 function collides(o, pb) {
   if (o.demo || o.type === 'coin' || o.broken || o.defeated) return false;
-  if (o.climbed || o.pushed || o.open || o.deflected || o.landed || o.unlocked || o.type === 'chasm') return false;   // תהום: העולם עוצר לפניה, הנפילה מטופלת ב-rope.js
+  if (o.climbed || o.pushed || o.open || o.deflected || o.landed || o.unlocked || o.type === 'chasm' || o.type === 'dragon') return false;   // תהום: העולם עוצר לפניה, הנפילה מטופלת ב-rope.js
   if (o.type === 'rock' && o.fallK === undefined) return false;
   if (o.type === 'guard' && hidingFrom === o) return false;   // מתכופף מאחורי הסלעים – השומרים לא רואים
   const m = cfg.forgive || 0;
@@ -289,7 +294,7 @@ function onHit(o) {
   if (dragonSave()) { invulnT = INVULN_TIME; sinkT = 0; o.pts = 0; cleared(o); return; }   // הדרקון חוסם את הפגיעה – בלי לאבד לב
   hits++; done++;
   if (typeof voiceMark === 'function') voiceMark('hit');
-  if (mode === 'journey') nextType = o.type;     // במסע: מכשול שפספסו חוזר מיד
+  if (mode === 'journey' && !SKY_TYPES.includes(o.type)) nextType = o.type;     // במסע: מכשול שפספסו חוזר מיד
   flash = { text: HIT_WORD[o.type], t: 1.2 };   // מראה את המילה הנכונה
   invulnT = INVULN_TIME;
   if (isFinite(lives)) {
@@ -381,7 +386,8 @@ function update(dt) {
 
   // הנינג'ה
   const wasAir = py > 0;
-  if (act.climb > 0) {                     // מטפס על הסולם – עולה ומתקדם באלכסון
+  if (rideCtl()) { py = ride.py; vy = 0; flyT = 0; }   // על הדרקון – הגובה נקבע ב-dragon.js
+  else if (act.climb > 0) {                     // מטפס על הסולם – עולה ומתקדם באלכסון
     climbK = Math.min(1, climbK + dt / CLIFF.time);
     py = CLIFF.h * climbK; vy = 0;
     if (climbK >= 1) { act.climb = 0; py = CLIFF.h; vy = 0; }           // למעלה – הולך על הצוק ואז קופץ למטה
@@ -423,7 +429,7 @@ function update(dt) {
   const v = curSpeed(), dx = v * dt;
   bgX += dx;
   distSinceSpawn += dx;
-  if (state === 'play' && distSinceSpawn >= nextGap) {
+  if (state === 'play' && distSinceSpawn >= nextGap && !rideBusy()) {
     if (mode === 'free' || spawned < (mode === 'journey' ? segLen(jStation) : STAGES[stageIdx].count)) spawn();
     else if (!flag) flag = { x: W + 2 };
   }
@@ -431,6 +437,7 @@ function update(dt) {
   const pb = playerBox();
   merchantUpdate(dt, pb);
   ropeUpdate(dt, pb);
+  rideUpdate(dt, pb);
   if (state === 'play' && testerMode === 'auto' && isTester()) testerAuto(pb, dt);   // מצב בודק: משחק אוטומטי
   if (state === 'demo' || state === 'intro') demoAuto(pb, dt);
   if (state === 'intro' && (introT -= dt) <= 0) introNext();
@@ -454,8 +461,13 @@ function update(dt) {
     f.x += FIREBALL.speed * dt; f.t += dt;
     if (Math.random() < 0.7) particles.push({ x: f.x - 2, y: f.y + (Math.random() - 0.5) * 2, vx: -20, vy: -4, g: -6, life: 0.35, color: Math.random() < 0.5 ? '#fb923c' : '#fde047', size: 0.9 });
     for (const o of obstacles) {
-      if (o.type !== 'ice' || o.broken) continue;
-      if (f.x + 2 >= o.x && f.x - 2 <= o.x + ICE.w) {
+      if ((o.type !== 'ice' && o.type !== 'storm') || o.broken) continue;
+      if (o.type === 'storm' && f.x + 2 >= o.x) {                       // ענן סערה – האש מפזרת אותו
+        o.broken = true; f.dead = true; sfx('hit');
+        for (let i = 0; i < 18; i++) particles.push({ x: o.x + Math.random() * o.w, y: GROUND - 8 - Math.random() * 54, vx: 10 + Math.random() * 30, vy: (Math.random() - 0.5) * 20, g: 0, life: 0.7 + Math.random() * 0.4, color: ['#64748b', '#94a3b8', '#cbd5e1'][i % 3], size: 2 + Math.random() * 2 });
+        burst(o.x + 3, f.y, '#fb923c', 10); cleared(o); break;
+      }
+      if (o.type === 'ice' && f.x + 2 >= o.x && f.x - 2 <= o.x + ICE.w) {
         o.broken = true; f.dead = true; sfx('hit');
         for (let i = 0; i < 26; i++) particles.push({ x: o.x + Math.random() * ICE.w, y: GROUND - Math.random() * ICE.h, vx: 15 + Math.random() * 45, vy: -10 - Math.random() * 35,
           g: 90, life: 0.9 + Math.random() * 0.5, color: ['#e0f2fe', '#bae6fd', '#7dd3fc', '#ffffff'][i % 4], size: 1 + Math.random() * 1.6, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 14 });

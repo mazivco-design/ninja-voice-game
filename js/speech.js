@@ -77,7 +77,7 @@ async function ensureAudio() {
 // מילה אחרת מחכה לתוצאה הסופית, שמגיעה עם ציון ביטחון: ציון גבוה – מופעלת (וזו טעות, כמו היום). ציון נמוך – כנראה בלבול עם מילה דומה, מתעלמים.
 // אם Vosk "מתקן" את המילה האחרונה (שמע down ואז הבין שזה jump) – מטפלים במילה המתוקנת.
 function handleText(text, isFinal, detail) {
-  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w);
+  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up';
   const { words, confs } = tokenize(text, detail);
   const exp = expectedWords();
   for (let i = 0; i < words.length; i++) {
@@ -108,7 +108,7 @@ function handleText(text, isFinal, detail) {
 
 // מפרק את הטקסט למילים של המשחק. "let go" (שתי מילים אצל Vosk) הופך למילה אחת 'let go', עם הציון הנמוך מבין השתיים
 function tokenize(text, detail) {
-  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w);
+  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up';
   const toks = (text || '').toLowerCase().split(/\s+/).filter(Boolean);
   const dconf = detail && detail.length ? detail.map(d => d.conf) : null;
   const words = [], confs = [];
@@ -122,6 +122,8 @@ function tokenize(text, detail) {
 // המילים שמתאימות למכשולים שעל המסך לפני הנינג'ה (ולסוחר). אם אין כלום – כל המילים של השלב
 function expectedWords() {
   if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? ['want'] : merchant.phase === 'choose' ? [...ITEM_WORDS] : [];
+  if (ride && ride.phase === 'wait') return ['ride'];
+  if (ride && (ride.phase === 'mount' || ride.phase === 'takeoff')) return ['up', 'down', 'fire'];
   if (rope && rope.phase !== 'done') return rope.phase === 'wait' ? ['catch'] : rope.phase === 'hang' ? ['let go'] : [];
   const pb = playerBox(), out = [];
   for (const o of obstacles) {
@@ -233,7 +235,10 @@ function command(word, source) {
 
   if (word === 'jump') {
     if (py === 0) { vy = cfg.jumpV; py = 0.001; duckT = 0; sfx('jump'); }   // קופץ גם מתוך התכופפות
-  } else if (word === 'down') {
+  } else if (word === 'up') { rideLane(true); }                       // UP – הדרקון עולה לגובה העליון
+  else if (word === 'ride') { rideCmd(); }                             // RIDE – עולים על הדרקון
+  else if (word === 'down') {
+    if (rideLane(false)) return;           // על הדרקון – יורדים לגובה התחתון
     duckT = DUCK_TIME;                     // כל "down" נוסף מאריך את ההתכופפות
     flyT = 0;
     if (py > 0) vy = Math.min(vy, -60);    // באוויר – נוחת מהר
@@ -274,7 +279,7 @@ function command(word, source) {
   }
   else if (word === 'dive')  { act.dive = DIVE_TIME; duckT = 0; }
   else if (word === 'fire') {                                            // כדור אש קדימה – שובר קיר קרח
-    if (!(act.fireCd > 0)) { const pb = playerBox(); fireballs.push({ x: pb.r + 1, y: pb.t + 5, t: 0 }); act.fireCd = FIREBALL.cooldown; throwT = 0.25; duckT = 0; sfx('jump'); }
+    if (!(act.fireCd > 0)) { const pb = playerBox(); fireballs.push(rideCtl() ? { x: PLAYER.x + 23, y: GROUND - ride.py - 4, t: 0 } : { x: pb.r + 1, y: pb.t + 5, t: 0 }); act.fireCd = FIREBALL.cooldown; throwT = 0.25; duckT = 0; sfx('jump'); }
   }
   else if (word === 'let go') ropeLetGo();                               // LET GO – משחררים את החבל
   else if (word === 'want') merchantWant();                              // I WANT – הסוחר שואל: איזה?
@@ -284,7 +289,7 @@ function command(word, source) {
 
 // מקלדת – לבדיקה במחשב
 const KEYS = { KeyX: 'crawl', KeyA: 'leap', KeyV: 'dive', Space: 'jump', ArrowUp: 'jump', ArrowDown: 'down', KeyK: 'kick', KeyT: 'throw', KeyC: 'catch', KeyF: 'fly',
-               KeyS: 'stop', KeyR: 'run', KeyW: 'swim', KeyL: 'climb', KeyO: 'push', KeyU: 'pull', KeyH: 'hide', KeyB: 'block', KeyE: 'fire', KeyG: 'let go' };
+               KeyS: 'stop', KeyR: 'run', KeyW: 'swim', KeyL: 'climb', KeyO: 'push', KeyU: 'pull', KeyH: 'hide', KeyB: 'block', KeyE: 'fire', KeyG: 'let go', KeyD: 'ride', KeyQ: 'up' };
 window.addEventListener('keydown', e => {
   const tag = e.target && e.target.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;      // כותבים שם – לא מפעילים פקודות

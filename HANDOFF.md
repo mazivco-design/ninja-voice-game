@@ -36,6 +36,8 @@
 - **`js/draw.js`:** `draw()`, `drawWorld` (5 עולמות: במבוק, כפר לילה, שלג, קניון, מקדש), `drawLayeredGround` + `GROUND_STYLE` (כרגע רק עולם 0), `drawObstacle`, מערה (`drawCaveBody`, סגנון 'cave'), `drawNinja`.
 - **`ninja-figure.js`:** השלד והעור של כל הדמויות (`drawFigure`, `figureJoints`, תנוחות `poseXxx`, `tune`, keyframes). השלד: ירך→מותן→צוואר (כיפוף חזה `spine`), גפיים בשני מפרקים, אופציונלי: כפות רגליים (`feet`, כבוי: `foot: 0`), `taper`, `ink`, `shade` (כולם 0 = מראה מקורי). עיניים: מצמוץ, `P.eyes = 'squint' | 'wide'`.
 - **`animator.html`:** עורך תנוחות (RIG ב־localStorage `ninjaVoice_rig`). כולל פסים ל־spine ולכפות הרגליים. תנועות: כל MOVES כולל `hide`.
+- **`js/rope.js`:** שלב LET GO: תהום עם גבעות, חבל מתנדנד (CATCH ואז LET GO), נפילה למים. עולם 5 = ערוץ עם מפל.
+- **`js/dragon.js`:** שלב RIDE (מילה חדשה + UP): דרקון שוכב ומחכה (העולם עוצר), RIDE ← קפיצה על הגב והמראה, בשמיים 3 מכשולים: `skyrock` בגובה שבו הדרקון (UP/DOWN לגובה השני) ו-`storm` בכל הגובה (FIRE – כדור אש מפה הדרקון). אחר כך נחיתה והדרקון עף. מכשולי השמיים נספרים ב-`spawned`; המפזר הרגיל עוצר בזמן הטיסה (`rideBusy`). 'up' איננה תחנה ב-WORDS – מתווספת ל-listenWords כשיש ride.
 - **`js/merchant.js`:** שלב I WANT: סוחר עם עגלה ומגש, שואל "What do you want?", מציג key/rope/torch; הילד אומר WANT ואז KEY; הנינג'ה הולך לדלת (phase `walk`) ופותח. החבל מצויר בקוד (`drawRope`).
 - **`js/tester.js`:** מצב בודק (שחקן בשם `tester`): כפתור ב־HUD שמחליף 🎤 Voice / 🤖 Auto (משחק אוטומטי) / 👆 Tap (כפתור גדול בצד ימין למעלה שמפעיל את מילת המכשול הקרוב).
 - **`js/state.js`:** גלובלים, `curSpeed`, חלונית דיבאג (🐞) עם יומן השמיעה וכפתורי Share / Copy / Clear.

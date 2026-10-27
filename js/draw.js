@@ -421,7 +421,8 @@ function drawSnow(left, right, top, bottom) {
 function playerPose() {
   const now = performance.now() / 1000;
   let P;
-  if (act.hiding > 0) P = poseHide(now);                 // כורע מכווץ מאחורי הסלעים
+  if (rideCtl() && ride.phase !== 'mount') P = poseRide();          // יושב על הדרקון
+  else if (act.hiding > 0) P = poseHide(now);                 // כורע מכווץ מאחורי הסלעים
   else if (act.climb > 0) P = poseClimb(now);
   else if (act.leap > 0) P = poseLeap();
   else if (diving()) P = poseDive(now);
@@ -539,6 +540,8 @@ function draw() {
 
 function drawObstacle(o, top) {
   const x = o.x;
+  if (o.type === 'dragon') { drawDragon(o.x + DRAGON.saddle, GROUND - DRAGON.lie, ride && ride.o === o && ride.phase === 'mount' ? 'stand' : 'lie'); return; }
+  if (SKY_TYPES.includes(o.type)) { drawSky(o); return; }
   if (artDraw(o)) return;                        // יש ציור SVG מהסטודיו – הוא מחליף את הציור הרגיל
   if (o.type === 'door') { drawDoor(o); drawMerchant(o); return; }   // I WANT: סוחר ודלת נעולה
   if (o.type === 'box') {                       // ארגז עץ
@@ -1193,6 +1196,7 @@ function drawNinja() {                                           // הנינג'�
   drawNinjaBody();
   if (L) ctx.restore();
   if (off) ctx.restore();
+  drawRideLeave();
 }
 function drawNinjaBody() {
   if (ropeHanging()) return;                                                      // תלוי על החבל – מצויר ב-drawRopeSwing
@@ -1200,8 +1204,9 @@ function drawNinjaBody() {
   const swim = swimmingNow();
   const drowning = drownK > 0 && !swim && py <= 0 && sinkT <= 0;     // במים בלי SWIM – שוקע
   const dive = diving(), leap = act.leap > 0, crawl = crawling() && !swim;
-  const duck = duckT > 0, fx = rope && rope.phase === 'fall' && rope.fallX !== undefined ? rope.fallX : leap || dive || crawl ? PLAYER.x + 3 : pb.l + (duck ? 5.5 : swim ? 3 : 4);
-  const fy = dive ? GROUND + POND.deep + 7 : leap ? GROUND - py : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : pb.b;
+  const riding = rideCtl() && ride.phase !== 'mount';
+  const duck = duckT > 0, fx = riding ? PLAYER.x + 4 : rope && rope.phase === 'fall' && rope.fallX !== undefined ? rope.fallX : leap || dive || crawl ? PLAYER.x + 3 : pb.l + (duck ? 5.5 : swim ? 3 : 4);
+  const fy = riding ? GROUND - py : dive ? GROUND + POND.deep + 7 : leap ? GROUND - py : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : pb.b;
   const now = performance.now() / 1000;
   if (sinkT > 0 && sinkType === 'burn') {                                       // נשרף בשדה האש – מושחר ועשן עולה
     const k = 1 - sinkT / SINK_TIME;
@@ -1254,6 +1259,7 @@ function drawNinjaBody() {
   }
   const P = drowning ? poseFly(now * 4) : playerPose();          // שוקע – מנופף בידיים
   P.eyes = invulnT > 0 || drowning ? 'wide' : (py > 0 || kickT > 0 || act.push > 0 || act.pulling > 0 || act.leap > 0) ? 'squint' : null;   // הבעה: בהלה אחרי פגיעה, מאמץ בפעולה
+  if (riding) drawRideDragon(fx, fy);                            // הדרקון מתחת לנינג'ה
   if (hasGear('katana')) drawKatana(fx, fy, P);                  // קטאנה על הגב – מאחורי הגוף
   drawFigure({ fx, fy, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
   drawPet(fx, fy);
