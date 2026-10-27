@@ -7,7 +7,7 @@
    ============================================================ */
 let managing = false, editing = null, editColor = COLORS[0], delArmed = false, delTimer = null;
 
-function hideAllOverlays() { ['menu', 'over', 'editP', 'dict', 'players', 'pause', 'lab', 'freePick', 'shop'].forEach(id => $(id).classList.remove('show')); }
+function hideAllOverlays() { ['menu', 'over', 'editP', 'dict', 'players', 'pause', 'lab', 'freePick', 'shop', 'orderPick'].forEach(id => $(id).classList.remove('show')); }
 
 function showPlayers() {
   state = 'menu';

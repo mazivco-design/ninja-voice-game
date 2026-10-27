@@ -9,6 +9,18 @@ const MODEL_URL = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-sm
 
 // כל המילים שהמשחק מכיר
 const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive', 'crawl', 'fire', 'want', 'let go'];
+// סדר התחנות במסע – אפשר לשנות בעורך (tester → 🧭). נשמר ב-ninjaVoice_wordOrder (ומסתנכרן בין מכשירים)
+const WORDS_DEFAULT = WORDS.slice();
+(function applyWordOrder() {
+  try {
+    const ord = JSON.parse(localStorage.getItem('ninjaVoice_wordOrder') || 'null');
+    if (!Array.isArray(ord)) return;
+    const known = ord.filter((w, i) => WORDS_DEFAULT.includes(w) && ord.indexOf(w) === i);
+    const rest = WORDS_DEFAULT.filter(w => !known.includes(w));                  // מילים חדשות שנוספו מאז – בסוף
+    if (known[0] !== 'jump') return;                                            // JUMP תמיד ראשונה (התחנה של כולם)
+    WORDS.splice(0, WORDS.length, ...known, ...rest);
+  } catch (e) {}
+})();
 const WORD_ICON = { jump: '⬆️', down: '⬇️', kick: '🦶', throw: '✴️', catch: '🟡', fly: '🪁',
                     stop: '✋', run: '💨', swim: '🌊', climb: '🧗', push: '🪨', pull: '⛓️', hide: '🌿', block: '🛡️', leap: '🤸', dive: '🤿', crawl: '🐛', fire: '🔥', want: '🙋', 'let go': '🪢' };
 

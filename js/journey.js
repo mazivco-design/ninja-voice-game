@@ -152,3 +152,40 @@ function labelsVisible() {
   if (state === 'intro' || state === 'demo' || state === 'menu' || state === 'studio') return true;
   return mode === 'journey' ? false : hintsOn();
 }
+
+/* ---------- 🧭 סדר התחנות (רק ל-tester) ----------
+   נעולות: כל התחנות עד הרחוקה ביותר שילד כלשהו הגיע אליה – כדי שאף ילד לא יאבד מילה שפתח או יקבל מילה שלא למד. */
+let orderDraft = null;
+function orderLockedUpTo() {                                     // אינדקס התחנה האחרונה שנעולה
+  let m = 0;
+  for (const p of players) if (!(p.id === 'tester' || p.name.trim().toLowerCase() === 'tester')) m = Math.max(m, getStation(p));
+  return m;
+}
+function openOrder() { orderDraft = WORDS.slice(); renderOrder(); hideAllOverlays(); $('orderPick').classList.add('show'); }
+function closeOrder() { hideAllOverlays(); renderMenu(); $('menu').classList.add('show'); }
+function renderOrder() {
+  const lock = orderLockedUpTo(), box = $('orderList'); box.innerHTML = '';
+  $('orderInfo').textContent = 'Locked: stations 0–' + lock + ' (the farthest a child has reached)';
+  orderDraft.forEach((w, i) => {
+    const locked = i <= lock, r = document.createElement('div');
+    r.className = 'orow' + (locked ? ' lock' : '');
+    r.innerHTML = '<span class="n">' + i + '</span><span>' + (locked ? '🔒' : WORD_ICON[w]) + '</span><span class="w">' + w.toUpperCase() + '</span>';
+    const mk = (txt, to) => { const b = document.createElement('button'); b.textContent = txt; b.disabled = locked || to <= lock || to >= orderDraft.length;
+      b.onclick = () => { [orderDraft[i], orderDraft[to]] = [orderDraft[to], orderDraft[i]]; renderOrder(); }; r.appendChild(b); };
+    mk('▲', i - 1); mk('▼', i + 1);
+    box.appendChild(r);
+  });
+}
+function applyOrder(ord) {                                       // משנים את WORDS במקום – כל המשחק קורא ממנו
+  WORDS.splice(0, WORDS.length, ...ord);
+  store('wordOrder', ord);
+  closeOrder();
+}
+$('orderBtn').onclick = openOrder;
+$('orderBack').onclick = closeOrder;
+$('orderSave').onclick = () => applyOrder(orderDraft);
+$('orderReset').onclick = () => {                                // חזרה לסדר המקורי – רק אם החלק הנעול זהה
+  const lock = orderLockedUpTo();
+  if (WORDS_DEFAULT.slice(0, lock + 1).join() !== WORDS.slice(0, lock + 1).join()) { $('orderInfo').textContent = 'Can\'t reset: a child already passed stations in the new order.'; return; }
+  orderDraft = WORDS_DEFAULT.slice(); renderOrder();
+};

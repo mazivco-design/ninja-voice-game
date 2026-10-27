@@ -47,8 +47,8 @@ function renderMenu() {
   // אימון: שיעור לכל מילה שנפתחה במסע
   const stars = getStars(), box = $('stages'), open = openWords();
   box.innerHTML = '';
-  STAGES.forEach((s, i) => {
-    if (!isLesson(i)) return;
+  WORDS.map(w => lessonIdx(w)).filter(i => i >= 0).forEach(i => {                // לפי סדר המסע (השלבים עצמם לא זזים – הכוכבים נשמרים)
+    const s = STAGES[i];
     const w = s.words[0], unlocked = open.includes(w), got = stars[i] || 0;
     const b = document.createElement('button');
     b.className = 'stage' + (unlocked ? '' : ' locked') + (w === pend ? ' pend' : '');
@@ -63,6 +63,7 @@ function renderMenu() {
   $('hintTgl').classList.toggle('off', !hintsOn());
   $('freeBtn').disabled = !model;
   $('shopBtnCoins').textContent = isTester() ? '∞' : coinsNow();
+  $('orderBtn').classList.toggle('hide', !isTester());
 }
 $('jGo').onclick = continueJourney;
 $('jRestart').onclick = () => play('journey', 0);

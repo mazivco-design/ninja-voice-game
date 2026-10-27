@@ -6,8 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Ninja Voice Game</title>
 <script src="https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js"></script>
-<script src="ninja-figure.js?v=20261027a"></script>
-<link rel="stylesheet" href="css/game.css?v=20261027a">
+<script src="ninja-figure.js?v=20261027b"></script>
+<link rel="stylesheet" href="css/game.css?v=20261027b">
 </head>
 <body>
 <div id="app">
@@ -69,6 +69,7 @@
         <button class="free mix" id="freeBtn" disabled>🎛️ Free mix</button>
         <button class="free shop" id="shopBtn">🛒 Shop <span class="coinIco"></span> <span id="shopBtnCoins">0</span></button>
         <button class="free words" id="dictBtn">📖 Words</button>
+        <button class="free order hide" id="orderBtn">🧭 Journey order</button>
       </div>
     </div>
     <div class="sideBoard" id="sideBoard">
@@ -90,6 +91,20 @@
   </div>
 
   <!-- בחירת מילים ל-Free Play -->
+  <div class="overlay" id="orderPick">
+    <div class="panel">
+      <h2>🧭 Journey order</h2>
+      <p>Move stations with ▲▼. Stations a child already reached are locked 🔒, so nobody loses progress.</p>
+      <p id="orderInfo" style="font-weight:800;color:#4f46e5"></p>
+      <div id="orderList"></div>
+      <div class="row">
+        <button class="btn" id="orderSave">Save ✓</button>
+        <button class="btn sec" id="orderReset">↺ Original order</button>
+        <button class="btn sec" id="orderBack">Back</button>
+      </div>
+    </div>
+  </div>
+
   <div class="overlay" id="freePick">
     <div class="panel">
       <h2>🎛️ Free mix</h2>
@@ -209,24 +224,24 @@
   <div id="debug"></div>
 </div>
 
-<script src="js/config.js?v=20261027a"></script>
-<script src="js/sound.js?v=20261027a"></script>
-<script src="js/state.js?v=20261027a"></script>
-<script src="js/players.js?v=20261027a"></script>
-<script src="js/journey.js?v=20261027a"></script>
-<script src="js/shop.js?v=20261027a"></script>
-<script src="js/merchant.js?v=20261027a"></script>
-<script src="js/rope.js?v=20261027a"></script>
-<script src="js/art.js?v=20261027a"></script>
-<script src="js/menu.js?v=20261027a"></script>
-<script src="js/speech.js?v=20261027a"></script>
-<script src="js/game.js?v=20261027a"></script>
-<script src="js/draw.js?v=20261027a"></script>
-<script src="js/tester.js?v=20261027a"></script>
-<script src="js/screens.js?v=20261027a"></script>
-<script src="js/lab.js?v=20261027a"></script>
-<script src="js/studio.js?v=20261027a"></script>
-<script src="js/main.js?v=20261027a"></script>
+<script src="js/config.js?v=20261027b"></script>
+<script src="js/sound.js?v=20261027b"></script>
+<script src="js/state.js?v=20261027b"></script>
+<script src="js/players.js?v=20261027b"></script>
+<script src="js/journey.js?v=20261027b"></script>
+<script src="js/shop.js?v=20261027b"></script>
+<script src="js/merchant.js?v=20261027b"></script>
+<script src="js/rope.js?v=20261027b"></script>
+<script src="js/art.js?v=20261027b"></script>
+<script src="js/menu.js?v=20261027b"></script>
+<script src="js/speech.js?v=20261027b"></script>
+<script src="js/game.js?v=20261027b"></script>
+<script src="js/draw.js?v=20261027b"></script>
+<script src="js/tester.js?v=20261027b"></script>
+<script src="js/screens.js?v=20261027b"></script>
+<script src="js/lab.js?v=20261027b"></script>
+<script src="js/studio.js?v=20261027b"></script>
+<script src="js/main.js?v=20261027b"></script>
 <!-- סנכרון בין מכשירים (משותף לכל הפרויקטים) -->
 <script src="/Ziviz-Projects-/firebase-config.js"></script>
 <script src="/Ziviz-Projects-/ls-sync.js" data-app="ninja" data-prefix="ninjaVoice" data-exclude="ninjaVoice_mute,ninjaVoice_vlog,ninjaVoice_current" data-button="#menu .mtop" data-busy="#menu:not(.show)"></script>
