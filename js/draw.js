@@ -324,7 +324,13 @@ function drawWorld(left, right, top, bottom) {
     repeat(left, right, 0.32, 24, (x, i) => { if (hash(i + 6) > 0.35) pillar(x, i); });
   }
 
-  // קרקע
+  // קרקע – עם "חורים" במקום של תהומות, כדי שרואים דרכן את הנוף שמאחור
+  const gaps = obstacles.filter(o => o.type === 'chasm');
+  if (gaps.length) { ctx.save(); ctx.beginPath(); ctx.rect(left, GROUND - 1, right - left, bottom - GROUND + 2); for (const o of gaps) ctx.rect(o.x + o.w, GROUND - 1, -o.w, bottom - GROUND + 2); ctx.clip('evenodd'); }
+  drawGroundOnly(left, right, bottom, wd);
+  if (gaps.length) ctx.restore();
+}
+function drawGroundOnly(left, right, bottom, wd) {
   if (GROUND_STYLE[world]) { drawLayeredGround(left, right, bottom, GROUND_STYLE[world]); return; }
   ctx.fillStyle = wd.ground; ctx.fillRect(left, GROUND, right - left, bottom - GROUND);
   ctx.fillStyle = wd.top; ctx.fillRect(left, GROUND, right - left, 2);
@@ -1167,7 +1173,7 @@ function drawNinjaBody() {
   if (sinkT > 0) {                                                               // נופל לתהום או שוקע במים
     const k = 1 - sinkT / SINK_TIME;
     ctx.save();
-    ctx.beginPath(); ctx.rect(fx - 20, GROUND - 40, 40, 40 + (sinkType === 'fall' ? 60 : 0)); ctx.clip();
+    ctx.beginPath(); ctx.rect(fx - 20, GROUND - 40, 40, 40 + (sinkType === 'fall' ? (rope ? ROPE.water + CHASM.h + 1 : 60) : 0)); ctx.clip();   // בתהום עם מים – נעלם בפני המים
     if (sinkType !== 'fall') { ctx.beginPath(); ctx.rect(fx - 20, GROUND - 40, 40, 40.5); ctx.clip(); }   // במים – נעלם מתחת לפני המים
     ctx.translate(fx, GROUND + k * k * (sinkType === 'fall' ? 45 : 16));
     ctx.rotate(sinkType === 'fall' ? k * 2.5 : 0);

@@ -4,7 +4,7 @@
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
 let rope = null;    // { o, phase: 'wait' | 'hang' | 'land' | 'fall' | 'done', t, theta, grabWant, bubble }
-const ROPE = { len: 40, amp: 0.95, period: 2.8, anchorH: 42, want: 1.5, nearAt: 0.7, farAt: 0.55, stopAt: 3 };
+const ROPE = { len: 74, amp: 0.45, period: 2.8, anchorH: 86, want: 1.5, nearAt: 0.7, farAt: 0.55, stopAt: 3, water: 20 };   // החבל תלוי מגבוה, מעבר לראש המסך
 const CHASM = { w: 52, h: 14, slope: 30, top: 8 };   // h = גובה הצוקים, slope = אורך השיפוע, top = משטח שטוח על כל צוק
 
 // גובה הקרקע מעל GROUND בנקודה x – גבעה שעולה לצוק, תהום, צוק שני ויורד חזרה (רק ליד תהום)
@@ -37,7 +37,8 @@ function ropeUpdate(dt, pb) {
     if (r.grabWant > 0) { r.grabWant -= dt; if (r.theta <= -ROPE.amp * ROPE.nearAt) { r.phase = 'hang'; r.grabWant = 0; sfx('coin'); } }
   } else if (r.phase === 'land') {                               // שוחרר בצד הרחוק – העולם "קופץ" כך שהקצה הרחוק מתחת לנינג'ה
     if (r.t > 0.25) { ropeShift(r.o); r.o.unlocked = true; cleared(r.o); r.phase = 'done'; r.t = 0; }
-  } else if (r.phase === 'fall') {                               // נפל לתהום – אחרי האנימציה ממשיכים מהצד הרחוק
+  } else if (r.phase === 'fall') {                               // נפל לתהום – למים. אחרי האנימציה ממשיכים מהצד הרחוק
+    if (!r.splash && r.t > 0.74) { r.splash = true; burst(r.fallX, GROUND + ROPE.water, '#bae6fd', 14, 40); burst(r.fallX, GROUND + ROPE.water, '#ffffff', 8, 30); sfx('hit'); }
     if (sinkT <= 0) { ropeShift(r.o); r.o.unlocked = true; r.phase = 'done'; r.t = 0; }
   } else if (r.phase === 'done' && r.t > 0.4) rope = null;
 }
@@ -64,10 +65,22 @@ function drawChasm(o, bottom) {                                  // גבעה ע�
   const G = (typeof GROUND_STYLE !== 'undefined' && GROUND_STYLE[world]) || null;
   const dirt = G ? G.dirt[0] : wd.ground, grass = G ? G.grass[1] : wd.top;
   const a = x - CHASM.top - CHASM.slope, d = x + w + CHASM.top + CHASM.slope;
-  // התהום: מהקרקע ומטה, ובין הצוקים – חושך עמוק
-  const g = ctx.createLinearGradient(0, T, 0, GROUND + 40);
-  g.addColorStop(0, '#2a1f17'); g.addColorStop(0.5, '#140e0a'); g.addColorStop(1, '#050302');
-  ctx.fillStyle = g; ctx.fillRect(x, T, w, bottom - T);
+  // בתוך התהום: ערפל בהיר של עומק (לא חושך), ובתחתית – מים
+  const sky = wd.sky[1], WY = GROUND + ROPE.water, t = performance.now() / 1000;
+  const g = ctx.createLinearGradient(0, GROUND - 2, 0, WY);                                     // הקיר הרחוק של הנקיק – דהוי מערפל, כמו הנוף הרחוק
+  g.addColorStop(0, '#c9e6d3'); g.addColorStop(0.6, '#a8cbbb'); g.addColorStop(1, '#8fb4a8');
+  ctx.fillStyle = g; ctx.fillRect(x, GROUND - 2, w, WY - GROUND + 2);
+  ctx.strokeStyle = 'rgba(70,100,90,.18)'; ctx.lineWidth = 0.8;                                   // שכבות סלע רחוקות
+  for (let yy = GROUND + 4; yy < WY - 1; yy += 5) { ctx.beginPath(); for (let xx = x; xx <= x + w; xx += 3) ctx.lineTo(xx, yy + Math.sin(xx * 0.18 + yy) * 0.8); ctx.stroke(); }
+  const wg = ctx.createLinearGradient(0, WY, 0, bottom);
+  wg.addColorStop(0, '#38bdf8'); wg.addColorStop(0.4, '#0284c7'); wg.addColorStop(1, '#075985');
+  ctx.fillStyle = wg; ctx.beginPath(); ctx.moveTo(x, bottom);
+  for (let xx = x; xx <= x + w; xx += 2) ctx.lineTo(xx, WY + Math.sin(xx * 0.35 + t * 2.5) * 0.6);
+  ctx.lineTo(x + w, bottom); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 0.5; ctx.beginPath();                // קצף על פני המים
+  for (let xx = x; xx <= x + w; xx += 2) ctx.lineTo(xx, WY + Math.sin(xx * 0.35 + t * 2.5) * 0.6); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.35)';
+  for (let k = 0; k < 5; k++) { const xx = x + 4 + ((k * 11 + t * 6) % (w - 8)); ctx.fillRect(xx, WY + 3 + (k % 2) * 3, 3, 0.4); }
   // שתי הגבעות: מילוי באדמה, ופס דשא לאורך הקו העליון
   const hill = (from, to, edgeX, side) => {
     ctx.fillStyle = dirt; ctx.beginPath(); ctx.moveTo(from, GROUND + 0.5);
@@ -79,8 +92,8 @@ function drawChasm(o, bottom) {                                  // גבעה ע�
   hill(a, x, x, -1); hill(x + w, d, x + w, 1);
   // קירות הצוקים: סלע עם שכבות וקצה מחוספס, שיורד עמוק לתוך התהום
   for (const [ex, dir] of [[x, 1], [x + w, -1]]) {
-    const rg = ctx.createLinearGradient(0, T, 0, GROUND + 40);
-    rg.addColorStop(0, '#8a7a68'); rg.addColorStop(0.35, '#5f5246'); rg.addColorStop(1, '#2a221c');
+    const rg = ctx.createLinearGradient(0, T, 0, GROUND + ROPE.water);
+    rg.addColorStop(0, '#8a7a68'); rg.addColorStop(0.5, '#6b5d50'); rg.addColorStop(1, '#4a3f36');
     ctx.fillStyle = rg; ctx.beginPath(); ctx.moveTo(ex - dir * 0.5, T);
     for (let k = 0; k < 10; k++) ctx.lineTo(ex + dir * (1.2 + hash(k * 3.1 + ex) * 3), T + 2 + k * 5);
     ctx.lineTo(ex - dir * 0.5, bottom); ctx.closePath(); ctx.fill();
@@ -88,12 +101,6 @@ function drawChasm(o, bottom) {                                  // גבעה ע�
     for (let k = 1; k < 8; k++) { ctx.beginPath(); ctx.moveTo(ex - dir * 0.5, T + k * 6); ctx.lineTo(ex + dir * (1.5 + hash(k + ex) * 2), T + k * 6 + 1); ctx.stroke(); }
     ctx.fillStyle = grass; ctx.fillRect(dir > 0 ? ex - 3 : ex, T - 0.4, 3, 1.6);               // שפת הדשא על קצה הצוק
   }
-  // מסגרת עץ על שני הצוקים שהחבל קשור אליה
-  const [ax, ay] = ropeAnchor(o);
-  ctx.fillStyle = '#78350f'; ctx.fillRect(x - 6, ay, 2.4, T - ay); ctx.fillRect(x + w + 3.6, ay, 2.4, T - ay);   // עמודים
-  ctx.fillStyle = '#92400e'; ctx.fillRect(x - 7, ay - 2.2, w + 14, 2.6);                                          // קורה
-  ctx.fillStyle = '#451a03'; ctx.fillRect(x - 7, ay - 0.4, w + 14, 0.8);
-  ctx.fillStyle = '#1c1917'; circle(ax, ay, 1.1);                                                                // הטבעת של החבל
 }
 function drawRopeSwing(o) {                                      // החבל (וגם הנינג'ה כשהוא תלוי)
   const th = rope && rope.o === o ? rope.theta : ropeTheta(performance.now() / 1000);
