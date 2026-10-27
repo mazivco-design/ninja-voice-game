@@ -36,7 +36,7 @@ function ropeUpdate(dt, pb) {
   if (r.phase === 'wait') {                                      // מחכים ל-CATCH כשהחבל קרוב
     if (r.grabWant > 0) { r.grabWant -= dt; if (r.theta <= -ROPE.amp * ROPE.nearAt) { r.phase = 'hang'; r.grabWant = 0; sfx('coin'); } }
   } else if (r.phase === 'land') {                               // שוחרר בצד הרחוק: קפיצה קטנה אל הצוק, והמצלמה זזה איתו חזרה למקום הרגיל
-    const D = 0.55, k = Math.min(1, r.t / D), hop = 1 - (1 - k) * (1 - k);
+    const D = r.air + 0.15, k = Math.min(1, r.t / D), hop = Math.min(1, r.t / r.air);   // באוויר – זז קדימה בקצב קבוע
     const figX = r.fromX + (r.landX - r.fromX) * hop;                // איפה הנינג'ה בעולם (לפני ההזזה)
     const pan = (r.landX - (PLAYER.x + 4)) * (k * k * (3 - 2 * k));  // כמה העולם זז עד עכשיו
     ropeShiftBy(pan - r.panned); r.panned = pan;
@@ -62,7 +62,8 @@ function ropeLetGo() {                                           // LET GO: בצ
   if (rope.theta >= ROPE.amp * ROPE.farAt) {
     const f = ropeFeet(rope.o, rope.theta), farX = rope.o.x + rope.o.w + 5;
     rope.phase = 'land'; rope.t = 0; rope.panned = 0; rope.fromX = f[0]; rope.landX = Math.max(f[0], farX) + 14; rope.drawOff = f[0] - (PLAYER.x + 4);
-    py = Math.max(0.5, (GROUND - CHASM.h) - f[1]); vy = 8; sfx('jump');           // נופל מהחבל אל הצוק
+    py = Math.max(0.5, (GROUND - CHASM.h) - f[1]); vy = cfg.jumpV * 0.55; sfx('jump');   // קופץ מהחבל בקשת אל הצוק
+    rope.air = (vy + Math.sqrt(vy * vy + 2 * cfg.gravity * py)) / cfg.gravity;      // כמה זמן הוא באוויר
   }
   else { rope.fallX = ropeEnd(rope.o, rope.theta)[0] - 1; rope.phase = 'fall'; rope.t = 0; onHit(rope.o); sinkT = SINK_TIME; sinkType = 'fall'; }   // נופל מהמקום שבו שחרר
 }
