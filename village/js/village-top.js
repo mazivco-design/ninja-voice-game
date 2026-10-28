@@ -202,21 +202,26 @@ function buildGround() {
     for (let i = 0; i < 40; i++) { const a = R() * 6.28, d = R() * 60; g.fillStyle = R() < 0.5 ? 'rgba(251,207,232,.85)' : 'rgba(244,164,200,.8)'; ell(g, t[1] + Math.cos(a) * d + 8, t[2] + Math.sin(a) * d, 2, 2.6); }
   });
   // שבילי חצץ: שוליים כהים, חצץ בהיר, אבנים קטנות
-  g.lineCap = 'round'; g.lineJoin = 'round';
-  const stroke = (w, col) => { g.strokeStyle = col; g.lineWidth = w; OUT.paths.forEach(p => { g.beginPath(); p.forEach((q, i) => i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])); g.stroke(); }); };
-  stroke(52, 'rgba(50,60,30,.3)');
-  stroke(46, '#a89c7e');
-  stroke(38, '#d6ccb2');
-  stroke(18, 'rgba(236,230,214,.5)');
-  OUT.paths.forEach(p => {
-    for (let i = 1; i < p.length; i++) {
-      const [ax, ay] = p[i - 1], [bx, by] = p[i], len = Math.hypot(bx - ax, by - ay);
-      for (let d = 0; d < len; d += 6) {
-        if (R() < 0.4) continue;
-        const k = d / len, ox = (R() - 0.5) * 32, oy = (R() - 0.5) * 32;
-        g.fillStyle = R() < 0.5 ? 'rgba(120,110,85,.45)' : 'rgba(250,246,235,.6)'; ell(g, ax + (bx - ax) * k + ox, ay + (by - ay) * k + oy, 1.4 + R() * 1.6, 1.4 + R() * 1.6);
-      }
-    }
+  // השביל נבנה מ"כתמים" לאורך קו מעוגל עם סטייה צדדית ורוחב משתנה – לא קו ישר ומדויק
+  const blobs = organicPaths(R);
+  const layer = (grow, col, squash) => { g.fillStyle = col; blobs.forEach(([x, y, w, a]) => { g.save(); g.translate(x, y); g.rotate(a); ell(g, 0, 0, w + grow, (w + grow) * squash); g.restore(); }); };
+  layer(7, 'rgba(50,60,30,.22)', 0.8);
+  layer(3, '#a99c7c', 0.82);
+  layer(-1, '#cfc4a7', 0.85);
+  // כתמים שחוקים ובהירים יותר, ולא במרכז בדיוק
+  blobs.forEach(([x, y, w]) => { if (R() < 0.18) { g.fillStyle = R() < 0.6 ? 'rgba(232,224,204,.55)' : 'rgba(170,160,130,.35)'; ell(g, x + (R() - 0.5) * w, y + (R() - 0.5) * w, 5 + R() * w * 0.5, 4 + R() * w * 0.35); } });
+  // חצץ ואבנים קטנות, וכמה אבנים גדולות יותר בצדדים
+  blobs.forEach(([x, y, w]) => {
+    for (let k = 0; k < 3; k++) { if (R() < 0.35) continue; g.fillStyle = R() < 0.5 ? 'rgba(120,110,85,.45)' : 'rgba(250,246,235,.6)'; ell(g, x + (R() - 0.5) * w * 1.6, y + (R() - 0.5) * w * 1.6, 1.3 + R() * 1.6, 1.3 + R() * 1.6); }
+    if (R() < 0.07) { const a = R() * 6.28, d = w * (0.85 + R() * 0.3), sx = x + Math.cos(a) * d, sy = y + Math.sin(a) * d; g.fillStyle = 'rgba(60,55,40,.3)'; ell(g, sx + 1, sy + 2, 5 + R() * 3, 4 + R() * 2); g.fillStyle = R() < 0.5 ? '#9d998e' : '#b2aea2'; ell(g, sx, sy, 4.5 + R() * 3, 3.5 + R() * 2); }
+  });
+  // דשא שנכנס לתוך השוליים
+  blobs.forEach(([x, y, w]) => {
+    if (R() < 0.86) return;
+    const a = R() * 6.28, d = w * (0.88 + R() * 0.2), gx = x + Math.cos(a) * d, gy = y + Math.sin(a) * d;
+    g.fillStyle = 'rgba(93,143,69,.9)'; ell(g, gx, gy, 3 + R() * 5, 2 + R() * 4);
+    g.strokeStyle = R() < 0.5 ? 'rgba(40,95,30,.75)' : 'rgba(140,190,90,.75)'; g.lineWidth = 1.3;
+    g.beginPath(); g.moveTo(gx, gy); g.lineTo(gx - 2, gy - 8); g.moveTo(gx + 2, gy); g.lineTo(gx + 3, gy - 10); g.stroke();
   });
   // כיכר הבאר – אבנים מרוצפות
   g.fillStyle = '#a89c7e'; ell(g, OUT.well.x, OUT.well.y + 6, 64, 54);
@@ -244,6 +249,35 @@ function buildGround() {
     if (onPath(cx, cy, 34)) continue;
     for (let j = 0; j < 7; j++) { const x = cx + (R() - 0.5) * 34, y = cy + (R() - 0.5) * 26; g.fillStyle = col; ell(g, x, y, 1.8, 2.6); g.fillStyle = '#facc15'; ell(g, x, y, 0.7, 1); }
   }
+}
+// שבילים אורגניים: מעגלים את הפינות, מוסיפים סטייה צדדית ורוחב משתנה, ומחזירים רשימת כתמים [x, y, רוחב, זווית]
+function organicPaths(R) {
+  const out = [];
+  OUT.paths.forEach((p0, pi) => {
+    let p = p0.map(q => q.slice());
+    for (let it = 0; it < 3; it++) {           // החלקת פינות (Chaikin)
+      const q = [p[0]];
+      for (let i = 0; i < p.length - 1; i++) {
+        const [ax, ay] = p[i], [bx, by] = p[i + 1];
+        q.push([ax * 0.75 + bx * 0.25, ay * 0.75 + by * 0.25], [ax * 0.25 + bx * 0.75, ay * 0.25 + by * 0.75]);
+      }
+      q.push(p[p.length - 1]); p = q;
+    }
+    let dist = 0; const ph = pi * 1.7;
+    for (let i = 1; i < p.length; i++) {
+      const [ax, ay] = p[i - 1], [bx, by] = p[i], len = Math.hypot(bx - ax, by - ay);
+      if (len < 0.01) continue;
+      const nx = -(by - ay) / len, ny = (bx - ax) / len, ang = Math.atan2(by - ay, bx - ax);
+      for (let d = 0; d < len; d += 5) {
+        const t = dist + d, k = d / len;
+        const wob = Math.sin(t / 53 + ph) * 5 + Math.sin(t / 21 + ph * 2) * 2;
+        const w = 23 + Math.sin(t / 61 + ph * 3) * 4 + Math.sin(t / 23 + ph) * 1.5;
+        out.push([ax + (bx - ax) * k + nx * wob, ay + (by - ay) * k + ny * wob, w, ang]);
+      }
+      dist += len;
+    }
+  });
+  return out;
 }
 function onPath(x, y, pad) {
   for (const p of OUT.paths) for (let i = 1; i < p.length; i++) {
