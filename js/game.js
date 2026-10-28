@@ -35,7 +35,7 @@ function startGame(m, idx) {
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
   world = m === 'stage' ? (STAGES[idx || 0].world ?? PAIR_WORLD[Math.floor((idx || 0) / 3)]) : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
-  learnT = 0; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
+  learnT = 0; learnWait = null; missCount = {}; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
@@ -290,17 +290,34 @@ function collides(o, pb) {
   return pb.l < b.r - m && pb.r > b.l + m && pb.t < b.b - m && pb.b > b.t + m;
 }
 
-// אחרי פגיעה: הריצה נעצרת לרגע (בלי לחזור אחורה), המילה הנכונה מופיעה בגדול ונשמעת בקול, ואז ממשיכים
-const LEARN = { pause: 1.5 };
-let learnT = 0;
+// אחרי פגיעה: בפעם הראשונה – בלי לעצור: המילה נשמעת מיד, ואותו מכשול חוזר (עם קצת יותר מרווח, כדי לשמוע).
+// כישלון שני ברצף באותו מכשול – כשהמכשול כבר מאחורי הנינג'ה, הריצה עוצרת לרגע, והמילה מופיעה בגדול ונשמעת. הצלחה מאפסת
+const LEARN = { pause: 1.5, gap: 0.7 };
+let learnT = 0, learnWait = null, missCount = {};
 const LEARN_SAY = { river: ['jump', 'fly'], chasm: ['let go'], door: ['want'], storm: ['fire'] };
-function learnAfterHit(o) {
-  const say = o.type === 'skyrock' ? [o.lane ? 'down' : 'up'] : (LEARN_SAY[o.type] || (OBSTACLE_WORDS[o.type] || []).slice(0, 1));
-  if (!say.length) return;
+function learnWords(o) { return o.type === 'skyrock' ? [o.lane ? 'down' : 'up'] : (LEARN_SAY[o.type] || (OBSTACLE_WORDS[o.type] || []).slice(0, 1)); }
+function sayWords(say, t) {
   speak(say[0]);
   if (say[1]) setTimeout(() => { if (state === 'play') speak(say[1]); }, 750);
-  flash = { text: say.map(w => (WORD_ICON[w] || '') + ' ' + w.toUpperCase()).join('  →  ') + '!', t: LEARN.pause + 0.3 };
-  if (!SKY_TYPES.includes(o.type) && o.type !== 'gust' && o.type !== 'chasm') learnT = LEARN.pause;   // בשמיים / בטורנדו / בתהום – העולם כבר עומד או שאי אפשר לעצור
+  flash = { text: say.map(w => (WORD_ICON[w] || '') + ' ' + w.toUpperCase()).join('  →  ') + '!', t };
+}
+function learnAfterHit(o) {
+  const say = learnWords(o);
+  if (!say.length) return;
+  missCount[o.type] = (missCount[o.type] || 0) + 1;
+  const canStop = !SKY_TYPES.includes(o.type) && o.type !== 'gust' && o.type !== 'chasm';   // בשמיים / בטורנדו / בתהום – העולם כבר עומד או שאי אפשר לעצור
+  if (missCount[o.type] >= 2 && canStop) { learnWait = { o, say, t: 0 }; return; }          // עוצרים רק אחרי שהמכשול עבר
+  sayWords(say, 1.4);
+  nextGap += speed * LEARN.gap;                                                              // זמן לשמוע לפני שהמכשול חוזר
+}
+function learnUpdate(dt) {
+  if (learnT > 0) learnT -= dt;
+  if (!learnWait) return;
+  const w = learnWait; w.t += dt;
+  const gone = !obstacles.includes(w.o), b = gone ? null : obstacleBox(w.o);
+  if (gone || b.r < PLAYER.x - 3 || w.t > 1.2) {                                             // המכשול כבר מאחור – עוצרים ואומרים
+    learnWait = null; learnT = LEARN.pause; sayWords(w.say, LEARN.pause + 0.3);
+  }
 }
 
 function onHit(o) {
@@ -333,6 +350,7 @@ function cleared(o) {
   if (typeof voiceMark === 'function') voiceMark('ok');
   const v = o.pts === undefined ? 1 : o.pts;
   o.passed = true; done++; score += v;
+  if (missCount[o.type]) missCount[o.type] = 0;                // הצליח – מאפסים את ספירת הכישלונות של המכשול הזה
   if (mode === 'journey' && state === 'play' && v > 0) floatText(PLAYER.x + 4, GROUND - 24, '+' + v, '#7c3aed');
   if (o.type !== 'coin') sfx('clear');
   if (mode === 'free' && state === 'play') endlessProgress();
@@ -442,7 +460,7 @@ function update(dt) {
   if (act.fireCd > 0) act.fireCd -= dt;
   for (const k of ['stop', 'run', 'swim', 'climbWant', 'push', 'pull', 'pullWant', 'hide', 'block', 'leapWant', 'dive', 'crawl', 'crawlWant', 'roll']) if (act[k] > 0) act[k] = Math.max(0, act[k] - dt);
   if (flash && (flash.t -= dt) <= 0) flash = null;
-  if (learnT > 0) learnT -= dt;
+  learnUpdate(dt);
   if (heard && (heard.t -= dt) <= 0) heard = null;
   if (banner && (banner.t -= dt) <= 0) banner = null;
 
