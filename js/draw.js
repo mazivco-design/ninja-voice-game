@@ -813,15 +813,47 @@ function basinPath(o, bottom, y0) {                                            /
 }
 const waterY = () => GROUND + SHORE.drop;                                       // פני המים – קצת מתחת לקרקע
 function waterPath(o, bottom) { basinPath(o, bottom, waterY()); }
-function drawBasinWall(o, bottom) {                                             // מעל המים: הדופן הרחוקה של הגדה, בצל
-  const G = (typeof GROUND_STYLE !== 'undefined' && GROUND_STYLE[world]) || null, wd = WORLDS[world];
-  ctx.save(); basinPath(o, waterY() + 1, GROUND - 0.6); ctx.clip();
-  const wg = ctx.createLinearGradient(0, GROUND - 0.6, 0, waterY() + 1);                      // צל רך למעלה, ובהיר יותר ליד המים
-  const base = world === 2 ? '#b8c4d4' : G ? G.dirt[0] : wd.ground;
-  wg.addColorStop(0, 'rgba(0,0,0,.28)'); wg.addColorStop(0.5, 'rgba(0,0,0,.1)'); wg.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = base; ctx.fillRect(o.x - 2, GROUND - 1, o.w + 4, SHORE.drop + 3);
+function drawBasinWall(o, bottom) {                                             // מעל המים: הדופן הרחוקה של הגדה – בהירה, עם צמחים שגולשים מלמעלה (או שלג וקרח)
+  const G = (typeof GROUND_STYLE !== 'undefined' && GROUND_STYLE[world]) || null, wd = WORLDS[world], snow = world === 2;
+  const x0 = o.x + bankOff(o, GROUND) - 1.2, x1 = o.x + o.w - bankOff(o, GROUND) + 1.2, wy = waterY();
+  ctx.save(); basinPath(o, wy + 1, GROUND - 0.6); ctx.clip();
+  ctx.fillStyle = snow ? '#c9d4e2' : G ? G.dirt[0] : wd.ground; ctx.fillRect(o.x - 2, GROUND - 1, o.w + 4, SHORE.drop + 3);
+  const wg = ctx.createLinearGradient(0, GROUND - 0.6, 0, wy + 1);              // צל עדין למעלה בלבד
+  wg.addColorStop(0, 'rgba(0,0,0,.13)'); wg.addColorStop(0.6, 'rgba(0,0,0,0)');
   ctx.fillStyle = wg; ctx.fillRect(o.x - 2, GROUND - 1, o.w + 4, SHORE.drop + 3);
+  if (!snow) {                                                                  // שורשים דקים בדופן
+    ctx.strokeStyle = 'rgba(92,64,38,.35)'; ctx.lineWidth = 0.3;
+    for (let k = 4; k < o.w - 4; k += 9) { const rx = o.x + k + hash(k + 7) * 4; ctx.beginPath(); ctx.moveTo(rx, GROUND); ctx.quadraticCurveTo(rx + 1, GROUND + 1, rx + 0.4, GROUND + 1.6 + hash(k) * 0.6); ctx.stroke(); }
+  }
   ctx.restore();
+  // הקצה העליון: לא קו ישר – קבוצות צמחים (או שלג) בגדלים שונים, עם רווחים ביניהן
+  for (let k = 0, xx = x0 + 1; xx < x1 - 1; k++) {
+    const r = hash(k * 3.1 + o.w * 0.37), r2 = hash(k * 5.7 + 11);
+    xx += 2 + r2 * 5.5;
+    if (r < 0.3 || xx > x1 - 1) continue;                                       // רווח – אין כלום כאן
+    if (snow) {
+      const sz = 0.8 + r * 1.6;
+      ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.ellipse(xx, GROUND - 0.2, sz * 1.3, sz * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+      if (r > 0.7) { ctx.beginPath(); ctx.ellipse(xx + sz * 0.6, GROUND - 0.6, sz * 0.7, sz * 0.4, 0, 0, Math.PI * 2); ctx.fill(); }
+      if (r2 > 0.55) { ctx.fillStyle = 'rgba(224,242,254,.9)'; ctx.beginPath(); ctx.moveTo(xx - 0.35, GROUND + 0.1); ctx.lineTo(xx + 0.35, GROUND + 0.1); ctx.lineTo(xx, GROUND + 0.6 + r2 * 1.2); ctx.closePath(); ctx.fill(); }   // נטיף קרח
+      continue;
+    }
+    const blades = 1 + Math.floor(r * 4), tall = 0.8 + r2 * 2.2;
+    ctx.fillStyle = r2 > 0.5 ? wd.top : '#16a34a';                               // גוש דשא
+    ctx.beginPath(); ctx.ellipse(xx, GROUND - 0.15, 0.7 + blades * 0.45, 0.55, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = r > 0.65 ? '#15803d' : '#22a04b'; ctx.lineWidth = 0.32; ctx.lineCap = 'round';
+    for (let b = 0; b < blades; b++) {                                          // עלי דשא בגבהים וכיוונים שונים
+      const bx = xx + (b - (blades - 1) / 2) * 0.7, h = tall * (0.6 + hash(k + b * 9) * 0.6), lean = (hash(k * 2 + b) - 0.5) * 1.4;
+      ctx.beginPath(); ctx.moveTo(bx, GROUND - 0.3); ctx.quadraticCurveTo(bx + lean * 0.3, GROUND - h * 0.6, bx + lean, GROUND - h); ctx.stroke();
+    }
+    if (r > 0.72) {                                                            // לפעמים: צמח שגולש על הדופן לכיוון המים
+      const len = 0.8 + r2 * (SHORE.drop - 0.3);
+      ctx.strokeStyle = '#4d7c0f'; ctx.lineWidth = 0.4;
+      ctx.beginPath(); ctx.moveTo(xx, GROUND); ctx.quadraticCurveTo(xx + 0.9, GROUND + len * 0.5, xx + 0.3, GROUND + len); ctx.stroke();
+      ctx.fillStyle = '#65a30d'; ctx.beginPath(); ctx.ellipse(xx + 0.55, GROUND + len * 0.55, 0.55, 0.3, 0.8, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(xx + 0.2, GROUND + len, 0.5, 0.28, -0.6, 0, Math.PI * 2); ctx.fill();
+    }
+  }
 }
 function drawShore(o) {                                                        // שפת המים: רצועה רטובה, אבנים, ודשא (או שלג) שנוטה מעל המים
   const x = o.x, w = o.w, wd = WORLDS[world], snow = world === 2;
