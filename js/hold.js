@@ -47,6 +47,7 @@ function gustUpdate(dt, pb) {
     if (grove && stalkX(grove, 2) - (pb.r + gustAdv) <= GUST.stopAt) {
       gust = { o: grove, phase: 'storm', t: 0, k: 0.25, gx: gustAdv, vx: 0, lift: 0, held: null, want: grove.holdWant ? GUST.want : 0, ang: 0 };
       if (!tornado) tornado = { x: W + 22, k: 0.55, a: 1 };
+      gustAdv = 0;                                                              // מכאן ההתקדמות על המסך נשמרת ב-gust.gx (בלי לספור אותה פעמיים)
       duckT = 0;
     } else if (!grove && tornado) { tornado.a -= dt * 2; if (tornado.a <= 0) tornado = null; }
     return;
@@ -54,6 +55,7 @@ function gustUpdate(dt, pb) {
   const g = gust, o = g.o, B = gustBuild(); g.t += dt;
   if (!obstacles.includes(o)) { gust = null; tornado = null; return; }
   if (g.want > 0) g.want -= dt;
+  if (g.snap) { g.snap *= Math.exp(-dt * 10); if (Math.abs(g.snap) < 0.02) g.snap = 0; }   // הידיים מחליקות אל הקנה (בלי קפיצה)
   if (g.phase === 'storm') {
     const total = B + GUST.peak;
     g.k = g.t < B ? 0.3 + 0.7 * (g.t / B) : 1;
@@ -78,7 +80,7 @@ function gustUpdate(dt, pb) {
         const hand = PLAYER.x + 4 + g.gx + 3;
         let best = null;
         GUST.stalks.forEach((_, i) => { const d = Math.abs(stalkX(o, i) - hand); if (d <= GUST.reach && (best === null || d < best.d)) best = { i, d }; });
-        if (best) { g.held = best.i; g.want = 0; g.vx = 0; sfx('coin'); burst(stalkX(o, best.i), GROUND - GUST.grip, '#a3e635', 6, 16); }
+        if (best) { g.snap = (PLAYER.x + 4 + g.gx) - (stalkX(o, best.i) - 0.8); g.held = best.i; g.want = 0; g.vx = 0; sfx('coin'); burst(stalkX(o, best.i), GROUND - GUST.grip, '#a3e635', 6, 16); }
       }
       if (PLAYER.x + 4 + g.gx < -8) {                                           // עף מהמסך – פגיעה
         g.phase = 'lost'; g.t = 0;
@@ -99,12 +101,12 @@ function gustUpdate(dt, pb) {
     if (g.t >= GUST.calm) {
       tornado = null; g.k = 0;
       if (!o.demo) cleared(o); else o.passed = true;
-      g.phase = 'back'; g.t = 0; g.from = g.held !== null ? stalkX(o, g.held) - (PLAYER.x + 4) - 3 : g.gx; g.held = null; g.lift = 0;
+      g.phase = 'back'; g.t = 0; g.from = g.held !== null ? stalkX(o, g.held) - (PLAYER.x + 4) - 1.5 : g.gx; g.gx = g.from; g.held = null; g.lift = 0;   // ממשיך בדיוק מהמקום שבו עמד
     }
   } else if (g.phase === 'lost') {                                              // מחוץ למסך – מחכים שהסערה תיגמר
     g.k = g.t < 1.0 ? 1 : Math.max(0, 1 - (g.t - 1.0) / 0.7);
     tornado.a = Math.min(1, g.k + 0.1); tornado.k = Math.max(0.3, g.k);
-    if (g.t >= 1.7) { tornado = null; g.phase = 'back'; g.t = 0; g.from = -PLAYER.x - 14; g.lift = 0; g.k = 0; }
+    if (g.t >= 1.7) { tornado = null; g.phase = 'back'; g.t = 0; g.from = -PLAYER.x - 14; g.gx = g.from; g.lift = 0; g.k = 0; }
   } else if (g.phase === 'back') {                                              // רץ חזרה למקום הרגיל
     const e = Math.min(1, g.t / GUST.back);
     g.gx = g.from * (1 - e);
@@ -253,7 +255,7 @@ function drawGustNinja() {
                        arms: [[Math.PI - 0.08, Math.PI - 0.05], [Math.PI + 0.06, Math.PI + 0.04]],          // שתי ידיים ישרות מעל הראש – על הקנה
                        legs: [[-0.2 + Math.sin(now * 15) * 0.35 * g.ang, -0.1], [0.15 - Math.sin(now * 15 + 1.5) * 0.35 * g.ang, 0.05]] });   // רגליים מתנופפות
     const [lx, ly] = handAt(0, 0, 1, 1, P);                                     // איפה הידיים ביחס לכפות הרגליים
-    const hx = stalkX(g.o, g.held) - 0.8, hy = GROUND + ly;                     // הידיים על הקנה, בגובה שבו הרגליים נוגעות בקרקע כשעומדים
+    const hx = stalkX(g.o, g.held) - 0.8 + (g.snap || 0), hy = GROUND + ly;                     // הידיים על הקנה, בגובה שבו הרגליים נוגעות בקרקע כשעומדים
     ctx.save(); ctx.translate(hx, hy); ctx.rotate(g.ang + flap);              // הגוף נמשך שמאלה עם הרוח – עד שהוא אופקי באוויר
     drawFigure({ fx: -lx, fy: -ly, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
     ctx.restore();
