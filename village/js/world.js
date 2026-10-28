@@ -1,9 +1,10 @@
 /* ============================================================
    village/js/world.js – העולם בחוץ: מפה גדולה בחמישה אזורים.
-   מרכז הכפר (המקורי) באמצע; מצפון יער במבוק עם מקדש קטן (פתוח).
+   מרכז הכפר (המקורי) באמצע; מדרום יער במבוק עם מקדש קטן (פתוח).
    ממערב: מקדש גדול – מאחורי סלע שחוסם את הדרך (PUSH).
    ממזרח: שדות אורז – מעבר לנהר, על אבני קפיצה (JUMP).
-   מדרום: שוק – מאחורי חומה ושער עם שומר (FIGHT).
+   מצפון: שוק – מאחורי חומה ושער עם שומר (FIGHT). השער בצפון כי במבט שלנו
+   רואים רק את הצד הדרומי של קירות – כך הנינג'ה מגיע אל השער מלפנים.
    הכול מכוסה בערפל שמתפזר כשהולכים, והמעברים נפתחים במילים.
    (בינתיים אין זיהוי קולי: נגיעה בשלט עם המילה פותחת את המעבר.)
    ============================================================ */
@@ -11,7 +12,7 @@
 const OUT = { w: 3400, h: 2600, cell: 8, start: { x: 1700, y: 1440, dir: 'down' } };
 const WALL = 60, RISE = 44;                         // גובה קיר הבית וגובה הגג
 const CLIFF_X = 1000, GAP = [1372, 1448];           // רכס הסלעים במערב, והפתח שהסלע הגדול חוסם
-const WALL_Y = 1840, GATE_X = 1720, GATE_HALF = 26; // החומה בדרום והשער
+const WALL_Y = 900, GATE_X = 1715, GATE_HALF = 26;  // החומה בצפון והשער
 const RIVER_HALF = 56;
 function riverX(y) { return 2525 + Math.sin(y / 260) * 40 + Math.sin(y / 97) * 8; }
 const CROSS_Y = 1376, CROSS_X = riverX(CROSS_Y);    // אבני הקפיצה בנהר
@@ -31,14 +32,14 @@ OUT.paths = [
   [[1810, 1372], [1915, 1270], [1915, 1152]],
   [[2000, 1384], [2000, 1615], [2155, 1615], [2155, 1552]],
   [[1700, 1366], [1700, 1700], [1470, 1720]],
-  [[1700, 1700], [1716, 1840], [1720, 2070]],                                                                        // דרומה, דרך השער, לשוק
-  [[1700, 1366], [1690, 1150], [1715, 900], [1650, 660], [1700, 420], [1620, 200]],                                  // צפונה ליער
-  [[1715, 900], [1880, 780], [2040, 720], [2048, 590]],                                                              // למקדש הקטן ביער
-  [[1650, 660], [1420, 560], [1230, 430]],                                                                           // לעץ הזקן ביער
+  [[1700, 1700], [1716, 1880], [1660, 2100], [1710, 2330], [1640, 2540]],                                          // דרומה ליער
+  [[1700, 1366], [1690, 1150], [1715, 900], [1718, 670]],                                                            // צפונה, דרך השער, לשוק
+  [[1710, 2330], [1900, 2352], [2048, 2334], [2048, 2278]],                                                          // למקדש הקטן ביער
+  [[1660, 2100], [1420, 2180], [1230, 2300]],                                                                        // לעץ הזקן ביער
   [[430, 1468], [455, 1330], [460, 1075]],                                                                           // למקדש הגדול
   [[760, 1432], [718, 1650]],                                                                                        // לבריכה במערב
   [[2800, 1400], [2900, 1250], [2965, 1135]],                                                                        // לבית החווה
-  [[1960, 2190], [2235, 2105]]                                                                                       // מהשוק לבית התה
+  [[1960, 380], [2235, 262]]                                                                                         // מהשוק לבית התה
 ];
 OUT.houses = [
   { x: 1430, y: 1100, w: 180, h: 130, roof: 'tile', enter: true },
@@ -46,7 +47,7 @@ OUT.houses = [
   { x: 2070, y: 1420, w: 170, h: 130, roof: 'tile2' },
   { x: 2880, y: 1000, w: 170, h: 120, roof: 'thatch' },
   { x: 300, y: 860, w: 320, h: 190, roof: 'temple', pillar: '#9f1d1d' },
-  { x: 2150, y: 1960, w: 170, h: 120, roof: 'tile' }
+  { x: 2150, y: 120, w: 170, h: 120, roof: 'tile' }
 ];
 OUT.houses.forEach(h => {
   h.doorX = h.x + h.w / 2;
@@ -58,27 +59,27 @@ OUT.houses.forEach(h => {
 });
 OUT.ponds = [{ x: 1330, y: 1590, rx: 125, ry: 72, koi: 3 }, { x: 700, y: 1745, rx: 105, ry: 62, koi: 2 }];
 OUT.well = { x: 1800, y: 1490, r: 24 };
-OUT.toriis = [{ x: 1700, y: 1620, half: 44 }, { x: 456, y: 1300, half: 50 }, { x: 2048, y: 668, half: 34, s: 0.72 }];
+OUT.toriis = [{ x: 1700, y: 1620, half: 44 }, { x: 456, y: 1300, half: 50 }, { x: 2048, y: 2300, half: 34, s: 0.72 }];
 OUT.plazas = [
   { x: 1800, y: 1496, rx: 64, ry: 54, kind: 'stone' },
-  { x: 1720, y: 2235, rx: 300, ry: 185, kind: 'earth' },
+  { x: 1720, y: 470, rx: 300, ry: 185, kind: 'earth' },
   { x: 460, y: 1185, rx: 200, ry: 100, kind: 'gravel' }
 ];
 OUT.paddies = [];
 for (let i = 0; i < 4; i++) for (let j = 0; j < 7; j++) OUT.paddies.push({ x: 2660 + i * 180, y: 1470 + j * 150, w: 140, h: 110 });
 for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) OUT.paddies.push({ x: 2660 + i * 180, y: 350 + j * 150, w: 140, h: 110 });
 OUT.stalls = [
-  { x: 1450, y: 2130, c: '#dc2626', goods: 'fruit' }, { x: 1990, y: 2130, c: '#16a34a', goods: 'pots' },
-  { x: 1460, y: 2400, c: '#2563eb', goods: 'fish' }, { x: 1720, y: 2410, c: '#9333ea', goods: 'sweets' }, { x: 1980, y: 2400, c: '#ca8a04', goods: 'cloth' }
+  { x: 1450, y: 610, c: '#dc2626', goods: 'fruit' }, { x: 1990, y: 610, c: '#16a34a', goods: 'pots' },
+  { x: 1460, y: 345, c: '#2563eb', goods: 'fish' }, { x: 1720, y: 335, c: '#9333ea', goods: 'sweets' }, { x: 1980, y: 345, c: '#ca8a04', goods: 'cloth' }
 ];
 OUT.people = [
-  { x: 1450, y: 2088, look: MERCHANT_LOOK }, { x: 1640, y: 2240, look: VILLAGER_LOOK }, { x: 1830, y: 2215, look: VILLAGER2_LOOK },
+  { x: 1450, y: 568, look: MERCHANT_LOOK }, { x: 1640, y: 470, look: VILLAGER_LOOK }, { x: 1830, y: 445, look: VILLAGER2_LOOK },
   { x: 585, y: 1128, look: MONK_LOOK }, { x: 2820, y: 1750, look: FARMER_LOOK }, { x: 1300, y: 1692, look: FISHER_LOOK, dir: 'up' }
 ].map((p, i) => Object.assign({ dir: 'down', phase: i * 1.3 }, p));
-OUT.shrine = { x: 2048, y: 545 };
-OUT.jizo = [[1990, 560], [2108, 560], [2130, 596]];
+OUT.shrine = { x: 2048, y: 2240 };
+OUT.jizo = [[1990, 2255], [2108, 2255], [2130, 2290]];
 OUT.scarecrows = [[3000, 1600], [3180, 1900], [2820, 600]];
-OUT.oldTree = { x: 1180, y: 380 };
+OUT.oldTree = { x: 1180, y: 2345 };
 
 // ---------- מה תופס מקום על הקרקע (לבדיקות מיקום) ----------
 function onPath(x, y, pad) {
@@ -102,7 +103,7 @@ function nearBarrier(x, y, pad) {
   if (Math.abs(y - WALL_Y) < 26 + pad && x > CLIFF_X - 20 && x < WALL_END + 60) return true;
   return false;
 }
-function region(x, y) { if (x < CLIFF_X) return 'west'; if (x > riverX(y)) return 'east'; if (y > WALL_Y) return 'south'; return 'center'; }
+function region(x, y) { if (x < CLIFF_X) return 'west'; if (x > riverX(y)) return 'east'; if (y < WALL_Y) return 'north'; return 'center'; }
 
 // ---------- עצמים: תחילה מה שתוכנן ביד (מרכז הכפר המקורי), ואחר כך מילוי אקראי ----------
 OUT.trees = []; OUT.stalks = []; OUT.bushes = []; OUT.rocks = []; OUT.lanterns = []; OUT.cliff = [];
@@ -128,13 +129,13 @@ function put(list, item, x, y, r) { list.push(item); placed.push([x, y, r]); }
    ['cherry', 2010, 1735, 0.9], ['pine', 2350, 1460, 0.9], ['cherry', 1880, 1660, 0.8]]
     .forEach(t => { if (!onPath(t[1], t[2], 30)) put(OUT.trees, t, t[1], t[2], 26 * t[3]); });
   OUT.trees.push(['pine', OUT.oldTree.x, OUT.oldTree.y, 1.55]);
-  [[1470, 1332], [1600, 1414], [1880, 1414], [1640, 1570], [1760, 1570], [390, 1180], [530, 1180], [1990, 610], [2106, 610],
-   [1340, 2060], [2110, 2060], [1340, 2420], [2110, 2420], [1640, 1890], [1800, 1890], [2600, 1440], [3040, 1170]]
+  [[1470, 1332], [1600, 1414], [1880, 1414], [1640, 1570], [1760, 1570], [390, 1180], [530, 1180], [1968, 2300], [2128, 2300],
+   [1340, 330], [2110, 330], [1340, 640], [2110, 640], [1635, 950], [1795, 950], [2600, 1440], [3040, 1170]]
     .forEach(l => put(OUT.lanterns, l, l[0], l[1], 14));
   [[2060, 1270, 10], [1960, 1490, 8], [1210, 1500, 12], [1445, 1515, 9], [1465, 1660, 10]].forEach(r => put(OUT.rocks, r, r[0], r[1], r[2] + 6));
-  [[1380, 970, 9], [1770, 940, 8], [2230, 970, 8], [1120, 1030, 7], [2230, 1705, 7], [1560, 1760, 6]].forEach(([gx, gy, n], gi) => {
+  [[1380, 970, 9], [2230, 970, 8], [1120, 1030, 7], [2230, 1705, 7], [1560, 1760, 6]].forEach(([gx, gy, n], gi) => {
     const R2 = rng(100 + gi);
-    for (let i = 0; i < n; i++) { const x = gx + (R2() - 0.5) * 70, y = gy + (R2() - 0.5) * 34; if (!onPath(x, y, 30)) put(OUT.stalks, [x, y, 0.75 + R2() * 0.5, R2()], x, y, 6); }
+    for (let i = 0; i < n; i++) { const x = gx + (R2() - 0.5) * 70, y = gy + (R2() - 0.5) * 34; if (!onPath(x, y, 30) && !nearBarrier(x, y, 10)) put(OUT.stalks, [x, y, 0.75 + R2() * 0.5, R2()], x, y, 6); }
   });
   // רכס הסלעים במערב (עם פתח לדרך)
   const RC = rng(311);
@@ -157,13 +158,13 @@ function put(list, item, x, y, r) { list.push(item); placed.push([x, y, r]); }
   // מילוי אקראי לפי אזור
   const R = rng(2026);
   const fill = (n, area, fn) => { let made = 0; for (let a = 0; a < n * 25 && made < n; a++) { const x = area[0] + R() * (area[2] - area[0]), y = area[1] + R() * (area[3] - area[1]); if (fn(x, y)) made++; } };
-  // יער הבמבוק בצפון
-  fill(380, [1030, 70, 2420, 870], (x, y) => {
-    if (Math.hypot(x - 2048, (y - 600) * 1.3) < 150 || Math.hypot(x - OUT.oldTree.x, y - OUT.oldTree.y) < 100 || inHouse(x, y, 60)) return false;
+  // יער הבמבוק בדרום
+  fill(380, [1030, 1880, 2420, 2560], (x, y) => {
+    if (Math.hypot(x - 2048, (y - 2255) * 1.3) < 150 || Math.hypot(x - OUT.oldTree.x, y - OUT.oldTree.y) < 100 || inHouse(x, y, 60)) return false;
     if (!okSpot(x, y, 9, 44)) return false;
     put(OUT.stalks, [x, y, 0.8 + R() * 0.55, R()], x, y, 7); return true;
   });
-  fill(22, [1030, 70, 2420, 860], (x, y) => okSpot(x, y, 28, 56) && (put(OUT.trees, ['pine', x, y, 0.9 + R() * 0.4], x, y, 28), true));
+  fill(22, [1030, 1880, 2420, 2560], (x, y) => okSpot(x, y, 28, 56) && (put(OUT.trees, ['pine', x, y, 0.9 + R() * 0.4], x, y, 28), true));
   // שאר האזורים: עצים, שיחים וסלעים
   const scatter = (area, nTrees, nBush, nRock, mix) => {
     fill(nTrees, area, (x, y) => okSpot(x, y, 34, 58) && (put(OUT.trees, [R() < mix ? 'cherry' : 'pine', x, y, 0.85 + R() * 0.35], x, y, 30), true));
@@ -172,10 +173,10 @@ function put(list, item, x, y, r) { list.push(item); placed.push([x, y, r]); }
   };
   scatter([60, 80, 960, 2560], 70, 50, 26, 0.45);                 // מערב
   scatter([2640, 80, 3360, 2560], 18, 26, 14, 0.4);               // מזרח (בין השדות)
-  scatter([1040, 1880, 2440, 2560], 22, 34, 12, 0.6);             // דרום
+  scatter([1040, 70, 2440, 860], 22, 34, 12, 0.6);                 // צפון (השוק)
   scatter([1040, 880, 2440, 1820], 10, 18, 8, 0.5);               // מרכז (מעט, כדי לא להעמיס)
   // סוף מילוי
-  OUT.trees.push(['cherry', 740, 980, 1.5], ['cherry', 190, 1110, 1.25], ['cherry', 1480, 2010, 1.1], ['cherry', 2000, 2480, 1.15]);
+  OUT.trees.push(['cherry', 740, 980, 1.5], ['cherry', 190, 1110, 1.25], ['cherry', 1250, 190, 1.1], ['cherry', 2240, 700, 1.1]);
 })();
 
 // ============================================================
@@ -237,7 +238,7 @@ const BOULDER_TO = [1056, 1500], GUARD_TO = [GATE_X + 80, WALL_Y + 34];
 const BARRIERS = [
   { id: 'push', word: 'PUSH', ax: 1066, ay: 1408, sx: CLIFF_X, sy: 1410 * K - 92 },
   { id: 'jump', word: 'JUMP', ax: CROSS_X - 100, ay: CROSS_Y, sx: CROSS_X - 88, sy: CROSS_Y * K - 74 },
-  { id: 'fight', word: 'FIGHT', ax: GATE_X, ay: WALL_Y - 74, sx: GATE_X + 70, sy: WALL_Y * K - 96 }
+  { id: 'fight', word: 'FIGHT', ax: GATE_X, ay: WALL_Y + 104, sx: GATE_X + 70, sy: WALL_Y * K - 96 }
 ];
 (function loadOpen() {
   let open = [];
@@ -250,7 +251,7 @@ const sparkles = [];
 function openBarrier(b) {
   if (b.open) return;
   b.open = true; b.t = 0; saveOpen(); buildSolid();
-  const cx = b.id === 'push' ? CLIFF_X : b.id === 'jump' ? CROSS_X : GATE_X, cy = b.id === 'push' ? 1410 : b.id === 'jump' ? CROSS_Y : WALL_Y - 20;
+  const cx = b.id === 'push' ? CLIFF_X : b.id === 'jump' ? CROSS_X : GATE_X, cy = b.id === 'push' ? 1410 : b.id === 'jump' ? CROSS_Y : WALL_Y + 20;
   for (let i = 0; i < 16; i++) sparkles.push({ x: cx, y: cy * K - 30, a: i / 16 * 6.283, t: 0 });
 }
 function updateBarriers(dt, nx, ny) {
