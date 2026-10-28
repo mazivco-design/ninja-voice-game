@@ -17,6 +17,7 @@ function fitApp() {
 function resize() {
   const dpr = window.devicePixelRatio || 1;
   fitApp();
+  lastVp = vpKey();
   const r = $('app').getBoundingClientRect();          // הגודל שבאמת רואים (בלי שורת הכתובת של Safari)
   cw = r.width || window.innerWidth; ch = r.height || window.innerHeight;
   window.scrollTo(0, 0);
@@ -28,6 +29,15 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', () => setTimeout(resize, 300));
+// חזרה לדפדפן: לפעמים הדפדפן מדווח רגע על גודל קטן (במעבר בין אפליקציות) ואחר כך לא מודיע שחזר לגודל המלא – והמשחק נשאר "חתוך".
+// לכן: מחשבים שוב כשחוזרים, ובודקים כל חצי שנייה אם גודל המסך השתנה בלי הודעה
+let lastVp = '';
+function vpKey() { const vv = window.visualViewport; return [innerWidth, innerHeight, vv ? Math.round(vv.width) : 0, vv ? Math.round(vv.height) : 0, vv ? Math.round(vv.offsetTop) : 0, vv ? Math.round(vv.offsetLeft) : 0].join('x'); }
+const resizeSoon = () => { resize(); setTimeout(resize, 250); setTimeout(resize, 900); };
+document.addEventListener('visibilitychange', () => { if (!document.hidden) resizeSoon(); });
+window.addEventListener('pageshow', resizeSoon);
+window.addEventListener('focus', resizeSoon);
+setInterval(() => { if (vpKey() !== lastVp) resize(); }, 500);
 if (window.visualViewport) { window.visualViewport.addEventListener('resize', resize); window.visualViewport.addEventListener('scroll', resize); }
 // אין גלילה של הדף: גרירה עובדת רק בתוך רשימות שבאמת צריך לגלול (רשימת שחקנים)
 document.addEventListener('touchmove', e => { if (!e.target.closest('.playerGrid, #orderList')) e.preventDefault(); }, { passive: false });
