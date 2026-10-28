@@ -84,7 +84,7 @@ function gustUpdate(dt, pb) {
       }
       if (PLAYER.x + 4 + g.gx < -8) {                                           // עף מהמסך – פגיעה
         g.phase = 'lost'; g.t = 0;
-        if (o.demo) { flash = { text: HIT_WORD.gust, t: 1.2 }; o.hit = true; } else onHit(o);
+        if (o.demo) { flash = { text: HIT_WORD.gust, t: 1.2 }; o.hit = true; } else onHit(o);   // onHit אומר HOLD בקול
         return;
       }
     }

@@ -35,7 +35,7 @@ function startGame(m, idx) {
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
   world = m === 'stage' ? (STAGES[idx || 0].world ?? PAIR_WORLD[Math.floor((idx || 0) / 3)]) : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
-  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
+  learnT = 0; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
@@ -290,6 +290,19 @@ function collides(o, pb) {
   return pb.l < b.r - m && pb.r > b.l + m && pb.t < b.b - m && pb.b > b.t + m;
 }
 
+// אחרי פגיעה: הריצה נעצרת לרגע (בלי לחזור אחורה), המילה הנכונה מופיעה בגדול ונשמעת בקול, ואז ממשיכים
+const LEARN = { pause: 1.5 };
+let learnT = 0;
+const LEARN_SAY = { river: ['jump', 'fly'], chasm: ['let go'], door: ['want'], storm: ['fire'] };
+function learnAfterHit(o) {
+  const say = o.type === 'skyrock' ? [o.lane ? 'down' : 'up'] : (LEARN_SAY[o.type] || (OBSTACLE_WORDS[o.type] || []).slice(0, 1));
+  if (!say.length) return;
+  speak(say[0]);
+  if (say[1]) setTimeout(() => { if (state === 'play') speak(say[1]); }, 750);
+  flash = { text: say.map(w => (WORD_ICON[w] || '') + ' ' + w.toUpperCase()).join('  →  ') + '!', t: LEARN.pause + 0.3 };
+  if (!SKY_TYPES.includes(o.type) && o.type !== 'gust' && o.type !== 'chasm') learnT = LEARN.pause;   // בשמיים / בטורנדו / בתהום – העולם כבר עומד או שאי אפשר לעצור
+}
+
 function onHit(o) {
   o.hit = true;
   shakeT = 0.3; sfx('hit');
@@ -300,8 +313,9 @@ function onHit(o) {
   if (dragonSave()) { invulnT = INVULN_TIME; sinkT = 0; o.pts = 0; cleared(o); return; }   // הדרקון חוסם את הפגיעה – בלי לאבד לב
   hits++; done++;
   if (typeof voiceMark === 'function') voiceMark('hit');
-  if (mode === 'journey' && !SKY_TYPES.includes(o.type)) nextType = o.type;     // במסע: מכשול שפספסו חוזר מיד
+  if (!SKY_TYPES.includes(o.type)) nextType = o.type;                            // מכשול שפספסו חוזר מיד – לנסות שוב עם המילה ששמע
   flash = { text: HIT_WORD[o.type], t: 1.2 };   // מראה את המילה הנכונה
+  learnAfterHit(o);                              // עוצר לרגע ואומר את המילה בקול
   invulnT = INVULN_TIME;
   if (isFinite(lives)) {
     lives--;
@@ -428,6 +442,7 @@ function update(dt) {
   if (act.fireCd > 0) act.fireCd -= dt;
   for (const k of ['stop', 'run', 'swim', 'climbWant', 'push', 'pull', 'pullWant', 'hide', 'block', 'leapWant', 'dive', 'crawl', 'crawlWant', 'roll']) if (act[k] > 0) act[k] = Math.max(0, act[k] - dt);
   if (flash && (flash.t -= dt) <= 0) flash = null;
+  if (learnT > 0) learnT -= dt;
   if (heard && (heard.t -= dt) <= 0) heard = null;
   if (banner && (banner.t -= dt) <= 0) banner = null;
 

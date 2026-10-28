@@ -87,7 +87,7 @@ function duelHurt(o) {
   if (dragonSave()) { invulnT = INVULN_TIME; return; }                           // הדרקון שומר עליו
   hits++;
   if (typeof voiceMark === 'function') voiceMark('hit');
-  flash = { text: HIT_WORD.duel, t: 1.2 }; invulnT = INVULN_TIME;
+  flash = { text: WORD_ICON.fight + ' FIGHT!', t: 1.4 }; invulnT = INVULN_TIME; speak('fight');   // אומר את המילה בקול
   if (isFinite(lives)) {
     lives--; renderHud();
     if (lives <= 0) { mode === 'stage' ? stageFailed() : mode === 'journey' ? journeyOver(false) : endFree(false); return; }
