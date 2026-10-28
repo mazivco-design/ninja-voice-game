@@ -174,6 +174,14 @@ function pickType() {
   return WORD_OBSTACLE[w];
 }
 
+// הציפור שמעל האגם: עפה הלוך ושוב מעל המים, בגובה של קפיצה
+const BIRD = { y: GROUND - 13, span: 0.32, speed: 0.75 };
+function birdPath(o) {                                                         // המסלול הרגיל: הלוך ושוב מעל המים
+  const t = o.bird ? o.bird.t : 0, a = Math.sin(t * BIRD.speed);
+  return [o.w * (0.5 + BIRD.span * a), BIRD.y + Math.sin(t * 2.2) * 1.6];
+}
+function birdPos(o) { const bd = o.bird; if (!bd || bd.rx === undefined) { const [rx, y] = birdPath(o); return [o.x + rx, y]; } return [o.x + bd.rx, bd.y]; }
+
 function riverWidth() {
   const airtime = 2 * cfg.jumpV / cfg.gravity;   // כמה זמן קפיצה רגילה באוויר
   return speed * airtime * RIVER_FACTOR;         // רחב מדי לקפיצה בלבד
@@ -613,6 +621,23 @@ function update(dt) {
     }
     // SWIM: במים בלי לשחות – שוקעים לאט. SWIM בזמן הזה מציל. מי שכבר שוחה – ממשיך עד הסוף
     if (o.type === 'lake') {
+      // ציפור מעל האגם: מי שקופץ במקום לשחות – נתקל בה (פגיעה), והיא בורחת
+      const bd = o.bird || (o.bird = { t: Math.random() * 6 });
+      bd.t += dt; if (bd.hitT !== undefined) bd.hitT += dt;
+      if (bd.rx === undefined) { const [rx, y] = birdPath(o); bd.rx = rx; bd.y = y; }
+      let [tx, ty] = birdPath(o);
+      if (bd.hitT === undefined && py > 2 && cx > o.x - 25 && cx < o.x + o.w - 4) { tx = cx + 2 - o.x; ty = pb.t + 5; bd.chase = true; }   // קפץ לכיוון המים – השחף צולל אליו
+      const sp = (bd.chase ? 95 : 40) * dt, dx = tx - bd.rx, dy = ty - bd.y, dd = Math.hypot(dx, dy) || 1;
+      bd.rx += dx * Math.min(1, sp / dd); bd.y += dy * Math.min(1, sp / dd);
+      if (py <= 0) bd.chase = false;
+      if (bd.hitT === undefined && !o.hit && !o.demo && py > 2) {
+        const [bx, by] = birdPos(o);
+        if (pb.r > bx - 4.5 && pb.l < bx + 4.5 && pb.t < by + 2.5 && pb.b > by - 2.5) {
+          bd.hitT = 0; sfx('squawk'); burst(bx, by, '#ffffff', 12, 26); burst(bx, by, '#e2e8f0', 6, 18);
+          vy = Math.min(vy, -20);                                                   // נופל למים
+          if (invulnT <= 0) { onHit(o); if (state === 'over') return; }
+        }
+      }
       const inside = py <= 0 && cx > o.x + 2 && cx < o.x + o.w - 2;
       if (inside) o.wet = true;
       if (inside && act.swim > 0) { act.swim = Math.max(act.swim, 0.2); o.swam = true; o.drown = Math.max(0, (o.drown || 0) - dt * 3); }

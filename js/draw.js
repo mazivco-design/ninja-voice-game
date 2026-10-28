@@ -873,6 +873,24 @@ function drawShore(o) {                                                        /
   ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 0.4;                                          // קצף קטן בנקודות המפגש
   for (const ex of [x + bankOff(o, waterY()) + 1.2, x + w - bankOff(o, waterY()) - 1.2]) { ctx.beginPath(); ctx.ellipse(ex, waterY() + 0.4, 1.8, 0.4, 0, 0, Math.PI * 2); ctx.stroke(); }
 }
+function drawLakeBird(o) {                                                    // שחף לבן שעף הלוך ושוב מעל המים
+  const bd = o.bird; if (!bd) return;
+  let [bx, by] = birdPos(o), dir = Math.cos(bd.t * BIRD.speed) >= 0 ? 1 : -1, flapSp = 9;
+  if (bd.hitT !== undefined) { if (bd.hitT > 2) return; bx += bd.hitT * 28 * dir; by -= bd.hitT * bd.hitT * 22 + bd.hitT * 10; flapSp = 22; }   // בורח למעלה
+  const f = Math.sin(bd.t * flapSp), now = performance.now() / 1000;
+  ctx.fillStyle = 'rgba(15,23,42,.10)'; ctx.beginPath(); ctx.ellipse(bx, waterY() + 0.6, 3.2, 0.5, 0, 0, Math.PI * 2); ctx.fill();   // צל על המים
+  ctx.save(); ctx.translate(bx, by); ctx.scale(dir * 1.35, 1.35);              // קצת גדול מהנינג'ה – שיבלוט
+  const wing = (dy, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(-0.6, 0); ctx.quadraticCurveTo(-1.5, dy * 0.6 - 0.6, -3.6, dy); ctx.quadraticCurveTo(-1.6, dy * 0.3 + 0.2, 0.6, 0.3); ctx.closePath(); ctx.fill(); };
+  wing(-2.6 - f * 1.8, '#cbd5e1');                                                // כנף רחוקה
+  ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.ellipse(0, 0.2, 2.4, 1.05, -0.05, 0, Math.PI * 2); ctx.fill();   // גוף
+  ctx.beginPath(); ctx.moveTo(-2.2, 0); ctx.lineTo(-3.4, -0.5); ctx.lineTo(-3.2, 0.6); ctx.closePath(); ctx.fill();   // זנב
+  ctx.beginPath(); ctx.arc(2.1, -0.5, 0.9, 0, Math.PI * 2); ctx.fill();         // ראש
+  ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.moveTo(2.8, -0.55); ctx.lineTo(4.0, -0.3); ctx.lineTo(2.8, -0.15); ctx.closePath(); ctx.fill();   // מקור
+  ctx.fillStyle = '#111827'; circle(2.4, -0.75, bd.hitT !== undefined ? 0.32 : 0.2);   // עין (פעורה כשנבהל)
+  wing(-2.2 - f * 2.2, '#ffffff');                                                // כנף קרובה
+  ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.arc(-3.4, -2.2 - f * 2.2, 0.35, 0, Math.PI * 2); ctx.fill();   // קצה כנף כהה
+  ctx.restore();
+}
 function drawLake(o, bottom) {
   const x = o.x, w = o.w, t = performance.now() / 400;
   const g = ctx.createLinearGradient(0, GROUND, 0, bottom);
@@ -888,6 +906,7 @@ function drawLake(o, bottom) {
   ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 0.35;                 // אדוות רגועות
   for (let i = 4; i < w - 6; i += 11) { ctx.beginPath(); ctx.ellipse(x + i, waterY() + 2.5 + (i % 3), 2.4 + Math.sin(t + i) * 0.4, 0.5, 0, 0, Math.PI * 2); ctx.stroke(); }
   label('SWIM', x + w / 2, GROUND - 6, 4, '#fde047', '#1e293b');
+  drawLakeBird(o);
 }
 
 const CAVE_PAD = 10;
