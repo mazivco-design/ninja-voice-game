@@ -796,13 +796,13 @@ function drawObstacle(o, top) {
 }
 
 // מים טבעיים: במקום מלבן עם קירות ישרים – אגן. הקרקע יורדת בשיפוע מעוגל לתוך המים משני הצדדים, והקרקעית מעמיקה באמצע
-const SHORE = { slope: 14, run: 7, bowl: 0.07 };
+const SHORE = { slope: 20, run: 16, bowl: 0.07 };   // run = כמה רחוק הגדה נכנסת – גדול = שיפוע מתון
 function bankOff(o, y) {                                                       // כמה המים "נכנסים" פנימה מהקצה בגובה y
-  const d = y - GROUND, run = Math.min(SHORE.run, o.w * 0.14);
+  const d = y - GROUND, run = Math.min(SHORE.run, o.w * 0.2);
   if (d <= 0) return 0;
   const s = Math.min(1, d / SHORE.slope), deep = Math.max(0, d - SHORE.slope);
   const bumpy = Math.sin(d * 0.9 + o.w) * 0.5 + Math.sin(d * 2.3) * 0.25;          // שפה לא ישרה לגמרי – כמו אדמה אמיתית
-  return run * Math.pow(s, 0.6) + deep * deep * SHORE.bowl + bumpy * s;            // למטה הקרקעית מתעגלת (קערה, לא V)
+  return run * Math.pow(s, 0.75) + deep * deep * SHORE.bowl + bumpy * s;            // למטה הקרקעית מתעגלת (קערה, לא V)
 }
 function waterPath(o, bottom) {
   const x = o.x, w = o.w, y0 = GROUND + 0.4;

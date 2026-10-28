@@ -190,7 +190,7 @@ function spawn() {
   if (type === 'gust') o.w = GUST.stalks[2] + 4;
   if (type === 'lake') o.w = speed * LAKE.factor;        // רחב מדי לקפיצה
   if (type === 'bridge') o.w = speed * BRIDGE.factor;    // רחב מדי לקפיצה, ארוך מדי להליכה
-  if (type === 'pond') o.w = Math.max(40, speed * POND.factor);   // הרשת באמצע
+  if (type === 'pond') o.w = Math.max(54, speed * POND.factor);   // הרשת באמצע
   if (type === 'bramble') o.w = BRAMBLE.ramp + Math.max(30, speed * BRAMBLE.factor) + BRAMBLE.exit;   // כניסה שהולכת ונעשית צרה + החלק הנמוך + יציאה
   if (type === 'coin') coins++;
   o.pts = obstacleValue(type);

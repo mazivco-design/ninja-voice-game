@@ -265,12 +265,12 @@ function setupDemo(w) {
   if (w === 'throw') obstacles.push({ type: 'enemy', x: near + 55 });
   if (w === 'catch') obstacles.push({ type: 'coin',  x: near + 12 });
   if (w === 'stop')  obstacles.push({ type: 'rock',  x: near + 18 });
-  if (w === 'swim')  obstacles.push({ type: 'lake',  x: PLAYER.x - 12, w: 34, wet: true, swam: true });
+  if (w === 'swim')  obstacles.push({ type: 'lake',  x: PLAYER.x - 16, w: 44, wet: true, swam: true });
   if (w === 'climb') obstacles.push({ type: 'cliff', x: near + CLIFF.ladder });
   if (w === 'push')  obstacles.push({ type: 'boulder', x: near + 14 });
   if (w === 'pull')  obstacles.push({ type: 'gate',  x: near + GATE.rope + 0.5 });
   if (w === 'leap')  obstacles.push({ type: 'window', x: near + 3 });
-  if (w === 'dive')  obstacles.push({ type: 'pond', x: PLAYER.x - 10, w: 40 });
+  if (w === 'dive')  obstacles.push({ type: 'pond', x: PLAYER.x - 14, w: 50 });
   if (w === 'crawl') obstacles.push({ type: 'bramble', x: PLAYER.x - 6, w: 60 });
   if (w === 'hide')  obstacles.push({ type: 'guard', x: near + 14 });
   if (w === 'block') obstacles.push({ type: 'arrows', x: near + 28 });

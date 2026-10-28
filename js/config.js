@@ -108,7 +108,7 @@ const ROCK = { size: 8, hangY: GROUND - 40, fall: 0.9, warn: 0.75 };   // STOP �
 const STOP_TIME = 1.6;                                               // העולם עוצר לשנייה וחצי
 const RUN_BOOST = { mult: 2.2, time: 2.0 };                          // RUN – מהירות כפולה לשתי שניות
 const BRIDGE = { factor: 4.0, delay: 0.3, chase: 1.7 };            // שדה אש ארוך: האש מתחילה בכניסה ורודפת – מהירה מהליכה (1), איטית מריצה (2.2)
-const LAKE = { factor: 2.2 }, SWIM_TIME = 1.2;                       // SWIM – אגם ארוך. שוחים עד הסוף
+const LAKE = { factor: 3.0 }, SWIM_TIME = 1.2;                       // SWIM – אגם ארוך. שוחים עד הסוף
 const DROWN = { easy: 1.1, other: 0.8 };                              // כמה זמן שוקעים במים לפני שנכשלים – אפשר עוד להציל עם SWIM
 const CLIFF = { w: 14, h: 40, range: 2.5, time: 1.3, ladder: 12 };  // CLIMB – צוק גבוה עם סולם נשען. מטפסים כשמגיעים לסולם
 const BOULDER = { r: 10, range: 25 };                                // PUSH – סלע עגול גדול, אפשר לדחוף מרחוק
@@ -119,7 +119,7 @@ const HIDE_ROCK = { w: 34, h: 12, lead: 25 };                          // HIDE �
 const ARROWS = { w: 7, speed: 30 }, BLOCK_TIME = 0.8;                 // BLOCK – מטח חיצים בכל הגבהים
 const WINDOW = { w: 10, top: GROUND - 18, bot: GROUND - 5, range: 4 }; // LEAP – קיר עבה עם מעבר צר באמצע הגובה
 const LEAP = { y: 6.5, h: 5, w: 12, want: 0.9, free: 0.45, arc: 3, roll: 0.5 };   // אחרי הזינוק – גלגול על הקרקע   // זינוק בקשת קלה דרך טבעת האש
-const POND = { factor: 1.6, net: 3, deep: 8 }, DIVE_TIME = 1.2;        // DIVE – רשת שיורדת עמוק לתוך המים, צוללים מתחתיה
+const POND = { factor: 2.2, net: 3, deep: 8 }, DIVE_TIME = 1.2;        // DIVE – רשת שיורדת עמוק לתוך המים, צוללים מתחתיה
 let CAVE_STYLE = 'cave';       // מראה המערה: 'cave' = גוש סלע אחד עם קיר פנימי כהה, 'boulders' = סלעים גדולים, 'chunks' = הגושים הישנים
 const BRAMBLE = { factor: 1.3, gap: 6.5, want: 1.0, slow: 0.6, ramp: 46, exit: 14, mouth: 34 };   // CRAWL – מערה שהתקרה שלה יורדת בהדרגה עד שחייבים לזחוליה
 // ניקוד במסע: ערך בסיס לפי קושי הפעולה, ועוד נקודה כל 3 תחנות. המספר מופיע על המכשול
