@@ -31,12 +31,13 @@ function gustUpdate(dt, pb) {
   if (gust) target = gust.k;
   windLevel += (target - windLevel) * Math.min(1, dt * 4);
   if (windLevel < 0.003) windLevel = 0;
+  windSound(windLevel);                                                          // רעש רוח שמתחזק עם הרוח
   gustEffects(dt);
   if (!gust) {
     if (grove && stalkX(grove, 2) - pb.r <= GUST.stopAt) {
       gust = { o: grove, phase: 'storm', t: 0, k: 0.25, gx: 0, vx: 0, lift: 0, held: null, want: grove.holdWant ? GUST.want : 0, ang: 0 };
       if (!tornado) tornado = { x: W + 22, k: 0.55, a: 1 };
-      duckT = 0; sfx('wind');
+      duckT = 0;
     } else if (!grove && tornado) { tornado.a -= dt * 2; if (tornado.a <= 0) tornado = null; }
     return;
   }
@@ -49,10 +50,13 @@ function gustUpdate(dt, pb) {
     tornado.x = lerp(tornado.x, PLAYER.x + 58, Math.min(1, dt * 1.2));          // הטורנדו מתקרב ונעצר מימין לנינג'ה
     tornado.k = Math.min(1, tornado.k + dt * 0.4);
     if (g.held === null) {
-      const push = Math.max(0, g.k - 0.45) / 0.55;                              // מתחיל להיסחף כשהרוח חזקה
-      g.vx = -GUST.push * push * push;
+      if (g.t < B) {                                                            // מנסה ללכת מכופף נגד הרוח – ובכל זאת נדחף אחורה לאט
+        g.vx = -(3 + 13 * g.k * g.k); g.lift = 0;
+      } else {                                                                  // המשב החזק: מתרומם ועף אחורה
+        const e = Math.min(1, (g.t - B) / 0.5);
+        g.vx = -GUST.push * (0.35 + 0.65 * e); g.lift = Math.min(10, (g.t - B) * 18);
+      }
       g.gx += g.vx * dt;
-      g.lift = Math.max(0, (push - 0.55) * 22);                                 // ברוח החזקה – מתרומם מהקרקע
       if (g.want > 0) {                                                         // HOLD: נתפס בקנה שבהישג יד
         const hand = PLAYER.x + 4 + g.gx + 3;
         let best = null;
@@ -204,7 +208,12 @@ function gustPlayerPose(P, now) {
   const g = gust;
   if (g.phase === 'back') { const R = poseRun(now * 14); R.lean = 0.3; return R; }   // רץ חזרה
   if (g.phase === 'storm' && g.lift > 1) { const F = poseFly(now * 3); F.lean = -0.7; F.eyes = 'wide'; F.headTilt = 0.4; return F; }   // עף אחורה
-  if (g.phase === 'storm') { P.lean = (P.lean || 0) + 0.35 * g.k; P.eyes = g.k > 0.6 ? 'wide' : 'squint'; }   // נאבק ברוח
+  if (g.phase === 'storm') {                                                    // הולך מכופף נגד הרוח: צעדים איטיים, ראש למטה, יד מגינה על הפנים
+    const R = poseRun(now * 6);
+    R.lean = 0.55 + 0.25 * g.k; R.spine = 0.25; R.headTilt = -0.35; R.bob = (R.bob || 0) * 0.4;
+    R.arms = [[-0.9, -0.4], [1.75, 2.9]]; R.eyes = g.k > 0.75 ? 'wide' : 'squint';
+    return R;
+  }
   return P;
 }
 // מצייר את הנינג'ה כשהוא מחזיק בקנה (רק הידיים על הקנה, הגוף באוויר) או עף. מחזיר true אם צויר כאן

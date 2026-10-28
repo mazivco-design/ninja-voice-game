@@ -37,6 +37,26 @@ const SFX = {
   swish: () => tone(900, 260, 0.11, 'sawtooth', 0.025),
   over: () => [440, 349, 262].forEach((f, i) => tone(f, 0, 0.3, 'triangle', 0.1, i * 0.18))
 };
+// רעש רוח רציף (לשלב HOLD): רעש לבן בלולאה דרך מסנן, העוצמה לפי חוזק הרוח
+let windNode = null;
+function windSound(level) {
+  if (!sfxCtx) return;
+  try {
+    if (!windNode) {
+      if (level <= 0) return;
+      const c = sfxCtx, n = c.sampleRate * 2, b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
+      let last = 0; for (let i = 0; i < n; i++) { last = last * 0.97 + (Math.random() * 2 - 1) * 0.03; d[i] = last * 6; }   // רעש "חום" רך
+      const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+      src.buffer = b; src.loop = true; f.type = 'bandpass'; f.Q.value = 0.7; g.gain.value = 0;
+      src.connect(f); f.connect(g); g.connect(c.destination); src.start();
+      windNode = { f, g };
+    }
+    const t = sfxCtx.currentTime, on = !muted && (state === 'play' || state === 'intro' || state === 'demo');
+    windNode.g.gain.setTargetAtTime(on ? Math.pow(Math.min(1, level), 1.3) * 0.45 : 0, t, 0.15);
+    windNode.f.frequency.setTargetAtTime(300 + 900 * level + 180 * Math.sin(t * 2.3), t, 0.2);   // שריקה שעולה ויורדת
+  } catch (e) {}
+}
+setInterval(() => { if (windNode && typeof state !== 'undefined' && state !== 'play' && state !== 'intro' && state !== 'demo') windSound(0); }, 250);   // השהיה / סוף משחק – שקט
 function sfx(name) { if (muted || !sfxCtx || !SFX[name]) return; try { SFX[name](); } catch (e) {} }
 document.addEventListener('pointerdown', sfxInit, { capture: true });
 
