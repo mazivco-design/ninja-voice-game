@@ -796,7 +796,7 @@ function drawObstacle(o, top) {
 }
 
 // מים טבעיים: במקום מלבן עם קירות ישרים – אגן. הקרקע יורדת בשיפוע מעוגל לתוך המים משני הצדדים, והקרקעית מעמיקה באמצע
-const SHORE = { slope: 15, run: 15, bowl: 0.16, drop: 2.2 };   // run = כמה רחוק הגדה נכנסת – גדול = שיפוע מתון
+const SHORE = { slope: 15, run: 15, bowl: 0.16, drop: 1.7 };   // run = כמה רחוק הגדה נכנסת – גדול = שיפוע מתון
 function bankOff(o, y) {                                                       // כמה המים "נכנסים" פנימה מהקצה בגובה y
   const d = y - GROUND, run = Math.min(SHORE.run, o.w * 0.2);
   if (d <= 0) return 0;
@@ -816,15 +816,17 @@ function waterPath(o, bottom) { basinPath(o, bottom, waterY()); }
 function drawBasinWall(o, bottom) {                                             // מעל המים: הדופן הרחוקה של הגדה – בהירה, עם צמחים שגולשים מלמעלה (או שלג וקרח)
   const G = (typeof GROUND_STYLE !== 'undefined' && GROUND_STYLE[world]) || null, wd = WORLDS[world], snow = world === 2;
   const x0 = o.x + bankOff(o, GROUND) - 1.2, x1 = o.x + o.w - bankOff(o, GROUND) + 1.2, wy = waterY();
-  ctx.save(); basinPath(o, wy + 1, GROUND - 0.6); ctx.clip();
-  ctx.fillStyle = snow ? '#c9d4e2' : G ? G.dirt[0] : wd.ground; ctx.fillRect(o.x - 2, GROUND - 1, o.w + 4, SHORE.drop + 3);
-  const wg = ctx.createLinearGradient(0, GROUND - 0.6, 0, wy + 1);              // צל עדין למעלה בלבד
-  wg.addColorStop(0, 'rgba(0,0,0,.13)'); wg.addColorStop(0.6, 'rgba(0,0,0,0)');
-  ctx.fillStyle = wg; ctx.fillRect(o.x - 2, GROUND - 1, o.w + 4, SHORE.drop + 3);
-  if (!snow) {                                                                  // שורשים דקים בדופן
-    ctx.strokeStyle = 'rgba(92,64,38,.35)'; ctx.lineWidth = 0.3;
-    for (let k = 4; k < o.w - 4; k += 9) { const rx = o.x + k + hash(k + 7) * 4; ctx.beginPath(); ctx.moveTo(rx, GROUND); ctx.quadraticCurveTo(rx + 1, GROUND + 1, rx + 0.4, GROUND + 1.6 + hash(k) * 0.6); ctx.stroke(); }
+  ctx.save(); basinPath(o, wy + 1, GROUND - 0.2); ctx.clip();               // באותו גובה כמו פני הקרקע מסביב – בלי לבלוט מעליה
+  if (G) {                                                                      // אותו דשא כמו הקרקע מסביב (פס עליון בהיר, ומתחתיו ירוק)
+    ctx.fillStyle = G.grass[1]; ctx.fillRect(o.x - 2, GROUND - 0.2, o.w + 4, SHORE.drop + 2);
+    ctx.fillStyle = G.grass[0]; ctx.fillRect(o.x - 2, GROUND - 0.2, o.w + 4, 1.1);
+  } else {
+    ctx.fillStyle = snow ? '#c9d4e2' : wd.ground; ctx.fillRect(o.x - 2, GROUND - 0.2, o.w + 4, SHORE.drop + 2);
+    ctx.fillStyle = snow ? '#f8fafc' : wd.top; ctx.fillRect(o.x - 2, GROUND - 0.2, o.w + 4, 1.0);
   }
+  const wg = ctx.createLinearGradient(0, GROUND + 0.6, 0, wy + 0.5);           // צל עדין ממש מעל המים
+  wg.addColorStop(0, 'rgba(0,0,0,0)'); wg.addColorStop(1, 'rgba(0,0,0,.14)');
+  ctx.fillStyle = wg; ctx.fillRect(o.x - 2, GROUND + 0.6, o.w + 4, SHORE.drop + 1);
   ctx.restore();
   // הקצה העליון: לא קו ישר – קבוצות צמחים (או שלג) בגדלים שונים, עם רווחים ביניהן
   for (let k = 0, xx = x0 + 1; xx < x1 - 1; k++) {
