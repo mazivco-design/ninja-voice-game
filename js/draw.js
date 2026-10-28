@@ -526,7 +526,7 @@ function draw() {
   for (const o of obstacles) if (o.type === 'window') drawFireRing(o, true);   // החצי הקדמי של הטבעת – מעל הנינג'ה, נראה שהוא עובר דרכה
   for (const o of obstacles) if (o.type === 'bridge') drawFieldSmoke(o);
   for (const o of obstacles) if (o.type === 'lake' || o.type === 'pond') {   // מים מעל השחיין – נראה חצי שקוע / צולל
-    ctx.fillStyle = o.type === 'lake' ? 'rgba(20,184,166,.55)' : 'rgba(14,116,144,.6)'; ctx.fillRect(o.x, GROUND + 0.3, o.w, bottom - GROUND);
+    ctx.fillStyle = o.type === 'lake' ? 'rgba(20,184,166,.55)' : 'rgba(14,116,144,.6)'; waterPath(o, bottom); ctx.fill();
     if (o.type === 'pond') drawNet(o, true);                                  // הרשת לפני הצולל
   }
   for (const s of shurikens) star4(s.x, s.y, hasGear('goldstar') ? 2.6 : 2, s.rot, hasGear('goldstar') ? '#facc15' : '#475569');
@@ -795,16 +795,49 @@ function drawObstacle(o, top) {
   }
 }
 
+// מים טבעיים: במקום מלבן עם קירות ישרים – אגן. הקרקע יורדת בשיפוע מעוגל לתוך המים משני הצדדים, והקרקעית מעמיקה באמצע
+const SHORE = { slope: 14, run: 7, bowl: 0.07 };
+function bankOff(o, y) {                                                       // כמה המים "נכנסים" פנימה מהקצה בגובה y
+  const d = y - GROUND, run = Math.min(SHORE.run, o.w * 0.14);
+  if (d <= 0) return 0;
+  const s = Math.min(1, d / SHORE.slope), deep = Math.max(0, d - SHORE.slope);
+  const bumpy = Math.sin(d * 0.9 + o.w) * 0.5 + Math.sin(d * 2.3) * 0.25;          // שפה לא ישרה לגמרי – כמו אדמה אמיתית
+  return run * Math.pow(s, 0.6) + deep * deep * SHORE.bowl + bumpy * s;            // למטה הקרקעית מתעגלת (קערה, לא V)
+}
+function waterPath(o, bottom) {
+  const x = o.x, w = o.w, y0 = GROUND + 0.4;
+  ctx.beginPath(); ctx.moveTo(x - 1.2, y0); ctx.lineTo(x + w + 1.2, y0);
+  for (let y = y0; y <= bottom; y += 1.5) ctx.lineTo(x + w - Math.min(w / 2 - 1, bankOff(o, y)), y);
+  for (let y = bottom; y >= y0; y -= 1.5) ctx.lineTo(x + Math.min(w / 2 - 1, bankOff(o, y)), y);
+  ctx.closePath();
+}
+function drawShore(o) {                                                        // שפת המים: רצועה רטובה, אבנים, ודשא (או שלג) שנוטה מעל המים
+  const x = o.x, w = o.w, wd = WORLDS[world], snow = world === 2;
+  for (const [dir, ex] of [[1, x], [-1, x + w]]) {
+    ctx.strokeStyle = snow ? 'rgba(148,163,184,.75)' : 'rgba(92,64,38,.6)'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+    ctx.beginPath(); for (let y = GROUND + 0.4; y <= GROUND + SHORE.slope + 6; y += 1) ctx.lineTo(ex + dir * (bankOff(o, y) - 0.6), y); ctx.stroke();
+    ctx.strokeStyle = snow ? 'rgba(226,232,240,.6)' : 'rgba(214,180,120,.55)'; ctx.lineWidth = 0.6;       // חול / קרח בשפה
+    ctx.beginPath(); for (let y = GROUND + 0.4; y <= GROUND + SHORE.slope; y += 1) ctx.lineTo(ex + dir * (bankOff(o, y) - 1.4), y); ctx.stroke();
+    ctx.fillStyle = snow ? '#94a3b8' : '#78716c';                                                        // אבנים בקו המים
+    ctx.beginPath(); ctx.ellipse(ex + dir * 1.2, GROUND + 0.9, 1.6, 0.9, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = snow ? '#cbd5e1' : '#a8a29e'; ctx.beginPath(); ctx.ellipse(ex - dir * 2.2, GROUND + 0.2, 1.1, 0.7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = snow ? '#f8fafc' : wd.top;                                                           // לשון דשא/שלג מעוגלת שנוטה מעל המים
+    ctx.beginPath(); ctx.ellipse(ex - dir * 0.6, GROUND - 0.1, 2.6, 0.9, dir * 0.12, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 0.4;                                          // קצף קטן בנקודות המפגש
+  for (const ex of [x + 1.5, x + w - 1.5]) { ctx.beginPath(); ctx.ellipse(ex, GROUND + 0.8, 1.8, 0.4, 0, 0, Math.PI * 2); ctx.stroke(); }
+}
 function drawLake(o, bottom) {
   const x = o.x, w = o.w, t = performance.now() / 400;
   const g = ctx.createLinearGradient(0, GROUND, 0, bottom);
   g.addColorStop(0, '#2dd4bf'); g.addColorStop(1, '#134e4a');
-  ctx.fillStyle = g; ctx.fillRect(x, GROUND + 0.5, w, bottom - GROUND);
+  ctx.fillStyle = g; waterPath(o, bottom); ctx.fill();
+  drawShore(o);
   ctx.fillStyle = '#15803d';                                                     // עלי לוטוס
   for (let i = 6; i < w - 6; i += 14) { ctx.beginPath(); ctx.ellipse(x + i + Math.sin(t + i) * 0.8, GROUND + 1.2, 2.6, 0.9, 0, 0, Math.PI * 2); ctx.fill(); }
   ctx.fillStyle = '#f9a8d4'; circle(x + w * 0.62, GROUND + 0.4, 0.9);
   ctx.strokeStyle = '#65a30d'; ctx.lineWidth = 0.45;                                // קני סוף בשפות האגם
-  for (const ex of [x + 1, x + w - 3]) for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(ex + k, GROUND + 1); ctx.lineTo(ex + k + 0.4 * Math.sin(t + k), GROUND - 4 - k); ctx.stroke(); }
+  for (const ex of [x + 2.5, x + w - 5]) for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(ex + k, GROUND + 1); ctx.lineTo(ex + k + 0.4 * Math.sin(t + k), GROUND - 4 - k); ctx.stroke(); }
   ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 0.35;                 // אדוות רגועות
   for (let i = 4; i < w - 6; i += 11) { ctx.beginPath(); ctx.ellipse(x + i, GROUND + 3 + (i % 3), 2.4 + Math.sin(t + i) * 0.4, 0.5, 0, 0, Math.PI * 2); ctx.stroke(); }
   label('SWIM', x + w / 2, GROUND - 6, 4, '#fde047', '#1e293b');
@@ -1153,7 +1186,8 @@ function drawPond(o, bottom) {                   // DIVE: מים עמוקים �
   const x = o.x, w = o.w, t = performance.now() / 400;
   const g = ctx.createLinearGradient(0, GROUND, 0, bottom);
   g.addColorStop(0, '#0ea5e9'); g.addColorStop(1, '#0c4a6e');
-  ctx.fillStyle = g; ctx.fillRect(x, GROUND + 0.5, w, bottom - GROUND);
+  ctx.fillStyle = g; waterPath(o, bottom); ctx.fill();
+  drawShore(o);
   ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 0.35;
   for (let i = 3; i < w - 4; i += 9) { ctx.beginPath(); ctx.moveTo(x + i, GROUND + 1.2 + Math.sin(t + i) * 0.3); ctx.quadraticCurveTo(x + i + 2, GROUND + 0.6, x + i + 4, GROUND + 1.2); ctx.stroke(); }
   ctx.fillStyle = 'rgba(255,255,255,.35)';                                      // בועות מהעומק
