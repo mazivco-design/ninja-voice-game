@@ -15,7 +15,7 @@ function showPlayers() {
   $('labBtn').classList.remove('hide');
   $('lab').classList.remove('show');
   hideAllOverlays();
-  try { speechSynthesis.cancel(); } catch (e) {}
+  stopSpeak();
   if (!players.length) { openEdit(null); return; }
   renderPlayers();
   $('players').classList.add('show');
@@ -173,11 +173,33 @@ function openDict() {
   $('dict').classList.add('show');
 }
 
+// קול: הקלטות של כל מילה ומשפט (קול "Fenrir", audio/voice/). אם הקלטה לא נטענת – הקול של הדפדפן כגיבוי
+const VOICE_CLIPS = {"jump": "jump", "down": "down", "kick": "kick", "throw": "throw", "catch": "catch", "fly": "fly", "stop": "stop", "run": "run", "swim": "swim", "climb": "climb", "push": "push", "pull": "pull", "hide": "hide", "block": "block", "leap": "leap", "dive": "dive", "crawl": "crawl", "fire": "fire", "let go": "let-go", "ride": "ride", "fight": "fight", "hold": "hold", "up": "up", "want": "want", "key": "key", "rope": "rope", "torch": "torch", "what do you want?": "what-do-you-want", "i have a key": "i-have-a-key", "a rope": "a-rope", "and a torch": "and-a-torch", "which one?": "which-one", "here you go!": "here-you-go", "hmm, that won't open the door.": "hmm-that-won-t-open-the-door"};
+const voiceAudio = {};
+let voiceNow = null;
 function speak(w) {
+  const slug = VOICE_CLIPS[String(w).toLowerCase()];
+  if (slug) {
+    try {
+      try { speechSynthesis.cancel(); } catch (e) {}
+      if (voiceNow) { voiceNow.pause(); voiceNow.currentTime = 0; }
+      const a = voiceAudio[slug] || (voiceAudio[slug] = new Audio('audio/voice/' + slug + '.mp3'));
+      voiceNow = a; a.currentTime = 0; a.muted = muted;
+      ignoreVoiceUntil = performance.now() + 1600;                       // לא לשמוע את הקול של המשחק עצמו
+      a.onended = () => { ignoreVoiceUntil = performance.now() + 400; };
+      const p = a.play();
+      if (p && p.catch) p.catch(() => speakSynth(w));
+      return;
+    } catch (e) {}
+  }
+  speakSynth(w);
+}
+function stopSpeak() { try { speechSynthesis.cancel(); } catch (e) {} if (voiceNow) { try { voiceNow.pause(); voiceNow.currentTime = 0; } catch (e) {} } }
+function speakSynth(w) {
   try {
     if (!('speechSynthesis' in window)) return;
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(w);
+    const u = new SpeechSynthesisUtterance(w === 'want' ? 'I want' : w);
     u.lang = 'en-US'; u.rate = 0.85;
     const voices = speechSynthesis.getVoices();
     const v = voices.find(x => /^en[-_]US/i.test(x.lang)) || voices.find(x => /^en/i.test(x.lang));
@@ -187,6 +209,8 @@ function speak(w) {
     speechSynthesis.speak(u);
   } catch (e) {}
 }
+// טוענים את ההקלטות מראש, כדי שיישמעו מיד
+setTimeout(() => { for (const slug of new Set(Object.values(VOICE_CLIPS))) { const a = voiceAudio[slug] = new Audio('audio/voice/' + slug + '.mp3'); a.preload = 'auto'; } }, 1500);
 
 // חפץ קטן ליד הנינג'ה (אם צריך), ורשימת פעולות לפי זמן
 function showWord(w) {
@@ -304,8 +328,8 @@ function finishIntro() {
   state = 'play';
   renderTester();
 }
-$('skipBtn').onclick = () => { try { speechSynthesis.cancel(); } catch (e) {} finishIntro(); };
-$('startBtn').onclick = () => { try { speechSynthesis.cancel(); } catch (e) {} finishIntro(); };
+$('skipBtn').onclick = () => { stopSpeak(); finishIntro(); };
+$('startBtn').onclick = () => { stopSpeak(); finishIntro(); };
 $('againBtn').onclick = () => {
   if (state !== 'intro') return;
   $('startBtn').classList.remove('ready');

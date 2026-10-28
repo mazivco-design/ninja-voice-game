@@ -30,7 +30,7 @@ function toMenu() {
   $('pauseBtn').classList.add('hide');
   renderTester();
   $('dict').classList.remove('show');
-  try { speechSynthesis.cancel(); } catch (e) {}
+  stopSpeak();
   $('over').classList.remove('show');
   $('endBtn').classList.add('hide');
   $('hudFree').classList.remove('hide');
@@ -46,7 +46,7 @@ function toMenu() {
 }
 $('menuBtn').onclick = toMenu;
 $('endBtn').onclick = () => {
-  if (state === 'intro') { try { speechSynthesis.cancel(); } catch (e) {} toMenu(); return; }
+  if (state === 'intro') { stopSpeak(); toMenu(); return; }
   if (state !== 'play') return;
   if (mode === 'free') endFree(true); else if (mode === 'journey') journeyOver(true); else { bankCoins(); toMenu(); }
 };
