@@ -35,7 +35,7 @@ function startGame(m, idx) {
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
   world = m === 'stage' ? (STAGES[idx || 0].world ?? PAIR_WORLD[Math.floor((idx || 0) / 3)]) : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
-  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; particles = []; flag = null;
+  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; gust = null; windLevel = 0; windStreaks = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
@@ -187,6 +187,7 @@ function spawn() {
   if (type === 'chasm') o.w = CHASM.w;
   if (type === 'dragon') o.w = DRAGON.w;
   if (type === 'duel') o.w = 8;
+  if (type === 'gust') o.w = GUST.stalks[2] + 4;
   if (type === 'lake') o.w = speed * LAKE.factor;        // רחב מדי לקפיצה
   if (type === 'bridge') o.w = speed * BRIDGE.factor;    // רחב מדי לקפיצה, ארוך מדי להליכה
   if (type === 'pond') o.w = Math.max(40, speed * POND.factor);   // הרשת באמצע
@@ -204,6 +205,7 @@ function spawn() {
   if (type === 'bridge') nextGap += speed * 1.0;             // אחרי RUN העולם מהיר – עוד מרווח
   if (type === 'door') nextGap += speed * 0.6;
   if (type === 'duel') nextGap += speed * 0.4;
+  if (type === 'gust') nextGap += speed * 0.4;
   if (type === 'chasm') nextGap += speed * 0.8 + CHASM.top + CHASM.slope;   // מקום לרדת מהגבעה
   if (nextType === 'chasm') nextGap += CHASM.top + CHASM.slope;                  // מקום לעלות על הגבעה לפני התהום
   if (mode === 'journey') addPickups(o);
@@ -234,6 +236,7 @@ function obstacleBox(o) {
     case 'door':  return { l: o.x, r: o.x + DOOR.w, t: GROUND - DOOR.h, b: GROUND };
     case 'skyrock': case 'storm': return skyBox(o);
     case 'dragon': return { l: o.x, r: o.x + o.w, t: GROUND - 10, b: GROUND };
+    case 'gust': return { l: o.x, r: o.x + GUST.stalks[2] + 4, t: GROUND - GUST.h, b: GROUND };   // כל החורשה
     case 'duel': return { l: o.x - 4, r: o.x + 4, t: GROUND - 16, b: GROUND };
     case 'chasm': return { l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 40 };
     case 'enemy': return { l: o.x, r: o.x + ENEMY.w, t: GROUND - ENEMY.h, b: GROUND };
@@ -263,7 +266,7 @@ function rockY(o) {   // הסלע נופל בתאוצה מהחבל עד הקרק
 // ברמה הקלה (forgive) מכווצים את אזור הפגיעה – נגיעה בקצה לא נחשבת
 function collides(o, pb) {
   if (o.demo || o.type === 'coin' || o.broken || o.defeated) return false;
-  if (o.climbed || o.pushed || o.open || o.deflected || o.landed || o.unlocked || o.type === 'chasm' || o.type === 'dragon' || o.type === 'duel') return false;   // תהום: העולם עוצר לפניה, הנפילה מטופלת ב-rope.js
+  if (o.climbed || o.pushed || o.open || o.deflected || o.landed || o.unlocked || o.type === 'chasm' || o.type === 'dragon' || o.type === 'duel' || o.type === 'gust') return false;   // תהום: העולם עוצר לפניה, הנפילה מטופלת ב-rope.js
   if (o.type === 'rock' && o.fallK === undefined) return false;
   if (o.type === 'guard' && hidingFrom === o) return false;   // מתכופף מאחורי הסלעים – השומרים לא רואים
   const m = cfg.forgive || 0;
@@ -442,6 +445,7 @@ function update(dt) {
   ropeUpdate(dt, pb);
   rideUpdate(dt, pb);
   duelUpdate(dt, pb);
+  gustUpdate(dt, pb);
   if (state === 'play' && testerMode === 'auto' && isTester()) testerAuto(pb, dt);   // מצב בודק: משחק אוטומטי
   if (state === 'demo' || state === 'intro') demoAuto(pb, dt);
   if (state === 'intro' && (introT -= dt) <= 0) introNext();

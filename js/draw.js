@@ -160,6 +160,15 @@ function hills(left, right, par, amp, color, seed) {
 }
 
 function bamboo(x, h, seed, far) {
+  const wk = typeof windNow === 'function' ? windNow() : 0;
+  if (wk > 0.01) {                                               // רוח: הקנה נוטה שמאלה ומתנדנד (הבסיס נשאר במקום)
+    const sway = wk * ((far ? 0.12 : 0.2) + 0.06 * Math.sin(performance.now() / 1000 * (5 + seed * 3) + seed * 9));
+    ctx.save(); ctx.translate(x, GROUND); ctx.transform(1, 0, sway, 1, 0, 0); ctx.translate(-x, -GROUND);
+    bambooShape(x, h, seed, far); ctx.restore(); return;
+  }
+  bambooShape(x, h, seed, far);
+}
+function bambooShape(x, h, seed, far) {
   const top = GROUND - h, w = far ? 1.4 : 1.8 + seed * 0.9;
   if (far) {                                                     // שכבה רחוקה: דהויה, בלי פרטים – עומק
     ctx.fillStyle = '#9bd3a0'; ctx.fillRect(x, top, w, h);
@@ -443,6 +452,7 @@ function playerPose() {
   if (catchT > 0) applyCatch(P);
   if (act.block > 0) applyBlock(P);
   if (act.stop > STOP_TIME - 0.8) applyStop(P);
+  P = gustPlayerPose(P, now);                     // רוח: נצמד לבמבוק / עף אחורה
   P = duelPlayerPose(P, now);                     // קרב: עמידה עם חרב והנפות
   return P;
 }
@@ -498,8 +508,10 @@ function draw() {
   }
 
   for (const o of obstacles) if (o.type === 'guard' && o.rx !== undefined) drawHideRock(o);   // הסלעים: לפני השומרים, מאחורי הנינג'ה
+  drawTornado();
   drawNinja();
   drawDuelFx();
+  drawWind();
   for (const o of obstacles) if (o.type === 'chasm') drawRopeSwing(o);        // החבל (והנינג'ה התלוי עליו) – לפני הכול
   for (const o of obstacles) if (o.type === 'window') drawFireRing(o, true);   // החצי הקדמי של הטבעת – מעל הנינג'ה, נראה שהוא עובר דרכה
   for (const o of obstacles) if (o.type === 'bridge') drawFieldSmoke(o);
@@ -555,6 +567,7 @@ function drawObstacle(o, top) {
   if (o.type === 'dragon') { drawDragon(o.x + DRAGON.saddle, GROUND - DRAGON.lie, ride && ride.o === o && ride.phase === 'mount' ? 'stand' : 'lie'); return; }
   if (SKY_TYPES.includes(o.type)) { drawSky(o); return; }
   if (o.type === 'duel') { drawDuelEnemy(o); return; }
+  if (o.type === 'gust') { drawGustBamboo(o); return; }
   if (artDraw(o)) return;                        // יש ציור SVG מהסטודיו – הוא מחליף את הציור הרגיל
   if (o.type === 'door') { drawDoor(o); drawMerchant(o); return; }   // I WANT: סוחר ודלת נעולה
   if (o.type === 'box') {                       // ארגז עץ
@@ -1202,7 +1215,7 @@ function drawBush(x, y, grow, t, now) {         // שיח מעלים מצויר�
 }
 
 function drawNinja() {                                           // הנינג'ה מורם לפי גובה הקרקע (גבעה לפני תהום)
-  const off = rope && rope.phase === 'land' ? rope.drawOff || 0 : 0;   // נוחת מהחבל – מצויר במקום שבו נחת
+  const off = (rope && rope.phase === 'land' ? rope.drawOff || 0 : 0) + gustOff();   // נוחת מהחבל / הרוח זרקה אותו אחורה   // נוחת מהחבל – מצויר במקום שבו נחת
   const L = terrainLift(PLAYER.x + PLAYER.w / 2 + off);
   if (off) { ctx.save(); ctx.translate(off, 0); }
   if (L) { ctx.save(); ctx.translate(0, -L); }
@@ -1212,6 +1225,7 @@ function drawNinja() {                                           // הנינג'�
   drawRideLeave();
 }
 function drawNinjaBody() {
+  if (drawGustNinja()) return;                                                    // בטורנדו: מחזיק בקנה / עף
   if (ropeHanging()) return;                                                      // תלוי על החבל – מצויר ב-drawRopeSwing
   const pb = playerBox();
   const swim = swimmingNow();

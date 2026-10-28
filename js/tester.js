@@ -22,6 +22,7 @@ function testerTap() {
   if (merchant && merchant.phase === 'ask') return command('want', 'tap');
   if (merchant && merchant.phase === 'choose') return command(DOOR.needs, 'tap');
   if (duelActive()) return command('fight', 'tap');
+  if (gustActive()) return command('hold', 'tap');
   if (ride && ride.phase === 'wait') return command('ride', 'tap');
   if (rope && rope.phase === 'wait') return command('catch', 'tap');
   if (rope && rope.phase === 'hang') return command('let go', 'tap');
@@ -58,6 +59,7 @@ function testerAuto(pb, dt) {
   }
   if (ride && ride.phase === 'wait') command('ride', 'auto');
   if (duel && duel.phase === 'face' && duel.t > 0.35) command('fight', 'auto');
+  if (gust && gust.phase === 'storm' && gust.held === null && gust.gx < -2) command('hold', 'auto');
   if (rope && rope.phase === 'wait') command('catch', 'auto'); else if (rope && rope.phase === 'hang' && rope.theta >= ROPE.amp * ROPE.farAt) command('let go', 'auto');
   if (merchant && merchant.t > 1) { if (merchant.phase === 'ask') command('want', 'auto'); else if (merchant.phase === 'choose') command(DOOR.needs, 'auto'); }
   if (autoSt.flyAt !== null && t >= autoSt.flyAt) { command('fly', 'auto'); autoSt.flyAt = null; }
