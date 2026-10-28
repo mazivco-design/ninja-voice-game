@@ -501,90 +501,111 @@ function drawKoi(g, now) {     // בקואורדינטות קרקע (בתוך ש
 }
 
 // ============================================================
-//   בתוך הבית – חדר יפני (טטאמי, קיר שוג'י, טוקונומה)
+//   בתוך הבית – חדר יפני קטן, במבט לתוך "קופסה" עם פרספקטיבה:
+//   מה שרחוק (ליד הקיר האחורי) מצטמצם, וכך רואים את קירות הצד מבפנים.
 // ============================================================
-const BW = 120;     // גובה הקיר האחורי על המסך
+const BW = 132;     // גובה הקירות (ביחידות של קדמת החדר)
 const ROOM = {
-  w: 640, h: 430, cell: 12,
-  start: { x: 320, y: 362, dir: 'up' },
-  table: { x: 210, y: 190, rx: 62, ry: 42 },
-  futon: { x: 462, y: 36, w: 140, h: 112 },
-  jars: [[568, 318, 15], [598, 346, 12]],
-  lamp: [96, 300],
-  elder: { x: 330, y: 96, phase: 0 },
-  exit: { x: 290, y: 390, w: 60, h: 40 }
+  w: 480, h: 342, cell: 10, D: 320, S0: 0.74,
+  start: { x: 240, y: 286, dir: 'up' },
+  table: { x: 170, y: 150, rx: 50, ry: 34 },
+  futon: { x: 330, y: 22, w: 122, h: 92 },
+  cushions: [[170, 104], [108, 152], [232, 152], [170, 198]],
+  jars: [[428, 258, 13], [454, 282, 10]],
+  lamp: [44, 236],
+  elder: { x: 262, y: 70, phase: 0 },
+  exit: { x: 212, y: 304, w: 56, h: 38 }
 };
+function rS(y) { return ROOM.S0 + (1 - ROOM.S0) * Math.max(0, Math.min(1.1, y / ROOM.D)); }
+function rP(x, y) { const c = ROOM.w / 2; return [c + (x - c) * rS(y), y * K]; }
+function rUnP(X, Y) { const y = Y / K, c = ROOM.w / 2; return [c + (X - c) / rS(y), y]; }
+function rPoly(g, pts) { g.beginPath(); pts.forEach((p, i) => { const [X, Y] = rP(p[0], p[1]); i ? g.lineTo(X, Y) : g.moveTo(X, Y); }); g.closePath(); }
+function rQuad(g, x, y, w, h) { rPoly(g, [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]); }
+function poly(g, pts) { g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); }
+function at(g, x, y, fn) { const [X, Y] = rP(x, y), s = rS(y); g.save(); g.translate(X, Y); g.scale(s, s); fn(g); g.restore(); }
+
 ROOM.blocked = function (x, y) {
-  if (x < 18 + NR || x > this.w - 18 - NR || y < 10 + NR) return true;
-  if (y > 386 && !(x > 298 && x < 342)) return true;
-  if (y > 426) return true;
+  if (x < 6 + NR || x > this.w - 6 - NR || y < 4 + NR) return true;
+  if (y > 306 && !(x > 218 && x < 262)) return true;
+  if (y > 340) return true;
   { const t = this.table, dx = (x - t.x) / (t.rx + NR), dy = (y - t.y) / (t.ry + NR); if (dx * dx + dy * dy < 1) return true; }
   { const f = this.futon; if (x > f.x - NR && x < f.x + f.w + NR && y > f.y - NR && y < f.y + f.h + NR) return true; }
   const hitC = (cx, cy, r) => { const dx = x - cx, dy = y - cy; return dx * dx + dy * dy < r * r; };
   for (const j of this.jars) if (hitC(j[0], j[1], j[2] + NR)) return true;
-  if (hitC(this.lamp[0], this.lamp[1], 12 + NR)) return true;
-  if (hitC(this.elder.x, this.elder.y, 12 + NR)) return true;
+  if (hitC(this.lamp[0], this.lamp[1], 11 + NR)) return true;
+  if (hitC(this.elder.x, this.elder.y, 11 + NR)) return true;
   return false;
 };
-function drawRoomFloor(g) {     // בקואורדינטות קרקע, בתוך שכבה מכווצת
-  const W = ROOM.w, H = 400;
-  g.save(); g.beginPath(); g.rect(0, 0, W, H); g.clip();
-  g.fillStyle = '#c9bd84'; g.fillRect(0, 0, W, H);
-  // מחצלות טטאמי: 160x80, עם פס כהה בצדדים הארוכים
+
+function drawRoomFloor(g) {
+  const W = ROOM.w, D = ROOM.D;
+  g.save(); rPoly(g, [[0, 0], [W, 0], [W, D], [0, D]]); g.clip();
+  g.fillStyle = '#c9bd84'; g.fillRect(-60, -10, W + 120, D * K + 20);
+  // מחצלות טטאמי עם פס כהה בצדדים הארוכים
+  const MW = 128, MH = 64;
   for (let row = 0; row < 5; row++) {
-    const off = row % 2 ? -80 : 0;
-    for (let x = off; x < W; x += 160) {
-      const y = row * 80;
-      g.fillStyle = row % 2 ? '#cdc188' : '#c4b77d'; g.fillRect(x + 1, y + 1, 158, 78);
-      g.fillStyle = 'rgba(120,110,60,.25)'; for (let k = 6; k < 78; k += 5) g.fillRect(x + 1, y + k, 158, 1);
-      g.fillStyle = '#3f4a2a'; g.fillRect(x, y, 160, 4); g.fillRect(x, y + 76, 160, 4);
-      g.fillStyle = 'rgba(60,50,30,.35)'; g.fillRect(x, y, 1.5, 80);
+    const off = row % 2 ? -64 : 0;
+    for (let x = off; x < W; x += MW) {
+      const y = row * MH;
+      g.fillStyle = (row + Math.round((x - off) / MW)) % 2 ? '#cdc188' : '#c4b77d'; rQuad(g, x + 1, y + 1, MW - 2, MH - 2); g.fill();
+      g.strokeStyle = 'rgba(120,110,60,.2)'; g.lineWidth = 0.8;
+      for (let k = 6; k < MH; k += 5) { const A = rP(x + 1, y + k), B = rP(x + MW - 1, y + k); g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(B[0], B[1]); g.stroke(); }
+      g.fillStyle = '#3f4a2a'; rQuad(g, x, y, MW, 3); g.fill(); rQuad(g, x, y + MH - 3, MW, 3); g.fill();
+      g.fillStyle = 'rgba(60,50,30,.35)'; rQuad(g, x, y, 1.5, MH); g.fill();
     }
   }
-  // אור חם מהקיר
-  g.fillStyle = 'rgba(255,225,160,.12)'; g.fillRect(0, 0, W, 120);
-  // כריות ישיבה (זאבוטון) סביב השולחן
-  [[210, 128], [128, 196], [292, 196], [210, 258]].forEach(([x, y]) => {
-    g.fillStyle = 'rgba(40,20,10,.2)'; rr(g, x - 20, y - 18, 44, 40, 8); g.fill();
-    g.fillStyle = '#7e3a6b'; rr(g, x - 22, y - 20, 44, 40, 8); g.fill();
-    g.fillStyle = '#9b4f86'; rr(g, x - 17, y - 15, 34, 30, 6); g.fill();
-    g.fillStyle = '#fbbf24'; circ(g, x, y, 2.4);
+  // כריות ישיבה
+  ROOM.cushions.forEach(([x, y]) => {
+    g.fillStyle = 'rgba(40,20,10,.2)'; rQuad(g, x - 18, y - 13, 40, 30); g.fill();
+    g.fillStyle = '#7e3a6b'; rQuad(g, x - 20, y - 15, 40, 30); g.fill();
+    g.fillStyle = '#9b4f86'; rQuad(g, x - 15, y - 11, 30, 22); g.fill();
+    const [X, Y] = rP(x, y); g.fillStyle = '#fbbf24'; ell(g, X, Y, 2.2, 1.5);
   });
-  // מזרן פוטון
+  // פוטון
   const f = ROOM.futon;
-  g.fillStyle = 'rgba(40,20,10,.2)'; rr(g, f.x + 6, f.y + 6, f.w, f.h, 8); g.fill();
-  g.fillStyle = '#f3efe6'; rr(g, f.x, f.y, f.w, f.h, 8); g.fill();
-  g.fillStyle = '#ffffff'; rr(g, f.x + 34, f.y + 8, f.w - 68, 22, 8); g.fill();
-  g.fillStyle = '#2d4a8a'; rr(g, f.x + 4, f.y + 38, f.w - 8, f.h - 42, 6); g.fill();
-  g.fillStyle = 'rgba(255,255,255,.35)'; for (let x = f.x + 16; x < f.x + f.w - 8; x += 22) circ(g, x, f.y + 70, 4);
-  // שטיחון כניסה ואור מהפתח
-  g.fillStyle = 'rgba(255,240,200,.25)'; g.fillRect(290, 370, 60, 30);
+  g.fillStyle = 'rgba(40,20,10,.22)'; rQuad(g, f.x + 5, f.y + 5, f.w, f.h); g.fill();
+  g.fillStyle = '#f3efe6'; rQuad(g, f.x, f.y, f.w, f.h); g.fill();
+  g.fillStyle = '#ffffff'; rQuad(g, f.x + 30, f.y + 7, f.w - 60, 20); g.fill();
+  g.fillStyle = '#2d4a8a'; rQuad(g, f.x + 4, f.y + 34, f.w - 8, f.h - 38); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.35)'; for (let x = f.x + 16; x < f.x + f.w - 8; x += 22) { const [X, Y] = rP(x, f.y + 62); ell(g, X, Y, 3.6, 2.4); }
+  // אור חם ליד הקיר האחורי, צל בפינות
+  let gr = g.createLinearGradient(0, 0, 0, D * K);
+  gr.addColorStop(0, 'rgba(255,225,160,.2)'); gr.addColorStop(0.55, 'rgba(255,225,160,0)'); gr.addColorStop(1, 'rgba(40,20,5,.12)');
+  g.fillStyle = gr; g.fillRect(-60, 0, W + 120, D * K);
+  g.fillStyle = 'rgba(0,0,0,.14)'; rQuad(g, 0, 0, W, 9); g.fill();
+  g.fillStyle = 'rgba(0,0,0,.1)'; rQuad(g, 0, 0, 10, D); g.fill(); rQuad(g, W - 10, 0, 10, D); g.fill();
   g.restore();
+  // סף עץ בקדמת החדר, ופתח עם אבן כניסה וסנדלים
+  g.fillStyle = '#6b4a2b'; rQuad(g, 0, D, 214, 7); g.fill(); rQuad(g, 266, D, W - 266, 7); g.fill();
+  const yA = rP(0, D + 7)[1];
+  g.fillStyle = '#3a2a1e'; g.fillRect(rP(0, D + 7)[0], yA, rP(214, D + 7)[0] - rP(0, D + 7)[0], 9); g.fillRect(rP(266, D + 7)[0], yA, rP(W, D + 7)[0] - rP(266, D + 7)[0], 9);
+  g.fillStyle = '#8f8b80'; rQuad(g, 210, D + 2, 60, 24); g.fill();
+  g.fillStyle = '#a7a397'; rQuad(g, 212, D + 3, 56, 7); g.fill();
+  [[228, D + 14], [246, D + 15]].forEach(([x, y]) => { const [X, Y] = rP(x, y); g.fillStyle = '#7a5232'; rr(g, X - 3.5, Y - 6, 7, 12, 3); g.fill(); g.fillStyle = '#b91c1c'; g.fillRect(X - 3, Y - 3, 6, 1.4); });
 }
-function drawRoomBack(g, now) {     // בקואורדינטות מסך
+function drawRoomBack(g, now) {     // הקיר האחורי, בקואורדינטות מקומיות: רוחב ROOM.w, גובה BW
   const W = ROOM.w, top = -BW;
   g.fillStyle = '#4a3527'; g.fillRect(0, top, W, BW);
-  // טוקונומה (גומחה) משמאל: מגילה וכד פרחים
-  g.fillStyle = '#3a2a1e'; g.fillRect(28, top + 14, 150, BW - 14);
-  g.fillStyle = '#d8cdb2'; g.fillRect(36, top + 20, 134, BW - 26);
-  g.fillStyle = 'rgba(0,0,0,.08)'; g.fillRect(36, top + 20, 134, 10);
-  g.fillStyle = '#6b4a2b'; g.fillRect(30, -12, 146, 12);
-  g.fillStyle = '#f5f0e2'; g.fillRect(84, top + 26, 34, 72);
-  g.fillStyle = '#5a3a1f'; g.fillRect(80, top + 24, 42, 4); g.fillRect(80, top + 96, 42, 4);
-  g.strokeStyle = '#334155'; g.lineWidth = 1.6; g.beginPath(); g.moveTo(88, top + 80); g.lineTo(96, top + 58); g.lineTo(102, top + 70); g.lineTo(108, top + 50); g.lineTo(114, top + 80); g.stroke();
-  g.fillStyle = '#dc2626'; circ(g, 106, top + 40, 4);
-  g.fillStyle = '#1e3a5f'; rr(g, 140, top + 82, 16, 22, 6); g.fill();
-  g.strokeStyle = '#4d7c0f'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(148, top + 82); g.quadraticCurveTo(144, top + 62, 136, top + 56); g.moveTo(148, top + 82); g.quadraticCurveTo(154, top + 60, 162, top + 54); g.stroke();
-  g.fillStyle = '#f9a8d4'; circ(g, 136, top + 56, 3.2); circ(g, 162, top + 54, 3.2); circ(g, 150, top + 64, 2.6);
-  // קיר שוג'י מואר
-  const sx = 196, sw = W - 214, n = 4, pw = sw / n;
+  // טוקונומה (גומחה): מגילה וכד פרחים
+  g.fillStyle = '#3a2a1e'; g.fillRect(24, top + 14, 150, BW - 14);
+  g.fillStyle = '#d8cdb2'; g.fillRect(32, top + 20, 134, BW - 26);
+  g.fillStyle = 'rgba(0,0,0,.1)'; g.fillRect(32, top + 20, 134, 12);
+  g.fillStyle = '#6b4a2b'; g.fillRect(26, -12, 146, 12);
+  g.fillStyle = '#f5f0e2'; g.fillRect(80, top + 28, 36, 76);
+  g.fillStyle = '#5a3a1f'; g.fillRect(76, top + 26, 44, 4); g.fillRect(76, top + 102, 44, 4);
+  g.strokeStyle = '#334155'; g.lineWidth = 1.6; g.beginPath(); g.moveTo(85, top + 86); g.lineTo(93, top + 62); g.lineTo(99, top + 74); g.lineTo(105, top + 54); g.lineTo(111, top + 86); g.stroke();
+  g.fillStyle = '#dc2626'; circ(g, 103, top + 42, 4);
+  g.fillStyle = '#1e3a5f'; rr(g, 136, top + 88, 16, 24, 6); g.fill();
+  g.strokeStyle = '#4d7c0f'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(144, top + 88); g.quadraticCurveTo(140, top + 68, 132, top + 62); g.moveTo(144, top + 88); g.quadraticCurveTo(150, top + 66, 158, top + 60); g.stroke();
+  g.fillStyle = '#f9a8d4'; circ(g, 132, top + 62, 3.2); circ(g, 158, top + 60, 3.2); circ(g, 146, top + 70, 2.6);
+  // קיר שוג'י מואר עם צללי במבוק
+  const sx = 192, sw = W - 204, n = 4, pw = sw / n;
   for (let i = 0; i < n; i++) {
     const px = sx + i * pw + 3;
     g.fillStyle = '#f4ecd6'; g.fillRect(px, top + 22, pw - 6, BW - 34);
     g.fillStyle = 'rgba(255,214,140,.3)'; g.fillRect(px, top + 22 + (BW - 34) * 0.5, pw - 6, (BW - 34) * 0.5);
-    // צל של במבוק מבחוץ
     g.fillStyle = 'rgba(80,110,60,.18)';
-    for (let k = 0; k < 2; k++) { const bx = px + 16 + k * 40 + Math.sin(now / 1500 + i + k) * 2; g.fillRect(bx, top + 22, 3, BW - 34); }
+    for (let k = 0; k < 2; k++) { const bx = px + 12 + k * 30 + Math.sin(now / 1500 + i + k) * 2; g.fillRect(bx, top + 22, 3, BW - 34); }
     g.fillStyle = '#b8a888';
     for (let k = 1; k < 3; k++) g.fillRect(px + (pw - 6) * k / 3 - 0.6, top + 22, 1.2, BW - 34);
     for (let k = 1; k < 5; k++) g.fillRect(px, top + 22 + (BW - 34) * k / 5 - 0.6, pw - 6, 1.2);
@@ -593,44 +614,59 @@ function drawRoomBack(g, now) {     // בקואורדינטות מסך
   for (let i = 1; i < n; i++) g.fillRect(sx + i * pw - 3, top + 12, 6, BW - 12);
   g.fillStyle = '#2a1d14'; g.fillRect(0, -6, W, 6);
 }
-function drawRoomSides(g) {
-  const H = 400 * K;
-  g.fillStyle = '#3a2a1e'; g.fillRect(0, -BW, 18, BW + H + 18); g.fillRect(ROOM.w - 18, -BW, 18, BW + H + 18);
+function drawRoomSides(g) {     // קירות הצד מבפנים – מרובעים מוטים בפרספקטיבה
+  const W = ROOM.w, D = ROOM.D, s0 = ROOM.S0;
+  [0, W].forEach((x, side) => {
+    const [bx, by] = rP(x, 0), [fx, fy] = rP(x, D + 7);
+    const fs = rS(D + 7), btop = by - BW * s0, ftop = fy - BW * fs;
+    const q = (t, zf) => [bx + (fx - bx) * t, (by + (fy - by) * t) - BW * (s0 + (fs - s0) * t) * zf];
+    g.fillStyle = side ? '#4f3929' : '#5a4130'; poly(g, [[bx, by], [bx, btop], [fx, ftop], [fx, fy]]); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,.14)'; g.lineWidth = 1;
+    for (let t = 0.07; t < 1; t += 0.07) { const A = q(t, 0), B = q(t, 1); g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(B[0], B[1]); g.stroke(); }
+    // חלון שוג'י בקיר הצד
+    g.fillStyle = '#3a2a1e'; poly(g, [q(0.28, 0.32), q(0.66, 0.32), q(0.66, 0.84), q(0.28, 0.84)]); g.fill();
+    g.fillStyle = '#f1e8cf'; poly(g, [q(0.3, 0.35), q(0.64, 0.35), q(0.64, 0.81), q(0.3, 0.81)]); g.fill();
+    g.fillStyle = 'rgba(255,214,140,.28)'; poly(g, [q(0.3, 0.35), q(0.64, 0.35), q(0.64, 0.55), q(0.3, 0.55)]); g.fill();
+    g.strokeStyle = '#b8a888'; g.lineWidth = 1.1;
+    [0.41, 0.53].forEach(t => { const A = q(t, 0.35), B = q(t, 0.81); g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(B[0], B[1]); g.stroke(); });
+    [0.5, 0.66].forEach(z => { const A = q(0.3, z), B = q(0.64, z); g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(B[0], B[1]); g.stroke(); });
+    // פס תחתון, קורה עליונה ועמוד בפינה האחורית
+    g.strokeStyle = '#3a2a1e'; g.lineWidth = 5; g.beginPath(); g.moveTo(bx, by - 2); g.lineTo(fx, fy - 3); g.stroke();
+    g.strokeStyle = '#2a1d14'; g.lineWidth = 7; g.beginPath(); g.moveTo(bx, btop); g.lineTo(fx, ftop); g.stroke();
+    g.fillStyle = '#2a1d14'; g.fillRect(bx - 3, btop, 6, by - btop);
+    // עמוד חזיתי (קצה הקיר החתוך)
+    g.fillStyle = '#2a1d14'; g.fillRect(side ? fx - 2 : fx - 10, ftop - 4, 12, fy - ftop + 14);
+  });
+  // קורה בראש הקיר האחורי
+  const L = rP(0, 0), R2 = rP(ROOM.w, 0);
+  g.fillStyle = '#2a1d14'; g.fillRect(L[0] - 3, L[1] - BW * s0 - 4, R2[0] - L[0] + 6, 7);
 }
-function drawRoomFront(g) {     // קיר קדמי נמוך עם פתח הדלת (מעל הכול)
-  const y = 400 * K;
-  g.fillStyle = '#4a3527'; g.fillRect(0, y - 4, 292, 22); g.fillRect(348, y - 4, ROOM.w - 348, 22);
-  g.fillStyle = '#3a2a1e'; g.fillRect(0, y - 4, 292, 4); g.fillRect(348, y - 4, ROOM.w - 348, 4);
-  g.fillStyle = '#3a2a1e'; g.fillRect(286, y - 30, 8, 48); g.fillRect(346, y - 30, 8, 48);
+function drawTable(g) {     // מקומי, מרכז השולחן ב־(0,0)
+  const t = ROOM.table, rx = t.rx, ry = t.ry * K, lift = 15;
+  g.fillStyle = 'rgba(40,20,5,.25)'; ell(g, 6, 4, rx, ry);
+  g.fillStyle = '#3a2a1e'; g.fillRect(-rx * 0.6, -lift + 2, 6, lift); g.fillRect(rx * 0.6 - 6, -lift + 2, 6, lift);
+  g.fillStyle = '#5a3a24'; ell(g, 0, -lift + 4, rx, ry);
+  g.fillStyle = '#7a5234'; ell(g, 0, -lift, rx, ry);
+  g.fillStyle = 'rgba(255,255,255,.08)'; ell(g, -rx * 0.2, -lift - ry * 0.3, rx * 0.6, ry * 0.4);
+  g.fillStyle = '#2f3b2e'; ell(g, -10, -lift - 8, 10, 8.5); g.fillRect(-14, -lift - 18, 8, 4);
+  g.strokeStyle = '#1f2937'; g.lineWidth = 1.6; g.beginPath(); g.arc(-10, -lift - 13, 8.5, Math.PI * 1.1, Math.PI * 1.9); g.stroke();
+  [[14, -4], [25, 2]].forEach(([dx, dy]) => { g.fillStyle = '#e7e5e4'; g.fillRect(dx - 4, -lift + dy - 8, 8, 7); g.fillStyle = '#9ca3af'; ell(g, dx, -lift + dy - 8, 4, 1.6); });
 }
-function drawTable(g) {
-  const t = ROOM.table, x = t.x, y = t.y * K, rx = t.rx, ry = t.ry * K, lift = 16;
-  g.fillStyle = 'rgba(40,20,5,.25)'; ell(g, x + 6, y + 4, rx, ry);
-  g.fillStyle = '#3a2a1e'; g.fillRect(x - rx * 0.6, y - lift + 2, 6, lift); g.fillRect(x + rx * 0.6 - 6, y - lift + 2, 6, lift);
-  g.fillStyle = '#5a3a24'; ell(g, x, y - lift + 4, rx, ry);
-  g.fillStyle = '#7a5234'; ell(g, x, y - lift, rx, ry);
-  g.fillStyle = 'rgba(255,255,255,.08)'; ell(g, x - rx * 0.2, y - lift - ry * 0.3, rx * 0.6, ry * 0.4);
-  // קומקום וכוסות
-  g.fillStyle = '#2f3b2e'; ell(g, x - 10, y - lift - 8, 11, 9); g.fillRect(x - 14, y - lift - 19, 8, 4);
-  g.strokeStyle = '#1f2937'; g.lineWidth = 1.6; g.beginPath(); g.arc(x - 10, y - lift - 14, 9, Math.PI * 1.1, Math.PI * 1.9); g.stroke();
-  g.fillStyle = '#e7e5e4'; [[16, -4], [28, 2]].forEach(([dx, dy]) => { g.fillRect(x + dx - 4, y - lift + dy - 8, 8, 7); g.fillStyle = '#9ca3af'; ell(g, x + dx, y - lift + dy - 8, 4, 1.6); g.fillStyle = '#e7e5e4'; });
+function drawJar(g, s) {    // מקומי
+  g.fillStyle = 'rgba(40,20,5,.28)'; ell(g, 4, 1, s, s * 0.4);
+  g.fillStyle = '#7c4a2a'; ell(g, 0, -s * 0.95, s, s * 1.05);
+  g.fillStyle = '#9a5f36'; ell(g, -s * 0.3, -s * 1.15, s * 0.35, s * 0.55);
+  g.fillStyle = '#3b6e8f'; g.fillRect(-s, -s * 1.1, s * 2, 2.4);
+  g.fillStyle = '#6a3c20'; ell(g, 0, -s * 1.9, s * 0.5, s * 0.22);
+  g.fillStyle = '#2a170c'; ell(g, 0, -s * 1.9, s * 0.32, s * 0.12);
 }
-function drawJar(g, j) {
-  const [x, y0, s] = j, y = y0 * K;
-  g.fillStyle = 'rgba(40,20,5,.28)'; ell(g, x + 4, y + 1, s, s * 0.4);
-  g.fillStyle = '#7c4a2a'; ell(g, x, y - s * 0.95, s, s * 1.05);
-  g.fillStyle = '#9a5f36'; ell(g, x - s * 0.3, y - s * 1.15, s * 0.35, s * 0.55);
-  g.fillStyle = '#3b6e8f'; g.fillRect(x - s, y - s * 1.1, s * 2, 2.4);
-  g.fillStyle = '#6a3c20'; ell(g, x, y - s * 1.9, s * 0.5, s * 0.22);
-  g.fillStyle = '#2a170c'; ell(g, x, y - s * 1.9, s * 0.32, s * 0.12);
-}
-function drawLamp(g, now) {
-  const [x, y0] = ROOM.lamp, y = y0 * K, fl = 0.85 + Math.sin(now / 200) * 0.05;
-  g.fillStyle = 'rgba(255,214,140,' + (0.2 * fl) + ')'; circ(g, x, y - 30, 34);
-  g.fillStyle = 'rgba(40,20,5,.25)'; ell(g, x + 4, y + 1, 12, 4);
-  g.fillStyle = '#3a2a1e'; g.fillRect(x - 10, y - 6, 20, 6); g.fillRect(x - 10, y - 50, 3, 46); g.fillRect(x + 7, y - 50, 3, 46);
-  g.fillStyle = 'rgba(255,236,190,' + fl + ')'; g.fillRect(x - 8, y - 46, 16, 32);
-  g.fillStyle = '#3a2a1e'; g.fillRect(x - 10, y - 52, 20, 4); g.fillRect(x - 10, y - 30, 20, 2);
+function drawLamp(g, now) {   // מקומי
+  const fl = 0.85 + Math.sin(now / 200) * 0.05;
+  g.fillStyle = 'rgba(255,214,140,' + (0.2 * fl) + ')'; circ(g, 0, -30, 34);
+  g.fillStyle = 'rgba(40,20,5,.25)'; ell(g, 4, 1, 12, 4);
+  g.fillStyle = '#3a2a1e'; g.fillRect(-10, -6, 20, 6); g.fillRect(-10, -50, 3, 46); g.fillRect(7, -50, 3, 46);
+  g.fillStyle = 'rgba(255,236,190,' + fl + ')'; g.fillRect(-8, -46, 16, 32);
+  g.fillStyle = '#3a2a1e'; g.fillRect(-10, -52, 20, 4); g.fillRect(-10, -30, 20, 2);
 }
 
 // ============================================================
@@ -642,7 +678,7 @@ const ninja = { x: OUT.start.x, y: OUT.start.y, dir: 'down', phase: 0, walking: 
 let doorArmed = true, bubble = null, marker = null, fade = null, moved = false;
 const keys = {};
 
-function zoomFor(s) { return s === ROOM ? Math.min(SW / 680, SH / (400 * K + BW + 70), 2.2) : Math.max(1.15, Math.min(SW / 820, SH / 560, 2)); }
+function zoomFor(s) { return s === ROOM ? Math.min(SW / (ROOM.w + 50), SH / (ROOM.D * K + BW * ROOM.S0 + 80), 2.6) : Math.max(1.15, Math.min(SW / 820, SH / 560, 2)); }
 
 function buildGrid(s) {
   const C = s.cell, cols = Math.ceil(s.w / C), rows = Math.ceil(s.h / C), g = new Uint8Array(cols * rows);
@@ -718,8 +754,12 @@ function onTap(sx, sy) {
   const mx = sx / view.z + view.cx, my = sy / view.z + view.cy;     // על המסך (לפני הכיווץ)
   if (scene === OUT) {
     for (const h of OUT.houses) if (inRect(mx, my, h.hit)) { goTo(h.doorX, h.zone.y + 10, { house: h }); return; }
-  } else if (inRect(mx, my, { x: 276, y: 380 * K, w: 88, h: 60 })) { goTo(320, 410, { exit: true }); return; }
-  goTo(mx, my / K, null);
+    goTo(mx, my / K, null);
+  } else {
+    const [gx, gy] = rUnP(mx, my);
+    if (gy > ROOM.D - 16 && Math.abs(gx - 240) < 46) { goTo(240, 328, { exit: true }); return; }
+    goTo(gx, gy, null);
+  }
 }
 function noteMoved() { if (!moved) { moved = true; hintEl.style.opacity = '0'; } }
 
@@ -820,7 +860,7 @@ function update(dt) {
 function camera() {
   const vw = SW / view.z, vh = SH / view.z;
   if (scene === ROOM) {
-    const top = -BW - 20, bottom = 400 * K + 40;
+    const top = -BW * ROOM.S0 - 20, bottom = ROOM.D * K + 40;
     view.cx = (ROOM.w - vw) / 2;
     view.cy = (top + bottom - vh) / 2;
     return;
@@ -837,15 +877,21 @@ function render() {
   ctx.setTransform(DPR * view.z, 0, 0, DPR * view.z, -view.cx * view.z * DPR, -view.cy * view.z * DPR);
   const items = [];
   // שכבת הקרקע (מכווצת)
-  ctx.save(); ctx.scale(1, K);
-  if (scene === OUT) { ctx.drawImage(groundCv, 0, 0, OUT.w, OUT.h); drawKoi(ctx, now); }
-  else drawRoomFloor(ctx);
-  if (marker) {
-    const k = (marker.t % 0.9) / 0.9;
-    ctx.strokeStyle = 'rgba(255,255,255,' + (0.7 * (1 - k)) + ')'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(marker.x, marker.y, 6 + k * 12, 0, Math.PI * 2); ctx.stroke();
+  if (scene === OUT) {
+    ctx.save(); ctx.scale(1, K);
+    ctx.drawImage(groundCv, 0, 0, OUT.w, OUT.h); drawKoi(ctx, now);
+    ctx.restore();
+  } else {
+    const L = rP(0, 0);
+    ctx.save(); ctx.translate(L[0], 0); ctx.scale(ROOM.S0, ROOM.S0); drawRoomBack(ctx, now); ctx.restore();
+    drawRoomSides(ctx);
+    drawRoomFloor(ctx);
   }
-  ctx.restore();
+  if (marker) {
+    const k = (marker.t % 0.9) / 0.9, [X, Y] = scene === OUT ? [marker.x, marker.y * K] : rP(marker.x, marker.y), r = 6 + k * 12;
+    ctx.strokeStyle = 'rgba(255,255,255,' + (0.7 * (1 - k)) + ')'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(X, Y, r, r * K, 0, 0, Math.PI * 2); ctx.stroke();
+  }
   // עצמים זקופים, ממוינים לפי עומק
   if (scene === OUT) {
     OUT.houses.forEach(h => items.push({ y: h.y + h.h, d: g => drawHouse(g, h, now) }));
@@ -857,16 +903,16 @@ function render() {
     items.push({ y: OUT.torii.y, d: g => drawTorii(g, OUT.torii) });
     items.push({ y: OUT.well.y + 4, d: g => drawWell(g, OUT.well) });
   } else {
-    drawRoomBack(ctx, now);
-    items.push({ y: ROOM.table.y + ROOM.table.ry * 0.3, d: drawTable });
-    ROOM.jars.forEach(j => items.push({ y: j[1], d: g => drawJar(g, j) }));
-    items.push({ y: ROOM.lamp[1], d: g => drawLamp(g, now) });
+    const T = ROOM.table;
+    items.push({ y: T.y + T.ry * 0.3, d: g => at(g, T.x, T.y, drawTable) });
+    ROOM.jars.forEach(j => items.push({ y: j[1], d: g => at(g, j[0], j[1], g2 => drawJar(g2, j[2])) }));
+    items.push({ y: ROOM.lamp[1], d: g => at(g, ROOM.lamp[0], ROOM.lamp[1], g2 => drawLamp(g2, now)) });
     const E = ROOM.elder;
-    items.push({ y: E.y, d: g => drawChar(g, E.x, E.y * K, ninja.y < E.y - 10 ? 'up' : 'down', E.phase, false, ELDER_LOOK) });
+    items.push({ y: E.y, d: g => at(g, E.x, E.y, g2 => drawChar(g2, 0, 0, ninja.y < E.y - 10 ? 'up' : 'down', E.phase, false, ELDER_LOOK)) });
   }
-  items.push({ y: ninja.y, d: g => drawChar(g, ninja.x, ninja.y * K, ninja.dir, ninja.phase, ninja.walking, NINJA_LOOK) });
+  if (scene === OUT) items.push({ y: ninja.y, d: g => drawChar(g, ninja.x, ninja.y * K, ninja.dir, ninja.phase, ninja.walking, NINJA_LOOK) });
+  else items.push({ y: ninja.y, d: g => at(g, ninja.x, ninja.y, g2 => drawChar(g2, 0, 0, ninja.dir, ninja.phase, ninja.walking, NINJA_LOOK)) });
   items.sort((a, b) => a.y - b.y).forEach(it => it.d(ctx));
-  if (scene === ROOM) { drawRoomSides(ctx); drawRoomFront(ctx); }
   if (bubble) {
     const a = Math.min(1, (1.6 - bubble.t) * 3);
     ctx.globalAlpha = a; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'center';
