@@ -30,14 +30,20 @@ const RIG_DEFAULT = {
              outline: '#ffffff', outlineAlpha: 0.6, accent: '' },          // accent ריק = צבע השחקן
     enemy: { body: '#7f1d1d', back: '#5b1313', front: '#a52a2a', edge: '#3b0a0a', skin: '#fcd9b6', eyes: '#000000',
              outline: '#ffffff', outlineAlpha: 0.45, accent: '#facc15' },
-    guard: { body: '#1e3a5f', back: '#13263f', front: '#2b4c75', edge: '#0f172a', skin: '#fcd9b6', eyes: '#000000',
-             outline: '#ffffff', outlineAlpha: 0.45, accent: '#ca8a04' }
+    guard: { body: '#26213a', back: '#16121f', front: '#342c4f', edge: '#07060b', skin: '#f1c7a1', eyes: '#000000',
+             outline: '#ffffff', outlineAlpha: 0.45, accent: '#92400e' }
   },
   shape: {
     thigh: 2.5, shin: 2.4, upper: 2.7, fore: 2.5,       // אורכי איברים
     torso: 3.4, shoulderAt: 0.8, headUp: 2.6, headR: 3.0,
     bodyW: 4.2, armW: 1.7, legW: 2.1,                   // עוביים
-    outlineW: 0.9, edgeW: 0.8, handR: 0.95
+    outlineW: 0.9, edgeW: 0.8, handR: 0.95,
+    // תוספות לשלד ולעור (ברירת המחדל שומרת על המראה הישן ככל האפשר)
+    spineAt: 0.45,      // איפה הגוף מתכופף: חלק האגן מתוך אורך הגוף (0.45 = קצת מתחת לאמצע)
+    foot: 0,            // אורך כף הרגל (0 = בלי כפות רגליים, כמו המקור)
+    taper: 1,           // השוק והאמה דקות יותר מהירך והזרוע (1 = אותו עובי)
+    ink: 0,             // קו מתאר כהה דק סביב כל חלק (0 = בלי)
+    shade: 0            // עוצמת ההצללה (0 = בלי)
   },
   run: { legSwing: 0.85, kneeBend: 1.0, armSwing: 1.15, elbowBend: 1.55, lean: 0.18, bob: 0.6, cadence: 1.0 },
   layers: { order: ELEMENTS.slice(), perMove: {} },   // perMove: { kick: [...], ... }
@@ -53,7 +59,7 @@ const RIG_DEFAULT = {
   offsets: {}   // { run: { lean, hipY, head, legB:[ירך,ברך], legF:[...], armB:[כתף,מרפק], armF:[...] }, kick: {...}, ... }
 };
 
-const MOVES = ['idle', 'run', 'jump', 'duck', 'fly', 'swim', 'climb', 'push', 'pull', 'kick', 'throw', 'catch', 'block', 'stop', 'leap', 'dive'];
+const MOVES = ['idle', 'run', 'jump', 'duck', 'fly', 'swim', 'climb', 'push', 'pull', 'kick', 'throw', 'catch', 'block', 'stop', 'leap', 'dive', 'crawl', 'hide'];
 
 function rigClone(o) { return JSON.parse(JSON.stringify(o)); }
 // מיזוג עמוק: שדות חדשים שנוספו בעתיד מקבלים ערך ברירת מחדל
@@ -133,11 +139,13 @@ function sampleKeys(name, ph) {
   }
   if (K.smooth !== false) u = (1 - Math.cos(Math.PI * u)) / 2;
   const L = (p, q) => p + (q - p) * u, L2 = (p, q) => [L(p[0], q[0]), L(p[1], q[1])];
-  return { lean: L(a.lean, b.lean), hipY: L(a.hipY, b.hipY), headTilt: L(a.headTilt || 0, b.headTilt || 0),
-           legB: L2(a.legB, b.legB), legF: L2(a.legF, b.legF), armB: L2(a.armB, b.armB), armF: L2(a.armF, b.armF) };
+  return { lean: L(a.lean, b.lean), hipY: L(a.hipY, b.hipY), headTilt: L(a.headTilt || 0, b.headTilt || 0), spine: L(a.spine || 0, b.spine || 0),
+           legB: L2(a.legB, b.legB), legF: L2(a.legF, b.legF), armB: L2(a.armB, b.armB), armF: L2(a.armF, b.armF),
+           feet: L2(a.feet || [0, 0], b.feet || [0, 0]) };
 }
 function poseToKey(P) {
-  return { lean: P.lean, hipY: P.hipY, headTilt: P.headTilt || 0, legB: P.legs[0].slice(), legF: P.legs[1].slice(), armB: P.arms[0].slice(), armF: P.arms[1].slice() };
+  return { lean: P.lean, hipY: P.hipY, headTilt: P.headTilt || 0, spine: P.spine || 0, legB: P.legs[0].slice(), legF: P.legs[1].slice(), armB: P.arms[0].slice(), armF: P.arms[1].slice(),
+           feet: (P.feet || [0, 0]).slice() };
 }
 
 // תיקוני הזווית מהעורך – מתווספים לתנוחה (או: תמונות מפתח מחליפות אותה)
@@ -146,8 +154,8 @@ function tune(name, P, phase) {
   P.phase = phase === undefined ? timePhase(name, poseClock()) : phase;
   if (keysOn(name) && !tune.raw) {
     const k = sampleKeys(name, P.phase);
-    P.lean = k.lean; P.hipY = k.hipY; P.headTilt = k.headTilt;
-    P.legs = [k.legB.slice(), k.legF.slice()]; P.arms = [k.armB.slice(), k.armF.slice()];
+    P.lean = k.lean; P.hipY = k.hipY; P.headTilt = k.headTilt; P.spine = k.spine;
+    P.legs = [k.legB.slice(), k.legF.slice()]; P.arms = [k.armB.slice(), k.armF.slice()]; P.feet = k.feet.slice();
     P.keyed = true;
     return P;
   }
@@ -158,6 +166,8 @@ function tune(name, P, phase) {
   P.lean += o.lean || 0;
   P.hipY += o.hipY || 0;
   P.headTilt = (P.headTilt || 0) + (o.head || 0);
+  P.spine = (P.spine || 0) + (o.spine || 0);
+  P.feet = [(P.feet ? P.feet[0] : 0) + (o.footB || 0), (P.feet ? P.feet[1] : 0) + (o.footF || 0)];
   P.legs = [add(P.legs[0], o.legB), add(P.legs[1], o.legF)];
   P.arms = [add(P.arms[0], o.armB), add(P.arms[1], o.armF)];
   return P;
@@ -168,14 +178,16 @@ function tune(name, P, phase) {
    legs/arms = [אחורי, קדמי], וכל אחד [ירך/כתף, ברך/מרפק]. */
 function poseIdle(now) {
   const br = Math.sin(now * 2.5);
-  return tune('idle', { hipY: -4.6, torso: RIG.shape.torso, lean: 0.05, bob: br * 0.15, legs: [[-0.15, -0.1], [0.18, 0.12]], arms: [[-0.2, 0.25], [0.25, 0.7]] }, timePhase('idle', now));
+  return tune('idle', { hipY: -4.6, torso: RIG.shape.torso, lean: 0.05, bob: br * 0.15, spine: br * 0.03, feet: [0.1, -0.12],
+                        legs: [[-0.15, -0.1], [0.18, 0.12]], arms: [[-0.2, 0.25], [0.25, 0.7]] }, timePhase('idle', now));
 }
 function poseRun(p) {
   const R = RIG.run;
   const leg = q => { const s = Math.sin(q), t = R.legSwing * s; return [t, t - R.kneeBend * Math.max(0, Math.sin(q - 1.3))]; };
   const arm = q => { const u = -R.armSwing * Math.sin(q); return [u, u + R.elbowBend]; };   // מרפק כפוף, אמה קדימה
-  return tune('run', { hipY: -4.6, torso: RIG.shape.torso, lean: R.lean, bob: -Math.abs(Math.cos(p)) * R.bob,
-                       legs: [leg(p + Math.PI), leg(p)], arms: [arm(p), arm(p + Math.PI)] }, frac(p / (2 * Math.PI)));
+  const foot = q => -0.75 * Math.max(0, Math.sin(q - 0.9));   // כף הרגל: שטוחה כשדורכים, אצבעות למטה כשהרגל מאחור ובאוויר
+  return tune('run', { hipY: -4.6, torso: RIG.shape.torso, lean: R.lean, bob: -Math.abs(Math.cos(p)) * R.bob, spine: 0.12,
+                       legs: [leg(p + Math.PI), leg(p)], arms: [arm(p), arm(p + Math.PI)], feet: [foot(p + Math.PI), foot(p)] }, frac(p / (2 * Math.PI)));
 }
 function poseAir(rising, ph) {      // ph = 0 בהמראה → 1 בנחיתה (אם ידוע)
   return tune('jump', { hipY: -4.6, torso: RIG.shape.torso, lean: 0.12, bob: 0, legs: [[0.5, -0.8], [1.35, 0.15]],
@@ -198,7 +210,7 @@ function poseClimb(t) {         // מטפס: ידיים למעלה לסירוג�
   return tune('climb', { hipY: -4.6, torso: RIG.shape.torso, lean: 0.3, bob: 0, legs: [[0.9 + 0.45 * s, -0.3], [0.9 - 0.45 * s, -0.3]], arms: [[2.7 + 0.35 * s, 2.95], [2.7 - 0.35 * s, 2.95]] }, timePhase('climb', t));
 }
 function posePush() {           // דוחף: נוטה קדימה, שתי ידיים ישרות, רגל אחורית נמתחת
-  return tune('push', { hipY: -4.2, torso: RIG.shape.torso, lean: 0.75, bob: 0, legs: [[-0.7, -0.5], [0.55, 0.1]], arms: [[1.45, 1.55], [1.55, 1.6]], openHand: true }, timePhase('push', poseClock()));
+  return tune('push', { hipY: -4.0, torso: RIG.shape.torso, lean: 0.75, spine: 0.35, headTilt: -0.35, bob: 0, legs: [[-1.0, -0.75], [0.7, -0.05]], arms: [[1.45, 1.55], [1.55, 1.6]], openHand: true }, timePhase('push', poseClock()));
 }
 function posePull(t) {          // מושך חבל: יד אחרי יד – מושיט למעלה, מושך עד המותניים, הגוף מתכופף עם המאמץ
   const ph = frac(t / 0.7), sm = q => (1 - Math.cos(2 * Math.PI * q)) / 2;
@@ -211,6 +223,17 @@ function posePull(t) {          // מושך חבל: יד אחרי יד – מו�
 function poseLeap() {          // זינוק אופקי – הגוף ישר קדימה, ידיים מושטות, רגליים מאחור
   return tune('leap', { hipY: -2.2, torso: RIG.shape.torso, lean: 1.45, bob: 0, headTilt: -1.0,
                         legs: [[-1.55, -1.6], [-1.45, -1.5]], arms: [[1.55, 1.6], [1.65, 1.7]] }, timePhase('leap', poseClock()));
+}
+function poseCrawl(t) {        // זוחל על הבטן: גוף כמעט אופקי, ידיים ורגליים זזות לסירוגין
+  const s = Math.sin(t * 9);
+  return tune('crawl', { hipY: -1.6, torso: RIG.shape.torso, lean: 1.4, spine: -0.4, bob: Math.abs(s) * -0.15, headTilt: -0.75,
+                         legs: [[-1.2 + 0.35 * s, -1.9], [-1.2 - 0.35 * s, -1.9]], arms: [[1.0 - 0.45 * s, 0.2], [1.0 + 0.45 * s, 0.2]] }, timePhase('crawl', t));
+}
+function poseHide(t) {         // מתחבא: כריעה מכווצת מאחורי הסלע – ברכיים לחזה, ידיים מחבקות את הברכיים, הראש מציץ מעל הסלע
+  const pk = Math.sin(t * 2.2) * 0.08;
+  // ברך אחת על הקרקע, הרגל השנייה כפופה קדימה, יד קדמית נשענת על הסלע – כמו מרגל שמציץ
+  return tune('hide', { hipY: -2.2, torso: RIG.shape.torso, lean: 0.3, spine: 0.15, bob: 0, headTilt: -0.45 + pk,
+                        legs: [[-0.35, -1.5], [1.35, -0.05]], arms: [[-0.8, -0.5], [1.35, 1.6]] }, timePhase('hide', t));   // השוק האחורית שטוחה על הקרקע, היד האחורית מאחור (לא בין הרגליים)
 }
 function poseDive(t) {         // צולל מתחת למים – גוף אופקי ונוטה מטה, ידיים קדימה, רגליים בועטות
   const f = Math.sin(t * 12) * 0.3;
@@ -251,16 +274,24 @@ function figureJoints(P) {
   const off = (o, d) => d ? [o[0] + fw[0] * d[0] + up[0] * d[1], o[1] + fw[1] * d[0] + up[1] * d[1]] : o;
   const hip = [0, P.hipY];
   const torso = P.torso || S.torso;
-  const neck = along(hip, torso);
-  const sh = along(hip, torso * S.shoulderAt);
-  const head0 = along(neck, S.headUp);
-  return { hip, neck, sh, head0, head: off(head0, A.head),
-           shB: off(sh, A.shB), shF: off(sh, A.shF), hipB: off(hip, A.hipB), hipF: off(hip, A.hipF), up, fw };
+  // הגוף בשני חלקים: אגן (בכיוון lean) וחזה (מתכופף ב-spine נוסף). spine = 0 → גוף ישר כמו פעם
+  const pelvis = torso * (S.spineAt === undefined ? 0.45 : S.spineAt), lean2 = P.lean + (P.spine || 0);
+  const up2 = [Math.sin(lean2), -Math.cos(lean2)], fw2 = [Math.cos(lean2), Math.sin(lean2)];
+  const waist = along(hip, pelvis);
+  const along2 = (o, d) => [o[0] + up2[0] * d, o[1] + up2[1] * d];
+  const off2 = (o, d) => d ? [o[0] + fw2[0] * d[0] + up2[0] * d[1], o[1] + fw2[1] * d[0] + up2[1] * d[1]] : o;
+  const neck = along2(waist, torso - pelvis);
+  const shD = torso * S.shoulderAt;
+  const sh = shD >= pelvis ? along2(waist, shD - pelvis) : along(hip, shD);
+  const head0 = along2(neck, S.headUp);
+  return { hip, waist, neck, sh, head0, head: off2(head0, A.head), lean2,
+           shB: off2(sh, A.shB), shF: off2(sh, A.shF), hipB: off(hip, A.hipB), hipF: off(hip, A.hipF), up: up2, fw: fw2 };
 }
 
 function drawFigure(F) {
   const P = F.pose, S = RIG.shape, now = performance.now() / 1000;
-  const C = RIG.colors[F.kind || 'ninja'] || RIG.colors.ninja;
+  const C0 = RIG.colors[F.kind || 'ninja'] || RIG.colors.ninja;
+  const C = F.suit ? Object.assign({}, C0, F.suit) : C0;      // חליפה מהחנות – מחליפה את צבעי הגוף
   const accent = C.accent || F.accent || '#dc2626';
   const halo = hexA(C.outline, C.outlineAlpha);
   const EL = RIG.elements || {};
@@ -270,9 +301,12 @@ function drawFigure(F) {
   ctx.scale(F.facing * F.scale, F.scale);
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   const J = figureJoints(P);
-  const { hip, neck, head } = J;
+  const { hip, waist, neck, head } = J;
   const hs = S.headR / 3;
   const wv = Math.sin(now * 11 + F.fx) * 0.9;
+  const headA = J.lean2 + (P.headTilt || 0);                     // זווית הראש (עם כיפוף הגוף)
+  const taper = S.taper === undefined ? 1 : S.taper, footL = S.foot === undefined ? 0 : S.foot, ink = S.ink || 0, shade = S.shade || 0;
+  const lite = 'rgba(255,255,255,' + shade + ')', dark = 'rgba(0,0,0,' + shade * 0.9 + ')';
 
   // נקודות האיברים (כתף/ירך → מרפק/ברך → כף יד/רגל)
   const seg = (o, a, l1, l2) => { const k = endOf(o[0], o[1], a[0], l1); return [o, k, endOf(k[0], k[1], a[1], l2)]; };
@@ -285,16 +319,30 @@ function drawFigure(F) {
     ctx.beginPath(); ctx.moveTo(q[0][0], q[0][1]); for (let i = 1; i < q.length; i++) ctx.lineTo(q[i][0], q[i][1]); ctx.stroke();
   };
   const gloveR = () => (P.openHand ? 1.25 : 0.95) * S.handR / 0.95;
+  // גפה: חלק עליון עבה, חלק תחתון דק יותר (taper). ex מרחיב (לקו המתאר), col מחליף צבע
+  const limb = (q, w, ex, col) => { line([q[0], q[1]], w + ex, col); line([q[1], q[2]], w * taper + ex, col); };
+  // כף רגל: קפסולה מהקרסול. כשהשוק אנכית – כף רגל שטוחה (ניצבת לשוק). כשהרגל מתוחה אופקית – האצבעות ממשיכות את קו הרגל. ועוד הסטה מהתנוחה (P.feet)
+  const footPts = (q, i) => {
+    const sh = P.legs[i][1], a = sh + Math.PI / 2 * (Math.cos(sh) + 1) / 2 + ((P.feet && P.feet[i]) || 0), e = q[2];
+    return [endOf(e[0], e[1], a, -0.5), endOf(e[0], e[1], a, footL)];
+  };
+  const foot = (q, i, ex, col, base) => { if (footL <= 0) return; line(footPts(q, i), S.legW * 0.95 + ex, col || base); };
+  // הצללה: פס בהיר לאורך הצד הקדמי של הגוף, וצל על הצד האחורי
+  const shadeLine = (q, w) => { if (!shade) return; const f = J.fw; const d = w * 0.22;
+    line(q.map(([x, y]) => [x + f[0] * d, y + f[1] * d]), w * 0.42, lite); line(q.map(([x, y]) => [x - f[0] * d, y - f[1] * d]), w * 0.3, dark); };
+  // עיניים: מצמוץ מדי כמה שניות, מצומצמות במאמץ (P.eyes = 'squint'), פעורות בבהלה ('wide')
+  const blink = frac(now / 3.4 + (F.fx || 0) * 0.37) < 0.04 ? 0.18 : 1;
+  const eyeH = (P.eyes === 'squint' ? 0.45 : P.eyes === 'wide' ? 1.15 : 1) * blink, eyeW = P.eyes === 'wide' ? 1.0 : 0.8;
 
   // כל חלק יודע לצייר את עצמו: ex = כמה להרחיב, col = צבע אחיד (להילה / לקו הכהה), או null = הצבעים הרגילים
   const DRAW = {
-    legB: (ex, col) => line(pts.legB, S.legW + ex, col || C.back),
-    armB: (ex, col) => line(pts.armB, S.armW + ex, col || C.back),
+    legB: (ex, col) => { limb(pts.legB, S.legW, ex, col || C.back); foot(pts.legB, 0, ex, col, C.back); },
+    armB: (ex, col) => limb(pts.armB, S.armW, ex, col || C.back),
     legF: (ex, col) => {
-      line(pts.legF, S.legW + ex, col || C.front);
+      limb(pts.legF, S.legW, ex, col || C.front); foot(pts.legF, 1, ex, col, C.front);
       if (!col && P.kickFoot) { const e = pts.legF[2]; ctx.fillStyle = accent; circle(e[0], e[1], 1.35); }
     },
-    armF: (ex, col) => line(pts.armF, S.armW + ex, col || C.front),
+    armF: (ex, col) => limb(pts.armF, S.armW, ex, col || C.front),
     handB: (ex, col) => { const e = pts.armB[2]; ctx.fillStyle = col || accent; circle(e[0], e[1], S.handR + ex / 2); },
     handF: (ex, col) => {
       const e = pts.armF[2];
@@ -307,7 +355,8 @@ function drawFigure(F) {
         if (!col) { ctx.fillStyle = accent; circle(e[0] + bx / bl * 0.4, e[1] + by / bl * 0.4, 0.75); }     // מגן יד
       }
       ctx.fillStyle = col || accent; circle(e[0], e[1], gloveR() + ex / 2);
-      if (style === 'guard') {                            // פנס נייר תלוי מהיד
+      if (!col && shade) { ctx.fillStyle = lite; circle(e[0] - 0.25, e[1] - 0.3, gloveR() * 0.4); }
+      if (style === 'guard' && !F.friendly) {            // פנס נייר תלוי מהיד (לא לסוחר)
         const lx = e[0], ly = e[1] + 2.2;
         if (!col) {
           ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 0.25; ctx.beginPath(); ctx.moveTo(e[0], e[1]); ctx.lineTo(lx, ly - 1.4); ctx.stroke();
@@ -322,8 +371,11 @@ function drawFigure(F) {
         if (!col) { ctx.fillStyle = '#92400e'; circle(e[0] + 0.8, e[1], 3.7); ctx.fillStyle = '#d6d3d1'; circle(e[0] + 0.8, e[1], 1.2); }
       }
     },
-    torso: (ex, col) => line([hip, neck], S.bodyW + ex, col || C.body),
-    head: (ex, col) => { ctx.fillStyle = col || C.body; circle(head[0], head[1], S.headR + ex / 2); },
+    torso: (ex, col) => { line([hip, waist, neck], S.bodyW + ex, col || C.body); if (!col) shadeLine([hip, waist, neck], S.bodyW); },
+    head: (ex, col) => {
+      ctx.fillStyle = col || C.body; circle(head[0], head[1], S.headR + ex / 2);
+      if (!col && shade) { ctx.fillStyle = lite; circle(head[0] + J.fw[0] * 0.5 - 0.5, head[1] - S.headR * 0.35, S.headR * 0.42); }   // ברק על הראש
+    },
     belt: (ex, col) => {
       ctx.save(); ctx.translate(hip[0], hip[1]); ctx.rotate(P.lean);
       const bw = S.bodyW, e = ex / 2;
@@ -343,7 +395,7 @@ function drawFigure(F) {
       ctx.restore();
     },
     face: (ex, col) => {
-      ctx.save(); ctx.translate(head[0], head[1]); ctx.rotate(P.lean + (P.headTilt || 0)); ctx.scale(hs, hs);
+      ctx.save(); ctx.translate(head[0], head[1]); ctx.rotate(headA); ctx.scale(hs, hs);
       const e = ex / 2 / hs;
       if (style === 'samurai') {                         // פנים גלויות, גבות כועסות, שפם
         ctx.fillStyle = col || C.skin; roundRect(-1.0 - e, -0.9 - e, 4.1 + 2 * e, 3.2 + 2 * e, 1 + e); ctx.fill();
@@ -355,15 +407,26 @@ function drawFigure(F) {
         }
       } else if (style === 'guard') {                    // פנים רחבות
         ctx.fillStyle = col || C.skin; roundRect(-1.4 - e, -1.0 - e, 4.5 + 2 * e, 2.6 + 2 * e, 0.8 + e); ctx.fill();
-        if (!col) { ctx.fillStyle = C.eyes; circle(0.9, -0.1, 0.42); circle(2.3, -0.1, 0.42); ctx.fillRect(1.1, 0.9, 1.2, 0.25); }
+        if (!col && F.friendly) {                       // סוחר: פנים חייכניות ושפם
+          ctx.fillStyle = C.eyes; circle(0.9, -0.2, 0.42); circle(2.3, -0.2, 0.42);
+          ctx.strokeStyle = '#3f2a1d'; ctx.lineWidth = 0.5; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(0.4, 0.75); ctx.quadraticCurveTo(1.0, 0.45, 1.6, 0.7); ctx.quadraticCurveTo(2.2, 0.45, 2.8, 0.75); ctx.stroke();
+          ctx.lineWidth = 0.3; ctx.beginPath(); ctx.moveTo(0.9, 1.1); ctx.quadraticCurveTo(1.6, 1.6, 2.3, 1.1); ctx.stroke();
+        } else if (!col) {                              // פנים כועסות: גבות משופעות, עיניים צרות, פה עקום ומסכה אדומה
+          ctx.fillStyle = C.eyes; ctx.fillRect(0.55, -0.3, 0.8, 0.38); ctx.fillRect(1.95, -0.3, 0.8, 0.38);
+          ctx.strokeStyle = C.eyes; ctx.lineWidth = 0.42; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(0.2, -1.0); ctx.lineTo(1.45, -0.42); ctx.moveTo(1.85, -0.42); ctx.lineTo(3.1, -1.0); ctx.stroke();
+          ctx.fillStyle = '#991b1b'; roundRect(-1.4, 0.55, 4.5, 1.05, 0.35); ctx.fill();          // מסכת פה אדומה
+          ctx.strokeStyle = '#450a0a'; ctx.lineWidth = 0.3; ctx.beginPath(); ctx.moveTo(0.8, 1.25); ctx.quadraticCurveTo(1.7, 0.75, 2.6, 1.25); ctx.stroke();   // שיניים חשוקות
+        }
       } else {
         ctx.fillStyle = col || C.skin; roundRect(-1.7 - e, -0.85 - e, 4.6 + 2 * e, 1.8 + 2 * e, 0.6 + e); ctx.fill();
-        if (!col) { ctx.fillStyle = C.eyes; ctx.fillRect(0.4, -0.45, 0.8, 0.9); ctx.fillRect(1.9, -0.45, 0.8, 0.9); }
+        if (!col) { ctx.fillStyle = C.eyes; const h = 0.9 * eyeH, w = eyeW; ctx.fillRect(0.8 - w / 2, -h / 2, w, h); ctx.fillRect(2.3 - w / 2, -h / 2, w, h); }
       }
       ctx.restore();
     },
     band: (ex, col) => {                                  // סרט ראש עם זנבות מתנופפים
-      ctx.save(); ctx.translate(head[0], head[1]); ctx.rotate(P.lean + (P.headTilt || 0)); ctx.scale(hs, hs);
+      ctx.save(); ctx.translate(head[0], head[1]); ctx.rotate(headA); ctx.scale(hs, hs);
       const e = ex / 2 / hs;
       if (style === 'samurai') {                         // קסדה: כיפה, מגן עורף וקרניים מזהב
         ctx.fillStyle = col || C.back;
@@ -395,19 +458,21 @@ function drawFigure(F) {
   // 2) החלקים עצמם, לפי סדר השכבות. חלק עם "קו כהה" מקבל קודם צללית כהה קצת יותר גדולה
   order.forEach(n => {
     if (EL[n] && EL[n].edge && S.edgeW > 0) DRAW[n](S.edgeW, C.edge);
+    else if (ink > 0 && n !== 'face') DRAW[n](ink * 2, C.edge);     // קו מתאר דק לכל חלק
     DRAW[n](0, null);
   });
 
   // מצב בדיקה: מציגים את השלד והמפרקים
   if (F.skeleton) {
     ctx.lineWidth = 0.25; ctx.strokeStyle = '#ef4444';
-    ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.lineTo(neck[0], neck[1]); ctx.lineTo(head[0], head[1]); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.lineTo(waist[0], waist[1]); ctx.lineTo(neck[0], neck[1]); ctx.lineTo(head[0], head[1]); ctx.stroke();
+    ctx.strokeStyle = '#3b82f6'; [0, 1].forEach(i => { const f = footPts(i ? pts.legF : pts.legB, i); ctx.beginPath(); ctx.moveTo(f[0][0], f[0][1]); ctx.lineTo(f[1][0], f[1][1]); ctx.stroke(); });
     for (const [n, [a, k, e]] of Object.entries(pts)) {
       ctx.strokeStyle = n.endsWith('F') ? '#22c55e' : '#f59e0b';
       ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(k[0], k[1]); ctx.lineTo(e[0], e[1]); ctx.stroke();
       ctx.fillStyle = ctx.strokeStyle; [a, k, e].forEach(q => circle(q[0], q[1], 0.35));
     }
-    ctx.fillStyle = '#ef4444'; [hip, neck, head].forEach(q => circle(q[0], q[1], 0.4));
+    ctx.fillStyle = '#ef4444'; [hip, waist, neck, head].forEach(q => circle(q[0], q[1], 0.4));
   }
   ctx.restore();
   // לעורך: איפה כל מפרק נמצא (בקואורדינטות של הדמות)
@@ -440,6 +505,8 @@ function movePose(move, t) {
     case 'stop':  { const c = t % 1.6; P = poseIdle(t); if (keyed || c < 0.8) applyStop(P); break; }
     case 'leap':  P = poseLeap(); lift = 4; break;
     case 'dive':  P = poseDive(t); break;
+    case 'crawl': P = poseCrawl(t); break;
+    case 'hide':  P = poseHide(t); break;
     default: P = poseIdle(t);
   }
   POSE_CLOCK = null;
