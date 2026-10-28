@@ -32,7 +32,7 @@ function curSpeed() {
   if (merchant && merchant.phase === 'walk') return speed * MERCHANT_WALK;   // עם המפתח ביד – הולכים לאט אל הדלת
   if (act.climb > 0) return CLIFF.ladder / CLIFF.time;         // על הסולם – מתקדמים לאט באלכסון
   if (act.stop > 0 || act.pulling > 0 || act.hiding > 0 || (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') || (rope && rope.phase !== 'done') || rideHolds() || duelHolds() || gustHolds()) return 0;   // …או עומדים ליד הסוחר   // עוצרים / מושכים בחבל / מתחבאים בשיח
-  return speed * (act.run > 0 ? RUN_BOOST.mult : 1) * (crawling() ? BRAMBLE.slow : 1);
+  return speed * (act.run > 0 ? RUN_BOOST.mult : 1) * (crawling() ? BRAMBLE.slow : 1) * gustSlow();   // gustSlow: הרוח מאטה לפני הטורנדו
 }
 let bgX = 0, lastT = 0;
 let world = 0, shakeT = 0;
