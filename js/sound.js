@@ -32,6 +32,8 @@ const SFX = {
   checkpoint: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0, 0.16, 'triangle', 0.1, i * 0.08)),
   record: () => [784, 988, 1175, 1568, 1175, 1568].forEach((f, i) => tone(f, 0, 0.18, 'square', 0.07, i * 0.09)),
   win: () => [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0, 0.25, 'triangle', 0.1, i * 0.1)),
+  clash: () => { tone(2400, 1500, 0.09, 'square', 0.045); tone(3100, 0, 0.32, 'triangle', 0.05, 0.01); tone(1650, 0, 0.26, 'triangle', 0.04, 0.01); },
+  swish: () => tone(900, 260, 0.11, 'sawtooth', 0.025),
   over: () => [440, 349, 262].forEach((f, i) => tone(f, 0, 0.3, 'triangle', 0.1, i * 0.18))
 };
 function sfx(name) { if (muted || !sfxCtx || !SFX[name]) return; try { SFX[name](); } catch (e) {} }

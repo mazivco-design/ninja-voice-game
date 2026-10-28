@@ -38,7 +38,7 @@ function toMenu() {
   $('progress').classList.add('hide');
   $('catchHud').classList.add('hide');
   $('lives').textContent = '';
-  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; particles = []; flag = null;
+  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; particles = []; flag = null;
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; resetAct();
   renderMenu();
   if (model) setStatus('Ready!');

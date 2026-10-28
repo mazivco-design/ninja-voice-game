@@ -443,6 +443,7 @@ function playerPose() {
   if (catchT > 0) applyCatch(P);
   if (act.block > 0) applyBlock(P);
   if (act.stop > STOP_TIME - 0.8) applyStop(P);
+  P = duelPlayerPose(P, now);                     // קרב: עמידה עם חרב והנפות
   return P;
 }
 
@@ -498,6 +499,7 @@ function draw() {
 
   for (const o of obstacles) if (o.type === 'guard' && o.rx !== undefined) drawHideRock(o);   // הסלעים: לפני השומרים, מאחורי הנינג'ה
   drawNinja();
+  drawDuelFx();
   for (const o of obstacles) if (o.type === 'chasm') drawRopeSwing(o);        // החבל (והנינג'ה התלוי עליו) – לפני הכול
   for (const o of obstacles) if (o.type === 'window') drawFireRing(o, true);   // החצי הקדמי של הטבעת – מעל הנינג'ה, נראה שהוא עובר דרכה
   for (const o of obstacles) if (o.type === 'bridge') drawFieldSmoke(o);
@@ -552,6 +554,7 @@ function drawObstacle(o, top) {
   const x = o.x;
   if (o.type === 'dragon') { drawDragon(o.x + DRAGON.saddle, GROUND - DRAGON.lie, ride && ride.o === o && ride.phase === 'mount' ? 'stand' : 'lie'); return; }
   if (SKY_TYPES.includes(o.type)) { drawSky(o); return; }
+  if (o.type === 'duel') { drawDuelEnemy(o); return; }
   if (artDraw(o)) return;                        // יש ציור SVG מהסטודיו – הוא מחליף את הציור הרגיל
   if (o.type === 'door') { drawDoor(o); drawMerchant(o); return; }   // I WANT: סוחר ודלת נעולה
   if (o.type === 'box') {                       // ארגז עץ
@@ -1271,8 +1274,9 @@ function drawNinjaBody() {
   const P = drowning ? poseFly(now * 4) : playerPose();          // שוקע – מנופף בידיים
   P.eyes = invulnT > 0 || drowning ? 'wide' : (py > 0 || kickT > 0 || act.push > 0 || act.pulling > 0 || act.leap > 0) ? 'squint' : null;   // הבעה: בהלה אחרי פגיעה, מאמץ בפעולה
   if (riding) drawRideDragon(fx, fy);                            // הדרקון מתחת לנינג'ה
-  if (hasGear('katana')) drawKatana(fx, fy, P);                  // קטאנה על הגב – מאחורי הגוף
+  if (hasGear('katana') && P.swordA === undefined) drawKatana(fx, fy, P);   // קטאנה על הגב – מאחורי הגוף (בקרב היא ביד)
   drawFigure({ fx, fy, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
+  drawPlayerSword(fx, fy, P);
   drawPet(fx, fy);
   if (drowning) {
     if (Math.random() < 0.25) particles.push({ x: fx + (Math.random() - 0.5) * 4, y: GROUND, vx: 0, vy: -8, g: 0, life: 0.5, color: '#e0f2fe', size: 0.9 });

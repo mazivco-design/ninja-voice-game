@@ -122,6 +122,7 @@ function tokenize(text, detail) {
 // המילים שמתאימות למכשולים שעל המסך לפני הנינג'ה (ולסוחר). אם אין כלום – כל המילים של השלב
 function expectedWords() {
   if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? ['want'] : merchant.phase === 'choose' ? [...ITEM_WORDS] : [];
+  if (duelActive()) return ['fight'];
   if (ride && ride.phase === 'wait') return ['ride'];
   if (ride && (ride.phase === 'mount' || ride.phase === 'takeoff')) return ['up', 'down', 'fire'];
   if (rope && rope.phase !== 'done') return rope.phase === 'wait' ? ['catch'] : rope.phase === 'hang' ? ['let go'] : [];
@@ -281,6 +282,7 @@ function command(word, source) {
   else if (word === 'fire') {                                            // כדור אש קדימה – שובר קיר קרח
     if (!(act.fireCd > 0)) { const pb = playerBox(); fireballs.push(rideCtl() ? { x: PLAYER.x + 23, y: GROUND - ride.py - 4, t: 0 } : { x: pb.r + 1, y: pb.t + 5, t: 0 }); act.fireCd = FIREBALL.cooldown; throwT = 0.25; duckT = 0; sfx('jump'); }
   }
+  else if (word === 'fight') fightCmd();                                  // FIGHT – הנפת חרב
   else if (word === 'let go') ropeLetGo();                               // LET GO – משחררים את החבל
   else if (word === 'want') merchantWant();                              // I WANT – הסוחר שואל: איזה?
   else if (ITEMS[word]) merchantItem(word);                              // שם חפץ – מבקשים אותו מהסוחר
@@ -289,7 +291,7 @@ function command(word, source) {
 
 // מקלדת – לבדיקה במחשב
 const KEYS = { KeyX: 'crawl', KeyA: 'leap', KeyV: 'dive', Space: 'jump', ArrowUp: 'jump', ArrowDown: 'down', KeyK: 'kick', KeyT: 'throw', KeyC: 'catch', KeyF: 'fly',
-               KeyS: 'stop', KeyR: 'run', KeyW: 'swim', KeyL: 'climb', KeyO: 'push', KeyU: 'pull', KeyH: 'hide', KeyB: 'block', KeyE: 'fire', KeyG: 'let go', KeyD: 'ride', KeyQ: 'up' };
+               KeyS: 'stop', KeyR: 'run', KeyW: 'swim', KeyL: 'climb', KeyO: 'push', KeyU: 'pull', KeyH: 'hide', KeyB: 'block', KeyE: 'fire', KeyG: 'let go', KeyD: 'ride', KeyQ: 'up', KeyZ: 'fight' };
 window.addEventListener('keydown', e => {
   const tag = e.target && e.target.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;      // כותבים שם – לא מפעילים פקודות
