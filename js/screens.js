@@ -177,24 +177,63 @@ function openDict() {
 const VOICE_CLIPS = {"jump": "jump", "down": "down", "kick": "kick", "throw": "throw", "catch": "catch", "fly": "fly", "stop": "stop", "run": "run", "swim": "swim", "climb": "climb", "push": "push", "pull": "pull", "hide": "hide", "block": "block", "leap": "leap", "dive": "dive", "crawl": "crawl", "fire": "fire", "let go": "let-go", "ride": "ride", "fight": "fight", "hold": "hold", "up": "up", "want": "want", "key": "key", "rope": "rope", "torch": "torch", "what do you want?": "what-do-you-want", "i have a key": "i-have-a-key", "a rope": "a-rope", "and a torch": "and-a-torch", "which one?": "which-one", "here you go!": "here-you-go", "hmm, that won't open the door.": "hmm-that-won-t-open-the-door"};
 const voiceAudio = {};
 let voiceNow = null;
+// מנגנים דרך Web Audio (אותו מנגנון של צלילי המשחק): נפתח פעם אחת בנגיעה הראשונה, ואז עובד בכל מקום – גם במסע בלי הדגמה.
+// ועוד הגברה (כשהמיקרופון פועל, האייפד מנמיך את הצלילים), עם מגביל כדי שלא יתעוות
+const VOICE_GAIN = 2.6;
+const voiceBuf = {}, voiceLoading = {};
+let voiceOut = null, voiceSrc = null;
+function voiceChain() {
+  if (voiceOut || !sfxCtx) return voiceOut;
+  const g = sfxCtx.createGain(), c = sfxCtx.createDynamicsCompressor();
+  g.gain.value = VOICE_GAIN; c.threshold.value = -10; c.knee.value = 6; c.ratio.value = 8; c.attack.value = 0.003; c.release.value = 0.15;
+  g.connect(c); c.connect(sfxCtx.destination); voiceOut = g; return g;
+}
+function voiceLoad(slug) {
+  if (voiceBuf[slug] || voiceLoading[slug] || !sfxCtx) return voiceLoading[slug];
+  return voiceLoading[slug] = fetch('audio/voice/' + slug + '.mp3').then(r => r.arrayBuffer())
+    .then(b => new Promise((res, rej) => sfxCtx.decodeAudioData(b, res, rej)))
+    .then(buf => { voiceBuf[slug] = buf; return buf; }).catch(() => { delete voiceLoading[slug]; return null; });
+}
+function voicePreload() { if (!sfxCtx) return; for (const slug of new Set(Object.values(VOICE_CLIPS))) voiceLoad(slug); }
+document.addEventListener('pointerdown', () => setTimeout(voicePreload, 50), { capture: true });   // אחרי שהצליל נפתח בנגיעה
+function playVoiceBuf(buf) {
+  const out = voiceChain(); if (!out) return false;
+  try { if (sfxCtx.state === 'suspended') sfxCtx.resume(); } catch (e) {}
+  if (voiceSrc) { try { voiceSrc.stop(); } catch (e) {} }
+  const src = sfxCtx.createBufferSource(); src.buffer = buf; src.connect(out); src.start();
+  voiceSrc = src;
+  ignoreVoiceUntil = performance.now() + buf.duration * 1000 + 450;          // לא לשמוע את הקול של המשחק עצמו
+  src.onended = () => { if (voiceSrc === src) voiceSrc = null; };
+  return true;
+}
 function speak(w) {
   const slug = VOICE_CLIPS[String(w).toLowerCase()];
-  if (slug) {
-    try {
-      try { speechSynthesis.cancel(); } catch (e) {}
-      if (voiceNow) { voiceNow.pause(); voiceNow.currentTime = 0; }
-      const a = voiceAudio[slug] || (voiceAudio[slug] = new Audio('audio/voice/' + slug + '.mp3'));
-      voiceNow = a; a.currentTime = 0; a.muted = muted;
-      ignoreVoiceUntil = performance.now() + 1600;                       // לא לשמוע את הקול של המשחק עצמו
-      a.onended = () => { ignoreVoiceUntil = performance.now() + 400; };
-      const p = a.play();
-      if (p && p.catch) p.catch(() => speakSynth(w));
-      return;
-    } catch (e) {}
+  if (slug && muted) return;
+  if (slug && sfxCtx) {
+    try { speechSynthesis.cancel(); } catch (e) {}
+    if (voiceBuf[slug]) { if (playVoiceBuf(voiceBuf[slug])) return; }
+    else {                                                                      // עוד לא נטען – טוענים ומנגנים מיד כשמוכן (אם עדיין רלוונטי)
+      const asked = performance.now();
+      const p = voiceLoad(slug);
+      if (p) { p.then(buf => { if (buf && performance.now() - asked < 1200) playVoiceBuf(buf); else if (!buf) speakFile(w, slug); }); return; }
+    }
   }
+  if (slug) { speakFile(w, slug); return; }
   speakSynth(w);
 }
-function stopSpeak() { try { speechSynthesis.cancel(); } catch (e) {} if (voiceNow) { try { voiceNow.pause(); voiceNow.currentTime = 0; } catch (e) {} } }
+function speakFile(w, slug) {                                                   // גיבוי: נגן רגיל של הדפדפן
+  try {
+    try { speechSynthesis.cancel(); } catch (e) {}
+    if (voiceNow) { voiceNow.pause(); voiceNow.currentTime = 0; }
+    const a = voiceAudio[slug] || (voiceAudio[slug] = new Audio('audio/voice/' + slug + '.mp3'));
+    voiceNow = a; a.currentTime = 0; a.muted = muted; a.volume = 1;
+    ignoreVoiceUntil = performance.now() + 1600;
+    a.onended = () => { ignoreVoiceUntil = performance.now() + 400; };
+    const p = a.play();
+    if (p && p.catch) p.catch(() => speakSynth(w));
+  } catch (e) { speakSynth(w); }
+}
+function stopSpeak() { try { speechSynthesis.cancel(); } catch (e) {} if (voiceNow) { try { voiceNow.pause(); voiceNow.currentTime = 0; } catch (e) {} } if (voiceSrc) { try { voiceSrc.stop(); } catch (e) {} voiceSrc = null; } }
 function speakSynth(w) {
   try {
     if (!('speechSynthesis' in window)) return;
@@ -209,8 +248,6 @@ function speakSynth(w) {
     speechSynthesis.speak(u);
   } catch (e) {}
 }
-// טוענים את ההקלטות מראש, כדי שיישמעו מיד
-setTimeout(() => { for (const slug of new Set(Object.values(VOICE_CLIPS))) { const a = voiceAudio[slug] = new Audio('audio/voice/' + slug + '.mp3'); a.preload = 'auto'; } }, 1500);
 
 // חפץ קטן ליד הנינג'ה (אם צריך), ורשימת פעולות לפי זמן
 function showWord(w) {
