@@ -84,6 +84,7 @@ function duelClash() {                                                          
 function duelHurt(o) {
   shakeT = 0.3; sfx('hit');
   if (state === 'demo' || state === 'intro' || o.demo) { flash = { text: HIT_WORD.duel, t: 1.2 }; invulnT = INVULN_TIME; return; }
+  if (shieldSave()) { invulnT = INVULN_TIME; return; }                            // בועת המגן
   if (dragonSave()) { invulnT = INVULN_TIME; return; }                           // הדרקון שומר עליו
   hits++;
   if (typeof voiceMark === 'function') voiceMark('hit');

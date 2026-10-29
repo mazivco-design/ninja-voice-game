@@ -23,6 +23,7 @@ async function play(m, idx) {
   listenWords = words.includes('fly') && !words.includes('jump') ? [...words, 'jump'] : [...words];   // FLY צריך גם JUMP
   if (words.includes('want')) listenWords.push('i', ...ITEM_WORDS);
   if (words.includes('let go') && !words.includes('catch')) listenWords.push('catch');
+  if (m !== 'demo') for (const w of powerWordsOwned()) if (!listenWords.includes(w)) listenWords.push(w);   // SHIELD / JET – אם יש מנות
   if (words.includes('ride')) for (const w of ['up', 'down', 'fire']) if (!listenWords.includes(w)) listenWords.push(w);   // RIDE: בשמיים צריך UP / DOWN / FIRE   // LET GO צריך גם CATCH                              // I WANT + שמות החפצים
   stopAudio();                      // מתחילים מחדש עם רשימת המילים של המשחק הזה
   const ok = await ensureAudio();   // נקרא ישירות מהלחיצה
@@ -35,7 +36,7 @@ function startGame(m, idx) {
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
   world = m === 'stage' ? (STAGES[idx || 0].world ?? PAIR_WORLD[Math.floor((idx || 0) / 3)]) : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
-  learnT = 0; learnWait = null; missCount = {}; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
+  learnT = 0; learnWait = null; missCount = {}; resetPowers(); obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
@@ -70,11 +71,12 @@ function renderHud() {
   if (mode === 'journey') $('progressBar').style.width = (100 * Math.min(1, done / segLen(jStation))) + '%';
   if (!isFinite(lives)) $('lives').textContent = '';
   else $('lives').textContent = '❤️'.repeat(Math.max(0, lives)) + '🤍'.repeat(Math.max(0, cfg.lives - lives));
+  renderPowerHud();
 }
 
 // חלון סיום – משותף לכל המצבים
 function showOver(title, big, sub, primaryLabel, primaryAction, starsStyle) {
-  state = 'over';
+  state = 'over'; renderPowerHud();
   renderTester();
   $('board').innerHTML = '';
   $('altBtn').classList.add('hide');
@@ -274,6 +276,7 @@ function rockY(o) {   // הסלע נופל בתאוצה מהחבל עד הקרק
 // ברמה הקלה (forgive) מכווצים את אזור הפגיעה – נגיעה בקצה לא נחשבת
 function collides(o, pb) {
   if (o.demo || o.type === 'coin' || o.broken || o.defeated) return false;
+  if (jetSafe()) return false;                                // עף עם תרמיל הסילון – מעל הכול
   if (o.climbed || o.pushed || o.open || o.deflected || o.landed || o.unlocked || o.type === 'chasm' || o.type === 'dragon' || o.type === 'duel' || o.type === 'gust') return false;   // תהום: העולם עוצר לפניה, הנפילה מטופלת ב-rope.js
   if (o.type === 'rock' && o.fallK === undefined) return false;
   if (o.type === 'guard' && hidingFrom === o) return false;   // מתכופף מאחורי הסלעים – השומרים לא רואים
@@ -335,6 +338,7 @@ function onHit(o) {
   if (state === 'demo' || state === 'intro') {   // בהדגמה – בלי עונש
     flash = { text: HIT_WORD[o.type], t: 1.2 }; invulnT = INVULN_TIME; return;
   }
+  if (shieldSave()) { invulnT = INVULN_TIME; sinkT = 0; o.pts = 0; cleared(o); return; }   // בועת המגן ספגה את הפגיעה
   if (dragonSave()) { invulnT = INVULN_TIME; sinkT = 0; o.pts = 0; cleared(o); return; }   // הדרקון חוסם את הפגיעה – בלי לאבד לב
   hits++; done++;
   if (typeof voiceMark === 'function') voiceMark('hit');
@@ -432,7 +436,8 @@ function update(dt) {
 
   // הנינג'ה
   const wasAir = py > 0;
-  if (rideCtl()) { py = ride.py; vy = 0; flyT = 0; }   // על הדרקון – הגובה נקבע ב-dragon.js
+  if (jetPhysics(dt)) {}                                // תרמיל סילון – עף מעל הכול (power.js)
+  else if (rideCtl()) { py = ride.py; vy = 0; flyT = 0; }   // על הדרקון – הגובה נקבע ב-dragon.js
   else if (act.climb > 0) {                     // מטפס על הסולם – עולה ומתקדם באלכסון
     climbK = Math.min(1, climbK + dt / CLIFF.time);
     py = CLIFF.h * climbK; vy = 0;
@@ -487,6 +492,7 @@ function update(dt) {
   rideUpdate(dt, pb);
   duelUpdate(dt, pb);
   gustUpdate(dt, pb);
+  powerTick(dt);
   if (state === 'play' && testerMode === 'auto' && isTester()) testerAuto(pb, dt);   // מצב בודק: משחק אוטומטי
   if (state === 'demo' || state === 'intro') demoAuto(pb, dt);
   if (state === 'intro' && (introT -= dt) <= 0) introNext();
@@ -630,7 +636,7 @@ function update(dt) {
       const sp = (bd.chase ? 95 : 40) * dt, dx = tx - bd.rx, dy = ty - bd.y, dd = Math.hypot(dx, dy) || 1;
       bd.rx += dx * Math.min(1, sp / dd); bd.y += dy * Math.min(1, sp / dd);
       if (py <= 0) bd.chase = false;
-      if (bd.hitT === undefined && !o.hit && !o.demo && py > 2) {
+      if (bd.hitT === undefined && !o.hit && !o.demo && py > 2 && !jetSafe()) {
         const [bx, by] = birdPos(o);
         if (pb.r > bx - 4.5 && pb.l < bx + 4.5 && pb.t < by + 2.5 && pb.b > by - 2.5) {
           bd.hitT = 0; sfx('squawk'); burst(bx, by, '#ffffff', 12, 26); burst(bx, by, '#e2e8f0', 6, 18);
@@ -673,7 +679,7 @@ function update(dt) {
     if (!o.hit && !o.passed && invulnT <= 0 && collides(o, pb)) { onHit(o); if (state === 'over') return; }
     const ob = obstacleBox(o);
     if (!o.passed && !o.hit && ob.r < pb.l) {
-      if (o.type === 'coin') { onHit(o); if (state === 'over') return; }   // מטבע שהוחמץ – מאבדים לב (CATCH צריך לתפוס)
+      if (o.type === 'coin' && !jetSafe()) { onHit(o); if (state === 'over') return; }   // מטבע שהוחמץ – מאבדים לב (CATCH צריך לתפוס)
       else cleared(o);                                                     // עבר את המכשול בשלום
     }
   }

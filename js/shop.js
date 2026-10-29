@@ -13,9 +13,12 @@ const SHOP = [
   { id: 'katana', at: 4,   cat: 'weapon', name: 'Katana',        price: 60, icon: '🗡️', desc: 'On your back · KICK reaches farther' },
   { id: 'goldstar', at: 5, cat: 'weapon', name: 'Gold shuriken', price: 60, icon: '⭐', desc: 'THROW flies faster' },
   { id: 'dragon', at: 9,   cat: 'pet',    name: 'Baby dragon',   price: 150, icon: '🐉', desc: 'Flies with you · saves you once each journey run' },
-  { id: 'owl', at: 6,      cat: 'pet',    name: 'Owl',           price: 100, icon: '🦉', desc: 'Flies with you · pulls coins to you, CATCH reaches farther' }
+  { id: 'owl', at: 6,      cat: 'pet',    name: 'Owl',           price: 100, icon: '🦉', desc: 'Flies with you · pulls coins to you, CATCH reaches farther' },
+  // פריטים חד-פעמיים: קונים מנות, כל שימוש מוריד אחת (power.js)
+  { id: 'shield', at: 2,   cat: 'power',  name: 'Bubble shield', price: 15, icon: '🫧', desc: 'Say SHIELD – a bubble stops the next hit', use: true },
+  { id: 'jet', at: 4,      cat: 'power',  name: 'Jet pack',      price: 25, icon: '🚀', desc: 'Say JET – fly over everything for 5 seconds', use: true }
 ];
-const SHOP_CATS = [['suit', '🥷 Suits'], ['weapon', '⚔️ Weapons'], ['pet', '🐉 Friends']];
+const SHOP_CATS = [['suit', '🥷 Suits'], ['weapon', '⚔️ Weapons'], ['pet', '🐉 Friends'], ['power', '⚡ Power-ups']];
 
 function coinsNow() { return pLoad('coins', 0); }
 function getOwned() { return isTester() ? SHOP.map(i => i.id) : pLoad('owned', ['suit_night']); }
@@ -40,6 +43,12 @@ function dragonSave() {
 }
 
 function buyItem(it) {
+  if (it.use) {                                                                  // חד-פעמי: עוד מנה
+    if (coinsNow() < it.price) { $('shopMsg').textContent = 'Not enough coins – catch more in the journey!'; return; }
+    pStore('coins', coinsNow() - it.price);
+    const p = getPowers(); p[it.id] = (p[it.id] || 0) + 1; pStore('powers', p);
+    sfx('coin'); speak(it.id); $('shopMsg').textContent = it.icon + ' +1 · say ' + it.id.toUpperCase() + ' in a run to use it'; renderShop(); return;
+  }
   const owned = getOwned();
   if (owned.includes(it.id)) return;
   if (coinsNow() < it.price) { $('shopMsg').textContent = 'Not enough coins – catch more in the journey!'; return; }
@@ -77,6 +86,13 @@ function renderShop() {
     d.innerHTML = '<div class="shopPic">' + pic + '</div><div class="shopName">' + it.name + '</div>' +
                   (it.desc ? '<div class="shopDesc">' + it.desc + '</div>' : '') + '<button class="shopBtn"></button>';
     const b = d.querySelector('button');
+    if (it.use) {                                                              // חד-פעמי: כמה יש, וכפתור לקנות עוד
+      const n = powerCount(it.id), locked = !isTester() && getStation() < (it.at || 0);
+      d.insertBefore(Object.assign(document.createElement('div'), { className: 'shopCount', textContent: 'You have: ' + (n === Infinity ? '∞' : n) }), b);
+      if (locked) { b.textContent = '🔒 Station ' + it.at; b.className = 'shopBtn lock'; d.classList.add('locked'); }
+      else { b.innerHTML = '+1 · <span class="coinIco"></span> ' + it.price; b.className = 'shopBtn buy' + (coinsNow() < it.price ? ' poor' : ''); b.onclick = () => buyItem(it); }
+      grid.appendChild(d); return;
+    }
     const locked = !has && !isTester() && getStation() < (it.at || 0);
     if (locked) { b.textContent = '🔒 Station ' + it.at; b.className = 'shopBtn lock'; d.classList.add('locked'); }
     else if (!has) { b.innerHTML = '<span class="coinIco"></span> ' + it.price; b.className = 'shopBtn buy' + (coinsNow() < it.price ? ' poor' : ''); b.onclick = () => buyItem(it); }

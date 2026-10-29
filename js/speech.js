@@ -77,7 +77,7 @@ async function ensureAudio() {
 // מילה אחרת מחכה לתוצאה הסופית, שמגיעה עם ציון ביטחון: ציון גבוה – מופעלת (וזו טעות, כמו היום). ציון נמוך – כנראה בלבול עם מילה דומה, מתעלמים.
 // אם Vosk "מתקן" את המילה האחרונה (שמע down ואז הבין שזה jump) – מטפלים במילה המתוקנת.
 function handleText(text, isFinal, detail) {
-  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up';
+  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || POWER_WORDS.includes(w);
   const { words, confs } = tokenize(text, detail);
   const exp = expectedWords();
   for (let i = 0; i < words.length; i++) {
@@ -108,7 +108,7 @@ function handleText(text, isFinal, detail) {
 
 // מפרק את הטקסט למילים של המשחק. "let go" (שתי מילים אצל Vosk) הופך למילה אחת 'let go', עם הציון הנמוך מבין השתיים
 function tokenize(text, detail) {
-  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up';
+  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || POWER_WORDS.includes(w);
   const toks = (text || '').toLowerCase().split(/\s+/).filter(Boolean);
   const dconf = detail && detail.length ? detail.map(d => d.conf) : null;
   const words = [], confs = [];
@@ -120,7 +120,8 @@ function tokenize(text, detail) {
 }
 
 // המילים שמתאימות למכשולים שעל המסך לפני הנינג'ה (ולסוחר). אם אין כלום – כל המילים של השלב
-function expectedWords() {
+function expectedWords() { return [...expectedWords0(), ...powerWordsOwned()]; }   // SHIELD / JET – תמיד מופעלות מיד
+function expectedWords0() {
   if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? ['want'] : merchant.phase === 'choose' ? [...ITEM_WORDS] : [];
   if (duelActive()) return ['fight'];
   if (gustActive()) return ['hold'];
@@ -283,6 +284,8 @@ function command(word, source) {
   else if (word === 'fire') {                                            // כדור אש קדימה – שובר קיר קרח
     if (!(act.fireCd > 0)) { const pb = playerBox(); fireballs.push(rideCtl() ? { x: PLAYER.x + 23, y: GROUND - ride.py - 4, t: 0 } : { x: pb.r + 1, y: pb.t + 5, t: 0 }); act.fireCd = FIREBALL.cooldown; throwT = 0.25; duckT = 0; sfx('jump'); }
   }
+  else if (word === 'shield') shieldCmd();                                // SHIELD – בועת מגן (מהחנות)
+  else if (word === 'jet') jetCmd();                                      // JET – תרמיל סילון (מהחנות)
   else if (word === 'hold') holdCmd();                                    // HOLD – נתפס בגזע הבמבוק
   else if (word === 'fight') fightCmd();                                  // FIGHT – הנפת חרב
   else if (word === 'let go') ropeLetGo();                               // LET GO – משחררים את החבל
@@ -293,7 +296,7 @@ function command(word, source) {
 
 // מקלדת – לבדיקה במחשב
 const KEYS = { KeyX: 'crawl', KeyA: 'leap', KeyV: 'dive', Space: 'jump', ArrowUp: 'jump', ArrowDown: 'down', KeyK: 'kick', KeyT: 'throw', KeyC: 'catch', KeyF: 'fly',
-               KeyS: 'stop', KeyR: 'run', KeyW: 'swim', KeyL: 'climb', KeyO: 'push', KeyU: 'pull', KeyH: 'hide', KeyB: 'block', KeyE: 'fire', KeyG: 'let go', KeyD: 'ride', KeyQ: 'up', KeyZ: 'fight', KeyY: 'hold' };
+               KeyS: 'stop', KeyR: 'run', KeyW: 'swim', KeyL: 'climb', KeyO: 'push', KeyU: 'pull', KeyH: 'hide', KeyB: 'block', KeyE: 'fire', KeyG: 'let go', KeyD: 'ride', KeyQ: 'up', KeyZ: 'fight', KeyY: 'hold', KeyI: 'shield', KeyJ: 'jet' };
 window.addEventListener('keydown', e => {
   const tag = e.target && e.target.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;      // כותבים שם – לא מפעילים פקודות

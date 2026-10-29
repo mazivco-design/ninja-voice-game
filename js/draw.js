@@ -463,7 +463,8 @@ function playerPose() {
   if (act.block > 0) applyBlock(P);
   if (act.stop > STOP_TIME - 0.8) applyStop(P);
   P = gustPlayerPose(P, now);                     // רוח: נצמד לבמבוק / עף אחורה
-  P = duelPlayerPose(P, now);                     // קרב: עמידה עם חרב והנפות
+  P = duelPlayerPose(P, now);
+  P = jetPose(P);                                 // תרמיל סילון – עף קדימה                     // קרב: עמידה עם חרב והנפות
   return P;
 }
 
@@ -1399,9 +1400,11 @@ function drawNinjaBody() {
   const P = drowning ? poseFly(now * 4) : playerPose();          // שוקע – מנופף בידיים
   P.eyes = invulnT > 0 || drowning ? 'wide' : (py > 0 || kickT > 0 || act.push > 0 || act.pulling > 0 || act.leap > 0) ? 'squint' : null;   // הבעה: בהלה אחרי פגיעה, מאמץ בפעולה
   if (riding) drawRideDragon(fx, fy);                            // הדרקון מתחת לנינג'ה
-  if (hasGear('katana') && P.swordA === undefined) drawKatana(fx, fy, P);   // קטאנה על הגב – מאחורי הגוף (בקרב היא ביד)
+  drawPowerBack(fx, fy, P);                                       // תרמיל הסילון על הגב
+  if (hasGear('katana') && P.swordA === undefined && jetT <= 0) drawKatana(fx, fy, P);   // קטאנה על הגב – מאחורי הגוף (בקרב היא ביד)
   drawFigure({ fx, fy, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
   drawPlayerSword(fx, fy, P);
+  drawPowerFront(fx, fy);                                         // בועת מגן / טיימר הסילון
   drawPet(fx, fy);
   if (drowning) {
     if (Math.random() < 0.25) particles.push({ x: fx + (Math.random() - 0.5) * 4, y: GROUND, vx: 0, vy: -8, g: 0, life: 0.5, color: '#e0f2fe', size: 0.9 });

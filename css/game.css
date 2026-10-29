@@ -377,3 +377,11 @@ canvas { display: block; width: 100%; height: 100%; }
 #orderList .orow button { border: 0; border-radius: 8px; background: #c7d2fe; color: #1e293b; font: 800 15px system-ui; width: 38px; height: 32px; }
 #orderList .orow button:disabled { opacity: .25; }
 .free.order { background: linear-gradient(135deg, #64748b, #334155); color: #fff; }
+
+/* פריטים חד-פעמיים (SHIELD / JET): מונה קטן בפינה השמאלית התחתונה */
+#powerHud { position: absolute; z-index: 10; left: max(16px, env(safe-area-inset-left)); bottom: max(16px, env(safe-area-inset-bottom)); display: flex; gap: 8px; pointer-events: none; }
+#powerHud.hide { display: none; }
+#powerHud .pw { background: rgba(15,23,42,.55); color: #fff; border-radius: 999px; padding: 4px 12px; font-size: clamp(13px, 2vh, 17px); font-weight: 800; }
+#powerHud .pw b { font-weight: 900; letter-spacing: .04em; }
+#powerHud .pw.on { background: #0ea5e9; box-shadow: 0 0 0 3px rgba(255,255,255,.6); }
+.shopCount { font-size: clamp(11px, 1.6vh, 14px); font-weight: 800; color: #0f766e; }
