@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>הכפר בתלת־ממד</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #cfe6ee; touch-action: none;
+               -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  canvas { display: block; }
+  #hint { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); padding: 6px 14px; border-radius: 999px;
+          background: rgba(15, 23, 42, .55); color: #f8fafc; font: 15px system-ui, sans-serif; pointer-events: none;
+          transition: opacity .8s; white-space: nowrap; }
+  #back { position: fixed; top: 10px; right: 12px; padding: 6px 12px; border-radius: 10px; background: rgba(15, 23, 42, .55);
+          color: #f8fafc; font: 14px system-ui, sans-serif; text-decoration: none; }
+  #err { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 24px;
+         font: 17px system-ui, sans-serif; color: #1f2937; text-align: center; }
+</style>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }</script>
+</head>
+<body>
+<div id="hint">נגיעה – הליכה · גרירה – סיבוב · שתי אצבעות – זום</div>
+<a id="back" href="../">לכפר הדו־ממדי</a>
+<div id="err">לא הצלחתי לטעון את התלת־ממד. כדאי לבדוק את החיבור לאינטרנט ולרענן.</div>
+<script>
+  // אם המודול לא נטען (למשל אין רשת), מציגים הודעה במקום מסך ריק
+  setTimeout(() => { if (!window.__v3d) document.getElementById('err').style.display = 'flex'; }, 8000);
+</script>
+<script type="module" src="main3d.js"></script>
+</body>
+</html>
