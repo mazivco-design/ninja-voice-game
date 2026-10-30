@@ -362,32 +362,39 @@ for (let i = 0; i < 160; i++) {
 //   הנינג'ה: שלד עם מפרקים
 // ============================================================
 const C = { body: 0x1e293b, limb: 0x111a2b, skin: 0xfcd9b6, accent: 0xdc2626 };
-function limb(parent, x, y, len, r, color, tip) {
+// SM = חומר חלק (לא מדורג) לדמות – כדורים נראים עגולים ולא "מגולפים"
+const SM = { flatShading: false };
+function limb(parent, x, y, len, r, color) {
   const pivot = new THREE.Group(); pivot.position.set(x, y, 0); parent.add(pivot);
-  const seg = mesh(new THREE.CapsuleGeometry(r, len - r * 2, 3, 8), color, 0, -len / 2, 0, pivot);
+  mesh(new THREE.CapsuleGeometry(r, Math.max(0.01, len - r * 2), 4, 10), color, 0, -len / 2, 0, pivot, SM);
   const joint = new THREE.Group(); joint.position.y = -len; pivot.add(joint);
   return { pivot, joint };
 }
+// הנינג'ה בפרופורציות של הדמות הדו־ממדית: ראש גדול ועגול, גוף קצר ורחב, רגליים וידיים קצרות ועבות
 function buildNinja() {
   const root = new THREE.Group(); scene.add(root);
   const body = new THREE.Group(); root.add(body);
-  const hips = { L: limb(body, -0.13, 0.78, 0.4, 0.085, C.limb), R: limb(body, 0.13, 0.78, 0.4, 0.085, C.limb) };
-  const knees = { L: limb(hips.L.joint, 0, 0, 0.38, 0.075, C.limb), R: limb(hips.R.joint, 0, 0, 0.38, 0.075, C.limb) };
-  [knees.L, knees.R].forEach(k => mesh(Box(0.15, 0.08, 0.24), C.limb, 0, -0.03, 0.05, k.joint));
-  const torso = new THREE.Group(); torso.position.y = 0.8; body.add(torso);
-  mesh(Box(0.36, 0.22, 0.24), C.body, 0, 0.06, 0, torso);
-  mesh(Box(0.38, 0.07, 0.26), C.accent, 0, 0.19, 0, torso);
-  const chest = new THREE.Group(); chest.position.y = 0.22; torso.add(chest);
-  mesh(new THREE.CapsuleGeometry(0.2, 0.18, 3, 10), C.body, 0, 0.22, 0, chest).scale.set(1.1, 1, 0.75);
-  const arms = { L: limb(chest, -0.27, 0.38, 0.32, 0.065, C.limb), R: limb(chest, 0.27, 0.38, 0.32, 0.065, C.limb) };
-  const fore = { L: limb(arms.L.joint, 0, 0, 0.3, 0.06, C.limb), R: limb(arms.R.joint, 0, 0, 0.3, 0.06, C.limb) };
-  [fore.L, fore.R].forEach(f => mesh(new THREE.SphereGeometry(0.08, 8, 6), C.accent, 0, -0.02, 0, f.joint));
-  const head = new THREE.Group(); head.position.y = 0.66; chest.add(head);
-  mesh(new THREE.SphereGeometry(0.27, 16, 12), C.body, 0, 0.1, 0, head);
-  mesh(new THREE.SphereGeometry(0.275, 16, 6, Math.PI * 0.5 - 0.95, 1.9, Math.PI * 0.44, Math.PI * 0.14), C.skin, 0, 0.1, 0, head);
-  [-0.09, 0.09].forEach(ex => mesh(new THREE.SphereGeometry(0.035, 6, 5), 0x000000, ex, 0.1, 0.262, head));
-  const band = mesh(new THREE.TorusGeometry(0.272, 0.03, 6, 22), C.accent, 0, 0.2, 0, head); band.rotation.x = Math.PI / 2;
-  const tails = [-1, 1].map(sd => { const t = mesh(Box(0.05, 0.03, 0.32), C.accent, sd * 0.06, 0.2, -0.38, head); t.rotation.y = sd * 0.25; return t; });
+  const HIP = 0.4;
+  const hips = { L: limb(body, -0.12, HIP, 0.21, 0.1, C.limb), R: limb(body, 0.12, HIP, 0.21, 0.1, C.limb) };
+  const knees = { L: limb(hips.L.joint, 0, 0.02, 0.2, 0.095, C.limb), R: limb(hips.R.joint, 0, 0.02, 0.2, 0.095, C.limb) };
+  [knees.L, knees.R].forEach(k => mesh(new THREE.SphereGeometry(0.11, 12, 8), C.limb, 0, 0.0, 0.04, k.joint, SM).scale.set(1, 0.6, 1.35));
+  const torso = new THREE.Group(); torso.position.y = HIP; body.add(torso);
+  mesh(new THREE.CapsuleGeometry(0.25, 0.1, 4, 14), C.body, 0, 0.22, 0, torso, SM).scale.set(1, 0.72, 0.78);
+  mesh(new THREE.CylinderGeometry(0.255, 0.255, 0.075, 18), C.accent, 0, 0.09, 0, torso, SM).scale.z = 0.8;
+  const chest = new THREE.Group(); chest.position.y = 0.2; torso.add(chest);
+  const arms = { L: limb(chest, -0.29, 0.17, 0.17, 0.08, C.limb), R: limb(chest, 0.29, 0.17, 0.17, 0.08, C.limb) };
+  const fore = { L: limb(arms.L.joint, 0, 0.01, 0.15, 0.075, C.limb), R: limb(arms.R.joint, 0, 0.01, 0.15, 0.075, C.limb) };
+  [fore.L, fore.R].forEach(f => mesh(new THREE.SphereGeometry(0.1, 12, 10), C.accent, 0, -0.02, 0, f.joint, SM));
+  const head = new THREE.Group(); head.position.y = 0.2; chest.add(head);
+  const HR = 0.36, HY = 0.3;
+  mesh(new THREE.SphereGeometry(HR, 24, 18), C.body, 0, HY, 0, head, SM);
+  // פס הפנים הבהיר והעיניים
+  mesh(new THREE.SphereGeometry(HR + 0.006, 24, 8, Math.PI * 0.5 - 0.85, 1.7, Math.PI * 0.43, Math.PI * 0.15), C.skin, 0, HY, 0, head, SM);
+  [-0.11, 0.11].forEach(ex => mesh(new THREE.SphereGeometry(0.042, 10, 8), 0x000000, ex, HY + 0.005, HR - 0.015, head, SM).scale.set(1, 1.25, 0.6));
+  // סרט ראש וקשר מאחור
+  const band = mesh(new THREE.TorusGeometry(HR - 0.02, 0.04, 8, 28), C.accent, 0, HY + 0.15, 0, head, SM); band.rotation.x = Math.PI / 2; band.scale.z = 1.4;
+  mesh(new THREE.SphereGeometry(0.055, 10, 8), C.accent, 0, HY + 0.15, -HR + 0.02, head, SM);
+  const tails = [-1, 1].map(sd => { const t = mesh(Box(0.055, 0.025, 0.3), C.accent, sd * 0.05, HY + 0.13, -HR - 0.14, head, SM); t.rotation.y = sd * 0.3; return t; });
   return { root, body, torso, chest, head, hips, knees, arms, fore, tails, x: 0, z: 8, dir: 0, phase: 0, speed: 0, target: null };
 }
 const ninja = buildNinja();
@@ -395,13 +402,13 @@ ninja.root.position.set(ninja.x, 0, ninja.z);
 function poseNinja(n, dt, now) {
   const w = Math.min(1, n.speed / 3.5), ph = n.phase;
   const s = Math.sin(ph), c = Math.cos(ph);
-  n.hips.L.pivot.rotation.x = s * 0.7 * w; n.hips.R.pivot.rotation.x = -s * 0.7 * w;
+  n.hips.L.pivot.rotation.x = s * 0.75 * w; n.hips.R.pivot.rotation.x = -s * 0.75 * w;
   n.knees.L.pivot.rotation.x = Math.max(0, -c) * 1.0 * w + 0.05; n.knees.R.pivot.rotation.x = Math.max(0, c) * 1.0 * w + 0.05;
   n.arms.L.pivot.rotation.x = -s * 0.75 * w; n.arms.R.pivot.rotation.x = s * 0.75 * w;
-  n.arms.L.pivot.rotation.z = -0.12; n.arms.R.pivot.rotation.z = 0.12;
-  n.fore.L.pivot.rotation.x = -0.35 - 0.5 * w; n.fore.R.pivot.rotation.x = -0.35 - 0.5 * w;
-  n.body.position.y = Math.abs(Math.sin(ph)) * 0.06 * w + Math.sin(now / 700) * 0.008 * (1 - w);
-  n.torso.rotation.x = 0.12 * w; n.chest.rotation.y = s * 0.12 * w;
+  n.arms.L.pivot.rotation.z = -0.28; n.arms.R.pivot.rotation.z = 0.28;
+  n.fore.L.pivot.rotation.x = -0.25 - 0.6 * w; n.fore.R.pivot.rotation.x = -0.25 - 0.6 * w;
+  n.body.position.y = Math.abs(Math.sin(ph)) * 0.05 * w + Math.sin(now / 700) * 0.008 * (1 - w);
+  n.torso.rotation.x = 0.08 * w; n.head.rotation.x = -0.05 * w; n.chest.rotation.y = s * 0.12 * w;
   n.tails.forEach((t, i) => { t.rotation.x = 0.2 + Math.sin(now / 120 + i) * 0.15 * (0.3 + w); });
 }
 
@@ -483,7 +490,7 @@ function updateNinja(dt, now) {
     n.x = nx; n.z = nz;
     n.dir = turnTo(n.dir, Math.atan2(mx, mz), Math.min(1, dt * 12));
   }
-  n.phase += dt * n.speed * 2.6;
+  n.phase += dt * n.speed * 3.4;
   n.root.position.set(n.x, 0, n.z); n.root.rotation.y = n.dir;
   poseNinja(n, dt, now);
 }
