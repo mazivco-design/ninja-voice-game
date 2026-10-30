@@ -522,15 +522,57 @@ function updateDog(dt, now) {
 }
 
 // ---------- מצלמה: מסתובבת סביב הנינג'ה ----------
-const cam = { yaw: 0, pitch: 0.72, dist: 15, tx: ninja.x, tz: ninja.z };
+// מבטים: רחוק (ברירת מחדל), קרוב מאחורי הכתף, מלמעלה, ומהעיניים של הנינג'ה (גוף ראשון).
+// בכל מבט: גרירה מסובבת, הג'ויסטיק הולך "קדימה" לפי כיוון המבט.
+const VIEWS = {
+  far:  { label: 'רחוק',    pitch: 0.72, dist: 15, ty: 1.0 },
+  near: { label: 'קרוב',    pitch: 0.28, dist: 5.2, ty: 1.35 },
+  top:  { label: 'מלמעלה',  pitch: 1.32, dist: 24, ty: 0.5 },
+  eyes: { label: 'עיניים',  eyes: true }
+};
+const cam = { mode: 'far', yaw: 0, pitch: 0.72, dist: 15, look: -0.08, tx: ninja.x, tz: ninja.z, ty: 1.0, blend: 1 };
+const camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), wantPos = new THREE.Vector3(), wantLook = new THREE.Vector3();
+function setView(mode) {
+  const v = VIEWS[mode]; if (!v) return;
+  cam.mode = mode;
+  if (!v.eyes) { cam.pitch = v.pitch; cam.dist = v.dist; }
+  else cam.look = -0.08;
+  cam.blend = 0;                                   // מעבר רך בין מבטים
+  ninja.root.visible = !v.eyes;
+  document.querySelectorAll('#views button').forEach(b => b.classList.toggle('on', b.dataset.v === mode));
+  try { localStorage.setItem('ninjaVoice_village3d_view', mode); } catch (e) {}
+}
 function placeCamera(dt) {
   cam.tx += (ninja.x - cam.tx) * Math.min(1, dt * 4); cam.tz += (ninja.z - cam.tz) * Math.min(1, dt * 4);
   if (keys.q) cam.yaw += dt * 1.6; if (keys.e) cam.yaw -= dt * 1.6;
-  const ty = 1.0, cp = Math.cos(cam.pitch);
-  camera.position.set(cam.tx + Math.sin(cam.yaw) * cp * cam.dist, ty + Math.sin(cam.pitch) * cam.dist, cam.tz + Math.cos(cam.yaw) * cp * cam.dist);
-  camera.lookAt(cam.tx, ty, cam.tz);
-  sun.position.set(cam.tx + 12, 24, cam.tz + 9); sun.target.position.set(cam.tx, 0, cam.tz);
+  const v = VIEWS[cam.mode];
+  cam.ty += ((v.ty || 1) - cam.ty) * Math.min(1, dt * 5);
+  if (v.eyes) {
+    const ey = 1.22 + ninja.body.position.y, fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), cl = Math.cos(cam.look);
+    wantPos.set(ninja.x + fx * 0.12, ey, ninja.z + fz * 0.12);
+    wantLook.set(wantPos.x + fx * cl, ey + Math.sin(cam.look), wantPos.z + fz * cl);
+    if (!ninja.speed || ninja.speed < 0.1) ninja.dir = turnTo(ninja.dir, Math.atan2(fx, fz), Math.min(1, dt * 10));
+  } else {
+    const cp = Math.cos(cam.pitch);
+    wantPos.set(cam.tx + Math.sin(cam.yaw) * cp * cam.dist, cam.ty + Math.sin(cam.pitch) * cam.dist, cam.tz + Math.cos(cam.yaw) * cp * cam.dist);
+    wantLook.set(cam.tx, cam.ty, cam.tz);
+  }
+  if (cam.blend < 1) { cam.blend = Math.min(1, cam.blend + dt * 2.5); const k = cam.blend * cam.blend * (3 - 2 * cam.blend); camPos.lerp(wantPos, k); camLook.lerp(wantLook, k); }
+  else { camPos.copy(wantPos); camLook.copy(wantLook); }
+  camera.position.copy(camPos); camera.lookAt(camLook);
+  sun.position.set(ninja.x + 12, 24, ninja.z + 9); sun.target.position.set(ninja.x, 0, ninja.z);
 }
+// כפתורי המבטים
+(function viewButtons() {
+  const bar = document.createElement('div'); bar.id = 'views';
+  Object.entries(VIEWS).forEach(([k, v]) => {
+    const b = document.createElement('button'); b.textContent = v.label; b.dataset.v = k;
+    b.addEventListener('click', e => { e.stopPropagation(); setView(k); });
+    bar.appendChild(b);
+  });
+  document.body.appendChild(bar);
+})();
+addEventListener('keydown', e => { if (e.key === 'v' || e.key === 'V') { const ks = Object.keys(VIEWS); setView(ks[(ks.indexOf(cam.mode) + 1) % ks.length]); } });
 
 // ---------- קלט מגע ----------
 const hintEl = document.getElementById('hint');
@@ -591,10 +633,15 @@ cv.addEventListener('pointermove', e => {
   }
   const cp = camPtrs();
   if (cp.length === 1) {
-    if (p.drag) { cam.yaw -= dx * 0.008; cam.pitch = Math.max(0.3, Math.min(1.25, cam.pitch + dy * 0.005)); noteMoved(); }
+    if (p.drag) {
+      cam.yaw -= dx * (cam.mode === 'eyes' ? 0.006 : 0.008);
+      if (cam.mode === 'eyes') cam.look = Math.max(-0.8, Math.min(0.7, cam.look - dy * 0.004));
+      else cam.pitch = Math.max(0.12, Math.min(1.4, cam.pitch + dy * 0.005));
+      noteMoved();
+    }
   } else if (cp.length === 2 && gesture) {
     const g = twoInfo(cp);
-    cam.dist = Math.max(6, Math.min(30, cam.dist * gesture.d / g.d));
+    if (cam.mode !== 'eyes') cam.dist = Math.max(3.5, Math.min(32, cam.dist * gesture.d / g.d));
     let da = g.a - gesture.a; if (da > Math.PI) da -= Math.PI * 2; if (da < -Math.PI) da += Math.PI * 2;
     cam.yaw -= da;
     gesture = g; cp.forEach(q => { q.drag = true; });
@@ -610,7 +657,7 @@ function endPtr(e, cancel) {
 }
 cv.addEventListener('pointerup', e => endPtr(e, false));
 cv.addEventListener('pointercancel', e => endPtr(e, true));
-cv.addEventListener('wheel', e => { e.preventDefault(); cam.dist = Math.max(6, Math.min(30, cam.dist * (1 + e.deltaY * 0.001))); }, { passive: false });
+cv.addEventListener('wheel', e => { e.preventDefault(); if (cam.mode !== 'eyes') cam.dist = Math.max(3.5, Math.min(32, cam.dist * (1 + e.deltaY * 0.001))); }, { passive: false });
 
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 
@@ -631,7 +678,9 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 placeCamera(1);
+try { const sv = localStorage.getItem('ninjaVoice_village3d_view'); setView(VIEWS[sv] ? sv : 'far'); } catch (e) { setView('far'); }
+cam.blend = 1;
 requestAnimationFrame(loop);
 
 // לבדיקות בלבד
-window.__v3d = { ninja, dog, cam, tapAt, colliders, goTo(x, z) { ninja.target = [x, z]; }, tp(x, z) { ninja.x = x; ninja.z = z; ninja.target = null; } };
+window.__v3d = { ninja, dog, cam, tapAt, setView, colliders, goTo(x, z) { ninja.target = [x, z]; }, tp(x, z) { ninja.x = x; ninja.z = z; ninja.target = null; } };

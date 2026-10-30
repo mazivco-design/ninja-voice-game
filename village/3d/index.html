@@ -14,6 +14,11 @@
           transition: opacity .8s; white-space: nowrap; }
   #back { position: fixed; top: 10px; right: 12px; padding: 6px 12px; border-radius: 10px; background: rgba(15, 23, 42, .55);
           color: #f8fafc; font: 14px system-ui, sans-serif; text-decoration: none; }
+  #views { position: fixed; top: 10px; left: 12px; display: flex; gap: 6px; }
+  #views button { padding: 7px 12px; border-radius: 10px; border: 0; background: rgba(15, 23, 42, .5); color: #f8fafc;
+                  font: 14px system-ui, sans-serif; cursor: pointer; }
+  #views button.on { background: #f8fafc; color: #0f172a; font-weight: 600; }
+  #hint { top: 56px !important; }
   #err { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 24px;
          font: 17px system-ui, sans-serif; color: #1f2937; text-align: center; }
 </style>
