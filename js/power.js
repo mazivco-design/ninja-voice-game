@@ -115,3 +115,48 @@ function renderPowerHud() {
   box.innerHTML = items.map(([w, n]) => '<span class="pw' + ((w === 'shield' && shieldOn) || (w === 'jet' && jetT > 0) ? ' on' : '') + '">' +
     (w === 'shield' ? '🫧' : '🚀') + ' <b>' + w.toUpperCase() + '</b> ' + (n === Infinity ? '∞' : n) + '</span>').join('');
 }
+
+/* ---------- נורת JUMP מעל הראש ----------
+   כשקופסה מתקרבת: נורה אדומה (עוד רגע), ובזמן הנכון להגיד JUMP היא נדלקת בירוק.
+   החלון מחושב מהפיזיקה של הקפיצה ברמה הנוכחית, ועוד SAY_LEAD – הזמן שלוקח לזיהוי הקול לשמוע את המילה. */
+const JUMP_LIGHT = { lead: 0.45, ready: 1.3, trim: 0.15 };
+function jumpWindow() {                                                         // [מוקדם, מאוחר] – כמה שניות לפני המגע עם הקופסה צריך להתחיל להגיד
+  const m = cfg.forgive || 0, h = BOX.h - m, g = cfg.gravity, v = cfg.jumpV, s = Math.max(1, speed);
+  const disc = v * v - 2 * g * h; if (disc <= 0) return null;
+  const t1 = (v - Math.sqrt(disc)) / g, t2 = (v + Math.sqrt(disc)) / g;        // מתי הנינג'ה גבוה מספיק
+  const d = (PLAYER.w + BOX.w - 2 * m) / s;                                     // כמה זמן הוא מעל הקופסה
+  const lo = t1 + JUMP_LIGHT.lead, hi = t2 - d + JUMP_LIGHT.lead, cut = (hi - lo) * JUMP_LIGHT.trim;
+  return hi > lo ? [lo + cut, hi - cut] : null;
+}
+function jumpLightState() {
+  if (state !== 'play' || py > 0.5 || jetT > 0 || ride || duel || gust) return null;
+  const pb = playerBox(), m = cfg.forgive || 0;
+  const box = obstacles.filter(o => o.type === 'box' && !o.hit && !o.passed && o.x + BOX.w > pb.l).sort((a, b) => a.x - b.x)[0];
+  if (!box) return null;
+  const win = jumpWindow(); if (!win) return null;
+  const tc = ((box.x + m) - (pb.r - m)) / Math.max(1, speed);                 // שניות עד המגע (במהירות הריצה)
+  if (tc < win[0]) return null;                                                 // כבר מאוחר – לא מבלבלים
+  if (tc <= win[1]) return 'go';
+  if (tc <= win[1] + JUMP_LIGHT.ready) return 'wait';
+  return null;
+}
+function drawJumpLight(fx, fy) {
+  const st = jumpLightState(); if (!st) return;
+  const now = performance.now() / 1000, x = fx + 0.5, y = fy - 21;
+  ctx.save();
+  if (st === 'go') {
+    const pulse = 1 + Math.sin(now * 14) * 0.08;
+    const g = ctx.createRadialGradient(x, y, 0.5, x, y, 7 * pulse);
+    g.addColorStop(0, 'rgba(134,239,172,.75)'); g.addColorStop(1, 'rgba(34,197,94,0)');
+    ctx.fillStyle = g; circle(x, y, 7 * pulse);
+  }
+  ctx.fillStyle = 'rgba(15,23,42,.7)'; circle(x, y, 2.9);                        // בית הנורה
+  ctx.fillStyle = st === 'go' ? '#4ade80' : '#ef4444'; circle(x, y, 2.2);
+  ctx.fillStyle = 'rgba(255,255,255,.7)'; circle(x - 0.7, y - 0.7, 0.6);         // ברק קטן
+  if (st === 'go') {
+    ctx.font = '900 3.6px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.lineWidth = 0.8; ctx.strokeStyle = 'rgba(15,23,42,.8)'; ctx.strokeText('JUMP!', x, y - 4.2);
+    ctx.fillStyle = '#bbf7d0'; ctx.fillText('JUMP!', x, y - 4.2);
+  }
+  ctx.restore();
+}

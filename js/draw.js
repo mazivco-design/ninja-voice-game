@@ -1405,6 +1405,7 @@ function drawNinjaBody() {
   drawFigure({ fx, fy, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
   drawPlayerSword(fx, fy, P);
   drawPowerFront(fx, fy);                                         // בועת מגן / טיימר הסילון
+  drawJumpLight(fx, fy);                                          // נורה מעל הראש: מתי להגיד JUMP
   drawPet(fx, fy);
   if (drowning) {
     if (Math.random() < 0.25) particles.push({ x: fx + (Math.random() - 0.5) * 4, y: GROUND, vx: 0, vy: -8, g: 0, life: 0.5, color: '#e0f2fe', size: 0.9 });
