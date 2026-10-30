@@ -364,10 +364,14 @@ for (let i = 0; i < 160; i++) {
 const C = { body: 0x1e293b, limb: 0x111a2b, skin: 0xfcd9b6, accent: 0xdc2626 };
 // SM = חומר חלק (לא מדורג) לדמות – כדורים נראים עגולים ולא "מגולפים"
 const SM = { flatShading: false };
-function limb(parent, x, y, len, r, color) {
+// איבר = צינור רציף (גליל שמצטמצם קצת) + כדור באותו עובי במפרק, כך שבכיפוף הוא נראה כמו צינור אחד ולא כמו חרוזים
+function limb(parent, x, y, len, r, color, r2) {
+  r2 = r2 || r * 0.9;
   const pivot = new THREE.Group(); pivot.position.set(x, y, 0); parent.add(pivot);
-  mesh(new THREE.CapsuleGeometry(r, Math.max(0.01, len - r * 2), 4, 10), color, 0, -len / 2, 0, pivot, SM);
+  mesh(new THREE.CylinderGeometry(r, r2, len, 14), color, 0, -len / 2, 0, pivot, SM);
+  mesh(new THREE.SphereGeometry(r, 14, 10), color, 0, 0, 0, pivot, SM);
   const joint = new THREE.Group(); joint.position.y = -len; pivot.add(joint);
+  mesh(new THREE.SphereGeometry(r2, 14, 10), color, 0, 0, 0, joint, SM);
   return { pivot, joint };
 }
 // הנינג'ה בפרופורציות של הדמות הדו־ממדית: ראש גדול ועגול, גוף קצר ורחב, רגליים וידיים קצרות ועבות
@@ -375,16 +379,16 @@ function buildNinja() {
   const root = new THREE.Group(); scene.add(root);
   const body = new THREE.Group(); root.add(body);
   const HIP = 0.4;
-  const hips = { L: limb(body, -0.12, HIP, 0.21, 0.1, C.limb), R: limb(body, 0.12, HIP, 0.21, 0.1, C.limb) };
-  const knees = { L: limb(hips.L.joint, 0, 0.02, 0.2, 0.095, C.limb), R: limb(hips.R.joint, 0, 0.02, 0.2, 0.095, C.limb) };
-  [knees.L, knees.R].forEach(k => mesh(new THREE.SphereGeometry(0.11, 12, 8), C.limb, 0, 0.0, 0.04, k.joint, SM).scale.set(1, 0.6, 1.35));
+  const hips = { L: limb(body, -0.12, HIP, 0.2, 0.085, C.limb, 0.075), R: limb(body, 0.12, HIP, 0.2, 0.085, C.limb, 0.075) };
+  const knees = { L: limb(hips.L.joint, 0, 0, 0.19, 0.075, C.limb, 0.07), R: limb(hips.R.joint, 0, 0, 0.19, 0.075, C.limb, 0.07) };
+  [knees.L, knees.R].forEach(k => mesh(new THREE.SphereGeometry(0.085, 12, 8), C.limb, 0, -0.01, 0.04, k.joint, SM).scale.set(1, 0.6, 1.5));
   const torso = new THREE.Group(); torso.position.y = HIP; body.add(torso);
   mesh(new THREE.CapsuleGeometry(0.25, 0.1, 4, 14), C.body, 0, 0.22, 0, torso, SM).scale.set(1, 0.72, 0.78);
   mesh(new THREE.CylinderGeometry(0.255, 0.255, 0.075, 18), C.accent, 0, 0.09, 0, torso, SM).scale.z = 0.8;
   const chest = new THREE.Group(); chest.position.y = 0.2; torso.add(chest);
-  const arms = { L: limb(chest, -0.29, 0.17, 0.17, 0.08, C.limb), R: limb(chest, 0.29, 0.17, 0.17, 0.08, C.limb) };
-  const fore = { L: limb(arms.L.joint, 0, 0.01, 0.15, 0.075, C.limb), R: limb(arms.R.joint, 0, 0.01, 0.15, 0.075, C.limb) };
-  [fore.L, fore.R].forEach(f => mesh(new THREE.SphereGeometry(0.1, 12, 10), C.accent, 0, -0.02, 0, f.joint, SM));
+  const arms = { L: limb(chest, -0.27, 0.17, 0.17, 0.068, C.limb, 0.06), R: limb(chest, 0.27, 0.17, 0.17, 0.068, C.limb, 0.06) };
+  const fore = { L: limb(arms.L.joint, 0, 0, 0.15, 0.06, C.limb, 0.055), R: limb(arms.R.joint, 0, 0, 0.15, 0.06, C.limb, 0.055) };
+  [fore.L, fore.R].forEach(f => mesh(new THREE.SphereGeometry(0.085, 12, 10), C.accent, 0, -0.03, 0, f.joint, SM));
   const head = new THREE.Group(); head.position.y = 0.2; chest.add(head);
   const HR = 0.36, HY = 0.3;
   mesh(new THREE.SphereGeometry(HR, 24, 18), C.body, 0, HY, 0, head, SM);
