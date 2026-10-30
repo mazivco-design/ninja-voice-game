@@ -317,9 +317,26 @@ function learnAfterHit(o) {
   if (!say.length) return;
   missCount[o.type] = (missCount[o.type] || 0) + 1;
   const canStop = !SKY_TYPES.includes(o.type) && o.type !== 'gust' && o.type !== 'chasm';   // בשמיים / בטורנדו / בתהום – העולם כבר עומד או שאי אפשר לעצור
+  const requeued = learnRequeue(o);
   if (missCount[o.type] >= 2 && canStop) { learnWait = { o, say, t: 0 }; return; }          // עוצרים רק אחרי שהמכשול עבר
   sayWords(say, 1.4);
-  nextGap += speed * LEARN.gap;                                                              // זמן לשמוע לפני שהמכשול חוזר
+  if (!requeued) nextGap += speed * LEARN.gap;                                               // זמן לשמוע לפני שהמכשול חוזר
+}
+// אם המכשול הבא כבר יצא לדרך – הוא נעלם בענן, ואותו מכשול שנכשלו בו מגיע מיד אחריו (ולא אחרי עוד מכשול אחר)
+const LEARN_KEEP = ['chasm', 'dragon', 'duel', 'gust', 'door', 'bridge'];
+function learnRequeue(o) {
+  if (SKY_TYPES.includes(o.type) || LEARN_KEEP.includes(o.type)) return false;
+  const ahead = obstacles.filter(a => a !== o && !a.hit && !a.passed && a.x > o.x);
+  if (!ahead.length || ahead.some(a => LEARN_KEEP.includes(a.type) || SKY_TYPES.includes(a.type))) return false;
+  for (const a of ahead) {
+    obstacles.splice(obstacles.indexOf(a), 1); spawned--;
+    if (a.type === 'coin') coins--;
+    if (a.x < W) for (let i = 0; i < 10; i++) particles.push({ x: a.x + 3 + (Math.random() - 0.5) * 6, y: GROUND - 6 - Math.random() * 10, vx: (Math.random() - 0.5) * 16, vy: -6 - Math.random() * 10, g: -4, life: 0.5, color: i % 2 ? '#e2e8f0' : '#cbd5e1', size: 1.6 });
+  }
+  nextType = o.type;
+  distSinceSpawn = (W + 2) - o.x;                                                            // כאילו המכשול הבא נבחר עכשיו, מיד אחרי זה שנכשלו בו
+  nextGap = speed * (rand(cfg.gapT[0], cfg.gapT[1]) + LEARN.gap) + (o.w || 0);
+  return true;
 }
 function learnUpdate(dt) {
   if (learnT > 0) learnT -= dt;

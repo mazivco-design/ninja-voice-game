@@ -198,7 +198,7 @@ function voicePreload() { if (!sfxCtx) return; for (const slug of new Set(Object
 document.addEventListener('pointerdown', () => setTimeout(voicePreload, 50), { capture: true });   // אחרי שהצליל נפתח בנגיעה
 function playVoiceBuf(buf) {
   const out = voiceChain(); if (!out) return false;
-  try { if (sfxCtx.state === 'suspended') sfxCtx.resume(); } catch (e) {}
+  try { if (sfxCtx.state !== 'running') sfxCtx.resume(); } catch (e) {}
   if (voiceSrc) { try { voiceSrc.stop(); } catch (e) {} }
   const src = sfxCtx.createBufferSource(); src.buffer = buf; src.connect(out); src.start();
   voiceSrc = src;

@@ -8,7 +8,7 @@
 let sfxCtx = null, muted = false;
 try { muted = JSON.parse(localStorage.getItem('ninjaVoice_mute') || 'false'); } catch (e) {}
 function sfxInit() {
-  try { if (!sfxCtx) sfxCtx = new (window.AudioContext || window.webkitAudioContext)(); if (sfxCtx.state === 'suspended') sfxCtx.resume(); } catch (e) {}
+  try { if (!sfxCtx) sfxCtx = new (window.AudioContext || window.webkitAudioContext)(); if (sfxCtx.state !== 'running') sfxCtx.resume(); } catch (e) {}
 }
 function tone(f0, f1, dur, type, vol, delay) {
   const c = sfxCtx, t = c.currentTime + (delay || 0), o = c.createOscillator(), g = c.createGain();
