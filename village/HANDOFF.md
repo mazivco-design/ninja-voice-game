@@ -12,7 +12,7 @@
 - **ריפו:** `mazivco-design/ninja-voice-game` (אותו ריפו כמו הארקייד).
 - **התיקייה של הכפר:** `village/` – כל הקבצים החדשים של הכפר נכנסים לכאן (דף `village/index.html`, קוד ב־`village/js/`).
 - **כתובת:** https://mazivco-design.github.io/ninja-voice-game/village/ (חי)
-- **אב־הטיפוס הישן (צידי):** `village.html` + `js/village.js` בשורש. נשאר כניסוי ולהפניה, **לא ממשיכים לפתח אותו**. הקישור "הכפר" באתר הפרויקטים (ריפו `Ziviz-Projects-`, קובץ `projects.json`) מוביל עכשיו לכפר החדש `village/`, לא לישן.
+- **אב־הטיפוס הישן (צידי):** `village.html` + `js/village.js` בשורש. נשאר כניסוי ולהפניה, **לא ממשיכים לפתח אותו**. הקישור "הכפר" באתר הפרויקטים (ריפו `Ziviz-Projects-`, קובץ `projects.json`) מוביל עכשיו לכפר החדש `village/`, לא לישן. יש שם גם כפתור "הכפר בתלת־ממד" (`village/3d/`).
 
 ## 2. כללי עבודה עם זיו (כמו בארקייד)
 
