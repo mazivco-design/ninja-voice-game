@@ -444,10 +444,10 @@ function playerPose() {
   else if (act.hiding > 0) P = poseHide(now);                 // כורע מכווץ מאחורי הסלעים
   else if (act.climb > 0) P = poseClimb(now);
   else if (act.leap > 0) P = poseLeap();
-  else if (diving()) P = poseDive(now);
+  else if (diveShown()) { P = poseDive(now); P.lean += diveFit(PLAYER.x + 3).tilt; }
   else if (crawling()) P = poseCrawl(now);
   else if (act.pulling > 0) P = posePull(now);
-  else if (swimmingNow()) P = poseSwim(now);
+  else if (swimShown()) P = poseSwim(now);
   else if (duckT > 0) P = poseDuck();
   else if (flyT > 0) P = poseFly(now);
   else if (py > 0 && !(py >= CLIFF.h - 0.5 && vy === 0 && cliffTop())) P = poseAir(vy > 0, Math.max(0, Math.min(1, 0.5 - vy / (2 * cfg.jumpV))));
@@ -813,6 +813,30 @@ function basinPath(o, bottom, y0) {                                            /
   ctx.closePath();
 }
 const waterY = () => GROUND + SHORE.drop;                                       // פני המים – קצת מתחת לקרקע
+// כמה עמוק אפשר לצלול: ליד הגדות האגן רדוד (שיפוע), אז הצולל עולה איתו ומטה את הגוף – ראש למטה בכניסה, ראש למעלה ביציאה
+function diveDepthAt(o, x) {                                                    // הכי עמוק שאפשר בנקודה x (מחוץ לאגן – על הקרקע)
+  const full = GROUND + POND.deep + 7;
+  let y = GROUND - 1.5;
+  for (let yy = waterY(); yy <= full; yy += 0.5) { const b = bankOff(o, yy + 2) + 1.5; if (x < o.x + b || x > o.x + o.w - b) break; y = yy; }
+  return y;
+}
+function swimShown() {                                                         // שוחה רק כשכל הגוף מעל מים עמוקים מספיק – בשפה עוד הולך בתוך המים
+  if (!swimmingNow()) return false;
+  const pb = playerBox(), cx = (pb.l + pb.r) / 2, o = obstacles.find(o => (o.type === 'lake' || o.type === 'pond') && cx > o.x && cx < o.x + o.w);
+  if (!o) return true;
+  const b = bankOff(o, GROUND + 4) + 1;
+  return pb.l - 3 > o.x + b && pb.r + 3 < o.x + o.w - b;
+}
+function wadeY(fx) {                                                            // הרגליים על קרקעית השיפוע (ככה הוא נכנס לאט למים ויוצא מהם)
+  const o = obstacles.find(o => (o.type === 'lake' || o.type === 'pond') && fx > o.x && fx < o.x + o.w); if (!o) return GROUND;
+  return GROUND + Math.max(0, Math.min(6, diveDepthAt(o, fx) - GROUND));
+}
+function diveShown() { return diving() && diveFit(PLAYER.x + 3).y >= GROUND + 4; }   // ממש בשפה – עוד רץ/יוצא, לא שוכב על הקרקע
+function diveFit(fx) {
+  const o = inPond(); if (!o) return { y: GROUND + POND.deep + 7, tilt: 0 };
+  const yB = Math.min(diveDepthAt(o, fx - 7), diveDepthAt(o, fx - 4)), yF = Math.min(diveDepthAt(o, fx + 4), diveDepthAt(o, fx + 7));
+  return { y: (yB + yF) / 2, tilt: Math.atan2(yF - yB, 12) };
+}
 function waterPath(o, bottom) { basinPath(o, bottom, waterY()); }
 function drawBasinWall(o, bottom) {                                             // מעל המים: הדופן הרחוקה של הגדה – בהירה, עם צמחים שגולשים מלמעלה (או שלג וקרח)
   const G = (typeof GROUND_STYLE !== 'undefined' && GROUND_STYLE[world]) || null, wd = WORLDS[world], snow = world === 2;
@@ -1340,12 +1364,13 @@ function drawNinjaBody() {
   if (drawGustNinja()) return;                                                    // בטורנדו: מחזיק בקנה / עף
   if (ropeHanging()) return;                                                      // תלוי על החבל – מצויר ב-drawRopeSwing
   const pb = playerBox();
-  const swim = swimmingNow();
+  const swim = swimShown();
   const drowning = drownK > 0 && !swim && py <= 0 && sinkT <= 0;     // במים בלי SWIM – שוקע
-  const dive = diving(), leap = act.leap > 0, crawl = crawling() && !swim;
+  const dive = diveShown(), leap = act.leap > 0, crawl = crawling() && !swim;
+  const wading = swimmingNow() && !swim && !dive && py <= 0;                     // בשפה של הבריכה: הולך בתוך המים הרדודים, על השיפוע
   const riding = rideCtl() && ride.phase !== 'mount';
   const duck = duckT > 0, fx = riding ? PLAYER.x + 4 : rope && rope.phase === 'fall' && rope.fallX !== undefined ? rope.fallX : leap || dive || crawl ? PLAYER.x + 3 : pb.l + (duck ? 5.5 : swim ? 3 : 4);
-  const fy = riding ? GROUND - py : dive ? GROUND + POND.deep + 7 : leap ? GROUND - py : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : pb.b;
+  const fy = riding ? GROUND - py : dive ? diveFit(fx).y : leap ? GROUND - py : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : wading ? wadeY(fx) : pb.b;
   const now = performance.now() / 1000;
   if (sinkT > 0 && sinkType === 'burn') {                                       // נשרף בשדה האש – מושחר ועשן עולה
     const k = 1 - sinkT / SINK_TIME;
