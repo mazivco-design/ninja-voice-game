@@ -477,14 +477,19 @@ function updateNinja(dt, now) {
   let mx = 0, mz = 0;
   const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw);           // "קדימה" לפי כיוון המצלמה
   const kf = (keys.u ? 1 : 0) - (keys.d ? 1 : 0), ks = (keys.r ? 1 : 0) - (keys.l ? 1 : 0);
+  let speedK = 1;
   if (kf || ks) { n.target = null; marker.visible = false; mx = fx * kf - fz * ks; mz = fz * kf + fx * ks; noteMoved(); }
+  else if (stick.vx || stick.vy) {                                       // ג'ויסטיק: למעלה = קדימה (לפי המצלמה)
+    const sf = -stick.vy, ss = stick.vx, m = Math.hypot(sf, ss);
+    if (m > 0.15) { mx = fx * sf - fz * ss; mz = fz * sf + fx * ss; speedK = Math.min(1, (m - 0.15) / 0.6 + 0.35); }
+  }
   else if (n.target) {
     const dx = n.target[0] - n.x, dz = n.target[1] - n.z, d = Math.hypot(dx, dz);
     if (d < 0.15) { n.target = null; marker.visible = false; }
     else { mx = dx / d; mz = dz / d; }
   }
   const len = Math.hypot(mx, mz);
-  const want = len ? SPEED : 0;
+  const want = len ? SPEED * speedK : 0;
   n.speed += (want - n.speed) * Math.min(1, dt * 10);
   if (len && n.speed > 0.05) {
     const step = n.speed * dt;
@@ -542,37 +547,69 @@ function tapAt(px, py) {
   ninja.target = [x, z]; marker.position.x = x; marker.position.z = z; marker.visible = true; marker.userData.t = 0;
   noteMoved();
 }
+// כל אצבע מקבלת תפקיד כשהיא נוגעת:
+//   חצי שמאלי של המסך (40%) – ג'ויסטיק: גוררים כדי ללכת, בכל כיוון, יחסית למצלמה.
+//   שאר המסך – מצלמה: גרירה מסובבת, שתי אצבעות – זום וסיבוב.
+//   נגיעה קצרה בלי גרירה בכל מקום – הליכה למקום שנגעו בו.
+// כך אפשר ללכת ביד אחת ולסובב את המצלמה ביד השנייה באותו זמן.
 const ptrs = new Map();
 let gesture = null;
+const stick = { id: null, ox: 0, oy: 0, vx: 0, vy: 0 };
+const STICK_R = 60;
+const stickBase = document.createElement('div'), stickKnob = document.createElement('div');
+Object.assign(stickBase.style, { position: 'fixed', width: STICK_R * 2 + 'px', height: STICK_R * 2 + 'px', borderRadius: '50%', border: '3px solid rgba(255,255,255,.7)',
+  background: 'rgba(15,23,42,.18)', pointerEvents: 'none', display: 'none', transform: 'translate(-50%,-50%)' });
+Object.assign(stickKnob.style, { position: 'fixed', width: '52px', height: '52px', borderRadius: '50%', background: 'rgba(255,255,255,.85)',
+  boxShadow: '0 2px 8px rgba(0,0,0,.25)', pointerEvents: 'none', display: 'none', transform: 'translate(-50%,-50%)' });
+document.body.append(stickBase, stickKnob);
+function showStick(on) { stickBase.style.display = stickKnob.style.display = on ? 'block' : 'none'; }
+function placeStick() {
+  stickBase.style.left = stick.ox + 'px'; stickBase.style.top = stick.oy + 'px';
+  stickKnob.style.left = stick.ox + stick.vx * STICK_R + 'px'; stickKnob.style.top = stick.oy + stick.vy * STICK_R + 'px';
+}
 const cv = renderer.domElement;
+function camPtrs() { return [...ptrs.values()].filter(q => q.role === 'cam'); }
 cv.addEventListener('pointerdown', e => {
   cv.setPointerCapture(e.pointerId);
-  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: performance.now() });
-  if (ptrs.size === 2) gesture = twoInfo();
+  const p = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: performance.now() };
+  p.role = (e.clientX < innerWidth * 0.4 && stick.id === null && e.pointerType !== 'mouse') ? 'stick' : 'cam';
+  ptrs.set(e.pointerId, p);
+  if (p.role === 'stick') { stick.id = e.pointerId; stick.ox = e.clientX; stick.oy = e.clientY; stick.vx = stick.vy = 0; }
+  const cp = camPtrs(); if (cp.length === 2) gesture = twoInfo(cp);
 });
 cv.addEventListener('pointermove', e => {
   const p = ptrs.get(e.pointerId); if (!p) return;
   const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
-  if (ptrs.size === 1) {
-    if (Math.hypot(p.x - p.sx, p.y - p.sy) > 8) p.drag = true;
+  if (Math.hypot(p.x - p.sx, p.y - p.sy) > 10) p.drag = true;
+  if (p.role === 'stick') {
+    if (!p.drag) return;
+    let vx = (p.x - stick.ox) / STICK_R, vy = (p.y - stick.oy) / STICK_R, m = Math.hypot(vx, vy);
+    if (m > 1) { vx /= m; vy /= m; }
+    stick.vx = vx; stick.vy = vy; showStick(true); placeStick();
+    ninja.target = null; marker.visible = false; noteMoved();
+    return;
+  }
+  const cp = camPtrs();
+  if (cp.length === 1) {
     if (p.drag) { cam.yaw -= dx * 0.008; cam.pitch = Math.max(0.3, Math.min(1.25, cam.pitch + dy * 0.005)); noteMoved(); }
-  } else if (ptrs.size === 2 && gesture) {
-    const g = twoInfo();
+  } else if (cp.length === 2 && gesture) {
+    const g = twoInfo(cp);
     cam.dist = Math.max(6, Math.min(30, cam.dist * gesture.d / g.d));
     let da = g.a - gesture.a; if (da > Math.PI) da -= Math.PI * 2; if (da < -Math.PI) da += Math.PI * 2;
     cam.yaw -= da;
-    gesture = g; ptrs.forEach(q => { q.drag = true; });
+    gesture = g; cp.forEach(q => { q.drag = true; });
   }
 });
-function twoInfo() { const [a, b] = [...ptrs.values()]; return { d: Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)), a: Math.atan2(b.y - a.y, b.x - a.x) }; }
-function endPtr(e) {
+function twoInfo(cp) { const [a, b] = cp; return { d: Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)), a: Math.atan2(b.y - a.y, b.x - a.x) }; }
+function endPtr(e, cancel) {
   const p = ptrs.get(e.pointerId); if (!p) return;
   ptrs.delete(e.pointerId);
-  if (ptrs.size < 2) gesture = null;
-  if (!p.drag && performance.now() - p.t < 450 && ptrs.size === 0) tapAt(e.clientX, e.clientY);
+  if (p.role === 'stick') { stick.id = null; stick.vx = stick.vy = 0; showStick(false); }
+  if (camPtrs().length < 2) gesture = null;
+  if (!cancel && !p.drag && performance.now() - p.t < 450 && ![...ptrs.values()].some(q => q.role === 'cam' && q.drag)) tapAt(e.clientX, e.clientY);
 }
-cv.addEventListener('pointerup', endPtr);
-cv.addEventListener('pointercancel', e => ptrs.delete(e.pointerId));
+cv.addEventListener('pointerup', e => endPtr(e, false));
+cv.addEventListener('pointercancel', e => endPtr(e, true));
 cv.addEventListener('wheel', e => { e.preventDefault(); cam.dist = Math.max(6, Math.min(30, cam.dist * (1 + e.deltaY * 0.001))); }, { passive: false });
 
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
