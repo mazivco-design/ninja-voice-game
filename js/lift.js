@@ -10,6 +10,7 @@
 
 let lift = null;   // { o, phase: 'atRock' | 'lifting' | 'carry' | 'atTarget' | 'placing' | 'climb' | 'onRock' | 'jumping' | 'crossing' | 'throwing' | 'bite' | 'waitPull' | 'pulling' | 'thanks', t, idle, hinted }
 const RESC = { pitAt: 44, half: 8, deep: 23, throwT: 0.65, biteT: 0.6, pullT: 2.2, thanksT: 1.4, coins: 5 };   // בור צר ועמוק בדרך – רואים אותו בחתך, והגור בתחתית
+const FAM = { cross: 1.8 };   // הגור שעובר על הקרש אל אמא שלו
 const PLANK = { len: 42, th: 2.6, gapAt: 52, gapW: 32, deep: 22, cross: 0.55 };   // קרש מעל בור
 const LIFT = { rockW: 10, rockH: 8, gap: 46, wallW: 10, wallH: 22, starDY: 39, starAhead: 7, starR: 4.2, carry: 0.7,
                liftT: 0.5, putT: 0.45, climbT: 0.45, hint: 3.5, hintEvery: 6, prizeCoins: 5 };
@@ -18,10 +19,10 @@ let liftKindNext = 'wall';
 function liftSetup(o) {                                                         // נקרא ב-spawn
   o.kind = liftKindNext; liftKindNext = { wall: 'prize', prize: 'rescue', rescue: 'plank', plank: 'wall' }[liftKindNext];   // קיר → כוכב → הצלה → קרש (הגור לפני הקרש)
   o.rock = 'ground';                                                            // ground | carried | placed
-  o.w = o.kind === 'rescue' ? RESC.pitAt + RESC.half + 6 : o.kind === 'plank' ? PLANK.gapAt + PLANK.gapW + 6 : LIFT.gap + (o.kind === 'wall' ? LIFT.wallW : 0) + 4;
+  o.w = o.kind === 'rescue' ? RESC.pitAt + RESC.half + 6 : o.kind === 'plank' ? PLANK.gapAt + PLANK.gapW + 26 : LIFT.gap + (o.kind === 'wall' ? LIFT.wallW : 0) + 4;
 }
 function liftWallX(o) { return o.x + LIFT.gap; }                                // הקיר (או הסימן של הפרס) – תחילתו
-function liftPlaceX(o) { return o.kind === 'rescue' ? o.x + RESC.pitAt - RESC.half - 14 : o.kind === 'plank' ? o.x + PLANK.gapAt : o.x + LIFT.gap - LIFT.rockW; }   // איפה הסלע מונח (בקרש: שפת הבור)
+function liftPlaceX(o) { return o.kind === 'rescue' ? o.x + RESC.pitAt - RESC.half - 14 : o.kind === 'plank' ? o.x + PLANK.gapAt - 13 : o.x + LIFT.gap - LIFT.rockW; }   // איפה הסלע מונח (בקרש: שפת הבור)
 function plankGap(o) { return { l: o.x + PLANK.gapAt, r: o.x + PLANK.gapAt + PLANK.gapW }; }
 function plankSpan(o) { const g = plankGap(o), m = (PLANK.len - PLANK.gapW) / 2; return { l: g.l - m, r: g.r + m }; }   // הקרש מונח לרוחב הבור
 function liftStar(o) { return [liftPlaceX(o) + LIFT.rockW / 2 + LIFT.starAhead, GROUND - LIFT.starDY]; }
@@ -35,7 +36,8 @@ function liftSpeed() {
   if (p === 'jumping') return lift.o.kind === 'wall' && !lift.o.overWall ? 0 : liftBase();
   if (p === 'crossing') return liftBase() * PLANK.cross;                       // הולך בזהירות על הקרש
   if (p === 'hop') return liftBase();
-  if (p === 'walkOut') return liftBase() * 0.8;                               // הולך לשפת הבור ואז קופץ                                          // קופץ מעל הבור הצר וממשיך
+  if (p === 'walkOut') return liftBase() * 0.8;
+  if (p === 'pupCross') return 0;                               // הולך לשפת הבור ואז קופץ                                          // קופץ מעל הבור הצר וממשיך
   return 0;
 }
 function liftCarrying() { return !!lift && ['lifting', 'carry', 'atTarget', 'placing'].includes(lift.phase); }
@@ -62,7 +64,10 @@ function liftUpdate(dt, pb) {
   }
   else if (L.phase === 'placing' && L.t >= LIFT.putT && o.kind === 'plank') {   // הקרש נחת לרוחב הבור – עוברים עליו
     o.rock = 'placed'; sfx('hit'); const sp = plankSpan(o); burst(sp.l + 1, GROUND - 0.5, WORLDS[world].dust, 6, 14); burst(sp.r - 1, GROUND - 0.5, WORLDS[world].dust, 6, 14);
-    L.phase = 'crossing'; L.t = 0;
+    L.phase = 'pupCross'; L.t = 0;                                               // קודם הגור עובר אל אמא שלו
+  }
+  else if (L.phase === 'pupCross' && L.t >= FAM.cross) {
+    L.phase = 'crossing'; L.t = 0; sfx('woof'); const g = plankGap(o); burst(g.r + 6, GROUND - 8, '#f472b6', 10, 20); o.reunited = true;
   }
   else if (L.phase === 'crossing') {
     if (PLAYER.x > plankGap(o).r + 1) { cleared(o); lift = null; }               // עבר את הבור
@@ -259,12 +264,28 @@ function drawPlankScene(o, placing) {
   // הקרש: על הדרך / מונח מעל הבור (מתנדנד כשהולכים עליו)
   if (o.rock === 'ground') drawPlank(o.x, GROUND - PLANK.th, o.x + PLANK.len, GROUND - PLANK.th);
   if (o.rock === 'placed') {
-    const sp = plankSpan(o), cx = PLAYER.x + 4, on = lift && lift.o === o && lift.phase === 'crossing' && cx > sp.l && cx < sp.r;
-    const sag = on ? Math.sin(Math.PI * (cx - sp.l) / (sp.r - sp.l)) * (1 + Math.sin(t * 9) * 0.35) : 0;
+    const sp = plankSpan(o), pupOn = lift && lift.o === o && lift.phase === 'pupCross', cx = pupOn ? famPup(o).x : PLAYER.x + 4, on = lift && lift.o === o && (lift.phase === 'crossing' || pupOn) && cx > sp.l && cx < sp.r;
+    const sag = on ? Math.sin(Math.PI * (cx - sp.l) / (sp.r - sp.l)) * (pupOn ? 0.5 : 1) * (1 + Math.sin(t * 9) * 0.35) : 0;
     const mid = (sp.l + sp.r) / 2;
     const yb = GROUND - 0.5;                                                      // מונח על שתי השפות – הרגליים בדיוק על הקרש
     drawPlank(sp.l, yb, mid, yb + sag); drawPlank(mid - 0.3, yb + sag, sp.r, yb);
   }
+  drawFamily(o);
+}
+// הגור המיילל בצד שלנו, ואמא שלו בצד השני של הבור
+function famPup(o) {
+  const g = plankGap(o), L = lift && lift.o === o ? lift : null, home = g.r + 5.5;
+  if (o.reunited || (L && L.phase === 'crossing')) return { x: home, y: GROUND, face: -1, happy: true };
+  if (L && L.phase === 'pupCross') { const k = Math.min(1, L.t / FAM.cross), e = k * k * (3 - 2 * k); return { x: lerp(g.l - 5, home, e), y: GROUND - 0.6, face: 1, run: true }; }
+  return { x: g.l - 5, y: GROUND, face: 1, sad: true };
+}
+function drawFamily(o) {
+  const g = plankGap(o), t = performance.now() / 1000, P = famPup(o), mx = g.r + 19;
+  drawPuppy(mx, GROUND, -1, { big: true, happy: !!o.reunited });               // אמא
+  drawPuppy(P.x, P.y, P.face, P);
+  const bubble = (x, y, txt, col) => { ctx.font = '900 3.4px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; const w = ctx.measureText(txt).width + 3; ctx.fillStyle = 'rgba(255,255,255,.95)'; roundRect(x - w / 2, y - 2.5, w, 5, 2); ctx.fill(); ctx.fillStyle = col; ctx.fillText(txt, x, y + 0.2); };
+  if (P.sad) { bubble(P.x + 1, GROUND - 13 + Math.sin(t * 3) * 0.5, 'Mama! 😢', '#1d4ed8'); if (Math.sin(t * 2.2) > 0.2) bubble(mx - 1, GROUND - 18, 'Woof! Woof!', '#92400e'); }
+  if (o.reunited) { const k = (t * 0.8) % 1; ctx.save(); ctx.globalAlpha = 1 - k; ctx.font = '4px system-ui'; ctx.textAlign = 'center'; ctx.fillText('❤️', (P.x + mx) / 2, GROUND - 12 - k * 8); ctx.restore(); }
 }
 function drawPlankCarry(fx, fy) {                                               // הקרש בידיים – לרוחב מעל הראש, ובהנחה נוחת לרוחב הבור
   const L = lift, o = L.o, top = fy - 13.6 - PLANK.th, half = PLANK.len / 2;
@@ -297,7 +318,7 @@ function liftRescueStep(L, o, dt, pb) {                                         
     if (mode === 'journey' && state === 'play') { picked += RESC.coins; coinsFlying++; flyCoinToHud({ x: px - 3 }, py2); floatText(px, py2 - 8, '+' + RESC.coins + ' 🟡', '#ca8a04'); }
     else floatText(px, py2 - 8, '❤️', '#e11d48');
   }
-  else if (L.phase === 'thanks' && L.t >= RESC.thanksT) { L.phase = 'walkOut'; L.t = 0; o.pup = { run: 0.001 }; }   // הגור רץ קדימה, הנינג'ה הולך אחריו
+  else if (L.phase === 'thanks' && L.t >= RESC.thanksT) { L.phase = 'walkOut'; L.t = 0; }   // הגור נשאר מאחור ומכשכש, הנינג'ה ממשיך לבד
   else if (L.phase === 'walkOut') { if (pb.r >= pitX(o) - RESC.half - 1) { L.phase = 'hop'; L.t = 0; vy = cfg.jumpV * 0.75; py = 0.001; sfx('jump'); } }   // בשפה – קופץ מעל הבור
   else return false;
   return true;
@@ -321,7 +342,8 @@ function drawPuppy(x, y, face, P) {                                             
   const t = performance.now() / 1000, f = face || 1;
   ctx.save(); ctx.translate(x, y);
   if (P.vert) { ctx.translate(0, -2.8); ctx.rotate(Math.PI / 2); ctx.translate(0, 2.8); ctx.scale(-1, 1); } else ctx.scale(f, 1);   // עולה בבור: הגוף אנכי, הראש למעלה, הרגליים אל הדופן השמאלית
-  const tan = '#d6a35c', dark = '#8b5a2b';
+  if (P.big) ctx.scale(1.45, 1.45);                                            // אמא – גדולה יותר וכהה יותר
+  const tan = P.big ? '#b8864a' : '#d6a35c', dark = P.big ? '#6b4423' : '#8b5a2b';
   const wag = Math.sin(t * (P.happy || P.run ? 22 : 10)) * 0.5;
   ctx.strokeStyle = tan; ctx.lineWidth = 1; ctx.lineCap = 'round';               // זנב
   ctx.beginPath(); ctx.moveTo(-3.2, -3.2); ctx.quadraticCurveTo(-5, -5 + wag, -4.6 + wag, -6.4); ctx.stroke();
