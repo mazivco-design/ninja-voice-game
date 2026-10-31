@@ -16,7 +16,7 @@ const LIFT = { rockW: 10, rockH: 8, gap: 46, wallW: 10, wallH: 22, starDY: 39, s
 let liftKindNext = 'wall';
 
 function liftSetup(o) {                                                         // נקרא ב-spawn
-  o.kind = liftKindNext; liftKindNext = { wall: 'prize', prize: 'plank', plank: 'rescue', rescue: 'wall' }[liftKindNext];   // קיר → כוכב → קרש → הצלה
+  o.kind = liftKindNext; liftKindNext = { wall: 'prize', prize: 'rescue', rescue: 'plank', plank: 'wall' }[liftKindNext];   // קיר → כוכב → הצלה → קרש (הגור לפני הקרש)
   o.rock = 'ground';                                                            // ground | carried | placed
   o.w = o.kind === 'rescue' ? RESC.pitAt + RESC.half + 6 : o.kind === 'plank' ? PLANK.gapAt + PLANK.gapW + 6 : LIFT.gap + (o.kind === 'wall' ? LIFT.wallW : 0) + 4;
 }
