@@ -101,7 +101,7 @@ function drawPoints(o) {
   const b = obstacleBox(o), wide = o.w && o.type !== 'bramble';
   let cx = (b.l + b.r) / 2, cy = b.b - 3.2;
   if (wide) { cx = o.x + 5; cy = GROUND + 4; }                         // לבה / אגם / שדה אש / בריכה – בתוך פני השטח
-  else if (o.type === 'bramble') { cx = o.x + 6; cy = GROUND - 3.2; }
+  else if (o.type === 'bramble') { const R = tunnelRock(o); cx = (R.l + R.r) / 2; cy = GROUND - 4; }
   else if (o.type === 'beam') cy = b.b - BEAM.thick / 2;               // על המוט
   else if (o.type === 'rock') cy = (b.t + b.b) / 2;
   else if (o.type === 'boulder') cy = GROUND - BOULDER.r;
@@ -445,7 +445,7 @@ function playerPose() {
   else if (act.climb > 0) P = poseClimb(now);
   else if (act.leap > 0) P = poseLeap();
   else if (diveShown()) { P = poseDive(now); P.lean += diveFit(PLAYER.x + 3).tilt; }
-  else if (crawling()) P = poseCrawl(now);
+  else if (crawling()) { P = poseCrawl(now); const tn = tunnelHere(); if (tn) P.lean += tunnelSlope(tn, PLAYER.x + 3); }
   else if (act.pulling > 0) P = posePull(now);
   else if (swimShown()) P = poseSwim(now);
   else if (duckT > 0) P = poseDuck();
@@ -581,6 +581,7 @@ function drawObstacle(o, top) {
   if (o.type === 'duel') { drawDuelEnemy(o); return; }
   if (o.type === 'gust') { drawGustBamboo(o); return; }
   if (o.type === 'lift') { drawLiftObstacle(o); return; }
+  if (o.type === 'bramble') { drawTunnel(o); return; }   // CRAWL: סלע ענק ומחילה מתחתיו (tunnel.js)
   if (artDraw(o)) return;                        // יש ציור SVG מהסטודיו – הוא מחליף את הציור הרגיל
   if (o.type === 'door') { drawDoor(o); drawMerchant(o); return; }   // I WANT: סוחר ודלת נעולה
   if (o.type === 'box') {                       // ארגז עץ
@@ -1369,10 +1370,11 @@ function drawNinjaBody() {
   const swim = swimShown();
   const drowning = drownK > 0 && !swim && py <= 0 && sinkT <= 0;     // במים בלי SWIM – שוקע
   const dive = diveShown(), leap = act.leap > 0, crawl = crawling() && !swim;
-  const wading = swimmingNow() && !swim && !dive && py <= 0;                     // בשפה של הבריכה: הולך בתוך המים הרדודים, על השיפוע
+  const wading = swimmingNow() && !swim && !dive && py <= 0;
+  const tunO = crawl ? tunnelHere() : null;                                     // זוחל בתוך המחילה – על הרצפה שלה                     // בשפה של הבריכה: הולך בתוך המים הרדודים, על השיפוע
   const riding = rideCtl() && ride.phase !== 'mount';
   const duck = duckT > 0, fx = riding ? PLAYER.x + 4 : rope && rope.phase === 'fall' && rope.fallX !== undefined ? rope.fallX : leap || dive || crawl ? PLAYER.x + 3 : pb.l + (duck ? 5.5 : swim ? 3 : 4);
-  const fy = riding ? GROUND - py : dive ? diveFit(fx).y : leap ? GROUND - py : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : wading ? wadeY(fx) : pb.b;
+  const fy = riding ? GROUND - py : dive ? diveFit(fx).y : leap ? GROUND - py : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : wading ? wadeY(fx) : tunO ? tunnelFloor(tunO, fx) : pb.b;
   const now = performance.now() / 1000;
   if (sinkT > 0 && sinkType === 'burn') {                                       // נשרף בשדה האש – מושחר ועשן עולה
     const k = 1 - sinkT / SINK_TIME;
@@ -1399,7 +1401,7 @@ function drawNinjaBody() {
     for (let k = 0; k < 3; k++) { const yy = fy - 4 - k * 3.5, o2 = ((now * 60 + k * 7) % 10); ctx.beginPath(); ctx.moveTo(fx - 6 - o2, yy); ctx.lineTo(fx - 13 - o2, yy); ctx.stroke(); }
   }
   // צל על הקרקע
-  if (!swim && !drowning && !dive && !(act.hiding > 0)) ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';   // כשכורעים – בלי צל (הברך על הקרקע)
+  if (!swim && !drowning && !dive && !tunO && !(act.hiding > 0)) ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';   // כשכורעים – בלי צל (הברך על הקרקע)
   else ctx.fillStyle = 'rgba(0,0,0,0)';
   if (riding) ctx.fillStyle = 'rgba(0,0,0,0)';                       // על הדרקון – בלי צל על הקרקע
   ctx.beginPath(); ctx.ellipse(fx + 0.5, GROUND + 0.6, Math.max(1.5, 4.5 - py * 0.08), 0.9, 0, 0, Math.PI * 2); ctx.fill();

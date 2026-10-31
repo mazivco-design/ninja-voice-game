@@ -61,7 +61,7 @@ const STAGES = [
   { name: 'LEAP',         words: ['leap'],           count: 4,  hint: 'Say LEAP to fly through the window' },
   { name: 'DIVE',         words: ['dive'],           count: 4,  hint: 'Say DIVE to swim under the net' },
   { name: 'LEAP + DIVE',  words: ['leap', 'dive'],   count: 10, hint: 'Read the word!' },
-  { name: 'CRAWL',        words: ['crawl'],          count: 4,  hint: 'Say CRAWL to go through the cave' },
+  { name: 'CRAWL',        words: ['crawl'],          count: 4,  hint: 'Say CRAWL to go under the big rock' },
   { name: 'FIRE',         words: ['fire'],           count: 4,  hint: 'Say FIRE to smash the ice wall' },
   { name: 'CRAWL + FIRE', words: ['crawl', 'fire'],  count: 10, hint: 'Read the word!' },
   { name: 'I WANT',       words: ['want'],           count: 4,  hint: 'Say I WANT, then the thing you need' },

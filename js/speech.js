@@ -127,6 +127,7 @@ function expectedWords0() {
   if (duelActive()) return ['fight'];
   if (gustActive()) return ['hold'];
   const le = liftExpected(); if (le) return le;
+  if (tunnelWait) return ['crawl'];
   if (ride && ride.phase === 'wait') return ['ride'];
   if (ride && (ride.phase === 'mount' || ride.phase === 'takeoff')) return ['up', 'down', 'fire'];
   if (rope && rope.phase !== 'done') return rope.phase === 'wait' ? ['catch'] : rope.phase === 'hang' ? ['let go'] : [];

@@ -37,7 +37,7 @@ function startGame(m, idx) {
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
   world = m === 'stage' ? (STAGES[idx || 0].world ?? PAIR_WORLD[Math.floor((idx || 0) / 3)]) : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
-  learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = 'wall'; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
+  learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = 'wall'; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; tunnelWait = null; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
@@ -203,7 +203,7 @@ function spawn() {
   if (type === 'lake') o.w = speed * LAKE.factor;        // רחב מדי לקפיצה
   if (type === 'bridge') o.w = speed * BRIDGE.factor;    // רחב מדי לקפיצה, ארוך מדי להליכה
   if (type === 'pond') o.w = Math.max(54, speed * POND.factor);   // הרשת באמצע
-  if (type === 'bramble') o.w = BRAMBLE.ramp + Math.max(30, speed * BRAMBLE.factor) + BRAMBLE.exit;   // כניסה שהולכת ונעשית צרה + החלק הנמוך + יציאה
+  if (type === 'bramble') o.w = tunnelW();                // CRAWL: מחילה מתחת לסלע ענק (tunnel.js)
   if (type === 'coin') coins++;
   o.pts = obstacleValue(type);
   obstacles.push(o);
@@ -268,7 +268,7 @@ function obstacleBox(o) {
     case 'arrows':  return { l: o.x, r: o.x + ARROWS.w, t: GROUND - 23, b: GROUND - 2 };
     case 'window':  return { l: o.x, r: o.x + WINDOW.w, t: -1e6, b: GROUND };
     case 'pond':    return { l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 20 };
-    case 'bramble': return { l: o.x, r: o.x + o.w, t: -1e6, b: GROUND - BRAMBLE.gap };
+    case 'bramble': return { l: o.x, r: o.x + o.w, t: GROUND - TUN.rockH, b: GROUND };
   }
 }
 function rockY(o) {   // הסלע נופל בתאוצה מהחבל עד הקרקע
@@ -292,10 +292,7 @@ function collides(o, pb) {
   if (o.type === 'window')  // רק החלון פתוח: חלק עליון וחלק תחתון של הקיר
     { const ovw = b => pb.l < b.r && pb.r > b.l && pb.t < b.b && pb.b > b.t;   // בלי מרווח סלחנות – רק זינוק עובר בחלון
       return ovw({ l: o.x, r: o.x + WINDOW.w, t: -1e6, b: WINDOW.top }) || ovw({ l: o.x, r: o.x + WINDOW.w, t: WINDOW.bot, b: GROUND + 1 }); }
-  if (o.type === 'bramble') {  // מערה: התקרה יורדת בהדרגה. רק זחילה עוברת בחלק הנמוך (גם התכופפות גבוהה מדי)
-    for (let k = 0; k <= 6; k++) { const xx = pb.l + m + (pb.r - pb.l - 2 * m) * k / 6; if (pb.t < caveCeiling(o, xx)) return true; }
-    return false;
-  }
+  if (o.type === 'bramble') return false;   // מחילה: בלי CRAWL הנינג'ה פשוט נעצר בפתח (tunnel.js) – אין פסילה
   if (o.type === 'pond') { const nx = netX(o); return ov({ l: nx, r: nx + POND.net, t: -1e6, b: GROUND + POND.deep + 1 }); }   // הרשת יורדת עמוק לתוך המים
   if (o.type === 'river') {
     const cx = (pb.l + pb.r) / 2;
@@ -515,6 +512,7 @@ function update(dt) {
   duelUpdate(dt, pb);
   gustUpdate(dt, pb);
   liftUpdate(dt, pb);
+  tunnelUpdate(dt, pb);
   powerTick(dt);
   if (state === 'play' && testerMode === 'auto' && isTester()) testerAuto(pb, dt);   // מצב בודק: משחק אוטומטי
   if (state === 'demo' || state === 'intro') demoAuto(pb, dt);

@@ -156,7 +156,7 @@ function renderDict() {
 }
 
 function resetDemo() {
-  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null; banner = null; flash = null; heard = null;
+  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; tunnelWait = null; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null; banner = null; flash = null; heard = null;
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   demoSteps = []; demoClock = 0;
 }
@@ -294,7 +294,7 @@ let introWords = [], introT = 0, runSpeed = 0;
 
 // מציב חפץ קטן ליד הנינג'ה ומתזמן את הפעולה (משותף למילון ולהדגמה)
 function setupDemo(w) {
-  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; gustAdv = 0; windLevel = 0; windStreaks = []; flash = null; invulnT = 0;
+  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; tunnelWait = null; gustAdv = 0; windLevel = 0; windStreaks = []; flash = null; invulnT = 0;
   py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0; resetAct();
   demoSteps = []; demoClock = 0;
   const near = PLAYER.x + PLAYER.w;
@@ -308,7 +308,7 @@ function setupDemo(w) {
   if (w === 'pull')  obstacles.push({ type: 'gate',  x: near + GATE.rope + 0.5 });
   if (w === 'leap')  obstacles.push({ type: 'window', x: near + 3 });
   if (w === 'dive')  obstacles.push({ type: 'pond', x: PLAYER.x - 14, w: 50 });
-  if (w === 'crawl') obstacles.push({ type: 'bramble', x: PLAYER.x - 6, w: 60 });
+  if (w === 'crawl') obstacles.push({ type: 'bramble', x: near + 3, w: tunnelW() });
   if (w === 'hide')  obstacles.push({ type: 'guard', x: near + 14 });
   if (w === 'block') obstacles.push({ type: 'arrows', x: near + 28 });
   if (w === 'fire')  obstacles.push({ type: 'ice', x: near + 30 });
@@ -352,12 +352,12 @@ function introNext() {
   setupDemo(w);
   speak(w);
   banner = { text: 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
-  introT = w === 'fly' ? 4.6 : w === 'want' || w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'pick up' ? 6.8 : 2.8;
+  introT = w === 'fly' ? 4.6 : w === 'want' || w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'pick up' ? 6.8 : w === 'crawl' ? 5.2 : 2.8;
 }
 
 function finishIntro() {
   if (state !== 'intro') return;
-  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; gustAdv = 0; windLevel = 0; windStreaks = []; demoSteps = []; flash = null; invulnT = 0;
+  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; tunnelWait = null; gustAdv = 0; windLevel = 0; windStreaks = []; demoSteps = []; flash = null; invulnT = 0;
   py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0; resetAct();
   speed = runSpeed; distSinceSpawn = 0; nextGap = speed * 2.4; liftKindNext = 'wall';   // PICK UP: מתחילים מהקיר
   seenWords = [];
