@@ -23,7 +23,7 @@ async function play(m, idx) {
   listenWords = words.includes('fly') && !words.includes('jump') ? [...words, 'jump'] : [...words];   // FLY צריך גם JUMP
   if (words.includes('want')) listenWords.push('i', ...ITEM_WORDS);
   if (words.includes('let go') && !words.includes('catch')) listenWords.push('catch');
-  if (words.includes('pick up')) for (const w of ['put down', 'jump']) if (!listenWords.includes(w)) listenWords.push(w);   // PICK UP → PUT DOWN → JUMP
+  if (words.includes('pick up')) for (const w of ['put down', 'jump', 'throw', 'pull']) if (!listenWords.includes(w)) listenWords.push(w);   // PICK UP → PUT DOWN → JUMP
   if (m !== 'demo') for (const w of powerWordsOwned()) if (!listenWords.includes(w)) listenWords.push(w);   // SHIELD / JET – אם יש מנות
   if (words.includes('ride')) for (const w of ['up', 'down', 'fire']) if (!listenWords.includes(w)) listenWords.push(w);   // RIDE: בשמיים צריך UP / DOWN / FIRE   // LET GO צריך גם CATCH                              // I WANT + שמות החפצים
   stopAudio();                      // מתחילים מחדש עם רשימת המילים של המשחק הזה

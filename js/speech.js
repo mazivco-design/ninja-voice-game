@@ -253,6 +253,7 @@ function command(word, source) {
     kickT = KICK.time;                     // בעיטה – שוברת קיר שקרוב מספיק
     duckT = 0;
   } else if (word === 'throw') {
+    if (liftThrow()) return;               // PICK UP: זורק את החבל לבור (להצלת הגור)
     if (throwCd <= 0) {                    // זורק שוריקן קדימה
       const pb = playerBox();
       shurikens.push({ x: pb.r, y: pb.t + 5, rot: 0 });
@@ -274,6 +275,7 @@ function command(word, source) {
   else if (word === 'swim')  { act.swim = SWIM_TIME; duckT = 0; }
   else if (word === 'climb') { act.climbWant = 0.8; }                     // מטפס כשהנינג'ה מגיע לסולם (אם זה קורה בשנייה הקרובה)
   else if (word === 'push')  { act.push = 0.6; duckT = 0; }
+  else if (word === 'pull' && liftPull()) {}                             // מושך את הגור מהבור
   else if (word === 'pull')  { act.pull = 0.6; act.pullWant = GATE.want; duckT = 0; }   // מושך כשמגיעים לחבל
   else if (word === 'hide')  { act.hide = HIDE_TIME; duckT = 0; }
   else if (word === 'block') { act.block = BLOCK_TIME; }

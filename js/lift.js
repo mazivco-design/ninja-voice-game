@@ -3,23 +3,25 @@
    שני מצבים (לסירוגין):
    · קיר גבוה – גבוה מדי לקפיצה. ליד הקיר הוא נעצר – PUT DOWN מניח את הסלע צמוד לקיר, הוא עולה עליו, ו-JUMP מעל הקיר.
    · פרס גבוה – כוכב זהב שמרחף גבוה מדי לקפיצה רגילה. מתחתיו יש סימן על הקרקע – PUT DOWN שם, עולים על הסלע ו-JUMP אל הכוכב (בונוס).
+   · הצלה – גור כלבים תקוע בבור בצד הדרך (קרוב לצופה). PICK UP מרים חבל מגולגל, THROW זורק אותו לבור, הגור נושך את החבל, ו-PULL מושך אותו החוצה. הגור מודה ונותן מטבעות.
    · קרש – במקום סלע יש קרש עץ ארוך. בהמשך בור עם נחל: בשפה PUT DOWN – הקרש נוחת לרוחב הבור, והנינג'ה עובר עליו בהליכה (הקרש מתנדנד קצת).
    הכול סבלני: העולם מחכה למילה. אחרי שתיקה ארוכה המשחק אומר את המילה בקול.
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-let lift = null;   // { o, phase: 'atRock' | 'lifting' | 'carry' | 'atTarget' | 'placing' | 'climb' | 'onRock' | 'jumping' | 'crossing', t, idle, hinted }
+let lift = null;   // { o, phase: 'atRock' | 'lifting' | 'carry' | 'atTarget' | 'placing' | 'climb' | 'onRock' | 'jumping' | 'crossing' | 'throwing' | 'bite' | 'waitPull' | 'pulling' | 'thanks', t, idle, hinted }
+const RESC = { pitAt: 40, rx: 11, ry: 3.6, py: GROUND + 7, throwT: 0.65, biteT: 0.6, pullT: 1.6, thanksT: 1.4, coins: 5 };   // הבור עם הגור – בצד הדרך, קרוב לצופה
 const PLANK = { len: 42, th: 2.6, gapAt: 52, gapW: 32, deep: 22, cross: 0.55 };   // קרש מעל בור
 const LIFT = { rockW: 10, rockH: 8, gap: 46, wallW: 10, wallH: 22, starDY: 39, starAhead: 7, starR: 4.2, carry: 0.7,
                liftT: 0.5, putT: 0.45, climbT: 0.45, hint: 3.5, hintEvery: 6, prizeCoins: 5 };
 let liftKindNext = 'wall';
 
 function liftSetup(o) {                                                         // נקרא ב-spawn
-  o.kind = liftKindNext; liftKindNext = { wall: 'prize', prize: 'plank', plank: 'wall' }[liftKindNext];   // קיר → כוכב → קרש
+  o.kind = liftKindNext; liftKindNext = { wall: 'prize', prize: 'plank', plank: 'rescue', rescue: 'wall' }[liftKindNext];   // קיר → כוכב → קרש → הצלה
   o.rock = 'ground';                                                            // ground | carried | placed
-  o.w = o.kind === 'plank' ? PLANK.gapAt + PLANK.gapW + 6 : LIFT.gap + (o.kind === 'wall' ? LIFT.wallW : 0) + 4;
+  o.w = o.kind === 'rescue' ? RESC.pitAt + RESC.rx + 4 : o.kind === 'plank' ? PLANK.gapAt + PLANK.gapW + 6 : LIFT.gap + (o.kind === 'wall' ? LIFT.wallW : 0) + 4;
 }
 function liftWallX(o) { return o.x + LIFT.gap; }                                // הקיר (או הסימן של הפרס) – תחילתו
-function liftPlaceX(o) { return o.kind === 'plank' ? o.x + PLANK.gapAt : o.x + LIFT.gap - LIFT.rockW; }   // איפה הסלע מונח (בקרש: שפת הבור)
+function liftPlaceX(o) { return o.kind === 'rescue' ? o.x + RESC.pitAt - 9 : o.kind === 'plank' ? o.x + PLANK.gapAt : o.x + LIFT.gap - LIFT.rockW; }   // איפה הסלע מונח (בקרש: שפת הבור)
 function plankGap(o) { return { l: o.x + PLANK.gapAt, r: o.x + PLANK.gapAt + PLANK.gapW }; }
 function plankSpan(o) { const g = plankGap(o), m = (PLANK.len - PLANK.gapW) / 2; return { l: g.l - m, r: g.r + m }; }   // הקרש מונח לרוחב הבור
 function liftStar(o) { return [liftPlaceX(o) + LIFT.rockW / 2 + LIFT.starAhead, GROUND - LIFT.starDY]; }
@@ -35,21 +37,22 @@ function liftSpeed() {
   return 0;
 }
 function liftCarrying() { return !!lift && ['lifting', 'carry', 'atTarget', 'placing'].includes(lift.phase); }
+function pitX(o) { return o.x + RESC.pitAt; }
 
 function liftUpdate(dt, pb) {
   if (!lift) {
     const o = obstacles.find(o => o.type === 'lift' && !o.passed && o.rock === 'ground' && o.x - pb.r <= 1.5 && o.x + (o.kind === 'plank' ? PLANK.len : LIFT.rockW) > pb.l);
+    for (const p of obstacles) if (p.type === 'lift' && p.pup && p.pup.run) p.pup.run += dt;   // הגור שניצל רץ קדימה
     if (o && py <= 0) { lift = { o, phase: 'atRock', t: 0, idle: 0, hinted: 0 }; duckT = 0; }
     return;
   }
   const L = lift, o = L.o; L.t += dt;
   if (!obstacles.includes(o)) { lift = null; return; }
-  if (L.phase === 'atRock' || L.phase === 'atTarget' || L.phase === 'onRock') {   // מחכים למילה – אחרי שתיקה ארוכה המשחק אומר אותה
+  if (L.phase === 'atRock' || L.phase === 'atTarget' || L.phase === 'onRock' || L.phase === 'waitPull') {   // מחכים למילה – אחרי שתיקה ארוכה המשחק אומר אותה
     L.idle += dt;
-    if (L.idle >= LIFT.hint + L.hinted * LIFT.hintEvery && state === 'play') {
-      L.hinted++; sayWords([L.phase === 'atRock' ? 'pick up' : L.phase === 'atTarget' ? 'put down' : 'jump'], 1.6);
-    }
+    if (L.idle >= LIFT.hint + L.hinted * LIFT.hintEvery && state === 'play') { L.hinted++; sayWords([liftExpected()[0]], 1.6); }
   }
+  if (o.kind === 'rescue' && liftRescueStep(L, o, dt)) return;
   if (L.phase === 'lifting' && L.t >= LIFT.liftT) { L.phase = 'carry'; L.t = 0; }
   else if (L.phase === 'carry') {
     const over = pb.r - liftPlaceX(o);
@@ -110,6 +113,7 @@ function liftPick() {
 }
 function liftPut() {
   if (!lift) return false;
+  if (lift.o.kind === 'rescue') { if (lift.phase === 'atTarget') flash = { text: '🐶 THROW the rope!', t: 1 }; return true; }
   if (lift.phase === 'atTarget') { lift.phase = 'placing'; lift.t = 0; }
   else if (lift.phase === 'carry') flash = { text: '👀 Not here yet!', t: 0.9 };
   return true;
@@ -121,6 +125,8 @@ function liftJump() {                                                           
 }
 function liftExpected() {
   if (!lift) return null;
+  if (lift.o.kind === 'rescue' && lift.phase === 'atTarget') return ['throw'];
+  if (lift.phase === 'waitPull') return ['pull'];
   return lift.phase === 'atRock' ? ['pick up'] : lift.phase === 'atTarget' ? ['put down'] : lift.phase === 'onRock' ? ['jump'] : [];
 }
 function liftAuto() {                                                           // מצב בודק 🤖
@@ -148,13 +154,14 @@ function drawLiftRock(x, y, s) {                                                
 }
 function drawLiftObstacle(o) {
   const placing = lift && lift.o === o && lift.phase === 'placing';
-  if (o.kind === 'plank') { drawPlankScene(o, placing); }
+  if (o.kind === 'rescue') { drawRescue(o); }
+  else if (o.kind === 'plank') { drawPlankScene(o, placing); }
   else {
     if (o.rock === 'ground') drawLiftRock(o.x, GROUND);
     if (o.rock === 'placed') drawLiftRock(liftPlaceX(o), GROUND);
   }
   const tx = liftWallX(o);
-  if (o.kind === 'plank') {}
+  if (o.kind === 'plank' || o.kind === 'rescue') {}
   else if (o.kind === 'wall') {                                                     // קיר אבנים גבוה
     const h = LIFT.wallH, top = GROUND - h;
     ctx.fillStyle = '#78716c'; ctx.fillRect(tx, top, LIFT.wallW, h);
@@ -179,6 +186,7 @@ function drawLiftObstacle(o) {
     starShape(sx, sy + bob, LIFT.starR, LIFT.starR * 0.45, t * 0.8, '#facc15', '#a16207');
   }
   if (lift && lift.o === o && labelsVisible()) {
+    if (o.kind === 'rescue') { const t2 = { atRock: 'PICK UP', atTarget: 'THROW', waitPull: 'PULL' }[lift.phase]; if (t2) label(t2, lift.phase === 'atRock' ? o.x + 3 : pitX(o), GROUND - 26, 4, '#fde047', '#1e293b'); return; }
     const pl = o.kind === 'plank', tag = { atRock: ['PICK UP', o.x + (pl ? PLANK.len / 2 : LIFT.rockW / 2), GROUND - 26], atTarget: ['PUT DOWN', pl ? plankGap(o).l + PLANK.gapW / 2 : liftPlaceX(o) + LIFT.rockW / 2, GROUND - 30], onRock: ['JUMP', PLAYER.x + 4, GROUND - LIFT.rockH - 24] }[lift.phase];
     if (tag) label(tag[0], tag[1], tag[2], 4, '#fde047', '#1e293b');
   }
@@ -193,12 +201,14 @@ function drawLiftCarry(fx, fy) {
   if (!liftCarrying()) return;
   const L = lift, o = L.o, top = fy - 13.6;
   if (o.kind === 'plank') { drawPlankCarry(fx, fy); return; }
+  if (o.kind === 'rescue') { drawCoilCarry(fx, fy); return; }
   let x = fx - LIFT.rockW / 2, y = top;                                         // מעל הראש
   if (L.phase === 'lifting') { const k = Math.min(1, L.t / LIFT.liftT), e = k * k * (3 - 2 * k); x = lerp(o.x, x, e); y = lerp(GROUND, top, e); }
   if (L.phase === 'placing') { const k = Math.min(1, L.t / LIFT.putT), e = k * k * (3 - 2 * k); x = lerp(x, liftPlaceX(o), e); y = lerp(top, GROUND, e); }
   drawLiftRock(x, y);
 }
 function liftPose(P) {                                                          // ידיים למעלה מחזיקות את הסלע
+  if (lift && lift.o.kind === 'rescue') return rescuePose(P);
   if (!liftCarrying()) return P;
   const L = lift;
   let k = 1;
@@ -258,4 +268,126 @@ function drawPlankCarry(fx, fy) {                                               
     x0 = lerp(x0, sp.l, e); x1 = lerp(x1, sp.r, e); y0 = lerp(top, GROUND - 0.5, e); y1 = lerp(top, GROUND - 0.5, Math.min(1, e * 1.25));   // הקצה הרחוק נוחת קודם
   }
   drawPlank(x0, y0, x1, y1);
+}
+
+/* ---------- הצלת הגור ---------- */
+function liftThrow() {                                                          // THROW ליד הבור – החבל עף פנימה
+  if (!lift || lift.o.kind !== 'rescue') return false;
+  if (lift.phase === 'atTarget') { lift.phase = 'throwing'; lift.t = 0; throwT = 0.25; sfx('swish'); }
+  return lift.phase !== 'atRock';                                                // ליד החבל המגולגל – זריקה רגילה (שוריקן)
+}
+function liftPull() {
+  if (!lift || lift.o.kind !== 'rescue') return false;
+  if (lift.phase === 'waitPull') { lift.phase = 'pulling'; lift.t = 0; }
+  return true;
+}
+function liftRescueStep(L, o, dt) {                                              // השלבים אחרי הזריקה. true = טופל
+  if (L.phase === 'throwing' && L.t >= RESC.throwT) { L.phase = 'bite'; L.t = 0; sfx('woof'); }
+  else if (L.phase === 'bite' && L.t >= RESC.biteT) { L.phase = 'waitPull'; L.t = 0; L.idle = 0; L.hinted = 0; }
+  else if (L.phase === 'pulling' && L.t >= RESC.pullT) {
+    L.phase = 'thanks'; L.t = 0; sfx('woof'); o.saved = true;
+    const px = pitX(o), py2 = RESC.py - 6; burst(px, py2, '#fde68a', 12, 30);
+    if (mode === 'journey' && state === 'play') { picked += RESC.coins; coinsFlying++; flyCoinToHud({ x: px - 3 }, py2); floatText(px, py2 - 8, '+' + RESC.coins + ' 🟡', '#ca8a04'); }
+    else floatText(px, py2 - 8, '❤️', '#e11d48');
+  }
+  else if (L.phase === 'thanks' && L.t >= RESC.thanksT) { o.pup = { run: 0.001 }; cleared(o); lift = null; }
+  else return false;
+  return true;
+}
+// איפה הגור: בתוך הבור, עולה בזמן המשיכה, ואז קופץ החוצה ורץ קדימה
+function pupPos(o) {
+  const px = pitX(o), L = lift && lift.o === o ? lift : null, bot = RESC.py + 7.5;   // עמוק בבור – רואים רק את הראש
+  if (o.pup && o.pup.run) { const t = o.pup.run; return { x: px + 4 + t * 60, y: GROUND + 4 - Math.abs(Math.sin(t * 14)) * 2, face: 1, run: true }; }
+  if (o.saved || (L && L.phase === 'thanks')) { const k = L ? Math.min(1, L.t / 0.35) : 1; return { x: px - 4 * k, y: RESC.py - 3 - Math.sin(Math.PI * k) * 6, face: -1, happy: true }; }
+  if (L && L.phase === 'pulling') { const k = Math.min(1, L.t / RESC.pullT), e = k * k * (3 - 2 * k); return { x: px - 1 * e, y: bot - 11.5 * e, face: -1, bite: true, up: e }; }
+  return { x: px, y: bot + Math.sin(performance.now() / 180) * 0.5, face: -1, bite: L && (L.phase === 'bite' || L.phase === 'waitPull') };
+}
+function drawPuppy(x, y, face, P) {                                             // גור קטן: (x, y) = הרגליים
+  const t = performance.now() / 1000, f = face || 1;
+  ctx.save(); ctx.translate(x, y); ctx.scale(f, 1);
+  const tan = '#d6a35c', dark = '#8b5a2b';
+  const wag = Math.sin(t * (P.happy || P.run ? 22 : 10)) * 0.5;
+  ctx.strokeStyle = tan; ctx.lineWidth = 1; ctx.lineCap = 'round';               // זנב
+  ctx.beginPath(); ctx.moveTo(-3.2, -3.2); ctx.quadraticCurveTo(-5, -5 + wag, -4.6 + wag, -6.4); ctx.stroke();
+  const lg = P.run ? Math.sin(t * 28) * 0.9 : 0;                                 // רגליים
+  ctx.lineWidth = 0.9; ctx.strokeStyle = '#b07d3c';
+  for (const [lx, ph] of [[-2.2, 1], [-1.2, -1], [1.4, -1], [2.4, 1]]) { ctx.beginPath(); ctx.moveTo(lx, -1.8); ctx.lineTo(lx + lg * ph, 0); ctx.stroke(); }
+  ctx.fillStyle = tan; ctx.beginPath(); ctx.ellipse(0, -2.8, 3.6, 1.9, 0, 0, Math.PI * 2); ctx.fill();   // גוף
+  ctx.fillStyle = '#f5deb3'; ctx.beginPath(); ctx.ellipse(0.6, -2.2, 2, 0.9, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = tan; ctx.beginPath(); ctx.arc(3.6, -5, 2.3, 0, Math.PI * 2); ctx.fill();               // ראש
+  ctx.fillStyle = '#f5deb3'; ctx.beginPath(); ctx.ellipse(5.3, -4.4, 1.3, 0.95, 0, 0, Math.PI * 2); ctx.fill();   // לוע
+  ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.arc(6.4, -4.7, 0.45, 0, Math.PI * 2); ctx.fill();      // אף
+  ctx.fillStyle = dark; ctx.beginPath(); ctx.ellipse(2.4, -5.4, 0.9, 1.7, 0.5 + wag * 0.2, 0, Math.PI * 2); ctx.fill();   // אוזן נופלת
+  if (P.happy) { ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 0.35; ctx.beginPath(); ctx.arc(4.3, -5.6, 0.45, Math.PI, 0); ctx.stroke(); }   // עיניים שמחות
+  else { ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.arc(4.4, -5.6, 0.38, 0, Math.PI * 2); ctx.fill(); }
+  if (P.happy || P.run) { ctx.fillStyle = '#f472b6'; ctx.beginPath(); ctx.ellipse(5.6, -3.4, 0.4, 0.7, 0, 0, Math.PI * 2); ctx.fill(); }   // לשון
+  ctx.restore();
+}
+function drawRescue(o) {
+  const px = pitX(o), cy = RESC.py, L = lift && lift.o === o ? lift : null, t = performance.now() / 1000;
+  // החבל המגולגל על הקרקע (לפני שמרימים)
+  if (o.rock === 'ground') drawCoil(o.x + 3, GROUND - 2.2);
+  // הבור: פתח אליפטי בקרקע, קרוב לצופה
+  ctx.save();
+  ctx.fillStyle = '#1c130c'; ctx.beginPath(); ctx.ellipse(px, cy, RESC.rx, RESC.ry, 0, 0, Math.PI * 2); ctx.fill();
+  const ig = ctx.createLinearGradient(0, cy - RESC.ry, 0, cy + RESC.ry);
+  ig.addColorStop(0, '#5b4433'); ig.addColorStop(0.55, '#2a1d14'); ig.addColorStop(1, '#0f0a06');
+  ctx.fillStyle = ig; ctx.beginPath(); ctx.ellipse(px, cy, RESC.rx - 0.5, RESC.ry - 0.4, 0, 0, Math.PI * 2); ctx.fill();   // הדופן הרחוקה מוארת, למטה חושך
+  ctx.restore();
+  // הגור: בתוך הבור (נחתך בשפה הקדמית), או בחוץ
+  const P = pupPos(o);
+  if (!(P.run && P.x > W + 12)) {
+    ctx.save();
+    if (!o.saved && !P.run) { ctx.beginPath(); ctx.rect(px - RESC.rx - 2, cy - 30, RESC.rx * 2 + 4, 30); ctx.ellipse(px, cy, RESC.rx - 0.4, RESC.ry - 0.3, 0, 0, Math.PI); ctx.clip(); }
+    drawPuppy(P.x, P.y, P.face, P);
+    ctx.restore();
+  }
+  // שפת הבור הקדמית – מעל הגור כשהוא עוד בפנים
+  ctx.strokeStyle = 'rgba(120,85,50,.9)'; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.ellipse(px, cy, RESC.rx, RESC.ry, 0, 0.05, Math.PI - 0.05); ctx.stroke();
+  // בועת "Help!" עד שזורקים חבל
+  if (!o.saved && (!L || ['atRock', 'lifting', 'carry', 'atTarget'].includes(L.phase)) && !(o.pup && o.pup.run)) {
+    const by = cy - 14 + Math.sin(t * 3) * 0.6, txt = 'Help! 🐶';
+    ctx.font = '900 3.6px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const w = ctx.measureText(txt).width + 3;
+    ctx.fillStyle = 'rgba(255,255,255,.95)'; roundRect(px - w / 2, by - 2.6, w, 5.2, 2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(px - 1, by + 2.4); ctx.lineTo(px + 1, by + 2.4); ctx.lineTo(px, by + 4.2); ctx.fill();
+    ctx.fillStyle = '#b91c1c'; ctx.fillText(txt, px, by + 0.2);
+  }
+  if (L && L.phase === 'thanks') {                                              // תודה!
+    const k = Math.min(1, L.t / 0.3), by = cy - 30;
+    ctx.save(); ctx.globalAlpha = k; ctx.font = '900 3.8px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const txt = 'Woof! Thank you! ❤️', w = ctx.measureText(txt).width + 3;
+    ctx.fillStyle = 'rgba(255,255,255,.95)'; roundRect(px + 2 - w / 2, by - 2.7, w, 5.4, 2); ctx.fill();
+    ctx.fillStyle = '#be185d'; ctx.fillText(txt, px + 2, by + 0.2); ctx.restore();
+  }
+  // החבל מהידיים לבור
+  if (L && ['throwing', 'bite', 'waitPull', 'pulling'].includes(L.phase)) {
+    const hx = PLAYER.x + 7, hy = GROUND - 8, mouth = (() => { const p = pupPos(o); return [p.x - 5.4, p.y - 4.2]; })();
+    let ex = mouth[0], ey = mouth[1];
+    if (L.phase === 'throwing') { const k = Math.min(1, L.t / RESC.throwT); ex = lerp(hx, px - 2, k); ey = lerp(hy, cy + 2, k) - Math.sin(Math.PI * k) * 10; }
+    const slack = L.phase === 'pulling' ? 0.3 : L.phase === 'throwing' ? 2.5 : 1.6;
+    ctx.save(); ctx.strokeStyle = '#a16207'; ctx.lineWidth = 0.9; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo((hx + ex) / 2, Math.max(hy, ey) + slack * 2, ex, ey); ctx.stroke();
+    if (L.phase === 'throwing') drawCoil(ex - 1.5, ey - 1.5, 0.6);
+    ctx.restore();
+  }
+}
+function drawCoil(x, y, s) {                                                    // חבל מגולגל (x, y = מרכז)
+  const k = s || 1;
+  ctx.save(); ctx.strokeStyle = '#a16207'; ctx.lineWidth = 0.8 * k;
+  for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.ellipse(x, y, (2.8 - i * 0.7) * k, (1.6 - i * 0.35) * k, 0, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 0.3 * k; ctx.beginPath(); ctx.ellipse(x, y - 0.3 * k, 2.8 * k, 1.5 * k, 0, Math.PI * 1.1, Math.PI * 1.7); ctx.stroke();
+  ctx.restore();
+}
+function drawCoilCarry(fx, fy) {                                                // החבל המגולגל על הכתף
+  const L = lift, o = L.o; let x = fx + 3.6, y = fy - 5.5;   // ליד המותן
+  if (L.phase === 'lifting') { const k = Math.min(1, L.t / LIFT.liftT), e = k * k * (3 - 2 * k); x = lerp(o.x + 3, x, e); y = lerp(GROUND - 2.2, y, e); }
+  drawCoil(x, y);
+}
+function rescuePose(P) {
+  const L = lift; if (!L) return P;
+  if (['lifting', 'carry', 'atTarget'].includes(L.phase)) { P.arms = [P.arms[0], [0.5, 1.3]]; }       // מחזיק את החבל המגולגל ליד המותן
+  if (L.phase === 'bite' || L.phase === 'waitPull') { P.arms = [[0.9, 1.1], [1.0, 1.2]]; P.lean = 0.25; }   // אוחז בחבל, ידיים קדימה-למטה
+  if (L.phase === 'pulling') { P = posePull(performance.now() / 1000); P.lean = -0.25; }                      // מושך אחורה
+  return P;
 }
