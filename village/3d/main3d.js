@@ -20,7 +20,7 @@ const SKY = 0xcfe6ee;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(SKY);
 scene.fog = new THREE.Fog(SKY, 40, 135);
-const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 420);
+const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 1100);
 
 scene.add(new THREE.HemisphereLight(0xeaf6ff, 0x5c7a3c, 1.1));
 const sun = new THREE.DirectionalLight(0xfff0d4, 2.2);
@@ -62,7 +62,10 @@ function groundH(x, z) {
   const d = Math.max(Math.abs(x), Math.abs(z));
   if (d < PLAY + 2) return 0;
   const k = d - PLAY - 2;
-  return k * 0.42 + Math.sin(x * 0.21) * Math.cos(z * 0.17) * Math.min(k, 6) * 0.35;
+  // גבעות נמוכות מסביב (עד ~7), ובצפון נמוכות עוד יותר – כדי שההר יראה מעליהן
+  const north = z < -PLAY ? Math.max(0, Math.min(1, (Math.abs(z) - Math.abs(x) * 0.6) / 20)) : 0;
+  const hill = Math.min(7, k * 0.42) * (1 - 0.65 * north);
+  return hill + Math.sin(x * 0.21) * Math.cos(z * 0.17) * Math.min(k, 6) * 0.35 * (1 - 0.5 * north);
 }
 
 // ---------- קרקע ----------
@@ -85,7 +88,7 @@ function groundH(x, z) {
   // הרים רחוקים
   for (let i = 0; i < 18; i++) {
     const a = i / 18 * Math.PI * 2 + R() * 0.2, d = 160 + R() * 25, h = 40 + R() * 35, r = 28 + R() * 16;
-    if (Math.abs(a - Math.PI * 1.5) < 0.55) continue;            // צפון פנוי – שם ההר הגדול
+    if (Math.abs(a - Math.PI * 1.5) < 0.9) continue;             // צפון פנוי – שם ההר הגדול
     const mtn = mesh(new THREE.ConeGeometry(r, h, 6), 0x9fb3bd, Math.cos(a) * d, h / 2 - 2, Math.sin(a) * d, scene, { fog: false });
     mtn.castShadow = false;
     const cap = mesh(new THREE.ConeGeometry(r * 0.28, h * 0.28, 6), 0xf1f5f7, mtn.position.x, h - 2 - h * 0.14, mtn.position.z, scene, { fog: false });
@@ -834,9 +837,9 @@ function updateDog(dt, now) {
 // מבטים: רחוק (ברירת מחדל), קרוב מאחורי הכתף, מלמעלה, ומהעיניים של הנינג'ה (גוף ראשון).
 // בכל מבט: גרירה מסובבת, הג'ויסטיק הולך "קדימה" לפי כיוון המבט.
 const VIEWS = {
-  far:  { label: 'רחוק',    pitch: 0.72, dist: 15, ty: 1.0 },
-  near: { label: 'קרוב',    pitch: 0.28, dist: 5.2, ty: 1.35 },
-  top:  { label: 'מלמעלה',  pitch: 1.32, dist: 24, ty: 0.5 },
+  far:  { label: 'רחוק',    pitch: 0.24, dist: 12, ty: 2.8 },      // נמוך מאחור – רואים את ההר באופק
+  near: { label: 'קרוב',    pitch: 0.12, dist: 6, ty: 1.9 },
+  top:  { label: 'מלמעלה',  pitch: 1.1, dist: 22, ty: 0.5 },
   eyes: { label: 'עיניים',  eyes: true }
 };
 const cam = { mode: 'far', yaw: 0, pitch: 0.72, dist: 15, look: -0.08, tx: ninja.x, tz: ninja.z, ty: 1.0, blend: 1 };
@@ -869,7 +872,7 @@ function placeCamera(dt) {
   if (cam.intro) {                                   // פתיחה: מסתכלים מהנינג'ה אל פסגת ההר, ואחר כך יורדים אליו
     const k = cam.intro.k, ex = ninja.x + 0.8, ez = ninja.z + 6;
     wantPos.set(ex, 2.2 + 1.6 * k, ez + 2 * k);
-    wantLook.set(ninja.x * k, 60 * (1 - k) + 1.1 * k, -128 * (1 - k) + ninja.z * k);
+    wantLook.set(ninja.x * k, (MTN.h * 0.62) * (1 - k) + 1.1 * k, mountain.g.position.z * (1 - k) + ninja.z * k);
     cam.blend = 1;
   }
   if (cam.blend < 1) { cam.blend = Math.min(1, cam.blend + dt * 2.5); const k = cam.blend * cam.blend * (3 - 2 * cam.blend); camPos.lerp(wantPos, k); camLook.lerp(wantLook, k); }
@@ -988,16 +991,42 @@ prog.done = prog.done || [];
 function saveProg() { try { localStorage.setItem(KEY_PROG, JSON.stringify(prog)); } catch (e) {} }
 
 // ---------- ההר הגדול בצפון, ואור בפסגה ----------
-const MTN = { x: 0, z: -128, h: 82, r: 48 };
+const MTN = { x: 0, z: -330, h: 95, r: 120 };       // רחוק מאוד, כדי שההתקרבות לאורך המסע תורגש
+// הר "אמיתי": משטח עם רכסים וגבשושיות, צבעים לפי גובה (יער → סלע → שלג), וערפל אוויר שמבהיר את מה שרחוק
+function peakGeo(r, h, seed, haze) {
+  const RS = 64, HS = 40, g = new THREE.CylinderGeometry(0, r, h, RS, HS, true);
+  g.translate(0, h / 2, 0);
+  const p = g.attributes.position, cols = [], c = new THREE.Color(), sky = new THREE.Color(SKY);
+  const n = (a, y) => Math.sin(a * 3 + seed) * 0.5 + Math.sin(a * 7 + seed * 2 + y * 0.03) * 0.25 + Math.sin(a * 13 + seed * 3 + y * 0.07) * 0.12 + Math.sin(a * 23 + y * 0.11) * 0.06;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i), u = y / h, a = Math.atan2(z, x);
+    const rr = Math.hypot(x, z);
+    const ridge = 1 + n(a, y) * 0.32 * (1 - u * 0.4);                // רכסים ושקעים
+    const k = Math.pow(1 - u, 0.85);                                    // מדרון: תלול למעלה, רחב למטה
+    const nr = r * k * ridge;
+    if (rr > 1e-6) { p.setX(i, x / rr * nr); p.setZ(i, z / rr * nr); }
+    p.setY(i, y + Math.sin(a * 5 + seed) * h * 0.015 * (1 - u));
+    const snowLine = 0.62 + n(a, 0) * 0.07;
+    if (u > snowLine) c.setHex(0xf3f6f8);
+    else if (u > 0.3) c.setHex(0x7d8790).lerp(new THREE.Color(0x96a0a8), Math.max(0, n(a * 2, y)));
+    else c.setHex(0x4f6b4a).lerp(new THREE.Color(0x6d7f6a), u / 0.3);
+    c.lerp(sky, haze);                                                    // ערפל אוויר
+    cols.push(c.r, c.g, c.b);
+  }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  g.computeVertexNormals();
+  return g;
+}
 const mountain = (function buildMountain() {
-  const g = new THREE.Group(); g.position.set(MTN.x, -2, MTN.z); scene.add(g);
+  const g = new THREE.Group(); g.position.set(MTN.x, -4, MTN.z); scene.add(g);
+  const mm = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true, fog: false });
+  const add = (geo, x, z, ry) => { const m = new THREE.Mesh(geo, mm); m.position.set(x, 0, z); m.rotation.y = ry || 0; g.add(m); return m; };
+  add(peakGeo(MTN.r, MTN.h, 1.3, 0.22), 0, 0);
+  add(peakGeo(MTN.r * 0.7, MTN.h * 0.5, 4.1, 0.38), -MTN.r * 0.95, 40, 1);        // כתף משמאל
+  add(peakGeo(MTN.r * 0.65, MTN.h * 0.45, 7.7, 0.40), MTN.r * 1.0, 30, 2);        // כתף מימין
+  // מקדש קטן בפסגה (גדול מספיק כדי לראות אותו מרחוק)
+  const S = 1.5, top = new THREE.Group(); top.position.set(0, MTN.h - 2, 0); top.scale.setScalar(S); g.add(top);
   const F = { fog: false };
-  mesh(new THREE.ConeGeometry(MTN.r, MTN.h, 9), 0x6f8796, 0, MTN.h / 2, 0, g, F).castShadow = false;
-  mesh(new THREE.ConeGeometry(MTN.r * 0.75, MTN.h * 0.6, 8), 0x7f97a4, -MTN.r * 0.55, MTN.h * 0.3, 12, g, F).castShadow = false;
-  mesh(new THREE.ConeGeometry(MTN.r * 0.7, MTN.h * 0.55, 8), 0x7890a0, MTN.r * 0.6, MTN.h * 0.27, 8, g, F).castShadow = false;
-  mesh(new THREE.ConeGeometry(MTN.r * 0.335, MTN.h * 0.32, 9), 0xf1f5f7, 0, MTN.h - MTN.h * 0.16 + 0.25, 0, g, F).castShadow = false;
-  // מקדש קטן בפסגה
-  const top = new THREE.Group(); top.position.set(0, MTN.h - 1, 0); g.add(top);
   mesh(Box(5, 3, 5), 0x7a1d1d, 0, 1.5, 0, top, F);
   mesh(new THREE.ConeGeometry(5, 3, 4), 0x2a303c, 0, 4.4, 0, top, F).rotation.y = Math.PI / 4;
   // האור
@@ -1006,12 +1035,18 @@ const mountain = (function buildMountain() {
   const haloMat = new THREE.MeshBasicMaterial({ color: 0xffe9a8, transparent: true, opacity: 0.35, fog: false, depthWrite: false });
   const halo = new THREE.Mesh(new THREE.SphereGeometry(6, 20, 14), haloMat); halo.position.copy(orb.position); top.add(halo);
   // עננים כהים שמכסים את האור
-  const clouds = new THREE.Group(); clouds.position.set(0, MTN.h + 7, 0); g.add(clouds);
+  const clouds = new THREE.Group(); clouds.position.set(0, MTN.h + 7 * S + 6, 0); clouds.scale.setScalar(S); g.add(clouds);
   const cMat = new THREE.MeshLambertMaterial({ color: 0x3f4654, transparent: true, opacity: 0, fog: false, flatShading: true, depthWrite: false });
   for (let i = 0; i < 14; i++) { const a = i / 14 * 6.28, c = new THREE.Mesh(Ico(3 + R() * 2.5, 1), cMat); c.position.set(Math.cos(a) * (7 + R() * 3), (R() - 0.5) * 3, Math.sin(a) * (5 + R() * 3)); clouds.add(c); }
   g.userData.dyn = true;
   return { g, orbMat, haloMat, halo, clouds, cMat, light: 1 };
 })();
+// ההר "מתקרב" לאט ככל שהולכים צפונה: בכפר הוא רחוק וקטן באופק, ולרגליו הוא ענק.
+// (המרחק האמיתי גדול מדי כדי שההליכה תשנה אותו – לכן מקרבים אותו לפי ההתקדמות)
+function placeMountain() {
+  const t = Math.max(0, Math.min(1, (8 - ninja.z) / 70)), e = t * t * (3 - 2 * t);
+  mountain.g.position.z = ninja.z - (480 - 300 * e);
+}
 function setMountainLight(k) {          // 1 = דולק, 0 = כבה
   mountain.light = k;
   mountain.orbMat.color.setRGB(0.25 + 0.75 * k, 0.22 + 0.6 * k, 0.2 + 0.22 * k);
@@ -1165,6 +1200,7 @@ function updateJourney(dt, now) {
   for (let i = sparkList.length - 1; i >= 0; i--) { const p = sparkList[i]; p.t += dt; p.v.y -= 9 * dt; p.m.position.addScaledVector(p.v, dt); p.m.rotation.y += dt * 8; if (p.t > 0.7) { scene.remove(p.m); sparkList.splice(i, 1); } }
   mountain.halo.scale.setScalar(1 + Math.sin(now / 600) * 0.06 * mountain.light);
   mountain.clouds.rotation.y += dt * 0.08;
+  placeMountain();
   const st = current();
   STATIONS.forEach(s2 => { s2.sp.visible = false; });
   if (st) {
