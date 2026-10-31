@@ -96,28 +96,28 @@ function drawTunnel(o) {
   drawTunnelRock(o);
   if (!o.passed && !o.inTunnel) label('CRAWL', x + TUN.ramp / 2, GROUND - TUN.rockH - 6, 4, '#fde047', '#1e293b');
 }
-function drawTunnelRock(o) {                                                    // גוש סלע ענק, נשען על הקרקע מעל המחילה
+function drawTunnelRock(o) {                                                    // גוש סלע ענק וזוויתי (פאות ישרות), נשען על הקרקע מעל המחילה
   const R = tunnelRock(o), l = R.l, r = R.r, w = r - l, top = GROUND - TUN.rockH;
-  const P = [[l, GROUND], [l - 1.5, GROUND - 8], [l + 1, GROUND - 19], [l + w * 0.12, GROUND - 28], [l + w * 0.32, top + 1], [l + w * 0.55, top - 1],
-             [l + w * 0.78, top + 2.5], [r - 1, GROUND - 24], [r + 1.5, GROUND - 12], [r, GROUND]];
+  const X = k => l + w * k, poly = (pts, fill) => { ctx.fillStyle = fill; ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) ctx.lineTo(p[0], p[1]); ctx.closePath(); ctx.fill(); };
+  // נקודות המתאר: צדדים כמעט ישרים, ראש שבור לכמה פאות
+  const A = [l - 0.5, GROUND], B = [l - 2, GROUND - 13], C = [X(0.06), GROUND - 27], D = [X(0.3), top + 1.5], E = [X(0.62), top - 0.5],
+        F = [X(0.86), top + 5], G = [r + 1.5, GROUND - 17], H = [r, GROUND];
+  const M = [X(0.42), GROUND - 21], N = [X(0.7), GROUND - 16], Q = [X(0.25), GROUND - 9];      // נקודות פנימיות – קווי השבר בין הפאות
   ctx.save();
-  const g = ctx.createLinearGradient(l, top, r, GROUND);
-  g.addColorStop(0, '#b4aa9c'); g.addColorStop(0.5, '#8d8376'); g.addColorStop(1, '#5f574d');
-  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(P[0][0], P[0][1]);
-  for (let i = 1; i < P.length; i++) { const [px, py2] = P[i], [qx, qy] = P[i - 1]; ctx.quadraticCurveTo(qx, qy, (px + qx) / 2, (py2 + qy) / 2); }
-  ctx.lineTo(r, GROUND); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,.14)';                                      // פאה מוארת
-  ctx.beginPath(); ctx.moveTo(l + w * 0.2, GROUND - 26); ctx.lineTo(l + w * 0.42, top + 2); ctx.lineTo(l + w * 0.5, GROUND - 20); ctx.lineTo(l + w * 0.3, GROUND - 12); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = 'rgba(0,0,0,.16)';                                            // צל בצד ימין
-  ctx.beginPath(); ctx.moveTo(l + w * 0.68, top + 3); ctx.lineTo(r - 0.5, GROUND - 22); ctx.lineTo(r + 1, GROUND - 6); ctx.lineTo(l + w * 0.72, GROUND - 8); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = 'rgba(40,34,28,.45)'; ctx.lineWidth = 0.5; ctx.lineCap = 'round';   // סדקים
-  ctx.beginPath();
-  ctx.moveTo(l + w * 0.55, top + 1); ctx.lineTo(l + w * 0.5, GROUND - 22); ctx.lineTo(l + w * 0.58, GROUND - 15); ctx.lineTo(l + w * 0.54, GROUND - 7);
-  ctx.moveTo(l + w * 0.18, GROUND - 14); ctx.lineTo(l + w * 0.27, GROUND - 9);
-  ctx.moveTo(l + w * 0.8, GROUND - 18); ctx.lineTo(l + w * 0.72, GROUND - 13);
-  ctx.stroke();
-  ctx.fillStyle = '#65a30d';                                                    // קצת טחב למעלה
-  for (let k = 0; k < 5; k++) { const mx = l + w * (0.25 + k * 0.12), my = top + 1.5 + Math.abs(k - 2) * 1.2; ctx.beginPath(); ctx.ellipse(mx, my, 2.2, 0.9, 0, 0, Math.PI * 2); ctx.fill(); }
-  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(l, GROUND - 0.6, w, 0.8);    // קו מגע עם הקרקע
+  poly([A, B, C, D, E, F, G, H], '#8a8074');                                    // גוף הסלע
+  poly([C, D, E, M], '#b3a99b');                                                // הפאה העליונה – מוארת
+  poly([B, C, M, Q], '#9d9386');                                                // פאה שמאלית
+  poly([E, F, G, N, M], '#736a5f');                                             // פאה ימנית – בצל
+  poly([G, H, [X(0.62), GROUND], N], '#5f574d');                                // תחתית ימין – הכי כהה
+  poly([A, Q, M, N, [X(0.62), GROUND]], '#857b6f');                             // החזית
+  ctx.strokeStyle = 'rgba(40,34,28,.35)'; ctx.lineWidth = 0.35; ctx.lineJoin = 'round';   // קווי שבר בין הפאות
+  ctx.beginPath(); ctx.moveTo(C[0], C[1]); ctx.lineTo(M[0], M[1]); ctx.lineTo(E[0], E[1]); ctx.moveTo(M[0], M[1]); ctx.lineTo(N[0], N[1]); ctx.lineTo(G[0], G[1]);
+  ctx.moveTo(B[0], B[1]); ctx.lineTo(Q[0], Q[1]); ctx.lineTo(M[0], M[1]); ctx.moveTo(N[0], N[1]); ctx.lineTo(X(0.62), GROUND); ctx.stroke();
+  ctx.strokeStyle = 'rgba(30,25,20,.5)'; ctx.lineWidth = 0.45;                 // סדקים
+  ctx.beginPath(); ctx.moveTo(X(0.5), GROUND - 18); ctx.lineTo(X(0.47), GROUND - 12); ctx.lineTo(X(0.52), GROUND - 6);
+  ctx.moveTo(X(0.15), GROUND - 20); ctx.lineTo(X(0.2), GROUND - 15); ctx.stroke();
+  ctx.fillStyle = '#65a30d';                                                    // טחב בשקעים של הפאה העליונה
+  for (const [k, dy, rw] of [[0.36, 2.2, 2.4], [0.5, 1.2, 1.8], [0.7, 3.4, 1.5]]) { ctx.beginPath(); ctx.ellipse(X(k), top + dy, rw, 0.7, -0.1, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(l - 0.5, GROUND - 0.6, w + 1, 0.8);   // קו מגע עם הקרקע
   ctx.restore();
 }
