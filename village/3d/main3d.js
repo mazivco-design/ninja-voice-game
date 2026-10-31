@@ -881,12 +881,12 @@ function placeCamera(dt) {
   } else {
     const cp = Math.cos(cam.pitch);
     wantPos.set(cam.tx + Math.sin(cam.yaw) * cp * cam.dist, cam.ty + Math.sin(cam.pitch) * cam.dist, cam.tz + Math.cos(cam.yaw) * cp * cam.dist);
-    wantLook.set(cam.tx, cam.ty, cam.tz);
+    wantLook.set(cam.tx, cam.ty + (cam.mode === "top" ? 0 : 3.2), cam.tz);       // מבט מעט כלפי מעלה – ההר והעשן נשארים בתמונה
   }
   if (cam.intro) {                                   // פתיחה: מסתכלים מהנינג'ה אל פסגת ההר, ואחר כך יורדים אליו
     const k = cam.intro.k, ex = ninja.x + 0.8, ez = ninja.z + 6;
     wantPos.set(ex, 2.2 + 1.6 * k, ez + 2 * k);
-    wantLook.set(ninja.x * k, (MTN.h * 0.62) * (1 - k) + 1.1 * k, mountain.g.position.z * (1 - k) + ninja.z * k);
+    wantLook.set(ninja.x * k, (MTN.h * 0.75) * (1 - k) + 1.1 * k, mountain.g.position.z * (1 - k) + ninja.z * k);
     cam.blend = 1;
   }
   if (cam.blend < 1) { cam.blend = Math.min(1, cam.blend + dt * 2.5); const k = cam.blend * cam.blend * (3 - 2 * cam.blend); camPos.lerp(wantPos, k); camLook.lerp(wantLook, k); }
@@ -1044,17 +1044,22 @@ const mountain = (function buildMountain() {
   const F = { fog: false };
   mesh(Box(5, 3, 5), 0x7a1d1d, 0, 1.5, 0, top, F);
   mesh(new THREE.ConeGeometry(5, 3, 4), 0x2a303c, 0, 4.4, 0, top, F).rotation.y = Math.PI / 4;
-  // האור
-  const orbMat = new THREE.MeshBasicMaterial({ color: 0xffd36b, fog: false });
-  const orb = new THREE.Mesh(new THREE.SphereGeometry(2.4, 20, 14), orbMat); orb.position.set(0, 8.4, 0); top.add(orb);
-  const haloMat = new THREE.MeshBasicMaterial({ color: 0xffe9a8, transparent: true, opacity: 0.35, fog: false, depthWrite: false });
-  const halo = new THREE.Mesh(new THREE.SphereGeometry(6, 20, 14), haloMat); halo.position.copy(orb.position); top.add(halo);
-  // עננים כהים שמכסים את האור
-  const clouds = new THREE.Group(); clouds.position.set(0, MTN.h + 7 * S + 6, 0); clouds.scale.setScalar(S); g.add(clouds);
-  const cMat = new THREE.MeshLambertMaterial({ color: 0x3f4654, transparent: true, opacity: 0, fog: false, flatShading: true, depthWrite: false });
-  for (let i = 0; i < 14; i++) { const a = i / 14 * 6.28, c = new THREE.Mesh(Ico(3 + R() * 2.5, 1), cMat); c.position.set(Math.cos(a) * (7 + R() * 3), (R() - 0.5) * 3, Math.sin(a) * (5 + R() * 3)); clouds.add(c); }
+  // עשן: עמוד דק כמו מדורה רחוקה – פתיתים רכים שעולים, מתרחבים, נוטים ברוח ונעלמים
+  const smokeTex = (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
+    const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.45, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = gr; x.fillRect(0, 0, 64, 64);
+    const t = new THREE.CanvasTexture(c); return t;
+  })();
+  const puffs = [], N = 26;
+  for (let i = 0; i < N; i++) {
+    const m = new THREE.SpriteMaterial({ map: smokeTex, color: 0xd8dcdf, transparent: true, opacity: 0, depthWrite: false, fog: false });
+    const sp = new THREE.Sprite(m); sp.position.set(0, MTN.h + 6, 0); g.add(sp);
+    puffs.push({ sp, life: i / N, rnd: R() });
+  }
   g.userData.dyn = true;
-  return { g, orbMat, haloMat, halo, clouds, cMat, light: 1 };
+  return { g, puffs, smoke: 0 };
 })();
 // ההר "מתקרב" לאט ככל שהולכים צפונה: בכפר הוא רחוק וקטן באופק, ולרגליו הוא ענק.
 // (המרחק האמיתי גדול מדי כדי שההליכה תשנה אותו – לכן מקרבים אותו לפי ההתקדמות)
@@ -1062,11 +1067,20 @@ function placeMountain() {
   const t = Math.max(0, Math.min(1, (8 - ninja.z) / 70)), e = t * t * (3 - 2 * t);
   mountain.g.position.z = ninja.z - (480 - 300 * e);
 }
-function setMountainLight(k) {          // 1 = דולק, 0 = כבה
-  mountain.light = k;
-  mountain.orbMat.color.setRGB(0.25 + 0.75 * k, 0.22 + 0.6 * k, 0.2 + 0.22 * k);
-  mountain.haloMat.opacity = 0.35 * k;
-  mountain.cMat.opacity = 0.85 * (1 - k);
+// עוצמת העשן: 0 = אין, 1 = עמוד מלא
+function setSmoke(k) { mountain.smoke = k; }
+function updateSmoke(dt) {
+  const H0 = MTN.h + 5, RISE = 70;
+  mountain.puffs.forEach(p => {
+    p.life += dt / 9;                                           // כל פתית חי ~9 שניות
+    if (p.life >= 1) { p.life -= 1; p.rnd = R(); }
+    const u = p.life, k = mountain.smoke;
+    p.sp.position.set(Math.sin(u * 3 + p.rnd * 6) * 1.5 + u * u * 22, H0 + u * RISE, Math.cos(u * 2 + p.rnd * 5) * 1.5);
+    const size = 4 + u * 16 + p.rnd * 3;
+    p.sp.scale.set(size, size, 1);
+    p.sp.material.opacity = k * Math.min(1, u * 6) * (1 - u) * 0.55;
+    p.sp.material.rotation = p.rnd * 6 + u;
+  });
 }
 
 // ---------- כיתוב על המסך: אנגלית גדולה + עברית קטנה ----------
@@ -1083,7 +1097,7 @@ function caption(en, he, secs) {
 const goalEl = document.createElement('div');
 Object.assign(goalEl.style, { position: 'fixed', right: '12px', bottom: '14px', padding: '7px 13px', borderRadius: '999px', background: 'rgba(15,23,42,.55)',
   color: '#fde68a', font: '15px system-ui, sans-serif', display: 'none' });
-goalEl.textContent = '⛰️ המטרה: להגיע להר ולהחזיר את האור';
+goalEl.textContent = '⛰️ המטרה: להגיע אל המסטר בהר';
 document.body.appendChild(goalEl);
 
 // ---------- שלטים עם מילה (ספרייט בעולם) ----------
@@ -1181,12 +1195,12 @@ let woofT = 0, idleT = 0;
 
 // ---------- פתיחה ----------
 let introT = prog.intro ? -1 : 0;
-setMountainLight(prog.intro ? 0 : 1);
+setSmoke(prog.intro ? 1 : 0);
 if (introT === 0) { ninja.x = -0.5; ninja.z = 3; dog.x = 0.8; dog.z = 3.8; cam.yaw = 0; ninja.dir = Math.PI; cam.intro = { k: 0 }; hintEl.style.display = 'none'; }
 else goalEl.style.display = 'block';
 function endIntro() {
   if (introT < 0) return;
-  introT = -1; prog.intro = true; saveProg(); setMountainLight(0);
+  introT = -1; prog.intro = true; saveProg(); setSmoke(1);
   cam.intro = null; hintEl.style.display = ''; cam.tx = ninja.x; cam.tz = ninja.z;
   const v = VIEWS[cam.mode]; if (!v.eyes) { cam.pitch = v.pitch; cam.dist = v.dist; }
   cam.blend = 0; goalEl.style.display = 'block'; woofT = 1.5;
@@ -1196,12 +1210,13 @@ function updateIntro(dt) {
   const t = introT;
   ninja.dir = turnTo(ninja.dir, Math.PI, 0.1);
   cam.yaw = 0;
-  if (cam.intro) { const u = Math.min(1, Math.max(0, (t - 6) / 2.5)); cam.intro.k = u * u * (3 - 2 * u); }
-  if (t > 2.2 && t < 5) setMountainLight(1 - (t - 2.2) / 2.8);
-  if (t > 2.6 && !updateIntro.c1) { updateIntro.c1 = 1; caption('Oh no! The light went out!', 'אוי לא! האור על ההר כבה!', 3.4); }
-  if (t > 6.3 && !updateIntro.c2) { updateIntro.c2 = 1; caption('Go to the mountain!', 'הזקן: "צא אל ההר והחזר את האור!"', 3.6); }
-  if (t > 10.2 && !updateIntro.c3) { updateIntro.c3 = 1; caption('Follow your dog!', 'הכלב יראה לך את הדרך', 3); woofT = 2; }
-  if (t > 13.4) endIntro();
+  if (cam.intro) { const u = Math.min(1, Math.max(0, (t - 10) / 3)); cam.intro.k = u * u * (3 - 2 * u); }
+  if (t > 1.5) setSmoke(Math.min(1, (t - 1.5) / 3));
+  if (t > 3.2 && !updateIntro.c1) { updateIntro.c1 = 1; caption('Smoke on the mountain!', 'עשן עולה מההר!', 3.2); }
+  if (t > 6.6 && !updateIntro.c2) { updateIntro.c2 = 1; caption('The master needs help!', 'הזקן: "זה האות של המסטר! הוא קורא לעזרה"', 3.6); }
+  if (t > 10.4 && !updateIntro.c3) { updateIntro.c3 = 1; caption('Go to the mountain!', 'הזקן: "אתה חייב להגיע להר!"', 3.4); }
+  if (t > 14 && !updateIntro.c4) { updateIntro.c4 = 1; caption('Follow your dog!', 'הכלב יראה לך את הדרך', 3); woofT = 2; }
+  if (t > 17.2) endIntro();
 }
 
 // ---------- עדכון כל פריים ----------
@@ -1213,8 +1228,7 @@ function updateJourney(dt, now) {
   if (bowl.visible) { bowl.position.set(ninja.x + Math.sin(ninja.dir) * 0.45, 1.05, ninja.z + Math.cos(ninja.dir) * 0.45); }
   for (let i = anims.length - 1; i >= 0; i--) { const a = anims[i]; a.t += dt; if (a.t < 0) continue; const k = Math.min(1, a.t / a.dur), e = k * k * (3 - 2 * k); a.f(e); if (k >= 1) anims.splice(i, 1); }
   for (let i = sparkList.length - 1; i >= 0; i--) { const p = sparkList[i]; p.t += dt; p.v.y -= 9 * dt; p.m.position.addScaledVector(p.v, dt); p.m.rotation.y += dt * 8; if (p.t > 0.7) { scene.remove(p.m); sparkList.splice(i, 1); } }
-  mountain.halo.scale.setScalar(1 + Math.sin(now / 600) * 0.06 * mountain.light);
-  mountain.clouds.rotation.y += dt * 0.08;
+  updateSmoke(dt);
   placeMountain();
   const st = current();
   STATIONS.forEach(s2 => { s2.sp.visible = false; });
@@ -1286,4 +1300,4 @@ cam.blend = 1;
 requestAnimationFrame(loop);
 
 // לבדיקות בלבד
-window.__v3d = { scene, ninja, dog, cam, tapAt, setView, STATIONS, sayWord, current, endIntro, prog, introAt(t) { introT = t; }, colliders, goTo(x, z) { ninja.target = [x, z]; }, tp(x, z) { ninja.x = x; ninja.z = z; ninja.target = null; } };
+window.__v3d = { mountain, scene, ninja, dog, cam, tapAt, setView, STATIONS, sayWord, current, endIntro, prog, introAt(t) { introT = t; }, get introT() { return introT; }, setSmoke, colliders, goTo(x, z) { ninja.target = [x, z]; }, tp(x, z) { ninja.x = x; ninja.z = z; ninja.target = null; } };
