@@ -309,23 +309,23 @@ function pupPos(o) {
     const x = out + o.pup.run * 45, over = x > l - 3 && x < r + 4, q = over ? (x - (l - 3)) / (r + 4 - (l - 3)) : 0;
     return { x, y: over ? GROUND - Math.sin(Math.PI * q) * 9 : GROUND - Math.abs(Math.sin(o.pup.run * 14)) * 1.6, face: 1, run: true };
   }
-  if (o.saved || (L && L.phase === 'thanks')) {                                 // קופץ מהבור אל הצד של הנינג'ה ומכשכש
+  if (o.saved || (L && L.phase === 'thanks')) {                                 // מטפס מעל השפה אל הצד של הנינג'ה ומכשכש
     const k = L && L.phase === 'thanks' ? Math.min(1, L.t / 0.45) : 1;
-    return { x: lerp(px, out, k), y: GROUND - Math.sin(Math.PI * k) * 7, face: -1, happy: true };
+    return { x: lerp(l + 4, out, k), y: lerp(GROUND + 8.8, GROUND, k) - Math.sin(Math.PI * k) * 6, face: -1, happy: true };
   }
-  if (L && L.phase === 'pulling') { const k = Math.min(1, L.t / RESC.pullT), e = k * k * (3 - 2 * k); return { x: px, y: lerp(bot, GROUND, e), vert: true, bite: true, hang: 1 }; }   // תלוי על החבל – אנכי, הראש למעלה
+  if (L && L.phase === 'pulling') { const k = Math.min(1, L.t / RESC.pullT), e = k * k * (3 - 2 * k); return { x: l + 4, y: lerp(bot, GROUND + 8.8, e), vert: true, bite: true, climb: true }; }   // עולה לאורך הדופן השמאלית: ראש למעלה, הרגליים על הקיר. בסוף הפה בגובה השפה
   return { x: px + 1, y: bot, face: -1, bite: L && (L.phase === 'bite' || L.phase === 'waitPull'), sad: !L || ['atRock', 'lifting', 'carry', 'atTarget', 'throwing'].includes(L.phase) };
 }
-function pupMouth(P) { return P.vert ? [P.x - 1.5, P.y - 9] : [P.x + 5.4 * (P.face || 1), P.y - 4.2]; }
+function pupMouth(P) { return P.vert ? [P.x + 1.5, P.y - 8.8] : [P.x + 5.4 * (P.face || 1), P.y - 4.2]; }
 function drawPuppy(x, y, face, P) {                                             // גור קטן: (x, y) = הרגליים
   const t = performance.now() / 1000, f = face || 1;
   ctx.save(); ctx.translate(x, y);
-  if (P.vert) { ctx.translate(0, -2.8); ctx.rotate(-Math.PI / 2); ctx.translate(0, 2.8); } else ctx.scale(f, 1);   // תלוי על החבל: הגוף אנכי, הראש למעלה
+  if (P.vert) { ctx.translate(0, -2.8); ctx.rotate(Math.PI / 2); ctx.translate(0, 2.8); ctx.scale(-1, 1); } else ctx.scale(f, 1);   // עולה בבור: הגוף אנכי, הראש למעלה, הרגליים אל הדופן השמאלית
   const tan = '#d6a35c', dark = '#8b5a2b';
   const wag = Math.sin(t * (P.happy || P.run ? 22 : 10)) * 0.5;
   ctx.strokeStyle = tan; ctx.lineWidth = 1; ctx.lineCap = 'round';               // זנב
   ctx.beginPath(); ctx.moveTo(-3.2, -3.2); ctx.quadraticCurveTo(-5, -5 + wag, -4.6 + wag, -6.4); ctx.stroke();
-  const lg = P.run ? Math.sin(t * 28) * 0.9 : 0;                                 // רגליים
+  const lg = P.run ? Math.sin(t * 28) * 0.9 : P.climb ? Math.sin(t * 16) * 0.8 : 0;   // רץ / מטפס על הדופן                                 // רגליים
   ctx.lineWidth = 0.9; ctx.strokeStyle = '#b07d3c';
   for (const [lx, ph] of [[-2.2, 1], [-1.2, -1], [1.4, -1], [2.4, 1]]) { ctx.beginPath(); ctx.moveTo(lx, -1.8); ctx.lineTo(lx + lg * ph, 0); ctx.stroke(); }
   ctx.fillStyle = tan; ctx.beginPath(); ctx.ellipse(0, -2.8, 3.6, 1.9, 0, 0, Math.PI * 2); ctx.fill();   // גוף
@@ -364,14 +364,16 @@ function drawRescue(o) {
       drawCoil(ex, ey, 0.5 * (1 - k) + 0.2, false);
     } else {
       const sway = L.phase === 'pulling' ? Math.sin(t * 7) * 0.4 : 0;
-      ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(lip[0], lip[1]); ctx.quadraticCurveTo(lip[0] + 1.5 + sway, (lip[1] + mouth[1]) / 2, mouth[0], mouth[1]); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(hx, hy);
+      if (mouth[1] > lip[1] + 1) { ctx.lineTo(lip[0], lip[1]); ctx.quadraticCurveTo(lip[0] + 0.8 + sway, (lip[1] + mouth[1]) / 2, mouth[0], mouth[1]); }   // מעל השפה ואז למטה בתוך הבור
+      else ctx.lineTo(mouth[0], mouth[1]);                                       // הפה כבר בגובה השפה – קו ישר
+      ctx.stroke();
     }
     ctx.restore();
   }
   // הגור
   if (!(P.run && P.x > W + 12)) {
     ctx.save();
-    if (P.hang) { const [mx, my] = pupMouth(P); ctx.translate(mx, my); ctx.rotate(Math.sin(t * 5) * 0.1); ctx.translate(-mx, -my); }   // מתנדנד קצת מהפה, בעלייה
     drawPuppy(P.x, P.y, P.face, P);
     ctx.restore();
   }
