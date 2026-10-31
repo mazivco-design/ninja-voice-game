@@ -85,6 +85,7 @@ function groundH(x, z) {
   // הרים רחוקים
   for (let i = 0; i < 18; i++) {
     const a = i / 18 * Math.PI * 2 + R() * 0.2, d = 160 + R() * 25, h = 40 + R() * 35, r = 28 + R() * 16;
+    if (Math.abs(a - Math.PI * 1.5) < 0.55) continue;            // צפון פנוי – שם ההר הגדול
     const mtn = mesh(new THREE.ConeGeometry(r, h, 6), 0x9fb3bd, Math.cos(a) * d, h / 2 - 2, Math.sin(a) * d, scene, { fog: false });
     mtn.castShadow = false;
     const cap = mesh(new THREE.ConeGeometry(r * 0.28, h * 0.28, 6), 0xf1f5f7, mtn.position.x, h - 2 - h * 0.14, mtn.position.z, scene, { fog: false });
@@ -119,12 +120,13 @@ const PATHS = [
   [[-29, 7.4], [-22, 7], [-12, 6.2], [-4, 4.4], [3, 4.8], [10, 6.5], [22, 5.6], [31, 5]],     // הדרך הראשית: מהאגם עד הגשר ההרוס
   [[-7.5, 4.6], [-7.5, -0.6]],
   [[6.5, 5.6], [7.2, 1.6], [7, -1.4]],
-  [[1, 4.6], [0.5, 9], [-2, 13], [-1.5, 22], [2, 34], [7, 42], [12, 46.5]],                    // דרומה ליער ולצוק
+  [[1, 4.6], [0.5, 9], [-2, 13], [-1.5, 22], [2, 34], [5, 44]],                                  // דרומה ליער
   [[3, 4.8], [2.8, -6], [2.2, -15], [0.4, -24], [0, -31], [0, -38]],                           // צפונה דרך השער לשוק
   [[22, 5.6], [27, 14], [31.5, CROSS_Z]],                                                       // אל אבני הקפיצה
   [[40.5, CROSS_Z], [45, 18], [49, 7], [58, 6], [66, 6.5]],                                     // מעבר לנהר
   [[49, 7], [54, -2], [56, -9.6]],                                                              // לבית החווה
-  [[-1.5, 22], [-9, 30], [-12, 40]]                                                             // ליער, מערבה
+  [[-1.5, 22], [-9, 30], [-12, 40]],                                                            // ליער, מערבה
+  [[0, -38], [1, -50], [-1, -58], [0, -65]]                                                     // מהשוק צפונה, אל ההר
 ];
 const pathCurves = PATHS.map((p, i) => { ribbon(p, 2.6, 0x9e9172, 0.02, i); return ribbon(p, 2.1, 0xcfc4a7, 0.03, i + 7); });
 // חצץ ואבנים על השבילים
@@ -365,9 +367,10 @@ function person(x, z, look, dir) {
   if (look.hat) { mesh(new THREE.ConeGeometry(0.55, 0.32, 18), look.hat, 0, 0.27, 0, head); mesh(Cyl(0.56, 0.56, 0.03, 18), look.hat, 0, 0.12, 0, head); }
   if (look.helmet) { mesh(new THREE.SphereGeometry(0.33, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.5), look.helmet, 0, 0.04, 0, head, SMp); mesh(Box(0.5, 0.06, 0.1), 0xfacc15, 0, 0.3, 0.2, head); }
   if (look.spear) { mesh(Cyl(0.025, 0.025, 2.2, 6), 0x5a3a1f, 0.42, 1.1, 0.1, g); mesh(new THREE.ConeGeometry(0.06, 0.25, 6), 0xcbd5e1, 0.42, 2.3, 0.1, g); }
-  addCircle(x, z, 0.35);
-  people.push({ g, head, x, z, base: dir || 0, ph: R() * 6 });
-  return g;
+  const col = { t: 'c', x, z, r: 0.35 }; colliders.push(col);
+  const ent = { g, head, x, z, base: dir || 0, ph: R() * 6, col };
+  people.push(ent);
+  return ent;
 }
 const LOOKS = {
   elder:   { body: 0x6b4f2e, limb: 0x56401f, accent: 0xa16207, skin: 0xf1c7a1, hat: 0xd9b968, beard: 0xe7e5e4 },
@@ -391,18 +394,22 @@ function wallSeg(x0, x1) {
   mesh(roofGeo(1.5, w + 0.3, 0.45, 0.16, 0.12), 0x3f4757, cx, 0.5 + H, WALL_Z);
   addBox(x0, WALL_Z - 0.5, x1, WALL_Z + 0.5);
 }
+const gateDoors = [];
+let gateCol = null;
 function gate() {
   const x = GATE_X, z = WALL_Z, g = new THREE.Group(); g.position.set(x, 0, z); scene.add(g);
   [-2.2, 2.2].forEach(px => { mesh(Box(0.5, 4, 0.5), 0x3a2a1e, px, 2, 0, g); mesh(Box(0.7, 0.4, 0.7), 0x7a756c, px, 0.2, 0, g); });
   mesh(Box(5.2, 0.4, 0.6), 0x4a3527, 0, 3.7, 0, g);
   mesh(roofGeo(2.4, 6.6, 0.9, 0.24, 0.3), 0x2a303c, 0, 3.95, 0, g);
-  // דלתות פתוחות (בינתיים אין מחסום – רק לחקור)
+  // דלתות: סגורות עד שמנצחים את השומר (FIGHT), ואז נפתחות פנימה
+  gateDoors.length = 0;
   [-1, 1].forEach(sd => {
-    const hinge = new THREE.Group(); hinge.position.set(sd * 1.95, 0, -0.1); hinge.rotation.y = sd * 1.35; g.add(hinge);
+    const hinge = new THREE.Group(); hinge.position.set(sd * 1.95, 0, -0.1); hinge.userData.dyn = true; g.add(hinge); gateDoors.push({ hinge, sd });
     mesh(Box(1.9, 3.2, 0.14), 0x6b4226, -sd * 0.95, 1.7, 0, hinge);
     for (let k = 0; k < 3; k++) for (let j = 0; j < 3; j++) mesh(new THREE.SphereGeometry(0.05, 6, 4), 0xfbbf24, -sd * (0.45 + j * 0.5), 0.9 + k * 0.8, 0.08, hinge);
   });
   addCircle(x - 2.2, z, 0.35); addCircle(x + 2.2, z, 0.35);
+  gateCol = { t: 'b', x0: x - 2.1, z0: z - 0.4, x1: x + 2.1, z1: z + 0.3 }; colliders.push(gateCol);
   [-1, 1].forEach(sd => { const l = mesh(new THREE.SphereGeometry(0.32, 10, 8), 0xdc2626, x + sd * 2.2, 3.1, z + 0.45, scene, { emissive: 0x7a1010 }); l.scale.y = 1.25; });
 }
 function stall(x, z, rot, color, goods) {
@@ -535,14 +542,14 @@ bamboo(-16, -6, 12, true); bamboo(-5, -12, 10, true); bamboo(12, 14, 9, true);
 [[-14, 1.5, 1], [-3.2, 9.2, 0.9], [13.5, 3.8, 1.05], [-17, 16, 1.1], [5.5, 9.5, 0.85]].forEach(([x, z, s]) => cherry(x, z, s));
 [[-15.5, -13, 1.1], [7.5, -11, 1], [17, 7, 1.05], [-5, 18, 1], [10, 18.5, 0.95]].forEach(([x, z, s]) => pine(x, z, s));
 house(-14, -20, 5.4, 4, 'tile2'); house(14, -19, 5, 3.8, 'thatch');
-person(-5, 7.5, LOOKS.elder, Math.PI * 0.1);
+const elder = person(-5, 7.5, LOOKS.elder, Math.PI * 0.1);
 person(-9.2, 13.8, LOOKS.fisher, -0.6);
 person(11.5, 9, LOOKS.boy, -0.4);
 
 // צפון: חומה עם שער, ושוק
-wallSeg(-30, GATE_X - 2.45); wallSeg(GATE_X + 2.45, riverX(WALL_Z) - RIVER_HALF - 1);
+wallSeg(-PLAY - 2, GATE_X - 2.45); wallSeg(GATE_X + 2.45, riverX(WALL_Z) - RIVER_HALF - 1);
 gate();
-person(GATE_X + 3.4, WALL_Z + 1.3, LOOKS.guard, 0);
+const guard = person(GATE_X, WALL_Z + 1.1, LOOKS.guard, 0);
 (function market() {
   const M = MARKET;
   const pz = mesh(new THREE.CircleGeometry(M.r, 32), 0xb59b74, M.x, 0.045, M.z); pz.rotation.x = -Math.PI / 2; pz.castShadow = false;
@@ -573,7 +580,6 @@ lake();
 person(LAKE.x + LAKE.rx + 3, 9, LOOKS.fisher, -1.2);
 
 // דרום: יער במבוק וצוק גבוה
-cliff(CLIFF2.x, CLIFF2.z, CLIFF2.s);
 torii(2, 34, 0.8);
 
 // ---------- מילוי: עצים, במבוק, שיחים וסלעים לפי אזור ----------
@@ -589,35 +595,35 @@ function okSpot(x, z, r, pathPad) {
   if (Math.max(Math.abs(x), Math.abs(z)) > PLAY - 1) return false;
   if (nearPath(x, z, pathPad) || inWater(x, z, 0.5)) return false;
   if (Math.hypot(x - MARKET.x, z - MARKET.z) < MARKET.r + 2) return false;
-  if (Math.abs(z - WALL_Z) < 2.5 && x > -31 && x < 40) return false;
-  if (Math.hypot(x - CLIFF2.x, z - CLIFF2.z) < 3.4 * CLIFF2.s + 1) return false;
+  if (Math.abs(z - WALL_Z) < 2.5 && x < 40) return false;
+  if (Math.abs(x - GATE_X) < 5 && z > WALL_Z - 2 && z < WALL_Z + 6) return false;
   return !blockedAt(x, z, r);
 }
 function scatter(n, x0, z0, x1, z1, fn) { let made = 0; for (let a = 0; a < n * 20 && made < n; a++) { const x = x0 + R() * (x1 - x0), z = z0 + R() * (z1 - z0); if (fn(x, z)) made++; } }
 // מרכז: שיחים וסלעים קטנים
-scatter(30, -24, -26, 24, 24, (x, z) => okSpot(x, z, 1.2, 2.4) && (R() < 0.6 ? bush(x, z, 0.7 + R() * 0.5, R() < 0.35) : rock(x, z, 0.3 + R() * 0.3), true));
+scatter(10, -24, -26, 24, 24, (x, z) => okSpot(x, z, 1.2, 2.4) && (R() < 0.6 ? bush(x, z, 0.7 + R() * 0.5, R() < 0.35) : rock(x, z, 0.3 + R() * 0.3), true));
 // דרום: יער במבוק צפוף, אורנים
-scatter(320, -30, 28, 32, 64, (x, z) => okSpot(x, z, 0.5, 2.6) && (bamboo(x, z, 1, true, 0), true));
-scatter(26, -30, 28, 32, 64, (x, z) => okSpot(x, z, 1.4, 3) && (pine(x, z, 1 + R() * 0.5), true));
+scatter(110, -30, 28, 32, 64, (x, z) => okSpot(x, z, 0.5, 2.6) && (bamboo(x, z, 1, true, 0), true));
+scatter(8, -30, 28, 32, 64, (x, z) => okSpot(x, z, 1.4, 3) && (pine(x, z, 1 + R() * 0.5), true));
 // מערב: דובדבן ואורן מסביב לאגם
-scatter(55, -64, -64, -27, 64, (x, z) => okSpot(x, z, 1.6, 3) && ((R() < 0.45 ? cherry : pine)(x, z, 0.95 + R() * 0.5), true));
-scatter(40, -64, -64, -27, 64, (x, z) => okSpot(x, z, 1, 2.4) && (R() < 0.6 ? bush(x, z, 0.7 + R() * 0.6, R() < 0.3) : rock(x, z, 0.3 + R() * 0.4), true));
+scatter(20, -64, -64, -27, 64, (x, z) => okSpot(x, z, 1.6, 3) && ((R() < 0.45 ? cherry : pine)(x, z, 0.95 + R() * 0.5), true));
+scatter(12, -64, -64, -27, 64, (x, z) => okSpot(x, z, 1, 2.4) && (R() < 0.6 ? bush(x, z, 0.7 + R() * 0.6, R() < 0.3) : rock(x, z, 0.3 + R() * 0.4), true));
 // צפון: סביב השוק
-scatter(40, -27, -64, 34, -32, (x, z) => okSpot(x, z, 1.6, 3) && ((R() < 0.55 ? cherry : pine)(x, z, 0.95 + R() * 0.45), true));
-scatter(26, -27, -64, 34, -32, (x, z) => okSpot(x, z, 1, 2.4) && (bush(x, z, 0.7 + R() * 0.5, R() < 0.4), true));
+scatter(12, -27, -64, 34, -32, (x, z) => okSpot(x, z, 1.6, 3) && ((R() < 0.55 ? cherry : pine)(x, z, 0.95 + R() * 0.45), true));
+scatter(8, -27, -64, 34, -32, (x, z) => okSpot(x, z, 1, 2.4) && (bush(x, z, 0.7 + R() * 0.5, R() < 0.4), true));
 // מזרח: מעט עצים בין השדות
-scatter(22, 41, -64, 64, 64, (x, z) => okSpot(x, z, 1.6, 2.6) && ((R() < 0.4 ? cherry : pine)(x, z, 0.9 + R() * 0.4), true));
+scatter(8, 41, -64, 64, 64, (x, z) => okSpot(x, z, 1.6, 2.6) && ((R() < 0.4 ? cherry : pine)(x, z, 0.9 + R() * 0.4), true));
 // מרכז ופינות ריקות: עוד עצים
-scatter(30, -26, -28, 32, 27, (x, z) => okSpot(x, z, 2, 3) && Math.max(Math.abs(x), Math.abs(z)) > 19 && ((R() < 0.5 ? cherry : pine)(x, z, 0.95 + R() * 0.4), true));
+scatter(8, -26, -28, 32, 27, (x, z) => okSpot(x, z, 2, 3) && Math.max(Math.abs(x), Math.abs(z)) > 19 && ((R() < 0.5 ? cherry : pine)(x, z, 0.95 + R() * 0.4), true));
 // שולי העולם: חגורת אורנים על הגבעות
-for (let i = 0; i < 160; i++) {
+for (let i = 0; i < 90; i++) {
   const t = R(), side = Math.floor(R() * 4), off = PLAY + 3 + R() * 14, u = -PLAY - 10 + t * (PLAY * 2 + 20);
   const [x, z] = side === 0 ? [u, -off] : side === 1 ? [u, off] : side === 2 ? [-off, u] : [off, u];
   if (Math.abs(x - riverX(z)) < 6) continue;
   pine(x, z, 1.2 + R() * 0.7);
 }
 // דשא ופרחים
-scatter(1100, -PLAY, -PLAY, PLAY, PLAY, (x, z) => {
+scatter(420, -PLAY, -PLAY, PLAY, PLAY, (x, z) => {
   if (nearPath(x, z, 1.5) || inWater(x, z, 0) || blockedAt(x, z, 0.3) || Math.hypot(x - MARKET.x, z - MARKET.z) < MARKET.r) return false;
   const tuft = mesh(new THREE.ConeGeometry(0.06, 0.28, 3), R() < 0.5 ? 0x3f7d2a : 0x6aa84a, x, 0.14, z); tuft.castShadow = false;
   if (R() < 0.25) { const f = mesh(Ico(0.07, 0), [0xf8fafc, 0xfde047, 0xf9a8d4, 0xc4b5fd][Math.floor(R() * 4)], x + 0.12, 0.25, z); f.castShadow = false; }
@@ -705,6 +711,13 @@ function poseNinja(n, dt, now) {
   n.body.position.y = Math.abs(Math.sin(ph)) * 0.05 * w + Math.sin(now / 700) * 0.008 * (1 - w);
   n.torso.rotation.x = 0.08 * w; n.head.rotation.x = -0.05 * w; n.chest.rotation.y = s * 0.12 * w;
   n.tails.forEach((t, i) => { t.rotation.x = 0.2 + Math.sin(now / 120 + i) * 0.15 * (0.3 + w); });
+  // פעולות: דחיפה (שתי ידיים קדימה), מכה (יד ימין מניפה), אכילה
+  if (n.action) {
+    const a = n.action, k = Math.min(1, a.t / 0.18) * Math.min(1, Math.max(0, (a.dur - a.t) / 0.25));
+    if (a.type === 'push') { n.arms.L.pivot.rotation.x = n.arms.R.pivot.rotation.x = -1.45 * k; n.fore.L.pivot.rotation.x = n.fore.R.pivot.rotation.x = -0.15; n.torso.rotation.x = 0.35 * k; n.hips.L.pivot.rotation.x = 0.5 * k; n.hips.R.pivot.rotation.x = -0.4 * k; }
+    if (a.type === 'hit') { const sw = Math.sin(Math.min(1, a.t / 0.3) * Math.PI); n.arms.R.pivot.rotation.x = -2.6 * sw; n.arms.R.pivot.rotation.z = 0.28 + 0.6 * sw; n.fore.R.pivot.rotation.x = -0.2; n.chest.rotation.y = -0.6 * sw; n.torso.rotation.x = 0.25 * sw; }
+    if (a.type === 'eat') { n.arms.R.pivot.rotation.x = -1.9 * k; n.fore.R.pivot.rotation.x = -1.6 * k; n.head.rotation.x = Math.sin(a.t * 12) * 0.12 * k; }
+  }
 }
 
 // ---------- הכלב (שיבה) ----------
@@ -799,7 +812,9 @@ function updateNinja(dt, now) {
 }
 function updateDog(dt, now) {
   const d = dog, n = ninja;
-  const bx = n.x - Math.sin(n.dir) * 1.3 + Math.cos(n.dir) * 0.7, bz = n.z - Math.cos(n.dir) * 1.3 - Math.sin(n.dir) * 0.7;
+  let bx = n.x - Math.sin(n.dir) * 1.3 + Math.cos(n.dir) * 0.7, bz = n.z - Math.cos(n.dir) * 1.3 - Math.sin(n.dir) * 0.7;
+  const lead = typeof dogLeadTarget === 'function' ? dogLeadTarget() : null;
+  if (lead) { bx = lead[0]; bz = lead[1]; }
   const dx = bx - d.x, dz = bz - d.z, dist = Math.hypot(dx, dz);
   const want = dist > 0.6 ? Math.min(6, 1.5 + dist * 1.8) : 0;
   d.speed += (want - d.speed) * Math.min(1, dt * 6);
@@ -851,6 +866,12 @@ function placeCamera(dt) {
     wantPos.set(cam.tx + Math.sin(cam.yaw) * cp * cam.dist, cam.ty + Math.sin(cam.pitch) * cam.dist, cam.tz + Math.cos(cam.yaw) * cp * cam.dist);
     wantLook.set(cam.tx, cam.ty, cam.tz);
   }
+  if (cam.intro) {                                   // פתיחה: מסתכלים מהנינג'ה אל פסגת ההר, ואחר כך יורדים אליו
+    const k = cam.intro.k, ex = ninja.x + 0.8, ez = ninja.z + 6;
+    wantPos.set(ex, 2.2 + 1.6 * k, ez + 2 * k);
+    wantLook.set(ninja.x * k, 60 * (1 - k) + 1.1 * k, -128 * (1 - k) + ninja.z * k);
+    cam.blend = 1;
+  }
   if (cam.blend < 1) { cam.blend = Math.min(1, cam.blend + dt * 2.5); const k = cam.blend * cam.blend * (3 - 2 * cam.blend); camPos.lerp(wantPos, k); camLook.lerp(wantLook, k); }
   else { camPos.copy(wantPos); camLook.copy(wantLook); }
   camera.position.copy(camPos); camera.lookAt(camLook);
@@ -876,6 +897,7 @@ const marker = new THREE.Mesh(new THREE.RingGeometry(0.25, 0.36, 24), new THREE.
 marker.rotation.x = -Math.PI / 2; marker.position.y = 0.06; marker.visible = false; scene.add(marker);
 const ray = new THREE.Raycaster(), groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hit = new THREE.Vector3();
 function tapAt(px, py) {
+  if (journey.tap(px, py)) return;
   const v = new THREE.Vector2(px / innerWidth * 2 - 1, -(py / innerHeight) * 2 + 1);
   ray.setFromCamera(v, camera);
   if (!ray.ray.intersectPlane(groundPlane, hit)) return;
@@ -955,11 +977,242 @@ cv.addEventListener('wheel', e => { e.preventDefault(); if (cam.mode !== 'eyes')
 
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 
+// ============================================================
+//   המסע: ההר באופק, פתיחה שמסבירה את המטרה, תחנות שחוסמות את הדרך,
+//   והכלב שמוביל לתחנה הבאה. בינתיים אין זיהוי קולי – נוגעים בשלט עם המילה.
+// ============================================================
+const KEY_PROG = 'ninjaVoice_village3d_progress';
+try { if (/[?&]reset\b/.test(location.search)) localStorage.removeItem(KEY_PROG); } catch (e) {}
+const prog = (() => { try { return JSON.parse(localStorage.getItem(KEY_PROG) || '{}'); } catch (e) { return {}; } })();
+prog.done = prog.done || [];
+function saveProg() { try { localStorage.setItem(KEY_PROG, JSON.stringify(prog)); } catch (e) {} }
+
+// ---------- ההר הגדול בצפון, ואור בפסגה ----------
+const MTN = { x: 0, z: -128, h: 82, r: 48 };
+const mountain = (function buildMountain() {
+  const g = new THREE.Group(); g.position.set(MTN.x, -2, MTN.z); scene.add(g);
+  const F = { fog: false };
+  mesh(new THREE.ConeGeometry(MTN.r, MTN.h, 9), 0x6f8796, 0, MTN.h / 2, 0, g, F).castShadow = false;
+  mesh(new THREE.ConeGeometry(MTN.r * 0.75, MTN.h * 0.6, 8), 0x7f97a4, -MTN.r * 0.55, MTN.h * 0.3, 12, g, F).castShadow = false;
+  mesh(new THREE.ConeGeometry(MTN.r * 0.7, MTN.h * 0.55, 8), 0x7890a0, MTN.r * 0.6, MTN.h * 0.27, 8, g, F).castShadow = false;
+  mesh(new THREE.ConeGeometry(MTN.r * 0.335, MTN.h * 0.32, 9), 0xf1f5f7, 0, MTN.h - MTN.h * 0.16 + 0.25, 0, g, F).castShadow = false;
+  // מקדש קטן בפסגה
+  const top = new THREE.Group(); top.position.set(0, MTN.h - 1, 0); g.add(top);
+  mesh(Box(5, 3, 5), 0x7a1d1d, 0, 1.5, 0, top, F);
+  mesh(new THREE.ConeGeometry(5, 3, 4), 0x2a303c, 0, 4.4, 0, top, F).rotation.y = Math.PI / 4;
+  // האור
+  const orbMat = new THREE.MeshBasicMaterial({ color: 0xffd36b, fog: false });
+  const orb = new THREE.Mesh(new THREE.SphereGeometry(2.4, 20, 14), orbMat); orb.position.set(0, 8.4, 0); top.add(orb);
+  const haloMat = new THREE.MeshBasicMaterial({ color: 0xffe9a8, transparent: true, opacity: 0.35, fog: false, depthWrite: false });
+  const halo = new THREE.Mesh(new THREE.SphereGeometry(6, 20, 14), haloMat); halo.position.copy(orb.position); top.add(halo);
+  // עננים כהים שמכסים את האור
+  const clouds = new THREE.Group(); clouds.position.set(0, MTN.h + 7, 0); g.add(clouds);
+  const cMat = new THREE.MeshLambertMaterial({ color: 0x3f4654, transparent: true, opacity: 0, fog: false, flatShading: true, depthWrite: false });
+  for (let i = 0; i < 14; i++) { const a = i / 14 * 6.28, c = new THREE.Mesh(Ico(3 + R() * 2.5, 1), cMat); c.position.set(Math.cos(a) * (7 + R() * 3), (R() - 0.5) * 3, Math.sin(a) * (5 + R() * 3)); clouds.add(c); }
+  g.userData.dyn = true;
+  return { g, orbMat, haloMat, halo, clouds, cMat, light: 1 };
+})();
+function setMountainLight(k) {          // 1 = דולק, 0 = כבה
+  mountain.light = k;
+  mountain.orbMat.color.setRGB(0.25 + 0.75 * k, 0.22 + 0.6 * k, 0.2 + 0.22 * k);
+  mountain.haloMat.opacity = 0.35 * k;
+  mountain.cMat.opacity = 0.85 * (1 - k);
+}
+
+// ---------- כיתוב על המסך: אנגלית גדולה + עברית קטנה ----------
+const cap = document.createElement('div');
+Object.assign(cap.style, { position: 'fixed', left: '50%', bottom: '9%', transform: 'translateX(-50%)', padding: '14px 22px', borderRadius: '18px',
+  background: 'rgba(15,23,42,.72)', color: '#fff', textAlign: 'center', fontFamily: 'system-ui, sans-serif', pointerEvents: 'none',
+  opacity: '0', transition: 'opacity .4s', maxWidth: '86vw' });
+document.body.appendChild(cap);
+let capT = 0;
+function caption(en, he, secs) {
+  cap.innerHTML = '<div style="font-size:30px;font-weight:700;direction:ltr">' + en + '</div>' + (he ? '<div style="font-size:17px;opacity:.85;margin-top:4px">' + he + '</div>' : '');
+  cap.style.opacity = '1'; capT = secs || 3.2;
+}
+const goalEl = document.createElement('div');
+Object.assign(goalEl.style, { position: 'fixed', right: '12px', bottom: '14px', padding: '7px 13px', borderRadius: '999px', background: 'rgba(15,23,42,.55)',
+  color: '#fde68a', font: '15px system-ui, sans-serif', display: 'none' });
+goalEl.textContent = '⛰️ המטרה: להגיע להר ולהחזיר את האור';
+document.body.appendChild(goalEl);
+
+// ---------- שלטים עם מילה (ספרייט בעולם) ----------
+function wordSprite(word) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 180;
+  const g = c.getContext('2d');
+  g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.roundRect(10, 16, 492, 156, 34); g.fill();
+  g.fillStyle = '#f6e7c4'; g.beginPath(); g.roundRect(4, 6, 492, 156, 34); g.fill();
+  g.lineWidth = 8; g.strokeStyle = '#8b5e3c'; g.stroke();
+  g.fillStyle = '#b45309'; g.beginPath(); g.roundRect(44, 46, 30, 52, 15); g.fill();
+  g.lineWidth = 7; g.strokeStyle = '#b45309'; g.beginPath(); g.arc(59, 84, 26, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke(); g.beginPath(); g.moveTo(59, 110); g.lineTo(59, 128); g.stroke();
+  g.fillStyle = '#3b2a1a'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  let fs = 86; g.font = 'bold ' + fs + 'px system-ui, sans-serif';
+  while (g.measureText(word).width > 380 && fs > 40) { fs -= 4; g.font = 'bold ' + fs + 'px system-ui, sans-serif'; }
+  g.fillText(word, 290, 86);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
+  sp.scale.set(3.4, 1.2, 1); sp.renderOrder = 10; sp.visible = false; scene.add(sp);
+  return sp;
+}
+// עמוד אור שמסמן את התחנה הבאה (נראה מרחוק)
+function beacon() {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.9, 30, 16, 1, true),
+    new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide }));
+  m.position.y = 15; scene.add(m); return m;
+}
+
+// ---------- תחנה 1: עץ שנפל לפני השער (PUSH) ----------
+const log = (function () {
+  const g = new THREE.Group(); g.position.set(GATE_X, 0, WALL_Z + 3.4); g.userData.dyn = true; scene.add(g);
+  const trunk = mesh(Cyl(0.42, 0.48, 6.4, 10), 0x6b4a2b, 0, 0.45, 0, g); trunk.rotation.z = Math.PI / 2;
+  [-1, 1].forEach(e => { const end = mesh(Cyl(0.4, 0.4, 0.04, 10), 0xc9a26b, e * 3.21, 0.45, 0, g); end.rotation.z = Math.PI / 2; });
+  [[-1.6, 0.5], [0.4, -0.6], [1.9, 0.4]].forEach(([bx, rz]) => { const br = mesh(Cyl(0.08, 0.12, 1.2, 5), 0x5a3a24, bx, 0.9, 0.2, g); br.rotation.set(0.6, 0, rz); mesh(Ico(0.45, 1), 0x3f8458, bx + rz * 0.6, 1.4, 0.55, g).scale.y = 0.6; });
+  const col = { t: 'b', x0: GATE_X - 3.3, z0: WALL_Z + 2.9, x1: GATE_X + 3.3, z1: WALL_Z + 3.9 }; colliders.push(col);
+  return { g, col };
+})();
+// ---------- תחנה 3: דוכן הנודלס – המשפט I WANT NOODLES ----------
+const NOODLE = { x: MARKET.x + 8.2, z: MARKET.z + 5.5 };
+const bowl = new THREE.Group(); bowl.visible = false; bowl.userData.dyn = true; scene.add(bowl);
+mesh(Cyl(0.2, 0.13, 0.15, 12), 0xdc2626, 0, 0, 0, bowl); mesh(Cyl(0.17, 0.17, 0.02, 12), 0xf5d58a, 0, 0.07, 0, bowl);
+
+// ---------- התחנות לפי הסדר ----------
+function removeCol(c) { const i = colliders.indexOf(c); if (i >= 0) colliders.splice(i, 1); }
+const STATIONS = [
+  { id: 'push', word: 'PUSH', at: [GATE_X + 0.8, WALL_Z + 6.2], sign: [GATE_X, 2.6, WALL_Z + 4.6], near: 6,
+    intro: ['A tree fell on the road!', 'עץ נפל על הדרך! תגיד PUSH כדי לדחוף אותו'],
+    say(st) { ninja.action = { type: 'push', t: 0, dur: 1.0 }; anims.push({ t: 0, dur: 1.4, f: k => { log.g.position.x = GATE_X + 6 * k; log.g.rotation.y = -0.9 * k; log.g.children[0].rotation.x = -k * 6; } });
+      removeCol(log.col); caption('PUSH!', 'יפה! העץ זז', 2); return true; } },
+  { id: 'fight', word: 'FIGHT', at: [GATE_X + 1.2, WALL_Z + 4.4], sign: [GATE_X + 2.6, 3.2, WALL_Z + 2.2], near: 6, hits: 3,
+    intro: ['The guard blocks the gate!', 'השומר לא נותן לעבור. תגיד FIGHT שלוש פעמים!'],
+    say(st) {
+      st.count = (st.count || 0) + 1;
+      ninja.action = { type: 'hit', t: 0, dur: 0.45 }; ninja.dir = Math.atan2(guard.x - ninja.x, guard.z - ninja.z);
+      sparks(guard.x, 1.4, guard.z + 0.3);
+      anims.push({ t: 0, dur: 0.4, f: k => { guard.g.position.z = guard.z - Math.sin(k * Math.PI) * 0.5; guard.g.rotation.x = -Math.sin(k * Math.PI) * 0.25; } });
+      if (st.count < st.hits) { caption('FIGHT! ' + '⭐'.repeat(st.count), 'עוד ' + (st.hits - st.count === 1 ? 'פעם אחת' : 'פעמיים') + '!', 1.6); return false; }
+      caption('You win!', 'ניצחת! השומר פותח את השער', 2.6);
+      anims.push({ t: -0.5, dur: 1.4, f: k => { guard.x = GATE_X + 3.6 * k; guard.z = WALL_Z + 1.1 + 0.4 * k; guard.g.position.set(guard.x, 0, guard.z); guard.col.x = guard.x; guard.col.z = guard.z; } });
+      anims.push({ t: -1.0, dur: 1.6, f: k => gateDoors.forEach(d => { d.hinge.rotation.y = d.sd * 1.35 * k; }) });
+      guard.base = Math.PI * 0.15;
+      setTimeout(() => removeCol(gateCol), 1800);
+      return true; } },
+  { id: 'noodles', word: 'I WANT NOODLES', at: [NOODLE.x - 2.4, NOODLE.z - 3], sign: [NOODLE.x - 0.6, 3.4, NOODLE.z - 1.2], near: 6,
+    intro: ['You are hungry!', 'הדרך להר ארוכה. תזמין נודלס: I WANT NOODLES'],
+    say(st) { ninja.action = { type: 'eat', t: 0, dur: 2.2 }; bowl.visible = true; caption('Yum! 🍜', 'טעים! קיבלת כוח לדרך', 2.6);
+      setTimeout(() => { bowl.visible = false; }, 2200); return true; } },
+  { id: 'climb', word: 'CLIMB', at: [0, -61], sign: [0, 3.2, -63.5], near: 7, soon: true,
+    intro: ['The mountain!', 'הגעת לרגלי ההר. הטיפוס – בפרק הבא'],
+    say(st) { caption('Coming soon…', 'הטיפוס על ההר יגיע בפרק הבא', 3); return false; } }
+];
+STATIONS.forEach(st => { st.sp = wordSprite(st.word); st.sp.position.set(st.sign[0], st.sign[1], st.sign[2]); if (st.soon) st.sp.material.opacity = 0.75; });
+const bcn = beacon();
+// סלעים בסוף השביל – כאן מתחיל ההר (מחסום עד הפרק הבא)
+for (let i = 0; i < 9; i++) rock(-8 + i * 2, -65.5 + Math.sin(i) * 0.6, 0.9 + R() * 0.6);
+const anims = [];
+// מצב כבר מההתחלה (אם כבר עשו חלק מהמסע)
+STATIONS.forEach(st => {
+  if (!prog.done.includes(st.id)) return;
+  if (st.id === 'push') { log.g.position.x = GATE_X + 6; log.g.rotation.y = -0.9; removeCol(log.col); }
+  if (st.id === 'fight') { guard.x = GATE_X + 3.6; guard.z = WALL_Z + 1.5; guard.g.position.set(guard.x, 0, guard.z); guard.col.x = guard.x; guard.col.z = guard.z; guard.base = Math.PI * 0.15; gateDoors.forEach(d => { d.hinge.rotation.y = d.sd * 1.35; }); removeCol(gateCol); }
+});
+function current() { return STATIONS.find(st => !prog.done.includes(st.id)); }
+
+// ---------- ניצוצות ----------
+const sparkList = [];
+const sparkMat = new THREE.MeshBasicMaterial({ color: 0xfde047 });
+function sparks(x, y, z) {
+  for (let i = 0; i < 10; i++) { const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.09), sparkMat); m.position.set(x, y, z); scene.add(m);
+    sparkList.push({ m, v: new THREE.Vector3((R() - 0.5) * 5, 2 + R() * 3, (R() - 0.5) * 5), t: 0 }); }
+}
+
+// ---------- "Woof!" מעל הכלב ----------
+const woof = wordSprite('Woof!'); woof.scale.set(1.6, 0.56, 1); woof.material.depthTest = true;
+let woofT = 0, idleT = 0;
+
+// ---------- פתיחה ----------
+let introT = prog.intro ? -1 : 0;
+setMountainLight(prog.intro ? 0 : 1);
+if (introT === 0) { ninja.x = -0.5; ninja.z = 3; dog.x = 0.8; dog.z = 3.8; cam.yaw = 0; ninja.dir = Math.PI; cam.intro = { k: 0 }; hintEl.style.display = 'none'; }
+else goalEl.style.display = 'block';
+function endIntro() {
+  if (introT < 0) return;
+  introT = -1; prog.intro = true; saveProg(); setMountainLight(0);
+  cam.intro = null; hintEl.style.display = ''; cam.tx = ninja.x; cam.tz = ninja.z;
+  const v = VIEWS[cam.mode]; if (!v.eyes) { cam.pitch = v.pitch; cam.dist = v.dist; }
+  cam.blend = 0; goalEl.style.display = 'block'; woofT = 1.5;
+}
+function updateIntro(dt) {
+  introT += dt;
+  const t = introT;
+  ninja.dir = turnTo(ninja.dir, Math.PI, 0.1);
+  cam.yaw = 0;
+  if (cam.intro) { const u = Math.min(1, Math.max(0, (t - 6) / 2.5)); cam.intro.k = u * u * (3 - 2 * u); }
+  if (t > 2.2 && t < 5) setMountainLight(1 - (t - 2.2) / 2.8);
+  if (t > 2.6 && !updateIntro.c1) { updateIntro.c1 = 1; caption('Oh no! The light went out!', 'אוי לא! האור על ההר כבה!', 3.4); }
+  if (t > 6.3 && !updateIntro.c2) { updateIntro.c2 = 1; caption('Go to the mountain!', 'הזקן: "צא אל ההר והחזר את האור!"', 3.6); }
+  if (t > 10.2 && !updateIntro.c3) { updateIntro.c3 = 1; caption('Follow your dog!', 'הכלב יראה לך את הדרך', 3); woofT = 2; }
+  if (t > 13.4) endIntro();
+}
+
+// ---------- עדכון כל פריים ----------
+let lastSt = null;
+function updateJourney(dt, now) {
+  if (introT >= 0) updateIntro(dt);
+  if (capT > 0) { capT -= dt; if (capT <= 0) cap.style.opacity = '0'; }
+  if (ninja.action) { ninja.action.t += dt; if (ninja.action.t > ninja.action.dur) ninja.action = null; }
+  if (bowl.visible) { bowl.position.set(ninja.x + Math.sin(ninja.dir) * 0.45, 1.05, ninja.z + Math.cos(ninja.dir) * 0.45); }
+  for (let i = anims.length - 1; i >= 0; i--) { const a = anims[i]; a.t += dt; if (a.t < 0) continue; const k = Math.min(1, a.t / a.dur), e = k * k * (3 - 2 * k); a.f(e); if (k >= 1) anims.splice(i, 1); }
+  for (let i = sparkList.length - 1; i >= 0; i--) { const p = sparkList[i]; p.t += dt; p.v.y -= 9 * dt; p.m.position.addScaledVector(p.v, dt); p.m.rotation.y += dt * 8; if (p.t > 0.7) { scene.remove(p.m); sparkList.splice(i, 1); } }
+  mountain.halo.scale.setScalar(1 + Math.sin(now / 600) * 0.06 * mountain.light);
+  mountain.clouds.rotation.y += dt * 0.08;
+  const st = current();
+  STATIONS.forEach(s2 => { s2.sp.visible = false; });
+  if (st) {
+    const d = Math.hypot(ninja.x - st.at[0], ninja.z - st.at[1]);
+    bcn.visible = introT < 0; bcn.position.x = st.sign[0]; bcn.position.z = st.sign[2];
+    bcn.material.opacity = (0.16 + Math.sin(now / 400) * 0.05) * Math.min(1, Math.max(0.25, (d - 4) / 10));
+    if (d < st.near + 3 && introT < 0) { st.sp.visible = true; st.sp.position.y = st.sign[1] + Math.sin(now / 350) * 0.08; }
+    if (d < st.near && lastSt !== st.id && introT < 0) { lastSt = st.id; caption(st.intro[0], st.intro[1], 3.6); }
+  } else bcn.visible = false;
+  // הכלב נובח כשהנינג'ה עומד הרבה זמן
+  idleT = ninja.speed > 0.3 ? 0 : idleT + dt;
+  if (idleT > 5 && st && Math.hypot(ninja.x - st.at[0], ninja.z - st.at[1]) > 8) { idleT = 0; woofT = 1.6; }
+  if (woofT > 0) { woofT -= dt; woof.visible = true; woof.position.set(dog.x, 1.4 + Math.abs(Math.sin(now / 120)) * 0.15, dog.z); } else woof.visible = false;
+}
+// הכלב: רץ קצת לפני הנינג'ה בכיוון התחנה הבאה, ומחכה ליד התחנה
+function dogLeadTarget() {
+  const st = current();
+  if (!st || introT >= 0) return null;
+  const dx = st.at[0] - ninja.x, dz = st.at[1] - ninja.z, d = Math.hypot(dx, dz);
+  if (d < 5) return [st.at[0] + 1.2, st.at[1] + 1.2];
+  const k = Math.min(d - 2, 5.5);
+  return [ninja.x + dx / d * k, ninja.z + dz / d * k];
+}
+// נגיעה בשלט = אמירת המילה
+const spRay = new THREE.Raycaster();
+const journey = {
+  tap(px, py) {
+    if (introT >= 0) { if (introT > 1) endIntro(); return true; }
+    const st = current(); if (!st || !st.sp.visible) return false;
+    spRay.setFromCamera(new THREE.Vector2(px / innerWidth * 2 - 1, -(py / innerHeight) * 2 + 1), camera);
+    if (!spRay.intersectObject(st.sp).length) return false;
+    sayWord(st); return true;
+  }
+};
+function sayWord(st) {
+  if (!st || (ninja.action && ninja.action.type !== 'hit')) return;
+  if (Math.hypot(ninja.x - st.at[0], ninja.z - st.at[1]) > st.near + 3) return;
+  const pulse = st.sp.scale.x; anims.push({ t: 0, dur: 0.3, f: k => { const s3 = 1 + Math.sin(k * Math.PI) * 0.15; st.sp.scale.set(3.4 * s3, 1.2 * s3, 1); } });
+  if (st.say(st)) { prog.done.push(st.id); saveProg(); lastSt = null; setTimeout(() => { const nx = current(); if (nx) woofT = 1.6; }, 2600); }
+}
+addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); sayWord(current()); } });
+
 // ---------- לולאה ----------
 let last = performance.now();
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  updateNinja(dt, now); updateDog(dt, now); placeCamera(dt);
+  if (introT < 0) updateNinja(dt, now); else { ninja.speed = 0; poseNinja(ninja, dt, now); ninja.root.rotation.y = ninja.dir; }
+  updateDog(dt, now); updateJourney(dt, now); placeCamera(dt);
   swayers.forEach(s => { if (s.y) s.o.rotation.y = Math.sin(now / 400 + s.ph) * s.a; else { s.o.rotation.z = Math.sin(now / 1300 + s.ph) * s.a; if (s.z) s.o.rotation.x = Math.cos(now / 1700 + s.ph) * s.a * 0.6; } });
   koi.forEach(k => {
     const a = k.a + now / 1000 * k.sp, x = k.x + Math.cos(a) * k.rx, z = k.z + Math.sin(a) * k.rz;
@@ -982,4 +1235,4 @@ cam.blend = 1;
 requestAnimationFrame(loop);
 
 // לבדיקות בלבד
-window.__v3d = { scene, ninja, dog, cam, tapAt, setView, colliders, goTo(x, z) { ninja.target = [x, z]; }, tp(x, z) { ninja.x = x; ninja.z = z; ninja.target = null; } };
+window.__v3d = { scene, ninja, dog, cam, tapAt, setView, STATIONS, sayWord, current, endIntro, prog, introAt(t) { introT = t; }, colliders, goTo(x, z) { ninja.target = [x, z]; }, tp(x, z) { ninja.x = x; ninja.z = z; ninja.target = null; } };
