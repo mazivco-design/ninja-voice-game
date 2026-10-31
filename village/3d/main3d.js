@@ -69,29 +69,71 @@ const colliders = [];
 const addCircle = (x, z, r) => colliders.push({ t: 'c', x, z, r });
 const addBox = (x0, z0, x1, z1) => colliders.push({ t: 'b', x0, z0, x1, z1 });
 const addEll = (x, z, rx, rz) => colliders.push({ t: 'e', x, z, rx, rz });
-const PLAY = 66;           // גבולות האזור שאפשר ללכת בו (העולם: בערך 132×132)
+// ============================================================
+//   המסלול: עמק צר ומתפתל מהכפר (בדרום) אל ההר (בצפון, z שלילי).
+//   צומת א: שתי דרכים (שמאל/ימין) שנפגשות שוב. צומת ב: דרך צדדית למבוי סתום עם תיבה.
+//   אפשר ללכת רק בתוך העמק (רוחב CORR מכל צד של השביל) ובתוך רחבת הכפר.
+// ============================================================
+const PLAY = 150;                    // (לתאימות: מעל זה אין התנגשויות)
+const CORR = 5.5;                    // חצי רוחב העמק
+const VILLAGE = { x: 0, z: 4, r: 19 };
+const BOX = { x0: -45, x1: 45, z0: -150, z1: 30 };
+const ROUTE = {
+  main1:  [[0, 14], [1, 4.6], [3, -6], [2, -16], [0, -26], [-3, -36], [-1, -44], [0, -48]],
+  left:   [[0, -48], [-9, -56], [-13, -66], [-8, -76], [0, -82]],
+  right:  [[0, -48], [9, -56], [12, -66], [7, -75], [0, -82]],
+  main2:  [[0, -82], [-2, -92], [1, -102], [0, -108]],
+  dead:   [[0, -108], [10, -110], [18, -116], [21, -122]],
+  main3:  [[0, -108], [-3, -118], [-1, -130], [0, -141]]
+};
+const CHEST_AT = [21.5, -123.5];
+// דגימה של כל השבילים + רשת חיפוש מהירה למרחק
+const RPTS = [];
+Object.values(ROUTE).forEach(pts => {
+  const c = new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(p[0], 0, p[1])));
+  const L = c.getLength();
+  for (let s = 0; s <= L; s += 0.7) { const q = c.getPointAt(s / L); RPTS.push([q.x, q.z]); }
+});
+const RG = 6, rgrid = new Map();
+RPTS.forEach(p => { const k = Math.floor(p[0] / RG) + ',' + Math.floor(p[1] / RG); if (!rgrid.has(k)) rgrid.set(k, []); rgrid.get(k).push(p); });
+// מרחק לשביל הקרוב + הנקודה הקרובה
+function routeNear(x, z) {
+  const cx = Math.floor(x / RG), cz = Math.floor(z / RG);
+  let best = Infinity, bp = null;
+  for (let r = 0; r < 6 && (bp === null || r <= 1 + Math.ceil(Math.sqrt(best) / RG)); r++)
+    for (let i = cx - r; i <= cx + r; i++) for (let j = cz - r; j <= cz + r; j++) {
+      if (Math.max(Math.abs(i - cx), Math.abs(j - cz)) !== r) continue;
+      const arr = rgrid.get(i + ',' + j); if (!arr) continue;
+      for (const p of arr) { const d = (p[0] - x) ** 2 + (p[1] - z) ** 2; if (d < best) { best = d; bp = p; } }
+    }
+  if (!bp) { for (const p of RPTS) { const d = (p[0] - x) ** 2 + (p[1] - z) ** 2; if (d < best) { best = d; bp = p; } } }
+  return { d: Math.sqrt(best), p: bp };
+}
+// כמה רחוק מחוץ לשטח ההליכה (שלילי = בפנים)
+function edgeDist(x, z) {
+  const v = Math.hypot(x - VILLAGE.x, z - VILLAGE.z) - VILLAGE.r;
+  return Math.min(routeNear(x, z).d - CORR, v);
+}
+function nearCorr(x, z) { return edgeDist(x, z) < 3; }
 
-// גובה הקרקע: שטוח באזור המשחק, גבעות מסביב
+// גובה הקרקע: שטוח בעמק, ועולה לגבעות משני הצדדים (גם האי בין שתי הדרכים של הצומת)
 function groundH(x, z) {
-  const d = Math.max(Math.abs(x), Math.abs(z));
-  if (d < PLAY + 2) return 0;
-  const k = d - PLAY - 2;
-  // גבעות נמוכות מסביב (עד ~7), ובצפון נמוכות עוד יותר – כדי שההר יראה מעליהן
-  const north = z < -PLAY ? Math.max(0, Math.min(1, (Math.abs(z) - Math.abs(x) * 0.6) / 20)) : 0;
-  const hill = Math.min(7, k * 0.42) * (1 - 0.65 * north);
-  return hill + Math.sin(x * 0.21) * Math.cos(z * 0.17) * Math.min(k, 6) * 0.35 * (1 - 0.5 * north);
+  const e = edgeDist(x, z);
+  if (e < 0.5) return 0;
+  const k = e - 0.5, u = Math.min(1, k / 9);
+  return u * u * (3 - 2 * u) * 7 + Math.sin(x * 0.21) * Math.cos(z * 0.17) * Math.min(k, 5) * 0.3;
 }
 
 // ---------- קרקע ----------
 (function ground() {
-  const S = 260, N = 140;
-  const g = new THREE.PlaneGeometry(S, S, N, N); g.rotateX(-Math.PI / 2);
+  const S = 340, N = 170, CZ = -60;
+  const g = new THREE.PlaneGeometry(S, S, N, N); g.rotateX(-Math.PI / 2); g.translate(0, 0, CZ);
   const p = g.attributes.position, cols = [], c = new THREE.Color();
   for (let i = 0; i < p.count; i++) {
-    const x = p.getX(i), z = p.getZ(i), d = Math.max(Math.abs(x), Math.abs(z));
-    p.setY(i, groundH(x, z) + (d > PLAY + 3 ? (R() - 0.5) * 0.35 : 0));
+    const x = p.getX(i), z = p.getZ(i), e = edgeDist(x, z);
+    p.setY(i, groundH(x, z) + (e > 1.5 ? (R() - 0.5) * 0.3 : 0));
     const v = R();
-    c.setHSL(0.27 + v * 0.03, 0.42 + v * 0.1, 0.36 + v * 0.06 + (d > PLAY + 3 ? -0.03 : 0));
+    c.setHSL(0.27 + v * 0.03, 0.42 + v * 0.1, 0.36 + v * 0.06 + (e > 1.5 ? -0.035 : 0));
     cols.push(c.r, c.g, c.b);
   }
   g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
@@ -99,14 +141,12 @@ function groundH(x, z) {
   const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
   m.receiveShadow = true; m.name = 'ground';
   scene.add(m);
-  // הרים רחוקים
-  for (let i = 0; i < 18; i++) {
-    const a = i / 18 * Math.PI * 2 + R() * 0.2, d = 160 + R() * 25, h = 40 + R() * 35, r = 28 + R() * 16;
-    if (Math.abs(a - Math.PI * 1.5) < 0.9) continue;             // צפון פנוי – שם ההר הגדול
-    const mtn = mesh(new THREE.ConeGeometry(r, h, 6), 0x9fb3bd, Math.cos(a) * d, h / 2 - 2, Math.sin(a) * d, scene, { fog: false });
-    mtn.castShadow = false;
-    const cap = mesh(new THREE.ConeGeometry(r * 0.28, h * 0.28, 6), 0xf1f5f7, mtn.position.x, h - 2 - h * 0.14, mtn.position.z, scene, { fog: false });
-    cap.castShadow = false;
+  // מעט גבעות רחוקות ונמוכות באופק (בלי שלג) – לא מתחרות בהר המטרה
+  for (let i = 0; i < 7; i++) {
+    const a = Math.PI * 0.15 + i / 6 * Math.PI * 0.7 + (R() - 0.5) * 0.15;        // רק בדרום/בצדדים
+    const d = 220 + R() * 30, h = 14 + R() * 10, r = 45 + R() * 20;
+    const mtn = mesh(new THREE.ConeGeometry(r, h, 7), 0x9fbfc9, Math.cos(a) * d, h / 2 - 3, -60 + Math.sin(a) * d, scene, { fog: false });
+    mtn.castShadow = false; mtn.scale.z = 0.7;
   }
 })();
 
@@ -126,25 +166,14 @@ function ribbon(pts, width, color, y, seed) {
   m.receiveShadow = true; scene.add(m);
   return curve;
 }
-// ---------- מיקומים של האזורים (x ימינה, z לכיוון המצלמה בהתחלה; "צפון" = z שלילי) ----------
-const WALL_Z = -30, GATE_X = 0;                          // צפון: חומה ושער לשוק
-function riverX(z) { return 36 + Math.sin(z * 0.05) * 3 + Math.sin(z * 0.13) * 0.8; }   // מזרח: נהר
-const RIVER_HALF = 3.2, BRIDGE_Z = 5, CROSS_Z = 26;     // גשר הרוס, ואבני קפיצה
-const LAKE = { x: -46, z: 4, rx: 15, rz: 11 };          // מערב: אגם עם בית על כלונסאות
-const CLIFF2 = { x: 17, z: 52, s: 1.9 };                // דרום: צוק גבוה ביער
-const MARKET = { x: 0, z: -46, r: 11 };
-const PATHS = [
-  [[-29, 7.4], [-22, 7], [-12, 6.2], [-4, 4.4], [3, 4.8], [10, 6.5], [22, 5.6], [31, 5]],     // הדרך הראשית: מהאגם עד הגשר ההרוס
-  [[-7.5, 4.6], [-7.5, -0.6]],
-  [[6.5, 5.6], [7.2, 1.6], [7, -1.4]],
-  [[1, 4.6], [0.5, 9], [-2, 13], [-1.5, 22], [2, 34], [5, 44]],                                  // דרומה ליער
-  [[3, 4.8], [2.8, -6], [2.2, -15], [0.4, -24], [0, -31], [0, -38]],                           // צפונה דרך השער לשוק
-  [[22, 5.6], [27, 14], [31.5, CROSS_Z]],                                                       // אל אבני הקפיצה
-  [[40.5, CROSS_Z], [45, 18], [49, 7], [58, 6], [66, 6.5]],                                     // מעבר לנהר
-  [[49, 7], [54, -2], [56, -9.6]],                                                              // לבית החווה
-  [[-1.5, 22], [-9, 30], [-12, 40]],                                                            // ליער, מערבה
-  [[0, -38], [1, -50], [-1, -58], [0, -65]]                                                     // מהשוק צפונה, אל ההר
-];
+// (קבועים ישנים – נשארו כדי שפונקציות שלא בשימוש לא ישברו)
+const WALL_Z = -30, GATE_X = 0;
+function riverX(z) { return 999; }
+const RIVER_HALF = 3.2, BRIDGE_Z = 5, CROSS_Z = 26;
+const LAKE = { x: -999, z: 0, rx: 1, rz: 1 };
+const CLIFF2 = { x: 999, z: 999, s: 1 };
+const MARKET = { x: 999, z: 999, r: 1 };
+const PATHS = Object.values(ROUTE);
 const pathCurves = PATHS.map((p, i) => { ribbon(p, 2.6, 0x9e9172, 0.02, i); return ribbon(p, 2.1, 0xcfc4a7, 0.03, i + 7); });
 // חצץ ואבנים על השבילים
 pathCurves.forEach(c => {
@@ -277,11 +306,11 @@ function cherry(x, z, s) {
     .forEach(([cx, cy, cz, r], i) => mesh(Ico(r, 1), [0xf2a7c8, 0xe58ab0, 0xfbd3e4][i % 3], cx, cy, cz, crown));
   if (Math.max(Math.abs(x), Math.abs(z)) < 22) { crown.userData.dyn = true; swayers.push({ o: crown, a: 0.025, ph: R() * 6 }); }
   // עלי כותרת על הקרקע
-  if (Math.max(Math.abs(x), Math.abs(z)) < PLAY) for (let i = 0; i < 18; i++) {
+  if (nearCorr(x, z)) for (let i = 0; i < 18; i++) {
     const a = R() * 6.28, d = R() * 2.2 * s, p = mesh(new THREE.CircleGeometry(0.05 + R() * 0.04, 5), R() < 0.5 ? 0xfbcfe8 : 0xf4a4c8, x + Math.cos(a) * d, 0.04, z + Math.sin(a) * d);
     p.rotation.x = -Math.PI / 2; p.castShadow = false;
   }
-  if (Math.max(Math.abs(x), Math.abs(z)) < PLAY + 1) addCircle(x, z, 0.3 * s);
+  if (nearCorr(x, z)) addCircle(x, z, 0.3 * s);
 }
 function pine(x, z, s) {
   const g = new THREE.Group(); g.position.set(x, groundH(x, z), z); g.scale.setScalar(s); g.rotation.y = R() * 6; scene.add(g);
@@ -295,7 +324,7 @@ function pine(x, z, s) {
     const pd = mesh(Ico(r, 1), [0x1f4f33, 0x2f6b45, 0x3f8458][i % 3], cx, cy, cz, pads); pd.scale.y = 0.42;
   });
   if (Math.max(Math.abs(x), Math.abs(z)) < 22) { pads.userData.dyn = true; swayers.push({ o: pads, a: 0.012, ph: R() * 6 }); }
-  if (Math.max(Math.abs(x), Math.abs(z)) < PLAY + 1) addCircle(x, z, 0.3 * s);
+  if (nearCorr(x, z)) addCircle(x, z, 0.3 * s);
 }
 function bamboo(cx, cz, n, still, spread) {
   for (let i = 0; i < n; i++) {
@@ -312,15 +341,16 @@ function bamboo(cx, cz, n, still, spread) {
   }
 }
 function bush(x, z, s, flower) {
-  const b = mesh(Ico(0.7 * s, 1), 0x2c6228, x, 0.35 * s, z); b.scale.y = 0.7;
-  mesh(Ico(0.45 * s, 1), 0x3d7d33, x - 0.25 * s, 0.6 * s, z + 0.15 * s);
+  const gy = groundH(x, z);
+  const b = mesh(Ico(0.7 * s, 1), 0x2c6228, x, 0.35 * s + gy, z); b.scale.y = 0.7;
+  mesh(Ico(0.45 * s, 1), 0x3d7d33, x - 0.25 * s, 0.6 * s + gy, z + 0.15 * s);
   if (flower) for (let i = 0; i < 7; i++) { const a = R() * 6.28; mesh(Ico(0.08, 0), 0xf472b6, x + Math.cos(a) * 0.55 * s, 0.4 * s + R() * 0.35 * s, z + Math.sin(a) * 0.5 * s); }
-  addCircle(x, z, 0.55 * s);
+  if (nearCorr(x, z)) addCircle(x, z, 0.55 * s);
 }
 function rock(x, z, s) {
   const r = mesh(new THREE.DodecahedronGeometry(s, 0), R() < 0.5 ? 0x8a867b : 0x9d998e, x, s * 0.35 + groundH(x, z), z);
   r.scale.set(1, 0.65, 0.9); r.rotation.set(R(), R() * 6, R());
-  if (Math.max(Math.abs(x), Math.abs(z)) < PLAY + 1) addCircle(x, z, s * 0.85);
+  if (nearCorr(x, z)) addCircle(x, z, s * 0.85);
 }
 
 // ---------- בריכה עם דגי קוי ----------
@@ -546,106 +576,94 @@ function lake() {
 }
 
 // ============================================================
-//   בניית העולם
+//   בניית העולם: הכפר בדרום, ואחריו העמק אל ההר
 // ============================================================
-// מרכז הכפר (הפינה המקורית)
 house(-7.5, -3.5, 6, 4.2, 'tile');
 house(7, -4.2, 5.6, 4, 'thatch');
 well(2.2, 0.6);
 pond(-11, 12, 3.6, 2.4);
 torii(1.6, 12.5, 1);
-[[-2.2, 2.2], [4.6, 2.6], [-1.6, 15], [4.4, 15], [10.5, 3.2], [-11.5, 3.4], [-1.6, -24], [2.2, -24]].forEach(([x, z]) => stoneLantern(x, z));
-bamboo(-16, -6, 12, true); bamboo(-5, -12, 10, true); bamboo(12, 14, 9, true);
-[[-14, 1.5, 1], [-3.2, 9.2, 0.9], [13.5, 3.8, 1.05], [-17, 16, 1.1], [5.5, 9.5, 0.85]].forEach(([x, z, s]) => cherry(x, z, s));
-[[-15.5, -13, 1.1], [7.5, -11, 1], [17, 7, 1.05], [-5, 18, 1], [10, 18.5, 0.95]].forEach(([x, z, s]) => pine(x, z, s));
-house(-14, -20, 5.4, 4, 'tile2'); house(14, -19, 5, 3.8, 'thatch');
+[[-2.2, 2.2], [4.6, 2.6], [-1.6, 15], [4.4, 15], [10.5, 3.2], [-11.5, 3.4]].forEach(([x, z]) => stoneLantern(x, z));
+bamboo(-15, -6, 10, true); bamboo(13, 13, 8, true);
+[[-14, 1.5, 1], [-3.2, 9.2, 0.9], [13.5, 3.8, 1.05], [-15, 15, 1.05], [5.5, 9.5, 0.85]].forEach(([x, z, s]) => cherry(x, z, s));
+[[-12, -12, 1.05], [12, -12, 1], [16, 6, 1.05], [-5, 19, 1], [9, 19, 0.95]].forEach(([x, z, s]) => pine(x, z, s));
 const elder = person(-5, 7.5, LOOKS.elder, Math.PI * 0.1);
 person(-9.2, 13.8, LOOKS.fisher, -0.6);
 person(11.5, 9, LOOKS.boy, -0.4);
+// פנסי אבן לאורך העמק
+[[4.5, -20], [-4.6, -32], [2.8, -42], [-3.6, -88], [3.2, -98], [-4.8, -114], [2.4, -126]].forEach(([x, z]) => stoneLantern(x, z));
 
-// צפון: חומה עם שער, ושוק
-wallSeg(-PLAY - 2, GATE_X - 2.45); wallSeg(GATE_X + 2.45, riverX(WALL_Z) - RIVER_HALF - 1);
-gate();
-const guard = person(GATE_X, WALL_Z + 1.1, LOOKS.guard, 0);
-(function market() {
-  const M = MARKET;
-  const pz = mesh(new THREE.CircleGeometry(M.r, 32), 0xb59b74, M.x, 0.045, M.z); pz.rotation.x = -Math.PI / 2; pz.castShadow = false;
-  const pz2 = mesh(new THREE.CircleGeometry(M.r - 0.6, 32), 0xc8ad85, M.x, 0.05, M.z); pz2.rotation.x = -Math.PI / 2; pz2.castShadow = false;
-  for (let i = 0; i < 90; i++) { const a = R() * 6.28, d = R() * (M.r - 1), st = mesh(new THREE.CircleGeometry(0.3 + R() * 0.3, 6), 0xa48862, M.x + Math.cos(a) * d, 0.055, M.z + Math.sin(a) * d); st.rotation.x = -Math.PI / 2; st.castShadow = false; }
-  const spots = [[-150, 0xdc2626, 'fruit'], [-110, 0x2563eb, 'fish'], [-70, 0x9333ea, 'sweets'], [-30, 0xca8a04, 'cloth'], [10, 0x16a34a, 'pots']];
-  spots.forEach(([deg, c, goods]) => { const a = deg * Math.PI / 180, x = M.x + Math.cos(a) * (M.r - 1.8), z = M.z + Math.sin(a) * (M.r - 1.8); stall(x, z, Math.atan2(M.x - x, M.z - z), c, goods); });
-  noodleStand(M.x + 8.2, M.z + 5.5, Math.atan2(-8.2, -5.5));
-  person(M.x - 8.2, M.z - 6, LOOKS.merchant, Math.atan2(8.2, 6));
-  person(M.x + 9.6, M.z + 6.8, LOOKS.cook, Math.atan2(-9.6, -6.8));
-  person(M.x - 2, M.z + 2, LOOKS.girl, 2.2); person(M.x + 3, M.z - 3, LOOKS.boy, -0.8);
-  stoneLantern(M.x - 3, M.z + M.r + 0.2); stoneLantern(M.x + 3, M.z + M.r + 0.2);
-  house(M.x - 16, M.z - 2, 6, 4.4, 'tile'); house(M.x + 16, M.z - 4, 5.6, 4, 'tile2');
-})();
-
-// מזרח: נהר, שדות, חווה
-river();
-for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) paddy(48 + i * 4.6, 13 + j * 4.2, 3.6, 3.2);
-for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) paddy(48 + i * 4.6, -36 + j * 4.2, 3.6, 3.2);
-house(57, -14, 5.6, 4, 'thatch');
-cart(44.2, 10, 0.5);
-person(45.8, 12.2, LOOKS.farmer, -2.4);
-scarecrow(52.6, 21.4); scarecrow(57.2, -31.8);
-stoneLantern(41.5, 7.8);
-
-// מערב: אגם
-lake();
-person(LAKE.x + LAKE.rx + 3, 9, LOOKS.fisher, -1.2);
-
-// דרום: יער במבוק וצוק גבוה
-torii(2, 34, 0.8);
-
-// ---------- מילוי: עצים, במבוק, שיחים וסלעים לפי אזור ----------
-function inWater(x, z, pad) {
-  if (Math.abs(x - riverX(z)) < RIVER_HALF + 1 + pad) return true;
-  if (((x - LAKE.x) / (LAKE.rx + 1 + pad)) ** 2 + ((z - LAKE.z) / (LAKE.rz + 1 + pad)) ** 2 < 1) return true;
-  return false;
+// ---------- גבולות העמק: עצים, סלעים ושיחים על המדרונות ----------
+function scatter(n, x0, z0, x1, z1, fn) { let made = 0; for (let a = 0; a < n * 30 && made < n; a++) { const x = x0 + R() * (x1 - x0), z = z0 + R() * (z1 - z0); if (fn(x, z)) made++; } }
+function freeAt(x, z, pad) {
+  return !colliders.some(c => c.t === 'c' ? Math.hypot(c.x - x, c.z - z) < c.r + pad : c.t === 'b' ? x > c.x0 - pad && x < c.x1 + pad && z > c.z0 - pad && z < c.z1 + pad : Math.hypot((x - c.x) / (c.rx + pad), (z - c.z) / (c.rz + pad)) < 1);
 }
-function blockedAt(x, z, pad) {
-  return colliders.some(c => c.t === 'c' ? Math.hypot(c.x - x, c.z - z) < c.r + pad : c.t === 'b' ? x > c.x0 - pad && x < c.x1 + pad && z > c.z0 - pad && z < c.z1 + pad : Math.hypot((x - c.x) / (c.rx + pad), (z - c.z) / (c.rz + pad)) < 1);
-}
-function okSpot(x, z, r, pathPad) {
-  if (Math.max(Math.abs(x), Math.abs(z)) > PLAY - 1) return false;
-  if (nearPath(x, z, pathPad) || inWater(x, z, 0.5)) return false;
-  if (Math.hypot(x - MARKET.x, z - MARKET.z) < MARKET.r + 2) return false;
-  if (Math.abs(z - WALL_Z) < 2.5 && x < 40) return false;
-  if (Math.abs(x - GATE_X) < 5 && z > WALL_Z - 2 && z < WALL_Z + 6) return false;
-  return !blockedAt(x, z, r);
-}
-function scatter(n, x0, z0, x1, z1, fn) { let made = 0; for (let a = 0; a < n * 20 && made < n; a++) { const x = x0 + R() * (x1 - x0), z = z0 + R() * (z1 - z0); if (fn(x, z)) made++; } }
-// מרכז: שיחים וסלעים קטנים
-scatter(10, -24, -26, 24, 24, (x, z) => okSpot(x, z, 1.2, 2.4) && (R() < 0.6 ? bush(x, z, 0.7 + R() * 0.5, R() < 0.35) : rock(x, z, 0.3 + R() * 0.3), true));
-// דרום: יער במבוק צפוף, אורנים
-scatter(110, -30, 28, 32, 64, (x, z) => okSpot(x, z, 0.5, 2.6) && (bamboo(x, z, 1, true, 0), true));
-scatter(8, -30, 28, 32, 64, (x, z) => okSpot(x, z, 1.4, 3) && (pine(x, z, 1 + R() * 0.5), true));
-// מערב: דובדבן ואורן מסביב לאגם
-scatter(20, -64, -64, -27, 64, (x, z) => okSpot(x, z, 1.6, 3) && ((R() < 0.45 ? cherry : pine)(x, z, 0.95 + R() * 0.5), true));
-scatter(12, -64, -64, -27, 64, (x, z) => okSpot(x, z, 1, 2.4) && (R() < 0.6 ? bush(x, z, 0.7 + R() * 0.6, R() < 0.3) : rock(x, z, 0.3 + R() * 0.4), true));
-// צפון: סביב השוק
-scatter(12, -27, -64, 34, -32, (x, z) => okSpot(x, z, 1.6, 3) && ((R() < 0.55 ? cherry : pine)(x, z, 0.95 + R() * 0.45), true));
-scatter(8, -27, -64, 34, -32, (x, z) => okSpot(x, z, 1, 2.4) && (bush(x, z, 0.7 + R() * 0.5, R() < 0.4), true));
-// מזרח: מעט עצים בין השדות
-scatter(8, 41, -64, 64, 64, (x, z) => okSpot(x, z, 1.6, 2.6) && ((R() < 0.4 ? cherry : pine)(x, z, 0.9 + R() * 0.4), true));
-// מרכז ופינות ריקות: עוד עצים
-scatter(8, -26, -28, 32, 27, (x, z) => okSpot(x, z, 2, 3) && Math.max(Math.abs(x), Math.abs(z)) > 19 && ((R() < 0.5 ? cherry : pine)(x, z, 0.95 + R() * 0.4), true));
-// שולי העולם: חגורת אורנים על הגבעות
-for (let i = 0; i < 90; i++) {
-  const t = R(), side = Math.floor(R() * 4), off = PLAY + 3 + R() * 14, u = -PLAY - 10 + t * (PLAY * 2 + 20);
-  const [x, z] = side === 0 ? [u, -off] : side === 1 ? [u, off] : side === 2 ? [-off, u] : [off, u];
-  if (Math.abs(x - riverX(z)) < 6) continue;
-  pine(x, z, 1.2 + R() * 0.7);
-}
-// דשא ופרחים
-scatter(420, -PLAY, -PLAY, PLAY, PLAY, (x, z) => {
-  if (nearPath(x, z, 1.5) || inWater(x, z, 0) || blockedAt(x, z, 0.3) || Math.hypot(x - MARKET.x, z - MARKET.z) < MARKET.r) return false;
+const decor = [];
+function roomFor(x, z, r) { for (const q of decor) if ((q[0] - x) ** 2 + (q[1] - z) ** 2 < (q[2] + r) ** 2) return false; decor.push([x, z, r]); return true; }
+// שורה צפופה בשולי העמק (ממש מחוץ לשטח ההליכה) – כדי שיהיה ברור איפה הגבול
+scatter(260, BOX.x0, BOX.z0, BOX.x1, -10, (x, z) => {
+  const e = edgeDist(x, z);
+  if (e < 0.6 || e > 4) return false;
+  if (!roomFor(x, z, 1.6)) return false;
+  const r = R();
+  if (r < 0.45) pine(x, z, 0.9 + R() * 0.45); else if (r < 0.62) cherry(x, z, 0.85 + R() * 0.35);
+  else if (r < 0.82) rock(x, z, 0.6 + R() * 0.7); else bush(x, z, 0.8 + R() * 0.5, R() < 0.3);
+  return true;
+});
+// על הגבעות עצמן: מעט עצים
+scatter(90, BOX.x0, BOX.z0, BOX.x1, -10, (x, z) => {
+  const e = edgeDist(x, z);
+  if (e < 4 || e > 22) return false;
+  if (!roomFor(x, z, 3)) return false;
+  (R() < 0.75 ? pine : cherry)(x, z, 1 + R() * 0.5);
+  return true;
+});
+// בתוך העמק: כמה שיחים וסלעים קטנים בצדי השביל
+scatter(24, BOX.x0, BOX.z0, BOX.x1, -12, (x, z) => {
+  const e = edgeDist(x, z);
+  if (e > -0.6 || nearPath(x, z, 2.2) || !freeAt(x, z, 1.2) || !roomFor(x, z, 1.2)) return false;
+  R() < 0.6 ? bush(x, z, 0.6 + R() * 0.4, R() < 0.35) : rock(x, z, 0.25 + R() * 0.25);
+  return true;
+});
+// דשא ופרחים בעמק ובכפר
+scatter(420, BOX.x0, BOX.z0, BOX.x1, BOX.z1, (x, z) => {
+  if (edgeDist(x, z) > 0.5 || nearPath(x, z, 1.5) || !freeAt(x, z, 0.3)) return false;
   const tuft = mesh(new THREE.ConeGeometry(0.06, 0.28, 3), R() < 0.5 ? 0x3f7d2a : 0x6aa84a, x, 0.14, z); tuft.castShadow = false;
   if (R() < 0.25) { const f = mesh(Ico(0.07, 0), [0xf8fafc, 0xfde047, 0xf9a8d4, 0xc4b5fd][Math.floor(R() * 4)], x + 0.12, 0.25, z); f.castShadow = false; }
   return true;
 });
+
+// ---------- עמודי אבן ממוספרים: כאן יהיו התחנות (בינתיים בלי מכשולים) ----------
+function numberTex(text, done) {
+  const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+  g.fillStyle = done ? '#16a34a' : '#f6e7c4'; g.beginPath(); g.arc(64, 64, 58, 0, 6.283); g.fill();
+  g.lineWidth = 8; g.strokeStyle = done ? '#14532d' : '#8b5e3c'; g.stroke();
+  g.fillStyle = done ? '#fff' : '#3b2a1a'; g.font = 'bold 70px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(done ? '✓' : text, 64, 68);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function markerPost(x, z, num) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); scene.add(g);
+  mesh(Cyl(0.55, 0.65, 0.3, 8), 0x8e8b82, 0, 0.15, 0, g);
+  mesh(Box(0.5, 1.6, 0.5), 0x9d998e, 0, 1.0, 0, g);
+  mesh(Box(0.7, 0.18, 0.7), 0x7d7a72, 0, 1.88, 0, g);
+  addCircle(x, z, 0.45);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: numberTex(String(num), false), transparent: true, depthWrite: false }));
+  sp.scale.set(1.1, 1.1, 1); sp.position.set(x, 2.75, z); sp.userData.dyn = true; scene.add(sp);
+  return sp;
+}
+// ---------- תיבה במבוי הסתום ----------
+const chest = (function () {
+  const [x, z] = CHEST_AT, g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = -0.6; g.userData.dyn = true; scene.add(g);
+  mesh(Box(1.3, 0.75, 0.85), 0x7a4a26, 0, 0.38, 0, g);
+  const lid = new THREE.Group(); lid.position.set(0, 0.76, -0.42); g.add(lid);
+  mesh(Box(1.34, 0.3, 0.88), 0x8b5e3c, 0, 0.13, 0.42, lid);
+  [-0.5, 0.5].forEach(bx => mesh(Box(0.08, 0.8, 0.9), 0xb8860b, bx, 0.42, 0, g));
+  mesh(Box(0.18, 0.2, 0.06), 0xfacc15, 0, 0.62, 0.45, g);
+  rock(x + 1.8, z - 1.2, 0.9); rock(x - 1.6, z - 1.6, 0.7);
+  addCircle(x, z, 0.8);
+  return { g, lid };
+})();
 
 // ---------- איחוד: כל מה שלא זז מתאחד לכמה רשתות גדולות (הרבה פחות ציורים בכל פריים) ----------
 (function mergeStatic() {
@@ -780,10 +798,17 @@ function resolve(x, z) {
         if (d < 1 && d > 1e-6) { x = c.x + ux / d * (c.rx + NR); z = c.z + uz / d * (c.rz + NR); }
       }
     }
-    // הנהר: חוסם, חוץ מרצועת אבני הקפיצה
-    const rx = riverX(z), half = RIVER_HALF + NR - 0.2;
-    if (Math.abs(x - rx) < half && Math.abs(z - CROSS_Z) > 1.1) x = x < rx ? rx - half : rx + half;
-    x = Math.max(-PLAY, Math.min(PLAY, x)); z = Math.max(-PLAY, Math.min(PLAY + 2, z));
+    // העמק: אם יצאנו מהשטח – חוזרים לשפה הקרובה (של העמק או של רחבת הכפר)
+    const vr = VILLAGE.r - NR, vd = Math.hypot(x - VILLAGE.x, z - VILLAGE.z);
+    if (vd > vr) {
+      const rn = routeNear(x, z), lim = CORR - NR;
+      if (rn.d > lim) {
+        const ex = rn.p[0] + (x - rn.p[0]) / rn.d * lim, ez = rn.p[1] + (z - rn.p[1]) / rn.d * lim;
+        const vx = VILLAGE.x + (x - VILLAGE.x) / vd * vr, vz = VILLAGE.z + (z - VILLAGE.z) / vd * vr;
+        if ((ex - x) ** 2 + (ez - z) ** 2 < (vx - x) ** 2 + (vz - z) ** 2) { x = ex; z = ez; } else { x = vx; z = vz; }
+      }
+    }
+    x = Math.max(BOX.x0, Math.min(BOX.x1, x)); z = Math.max(BOX.z0, Math.min(BOX.z1, z));
   }
   return [x, z];
 }
@@ -918,7 +943,7 @@ function tapAt(px, py) {
   const v = new THREE.Vector2(px / innerWidth * 2 - 1, -(py / innerHeight) * 2 + 1);
   ray.setFromCamera(v, camera);
   if (!ray.ray.intersectPlane(groundPlane, hit)) return;
-  const [x, z] = resolve(Math.max(-PLAY, Math.min(PLAY, hit.x)), Math.max(-PLAY, Math.min(PLAY + 2, hit.z)));
+  const [x, z] = resolve(Math.max(BOX.x0, Math.min(BOX.x1, hit.x)), Math.max(BOX.z0, Math.min(BOX.z1, hit.z)));
   ninja.target = [x, z]; marker.position.x = x; marker.position.z = z; marker.visible = true; marker.userData.t = 0;
   noteMoved();
 }
@@ -1064,8 +1089,8 @@ const mountain = (function buildMountain() {
 // ההר "מתקרב" לאט ככל שהולכים צפונה: בכפר הוא רחוק וקטן באופק, ולרגליו הוא ענק.
 // (המרחק האמיתי גדול מדי כדי שההליכה תשנה אותו – לכן מקרבים אותו לפי ההתקדמות)
 function placeMountain() {
-  const t = Math.max(0, Math.min(1, (8 - ninja.z) / 70)), e = t * t * (3 - 2 * t);
-  mountain.g.position.z = ninja.z - (480 - 300 * e);
+  const t = Math.max(0, Math.min(1, (6 - ninja.z) / 147)), e = t * t * (3 - 2 * t);
+  mountain.g.position.z = ninja.z - (480 - 320 * e);
 }
 // עוצמת העשן: 0 = אין, 1 = עמוד מלא
 function setSmoke(k) { mountain.smoke = k; }
@@ -1125,61 +1150,24 @@ function beacon() {
   m.position.y = 15; scene.add(m); return m;
 }
 
-// ---------- תחנה 1: עץ שנפל לפני השער (PUSH) ----------
-const log = (function () {
-  const g = new THREE.Group(); g.position.set(GATE_X, 0, WALL_Z + 3.4); g.userData.dyn = true; scene.add(g);
-  const trunk = mesh(Cyl(0.42, 0.48, 6.4, 10), 0x6b4a2b, 0, 0.45, 0, g); trunk.rotation.z = Math.PI / 2;
-  [-1, 1].forEach(e => { const end = mesh(Cyl(0.4, 0.4, 0.04, 10), 0xc9a26b, e * 3.21, 0.45, 0, g); end.rotation.z = Math.PI / 2; });
-  [[-1.6, 0.5], [0.4, -0.6], [1.9, 0.4]].forEach(([bx, rz]) => { const br = mesh(Cyl(0.08, 0.12, 1.2, 5), 0x5a3a24, bx, 0.9, 0.2, g); br.rotation.set(0.6, 0, rz); mesh(Ico(0.45, 1), 0x3f8458, bx + rz * 0.6, 1.4, 0.55, g).scale.y = 0.6; });
-  const col = { t: 'b', x0: GATE_X - 3.3, z0: WALL_Z + 2.9, x1: GATE_X + 3.3, z1: WALL_Z + 3.9 }; colliders.push(col);
-  return { g, col };
-})();
-// ---------- תחנה 3: דוכן הנודלס – המשפט I WANT NOODLES ----------
-const NOODLE = { x: MARKET.x + 8.2, z: MARKET.z + 5.5 };
-const bowl = new THREE.Group(); bowl.visible = false; bowl.userData.dyn = true; scene.add(bowl);
-mesh(Cyl(0.2, 0.13, 0.15, 12), 0xdc2626, 0, 0, 0, bowl); mesh(Cyl(0.17, 0.17, 0.02, 12), 0xf5d58a, 0, 0.07, 0, bowl);
-
-// ---------- התחנות לפי הסדר ----------
-function removeCol(c) { const i = colliders.indexOf(c); if (i >= 0) colliders.splice(i, 1); }
+// ---------- התחנות: בינתיים רק מקומות ממוספרים לאורך המסלול (בלי מכשולים) ----------
+// ב־3 יש שתי אפשרויות (צומת א – שמאל או ימין); כל אחת מהן נחשבת.
 const STATIONS = [
-  { id: 'push', word: 'PUSH', at: [GATE_X + 0.8, WALL_Z + 6.2], sign: [GATE_X, 2.6, WALL_Z + 4.6], near: 6,
-    intro: ['A tree fell on the road!', 'עץ נפל על הדרך! תגיד PUSH כדי לדחוף אותו'],
-    say(st) { ninja.action = { type: 'push', t: 0, dur: 1.0 }; anims.push({ t: 0, dur: 1.4, f: k => { log.g.position.x = GATE_X + 6 * k; log.g.rotation.y = -0.9 * k; log.g.children[0].rotation.x = -k * 6; } });
-      removeCol(log.col); caption('PUSH!', 'יפה! העץ זז', 2); return true; } },
-  { id: 'fight', word: 'FIGHT', at: [GATE_X + 1.2, WALL_Z + 4.4], sign: [GATE_X + 2.6, 3.2, WALL_Z + 2.2], near: 6, hits: 3,
-    intro: ['The guard blocks the gate!', 'השומר לא נותן לעבור. תגיד FIGHT שלוש פעמים!'],
-    say(st) {
-      st.count = (st.count || 0) + 1;
-      ninja.action = { type: 'hit', t: 0, dur: 0.45 }; ninja.dir = Math.atan2(guard.x - ninja.x, guard.z - ninja.z);
-      sparks(guard.x, 1.4, guard.z + 0.3);
-      anims.push({ t: 0, dur: 0.4, f: k => { guard.g.position.z = guard.z - Math.sin(k * Math.PI) * 0.5; guard.g.rotation.x = -Math.sin(k * Math.PI) * 0.25; } });
-      if (st.count < st.hits) { caption('FIGHT! ' + '⭐'.repeat(st.count), 'עוד ' + (st.hits - st.count === 1 ? 'פעם אחת' : 'פעמיים') + '!', 1.6); return false; }
-      caption('You win!', 'ניצחת! השומר פותח את השער', 2.6);
-      anims.push({ t: -0.5, dur: 1.4, f: k => { guard.x = GATE_X + 3.6 * k; guard.z = WALL_Z + 1.1 + 0.4 * k; guard.g.position.set(guard.x, 0, guard.z); guard.col.x = guard.x; guard.col.z = guard.z; } });
-      anims.push({ t: -1.0, dur: 1.6, f: k => gateDoors.forEach(d => { d.hinge.rotation.y = d.sd * 1.35 * k; }) });
-      guard.base = Math.PI * 0.15;
-      setTimeout(() => removeCol(gateCol), 1800);
-      return true; } },
-  { id: 'noodles', word: 'I WANT NOODLES', at: [NOODLE.x - 2.4, NOODLE.z - 3], sign: [NOODLE.x - 0.6, 3.4, NOODLE.z - 1.2], near: 6,
-    intro: ['You are hungry!', 'הדרך להר ארוכה. תזמין נודלס: I WANT NOODLES'],
-    say(st) { ninja.action = { type: 'eat', t: 0, dur: 2.2 }; bowl.visible = true; caption('Yum! 🍜', 'טעים! קיבלת כוח לדרך', 2.6);
-      setTimeout(() => { bowl.visible = false; }, 2200); return true; } },
-  { id: 'climb', word: 'CLIMB', at: [0, -61], sign: [0, 3.2, -63.5], near: 7, soon: true,
-    intro: ['The mountain!', 'הגעת לרגלי ההר. הטיפוס – בפרק הבא'],
-    say(st) { caption('Coming soon…', 'הטיפוס על ההר יגיע בפרק הבא', 3); return false; } }
+  { id: '1', num: 1, spots: [[2.6, -16]] },
+  { id: '2', num: 2, spots: [[-2.6, -36]] },
+  { id: '3', num: 3, spots: [[-13, -66], [12, -66]] },
+  { id: '4', num: 4, spots: [[-1.5, -92]] },
+  { id: '5', num: 5, spots: [[-2.4, -120]] },
+  { id: '6', num: 6, spots: [[0, -138]] }
 ];
-STATIONS.forEach(st => { st.sp = wordSprite(st.word); st.sp.position.set(st.sign[0], st.sign[1], st.sign[2]); if (st.soon) st.sp.material.opacity = 0.75; });
+STATIONS.forEach(st => { st.posts = st.spots.map(([x, z]) => { const sp = markerPost(x + 1.6, z, st.num); return { x, z, sp }; }); st.at = st.spots[0]; st.near = 4; });
 const bcn = beacon();
-// סלעים בסוף השביל – כאן מתחיל ההר (מחסום עד הפרק הבא)
-for (let i = 0; i < 9; i++) rock(-8 + i * 2, -65.5 + Math.sin(i) * 0.6, 0.9 + R() * 0.6);
 const anims = [];
-// מצב כבר מההתחלה (אם כבר עשו חלק מהמסע)
-STATIONS.forEach(st => {
-  if (!prog.done.includes(st.id)) return;
-  if (st.id === 'push') { log.g.position.x = GATE_X + 6; log.g.rotation.y = -0.9; removeCol(log.col); }
-  if (st.id === 'fight') { guard.x = GATE_X + 3.6; guard.z = WALL_Z + 1.5; guard.g.position.set(guard.x, 0, guard.z); guard.col.x = guard.x; guard.col.z = guard.z; guard.base = Math.PI * 0.15; gateDoors.forEach(d => { d.hinge.rotation.y = d.sd * 1.35; }); removeCol(gateCol); }
-});
+function markDone(st) { st.posts.forEach(p => { p.sp.material.map = numberTex('', true); p.sp.material.needsUpdate = true; }); }
+STATIONS.forEach(st => { if (prog.done.includes(st.id)) markDone(st); });
+if (prog.chest) chest.lid.rotation.x = -1.9;
 function current() { return STATIONS.find(st => !prog.done.includes(st.id)); }
+function nearestSpot(st) { let b = st.spots[0], bd = Infinity; st.spots.forEach(p => { const d = Math.hypot(ninja.x - p[0], ninja.z - p[1]); if (d < bd) { bd = d; b = p; } }); return b; }
 
 // ---------- ניצוצות ----------
 const sparkList = [];
@@ -1225,20 +1213,31 @@ function updateJourney(dt, now) {
   if (introT >= 0) updateIntro(dt);
   if (capT > 0) { capT -= dt; if (capT <= 0) cap.style.opacity = '0'; }
   if (ninja.action) { ninja.action.t += dt; if (ninja.action.t > ninja.action.dur) ninja.action = null; }
-  if (bowl.visible) { bowl.position.set(ninja.x + Math.sin(ninja.dir) * 0.45, 1.05, ninja.z + Math.cos(ninja.dir) * 0.45); }
   for (let i = anims.length - 1; i >= 0; i--) { const a = anims[i]; a.t += dt; if (a.t < 0) continue; const k = Math.min(1, a.t / a.dur), e = k * k * (3 - 2 * k); a.f(e); if (k >= 1) anims.splice(i, 1); }
   for (let i = sparkList.length - 1; i >= 0; i--) { const p = sparkList[i]; p.t += dt; p.v.y -= 9 * dt; p.m.position.addScaledVector(p.v, dt); p.m.rotation.y += dt * 8; if (p.t > 0.7) { scene.remove(p.m); sparkList.splice(i, 1); } }
   updateSmoke(dt);
   placeMountain();
   const st = current();
-  STATIONS.forEach(s2 => { s2.sp.visible = false; });
   if (st) {
+    st.at = nearestSpot(st);
     const d = Math.hypot(ninja.x - st.at[0], ninja.z - st.at[1]);
-    bcn.visible = introT < 0; bcn.position.x = st.sign[0]; bcn.position.z = st.sign[2];
-    bcn.material.opacity = (0.16 + Math.sin(now / 400) * 0.05) * Math.min(1, Math.max(0.25, (d - 4) / 10));
-    if (d < st.near + 3 && introT < 0) { st.sp.visible = true; st.sp.position.y = st.sign[1] + Math.sin(now / 350) * 0.08; }
-    if (d < st.near && lastSt !== st.id && introT < 0) { lastSt = st.id; caption(st.intro[0], st.intro[1], 3.6); }
+    bcn.visible = introT < 0; bcn.position.x = st.at[0] + 1.6; bcn.position.z = st.at[1];
+    const dc = Math.hypot(camera.position.x - bcn.position.x, camera.position.z - bcn.position.z);   // קרוב למצלמה – נעלם, כדי שלא יכסה את המסך
+    bcn.material.opacity = (0.16 + Math.sin(now / 400) * 0.05) * Math.min(1, Math.max(0.25, (d - 4) / 10)) * Math.min(1, Math.max(0, (dc - 6) / 10));
+    if (d < st.near && introT < 0) {
+      prog.done.push(st.id); saveProg(); markDone(st);
+      sparks(st.at[0] + 1.6, 2.6, st.at[1]);
+      const nx = current();
+      caption('Station ' + st.num + ' ✓', nx ? 'כאן יהיה מכשול. ממשיכים לתחנה ' + nx.num : 'הגעת לרגלי ההר! הטיפוס – בפרק הבא', 2.6);
+      if (nx) setTimeout(() => { woofT = 1.6; }, 1800);
+    }
   } else bcn.visible = false;
+  // התיבה במבוי הסתום
+  if (!prog.chest && Math.hypot(ninja.x - CHEST_AT[0], ninja.z - CHEST_AT[1]) < 3.4) {
+    prog.chest = true; saveProg(); sparks(CHEST_AT[0], 1.2, CHEST_AT[1]);
+    anims.push({ t: 0, dur: 0.8, f: k => { chest.lid.rotation.x = -1.9 * k; } });
+    caption('A secret chest!', 'מצאת תיבה סודית! (מה יש בה – נחליט בהמשך)', 3);
+  }
   // הכלב נובח כשהנינג'ה עומד הרבה זמן
   idleT = ninja.speed > 0.3 ? 0 : idleT + dt;
   if (idleT > 5 && st && Math.hypot(ninja.x - st.at[0], ninja.z - st.at[1]) > 8) { idleT = 0; woofT = 1.6; }
@@ -1258,19 +1257,64 @@ const spRay = new THREE.Raycaster();
 const journey = {
   tap(px, py) {
     if (introT >= 0) { if (introT > 1) endIntro(); return true; }
-    const st = current(); if (!st || !st.sp.visible) return false;
-    spRay.setFromCamera(new THREE.Vector2(px / innerWidth * 2 - 1, -(py / innerHeight) * 2 + 1), camera);
-    if (!spRay.intersectObject(st.sp).length) return false;
-    sayWord(st); return true;
+    return false;
   }
 };
-function sayWord(st) {
-  if (!st || (ninja.action && ninja.action.type !== 'hit')) return;
-  if (Math.hypot(ninja.x - st.at[0], ninja.z - st.at[1]) > st.near + 3) return;
-  const pulse = st.sp.scale.x; anims.push({ t: 0, dur: 0.3, f: k => { const s3 = 1 + Math.sin(k * Math.PI) * 0.15; st.sp.scale.set(3.4 * s3, 1.2 * s3, 1); } });
-  if (st.say(st)) { prog.done.push(st.id); saveProg(); lastSt = null; setTimeout(() => { const nx = current(); if (nx) woofT = 1.6; }, 2600); }
+function sayWord() {}
+
+// ---------- מפה: כפתור בפינה, מפה על נייר עם המסלול, התחנות, התיבה והנינג'ה ----------
+const mapBtn = document.createElement('button');
+mapBtn.textContent = '🗺️ מפה';
+Object.assign(mapBtn.style, { position: 'fixed', right: '12px', top: '52px', padding: '7px 12px', borderRadius: '10px', border: '0',
+  background: 'rgba(15,23,42,.55)', color: '#f8fafc', font: '15px system-ui, sans-serif', cursor: 'pointer' });
+document.body.appendChild(mapBtn);
+const mapWrap = document.createElement('div');
+Object.assign(mapWrap.style, { position: 'fixed', inset: '0', display: 'none', alignItems: 'center', justifyContent: 'center', background: 'rgba(15,23,42,.35)' });
+const mapCv = document.createElement('canvas');
+mapWrap.appendChild(mapCv); document.body.appendChild(mapWrap);
+let mapOpen = false;
+mapBtn.addEventListener('click', e => { e.stopPropagation(); mapOpen = !mapOpen; mapWrap.style.display = mapOpen ? 'flex' : 'none'; });
+mapWrap.addEventListener('pointerdown', e => { e.stopPropagation(); mapOpen = false; mapWrap.style.display = 'none'; });
+const MAPB = { x0: -32, x1: 32, z0: -152, z1: 26 };
+function drawMap(now) {
+  const H = Math.min(innerHeight * 0.86, 720), W = H * (MAPB.x1 - MAPB.x0) / (MAPB.z1 - MAPB.z0) * 1.15, dpr = Math.min(2, devicePixelRatio || 1);
+  if (mapCv.width !== Math.round(W * dpr)) { mapCv.width = Math.round(W * dpr); mapCv.height = Math.round(H * dpr); mapCv.style.width = W + 'px'; mapCv.style.height = H + 'px'; }
+  const g = mapCv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const pad = 26, sx = (W - pad * 2) / (MAPB.x1 - MAPB.x0), sz = (H - pad * 2) / (MAPB.z1 - MAPB.z0);
+  const P = (x, z) => [pad + (x - MAPB.x0) * sx, pad + (z - MAPB.z0) * sz];
+  // נייר
+  g.fillStyle = '#efe2c2'; g.beginPath(); g.roundRect(0, 0, W, H, 16); g.fill();
+  g.strokeStyle = '#8b5e3c'; g.lineWidth = 5; g.stroke();
+  g.strokeStyle = 'rgba(139,94,60,.35)'; g.lineWidth = 1.5; g.beginPath(); g.roundRect(9, 9, W - 18, H - 18, 10); g.stroke();
+  // עמק
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  const line = (pts, w, col) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); pts.forEach((p, i) => { const [X, Y] = P(p[0], p[1]); i ? g.lineTo(X, Y) : g.moveTo(X, Y); }); g.stroke(); };
+  Object.values(ROUTE).forEach(pts => line(pts, CORR * 2 * sx, '#d6e3b0'));
+  { const [X, Y] = P(VILLAGE.x, VILLAGE.z); g.fillStyle = '#d6e3b0'; g.beginPath(); g.ellipse(X, Y, VILLAGE.r * sx, VILLAGE.r * sz, 0, 0, 6.283); g.fill(); }
+  Object.values(ROUTE).forEach(pts => line(pts, 3, '#a0743f'));
+  // הכפר וההר
+  g.font = 'bold 15px system-ui, sans-serif'; g.textAlign = 'center'; g.fillStyle = '#5b3a1e';
+  { const [X, Y] = P(VILLAGE.x, VILLAGE.z); g.fillText('🏠 הכפר', X, Y + 4); }
+  { const [X, Y] = P(0, -146); g.fillStyle = '#56606b'; g.beginPath(); g.moveTo(X - 22, Y + 6); g.lineTo(X, Y - 16); g.lineTo(X + 22, Y + 6); g.closePath(); g.fill();
+    g.fillStyle = '#fff'; g.beginPath(); g.moveTo(X - 7, Y - 9); g.lineTo(X, Y - 16); g.lineTo(X + 7, Y - 9); g.closePath(); g.fill();
+    g.fillStyle = 'rgba(120,120,120,.5)'; for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(X + 3 + i * 3, Y - 20 - i * 6 - (now / 300 % 6), 3 + i, 0, 6.283); g.fill(); } }
+  // תיבה
+  { const [X, Y] = P(CHEST_AT[0], CHEST_AT[1]); g.font = '18px system-ui'; g.fillText(prog.chest ? '📦' : '❔', X, Y + 6); }
+  // תחנות
+  const cur = current();
+  STATIONS.forEach(st => st.spots.forEach(([x, z]) => {
+    const [X, Y] = P(x, z), done = prog.done.includes(st.id), next = st === cur;
+    const r = next ? 11 + Math.sin(now / 250) * 2 : 10;
+    g.fillStyle = done ? '#16a34a' : next ? '#f59e0b' : '#f6e7c4'; g.beginPath(); g.arc(X, Y, r, 0, 6.283); g.fill();
+    g.strokeStyle = '#5b3a1e'; g.lineWidth = 2; g.stroke();
+    g.fillStyle = done ? '#fff' : '#3b2a1a'; g.font = 'bold 13px system-ui'; g.fillText(done ? '✓' : String(st.num), X, Y + 5);
+  }));
+  // הנינג'ה
+  { const [X, Y] = P(ninja.x, ninja.z); g.fillStyle = 'rgba(220,38,38,.25)'; g.beginPath(); g.arc(X, Y, 12 + Math.sin(now / 200) * 2, 0, 6.283); g.fill();
+    g.fillStyle = '#dc2626'; g.beginPath(); g.arc(X, Y, 6, 0, 6.283); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.stroke();
+    g.strokeStyle = '#dc2626'; g.lineWidth = 3; g.beginPath(); g.moveTo(X, Y); g.lineTo(X + Math.sin(ninja.dir) * 14, Y + Math.cos(ninja.dir) * 14 * (sz / sx)); g.stroke(); }
+  g.fillStyle = '#5b3a1e'; g.font = '13px system-ui'; g.fillText('נגיעה – סגירה', W / 2, H - 10);
 }
-addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); sayWord(current()); } });
 
 // ---------- לולאה ----------
 let last = performance.now();
@@ -1278,6 +1322,7 @@ function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (introT < 0) updateNinja(dt, now); else { ninja.speed = 0; poseNinja(ninja, dt, now); ninja.root.rotation.y = ninja.dir; }
   updateDog(dt, now); updateJourney(dt, now); placeCamera(dt);
+  if (mapOpen) drawMap(now);
   swayers.forEach(s => { if (s.y) s.o.rotation.y = Math.sin(now / 400 + s.ph) * s.a; else { s.o.rotation.z = Math.sin(now / 1300 + s.ph) * s.a; if (s.z) s.o.rotation.x = Math.cos(now / 1700 + s.ph) * s.a * 0.6; } });
   koi.forEach(k => {
     const a = k.a + now / 1000 * k.sp, x = k.x + Math.cos(a) * k.rx, z = k.z + Math.sin(a) * k.rz;
@@ -1300,4 +1345,4 @@ cam.blend = 1;
 requestAnimationFrame(loop);
 
 // לבדיקות בלבד
-window.__v3d = { mountain, scene, ninja, dog, cam, tapAt, setView, STATIONS, sayWord, current, endIntro, prog, introAt(t) { introT = t; }, get introT() { return introT; }, setSmoke, colliders, goTo(x, z) { ninja.target = [x, z]; }, tp(x, z) { ninja.x = x; ninja.z = z; ninja.target = null; } };
+window.__v3d = { openMap() { mapOpen = true; mapWrap.style.display = 'flex'; }, mountain, scene, ninja, dog, cam, tapAt, setView, STATIONS, sayWord, current, endIntro, prog, introAt(t) { introT = t; }, get introT() { return introT; }, setSmoke, colliders, goTo(x, z) { ninja.target = [x, z]; }, tp(x, z) { ninja.x = x; ninja.z = z; ninja.target = null; } };
