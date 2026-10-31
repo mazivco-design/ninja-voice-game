@@ -464,6 +464,7 @@ function playerPose() {
   if (act.stop > STOP_TIME - 0.8) applyStop(P);
   P = gustPlayerPose(P, now);                     // רוח: נצמד לבמבוק / עף אחורה
   P = duelPlayerPose(P, now);
+  P = liftPose(P);                                // PICK UP: הסלע מעל הראש
   P = jetPose(P);                                 // תרמיל סילון – עף קדימה                     // קרב: עמידה עם חרב והנפות
   return P;
 }
@@ -579,6 +580,7 @@ function drawObstacle(o, top) {
   if (SKY_TYPES.includes(o.type)) { drawSky(o); return; }
   if (o.type === 'duel') { drawDuelEnemy(o); return; }
   if (o.type === 'gust') { drawGustBamboo(o); return; }
+  if (o.type === 'lift') { drawLiftObstacle(o); return; }
   if (artDraw(o)) return;                        // יש ציור SVG מהסטודיו – הוא מחליף את הציור הרגיל
   if (o.type === 'door') { drawDoor(o); drawMerchant(o); return; }   // I WANT: סוחר ודלת נעולה
   if (o.type === 'box') {                       // ארגז עץ
@@ -1430,6 +1432,7 @@ function drawNinjaBody() {
   drawFigure({ fx, fy, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
   drawPlayerSword(fx, fy, P);
   drawPowerFront(fx, fy);                                         // בועת מגן / טיימר הסילון
+  drawLiftCarry(fx, fy);                                          // הסלע בידיים
   drawJumpLight(fx, fy);                                          // נורה מעל הראש: מתי להגיד JUMP
   drawPet(fx, fy);
   if (drowning) {

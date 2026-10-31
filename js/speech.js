@@ -77,7 +77,7 @@ async function ensureAudio() {
 // מילה אחרת מחכה לתוצאה הסופית, שמגיעה עם ציון ביטחון: ציון גבוה – מופעלת (וזו טעות, כמו היום). ציון נמוך – כנראה בלבול עם מילה דומה, מתעלמים.
 // אם Vosk "מתקן" את המילה האחרונה (שמע down ואז הבין שזה jump) – מטפלים במילה המתוקנת.
 function handleText(text, isFinal, detail) {
-  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || POWER_WORDS.includes(w);
+  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'put down' || POWER_WORDS.includes(w);
   const { words, confs } = tokenize(text, detail);
   const exp = expectedWords();
   for (let i = 0; i < words.length; i++) {
@@ -108,12 +108,13 @@ function handleText(text, isFinal, detail) {
 
 // מפרק את הטקסט למילים של המשחק. "let go" (שתי מילים אצל Vosk) הופך למילה אחת 'let go', עם הציון הנמוך מבין השתיים
 function tokenize(text, detail) {
-  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || POWER_WORDS.includes(w);
+  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'put down' || POWER_WORDS.includes(w);
   const toks = (text || '').toLowerCase().split(/\s+/).filter(Boolean);
   const dconf = detail && detail.length ? detail.map(d => d.conf) : null;
   const words = [], confs = [];
   for (let i = 0; i < toks.length; i++) {
-    if (toks[i] === 'let' && toks[i + 1] === 'go') { words.push('let go'); confs.push(dconf ? Math.min(dconf[i], dconf[i + 1]) : undefined); i++; }
+    const pair = toks[i] + ' ' + toks[i + 1];
+    if (pair === 'let go' || pair === 'pick up' || pair === 'put down') { words.push(pair); confs.push(dconf ? Math.min(dconf[i], dconf[i + 1]) : undefined); i++; }
     else if (ok(toks[i])) { words.push(toks[i]); confs.push(dconf ? dconf[i] : undefined); }
   }
   return { words, confs: dconf ? confs : null };
@@ -125,6 +126,7 @@ function expectedWords0() {
   if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? ['want'] : merchant.phase === 'choose' ? [...ITEM_WORDS] : [];
   if (duelActive()) return ['fight'];
   if (gustActive()) return ['hold'];
+  const le = liftExpected(); if (le) return le;
   if (ride && ride.phase === 'wait') return ['ride'];
   if (ride && (ride.phase === 'mount' || ride.phase === 'takeoff')) return ['up', 'down', 'fire'];
   if (rope && rope.phase !== 'done') return rope.phase === 'wait' ? ['catch'] : rope.phase === 'hang' ? ['let go'] : [];
@@ -237,6 +239,7 @@ function command(word, source) {
   heard = { text: word.toUpperCase(), t: 0.8 };
 
   if (word === 'jump') {
+    if (liftJump()) return;                // על הסלע – קופץ מעל הקיר / אל הכוכב
     if (py === 0) { vy = cfg.jumpV; py = 0.001; duckT = 0; sfx('jump'); }   // קופץ גם מתוך התכופפות
   } else if (word === 'up') { rideLane(true); }                       // UP – הדרקון עולה לגובה העליון
   else if (word === 'ride') { rideCmd(); }                             // RIDE – עולים על הדרקון
@@ -287,6 +290,8 @@ function command(word, source) {
   else if (word === 'shield') shieldCmd();                                // SHIELD – בועת מגן (מהחנות)
   else if (word === 'jet') jetCmd();                                      // JET – תרמיל סילון (מהחנות)
   else if (word === 'hold') holdCmd();                                    // HOLD – נתפס בגזע הבמבוק
+  else if (word === 'pick up') liftPick();                               // PICK UP – מרים את הסלע
+  else if (word === 'put down') liftPut();                               // PUT DOWN – מניח אותו
   else if (word === 'fight') fightCmd();                                  // FIGHT – הנפת חרב
   else if (word === 'let go') ropeLetGo();                               // LET GO – משחררים את החבל
   else if (word === 'want') merchantWant();                              // I WANT – הסוחר שואל: איזה?
@@ -296,7 +301,7 @@ function command(word, source) {
 
 // מקלדת – לבדיקה במחשב
 const KEYS = { KeyX: 'crawl', KeyA: 'leap', KeyV: 'dive', Space: 'jump', ArrowUp: 'jump', ArrowDown: 'down', KeyK: 'kick', KeyT: 'throw', KeyC: 'catch', KeyF: 'fly',
-               KeyS: 'stop', KeyR: 'run', KeyW: 'swim', KeyL: 'climb', KeyO: 'push', KeyU: 'pull', KeyH: 'hide', KeyB: 'block', KeyE: 'fire', KeyG: 'let go', KeyD: 'ride', KeyQ: 'up', KeyZ: 'fight', KeyY: 'hold', KeyI: 'shield', KeyJ: 'jet' };
+               KeyS: 'stop', KeyR: 'run', KeyW: 'swim', KeyL: 'climb', KeyO: 'push', KeyU: 'pull', KeyH: 'hide', KeyB: 'block', KeyE: 'fire', KeyG: 'let go', KeyD: 'ride', KeyQ: 'up', KeyZ: 'fight', KeyY: 'hold', KeyI: 'shield', KeyJ: 'jet', KeyM: 'pick up', KeyN: 'put down' };
 window.addEventListener('keydown', e => {
   const tag = e.target && e.target.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;      // כותבים שם – לא מפעילים פקודות

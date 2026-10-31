@@ -23,6 +23,7 @@ async function play(m, idx) {
   listenWords = words.includes('fly') && !words.includes('jump') ? [...words, 'jump'] : [...words];   // FLY צריך גם JUMP
   if (words.includes('want')) listenWords.push('i', ...ITEM_WORDS);
   if (words.includes('let go') && !words.includes('catch')) listenWords.push('catch');
+  if (words.includes('pick up')) for (const w of ['put down', 'jump']) if (!listenWords.includes(w)) listenWords.push(w);   // PICK UP → PUT DOWN → JUMP
   if (m !== 'demo') for (const w of powerWordsOwned()) if (!listenWords.includes(w)) listenWords.push(w);   // SHIELD / JET – אם יש מנות
   if (words.includes('ride')) for (const w of ['up', 'down', 'fire']) if (!listenWords.includes(w)) listenWords.push(w);   // RIDE: בשמיים צריך UP / DOWN / FIRE   // LET GO צריך גם CATCH                              // I WANT + שמות החפצים
   stopAudio();                      // מתחילים מחדש עם רשימת המילים של המשחק הזה
@@ -36,7 +37,7 @@ function startGame(m, idx) {
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
   world = m === 'stage' ? (STAGES[idx || 0].world ?? PAIR_WORLD[Math.floor((idx || 0) / 3)]) : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
-  learnT = 0; learnWait = null; missCount = {}; resetPowers(); obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
+  learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = 'wall'; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
@@ -198,6 +199,7 @@ function spawn() {
   if (type === 'dragon') o.w = DRAGON.w;
   if (type === 'duel') o.w = 8;
   if (type === 'gust') o.w = GUST.stalks[2] + 4;
+  if (type === 'lift') liftSetup(o);
   if (type === 'lake') o.w = speed * LAKE.factor;        // רחב מדי לקפיצה
   if (type === 'bridge') o.w = speed * BRIDGE.factor;    // רחב מדי לקפיצה, ארוך מדי להליכה
   if (type === 'pond') o.w = Math.max(54, speed * POND.factor);   // הרשת באמצע
@@ -216,6 +218,7 @@ function spawn() {
   if (type === 'door') nextGap += speed * 0.6;
   if (type === 'duel') nextGap += speed * 0.4;
   if (type === 'gust') nextGap += speed * 0.4;
+  if (type === 'lift') nextGap += speed * 0.6;
   if (type === 'chasm') nextGap += speed * 0.8 + CHASM.top + CHASM.slope;   // מקום לרדת מהגבעה
   if (nextType === 'chasm') nextGap += CHASM.top + CHASM.slope;                  // מקום לעלות על הגבעה לפני התהום
   if (mode === 'journey') addPickups(o);
@@ -246,6 +249,7 @@ function obstacleBox(o) {
     case 'door':  return { l: o.x, r: o.x + DOOR.w, t: GROUND - DOOR.h, b: GROUND };
     case 'skyrock': case 'storm': return skyBox(o);
     case 'dragon': return { l: o.x, r: o.x + o.w, t: GROUND - 10, b: GROUND };
+    case 'lift': return { l: o.x, r: o.x + o.w, t: GROUND - LIFT.wallH, b: GROUND };
     case 'gust': return { l: o.x, r: o.x + GUST.stalks[2] + 4, t: GROUND - GUST.h, b: GROUND };   // כל החורשה
     case 'duel': return { l: o.x - 4, r: o.x + 4, t: GROUND - 16, b: GROUND };
     case 'chasm': return { l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 40 };
@@ -277,7 +281,7 @@ function rockY(o) {   // הסלע נופל בתאוצה מהחבל עד הקרק
 function collides(o, pb) {
   if (o.demo || o.type === 'coin' || o.broken || o.defeated) return false;
   if (jetSafe()) return false;                                // עף עם תרמיל הסילון – מעל הכול
-  if (o.climbed || o.pushed || o.open || o.deflected || o.landed || o.unlocked || o.type === 'chasm' || o.type === 'dragon' || o.type === 'duel' || o.type === 'gust') return false;   // תהום: העולם עוצר לפניה, הנפילה מטופלת ב-rope.js
+  if (o.climbed || o.pushed || o.open || o.deflected || o.landed || o.unlocked || o.type === 'chasm' || o.type === 'dragon' || o.type === 'duel' || o.type === 'gust' || o.type === 'lift') return false;   // תהום: העולם עוצר לפניה, הנפילה מטופלת ב-rope.js
   if (o.type === 'rock' && o.fallK === undefined) return false;
   if (o.type === 'guard' && hidingFrom === o) return false;   // מתכופף מאחורי הסלעים – השומרים לא רואים
   const m = cfg.forgive || 0;
@@ -323,7 +327,7 @@ function learnAfterHit(o) {
   if (!requeued) nextGap += speed * LEARN.gap;                                               // זמן לשמוע לפני שהמכשול חוזר
 }
 // אם המכשול הבא כבר יצא לדרך – הוא נעלם בענן, ואותו מכשול שנכשלו בו מגיע מיד אחריו (ולא אחרי עוד מכשול אחר)
-const LEARN_KEEP = ['chasm', 'dragon', 'duel', 'gust', 'door', 'bridge'];
+const LEARN_KEEP = ['chasm', 'dragon', 'duel', 'gust', 'door', 'bridge', 'lift'];
 function learnRequeue(o) {
   if (SKY_TYPES.includes(o.type) || LEARN_KEEP.includes(o.type)) return false;
   const ahead = obstacles.filter(a => a !== o && !a.hit && !a.passed && a.x > o.x);
@@ -453,7 +457,8 @@ function update(dt) {
 
   // הנינג'ה
   const wasAir = py > 0;
-  if (jetPhysics(dt)) {}                                // תרמיל סילון – עף מעל הכול (power.js)
+  if (jetPhysics(dt)) {}
+  else if (liftPhysics(dt)) {}                         // PICK UP: עולה על הסלע / קופץ ממנו (lift.js)                                // תרמיל סילון – עף מעל הכול (power.js)
   else if (rideCtl()) { py = ride.py; vy = 0; flyT = 0; }   // על הדרקון – הגובה נקבע ב-dragon.js
   else if (act.climb > 0) {                     // מטפס על הסולם – עולה ומתקדם באלכסון
     climbK = Math.min(1, climbK + dt / CLIFF.time);
@@ -509,6 +514,7 @@ function update(dt) {
   rideUpdate(dt, pb);
   duelUpdate(dt, pb);
   gustUpdate(dt, pb);
+  liftUpdate(dt, pb);
   powerTick(dt);
   if (state === 'play' && testerMode === 'auto' && isTester()) testerAuto(pb, dt);   // מצב בודק: משחק אוטומטי
   if (state === 'demo' || state === 'intro') demoAuto(pb, dt);

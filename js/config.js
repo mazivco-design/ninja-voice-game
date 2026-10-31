@@ -8,7 +8,7 @@
 const MODEL_URL = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz';
 
 // כל המילים שהמשחק מכיר
-const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive', 'crawl', 'fire', 'want', 'let go', 'ride', 'fight', 'hold'];
+const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive', 'crawl', 'fire', 'want', 'let go', 'ride', 'fight', 'hold', 'pick up'];
 // סדר התחנות במסע – אפשר לשנות בעורך (tester → 🧭). נשמר ב-ninjaVoice_wordOrder (ומסתנכרן בין מכשירים)
 const WORDS_DEFAULT = WORDS.slice();
 (function applyWordOrder() {
@@ -22,7 +22,7 @@ const WORDS_DEFAULT = WORDS.slice();
   } catch (e) {}
 })();
 const WORD_ICON = { jump: '⬆️', down: '⬇️', kick: '🦶', throw: '✴️', catch: '🟡', fly: '🪁',
-                    stop: '✋', run: '💨', swim: '🌊', climb: '🧗', push: '🪨', pull: '⛓️', hide: '🌿', block: '🛡️', leap: '🤸', dive: '🤿', crawl: '🐛', fire: '🔥', want: '🙋', 'let go': '🪢', ride: '🐉', fight: '⚔️', hold: '🎋' };
+                    stop: '✋', run: '💨', swim: '🌊', climb: '🧗', push: '🪨', pull: '⛓️', hide: '🌿', block: '🛡️', leap: '🤸', dive: '🤿', crawl: '🐛', fire: '🔥', want: '🙋', 'let go': '🪢', ride: '🐉', fight: '⚔️', hold: '🎋', 'pick up': '🏋️', 'put down': '🫳' };
 
 // רמות קושי – קובעות מהירות, לבבות וקפיצה.
 // gapT = הזמן (בשניות) בין מכשול למכשול. מוגדר בזמן ולא במרחק,
@@ -68,7 +68,8 @@ const STAGES = [
   { name: 'LET GO',       words: ['let go'],         count: 4,  hint: 'Say CATCH to grab the rope, then LET GO', world: 5 },
   { name: 'RIDE',         words: ['ride'],           count: 8,  hint: 'RIDE the dragon · UP / DOWN past rocks · FIRE at storms', world: 2 },
   { name: 'FIGHT',        words: ['fight'],          count: 4,  hint: 'Say FIGHT, FIGHT, FIGHT to win the duel', world: 4 },
-  { name: 'HOLD',         words: ['hold'],           count: 4,  hint: 'Say HOLD to grab the bamboo before the wind', world: 0 }
+  { name: 'HOLD',         words: ['hold'],           count: 4,  hint: 'Say HOLD to grab the bamboo before the wind', world: 0 },
+  { name: 'PICK UP',      words: ['pick up'],        count: 4,  hint: 'PICK UP the rock · PUT DOWN · JUMP', world: 3 }
 ];
 // איזה עולם לכל זוג מילים (0 במבוק, 1 כפר בלילה, 2 שלג, 3 קניון, 4 מקדש)
 const PAIR_WORLD = [0, 1, 2, 3, 0, 4, 1, 2, 3, 0, 3];
@@ -76,7 +77,7 @@ const PAIR_WORLD = [0, 1, 2, 3, 0, 4, 1, 2, 3, 0, 3];
 // איזה מכשול מתאים לכל מילה
 const WORD_OBSTACLE = { jump: 'box', down: 'beam', kick: 'wall', throw: 'enemy', catch: 'coin', fly: 'river',
                         stop: 'rock', run: 'bridge', swim: 'lake', climb: 'cliff', push: 'boulder', pull: 'gate', hide: 'guard', block: 'arrows',
-                        leap: 'window', dive: 'pond', crawl: 'bramble', fire: 'ice', want: 'door', 'let go': 'chasm', ride: 'dragon', fight: 'duel', hold: 'gust' };
+                        leap: 'window', dive: 'pond', crawl: 'bramble', fire: 'ice', want: 'door', 'let go': 'chasm', ride: 'dragon', fight: 'duel', hold: 'gust', 'pick up': 'lift' };
 // זיהוי קולי: מילה שמתאימה למכשול שעל המסך מופעלת מיד. מילה אחרת מחכה לתוצאה הסופית, ומופעלת רק בביטחון גבוה
 const VOICE = { confMin: 0.8, waitMs: 350, logMax: 200 };   // waitMs: מילה שלא מתאימה למכשול הקרוב מחכה לכל היותר כך לציון, ואז מופעלת בכל מקרה
 // אילו מילים "מצופות" ליד כל מכשול (ההפך של WORD_OBSTACLE, ועוד מילים שעובדות יחד)
@@ -85,9 +86,10 @@ OBSTACLE_WORDS.river = ['jump', 'fly'];
 OBSTACLE_WORDS.chasm = ['catch', 'let go'];
 OBSTACLE_WORDS.skyrock = ['up', 'down'];
 OBSTACLE_WORDS.storm = ['fire'];
+OBSTACLE_WORDS.lift = ['pick up', 'put down', 'jump'];
 const HIT_WORD = { box: 'JUMP!', beam: 'DOWN!', wall: 'KICK!', enemy: 'THROW!', river: 'JUMP + FLY!',
                    rock: 'STOP!', bridge: 'RUN!', lake: 'SWIM!', cliff: 'CLIMB!', boulder: 'PUSH!', gate: 'PULL!', guard: 'HIDE!', arrows: 'BLOCK!',
-                   window: 'LEAP!', pond: 'DIVE!', coin: 'CATCH!', bramble: 'CRAWL!', ice: 'FIRE!', door: 'I WANT A KEY!', chasm: 'CATCH… LET GO!', dragon: 'RIDE!', duel: 'FIGHT!', gust: 'HOLD!', skyrock: 'UP or DOWN!', storm: 'FIRE!' };
+                   window: 'LEAP!', pond: 'DIVE!', coin: 'CATCH!', bramble: 'CRAWL!', ice: 'FIRE!', door: 'I WANT A KEY!', chasm: 'CATCH… LET GO!', dragon: 'RIDE!', duel: 'FIGHT!', gust: 'HOLD!', lift: 'PICK UP!', skyrock: 'UP or DOWN!', storm: 'FIRE!' };
 
 // "העולם" של המשחק: 160 על 100 יחידות, מוגדל לגודל המסך
 const W = 160, H = 100, GROUND = 72;   // קרקע גבוהה יותר – מקום לעומק מתחתיה (בורות, צלילה, נתיב קדמי)
@@ -123,7 +125,7 @@ const POND = { factor: 2.2, net: 3, deep: 8 }, DIVE_TIME = 1.2;        // DIVE �
 let CAVE_STYLE = 'cave';       // מראה המערה: 'cave' = גוש סלע אחד עם קיר פנימי כהה, 'boulders' = סלעים גדולים, 'chunks' = הגושים הישנים
 const BRAMBLE = { factor: 1.3, gap: 6.5, want: 1.0, slow: 0.6, ramp: 46, exit: 14, mouth: 34 };   // CRAWL – מערה שהתקרה שלה יורדת בהדרגה עד שחייבים לזחוליה
 // ניקוד במסע: ערך בסיס לפי קושי הפעולה, ועוד נקודה כל 3 תחנות. המספר מופיע על המכשול
-const WORD_POINTS = { 'let go': 4, ride: 4, fight: 3, hold: 3, jump: 1, down: 1, catch: 1, kick: 2, throw: 2, stop: 2, push: 2, hide: 2,
+const WORD_POINTS = { 'pick up': 4, 'let go': 4, ride: 4, fight: 3, hold: 3, jump: 1, down: 1, catch: 1, kick: 2, throw: 2, stop: 2, push: 2, hide: 2,
                       fly: 3, run: 3, swim: 3, climb: 3, pull: 3, block: 3, crawl: 3, fire: 3, leap: 4, dive: 4, want: 4 };
 // I WANT: סוחר עם עגלה לפני דלת נעולה. אומרים I WANT ואז את שם החפץ
 const ITEMS = { key: { icon: '🔑', say: 'a key' }, rope: { icon: '🪢', say: 'a rope' }, torch: { icon: '🔦', say: 'a torch' } };
