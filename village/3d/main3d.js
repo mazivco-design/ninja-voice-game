@@ -16,9 +16,23 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
-const SKY = 0xcfe6ee;
+const SKY = 0xbfe0ef;                       // צבע האופק (וגם צבע הערפל הקרוב)
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(SKY);
+// שמיים של בוקר בהיר: כיפה עם מעבר מכחול עמוק למעלה לבהיר באופק
+(function skyDome() {
+  const g = new THREE.SphereGeometry(1000, 32, 20), p = g.attributes.position, cols = [], c = new THREE.Color();
+  const top = new THREE.Color(0x2f7fd0), mid = new THREE.Color(0x6fb3e6), hor = new THREE.Color(SKY);
+  for (let i = 0; i < p.count; i++) {
+    const y = p.getY(i) / 1000;
+    if (y < 0) c.copy(hor); else if (y < 0.18) c.copy(hor).lerp(mid, y / 0.18); else c.copy(mid).lerp(top, Math.min(1, (y - 0.18) / 0.6));
+    cols.push(c.r, c.g, c.b);
+  }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }));
+  m.name = 'sky'; m.renderOrder = -1; m.userData.dyn = true; m.onBeforeRender = (r, sc, cam2) => m.position.copy(cam2.position);
+  scene.add(m);
+})();
 scene.fog = new THREE.Fog(SKY, 40, 135);
 const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 1100);
 
@@ -1007,9 +1021,10 @@ function peakGeo(r, h, seed, haze) {
     if (rr > 1e-6) { p.setX(i, x / rr * nr); p.setZ(i, z / rr * nr); }
     p.setY(i, y + Math.sin(a * 5 + seed) * h * 0.015 * (1 - u));
     const snowLine = 0.62 + n(a, 0) * 0.07;
-    if (u > snowLine) c.setHex(0xf3f6f8);
-    else if (u > 0.3) c.setHex(0x7d8790).lerp(new THREE.Color(0x96a0a8), Math.max(0, n(a * 2, y)));
-    else c.setHex(0x4f6b4a).lerp(new THREE.Color(0x6d7f6a), u / 0.3);
+    if (u > snowLine) c.setHex(0xffffff);
+    else if (u > 0.3) c.setHex(0x4e5c6c).lerp(new THREE.Color(0x66727f), Math.max(0, n(a * 2, y)));
+    else c.setHex(0x2f4f35).lerp(new THREE.Color(0x4a5e52), u / 0.3);
+    c.multiplyScalar(0.78 + 0.32 * Math.max(-1, Math.min(1, (x * 0.8 + z * 0.4) / (rr + 1e-6))) * (u > snowLine ? 0.35 : 1)); // צד מואר / צד בצל
     c.lerp(sky, haze);                                                    // ערפל אוויר
     cols.push(c.r, c.g, c.b);
   }
@@ -1021,9 +1036,9 @@ const mountain = (function buildMountain() {
   const g = new THREE.Group(); g.position.set(MTN.x, -4, MTN.z); scene.add(g);
   const mm = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true, fog: false });
   const add = (geo, x, z, ry) => { const m = new THREE.Mesh(geo, mm); m.position.set(x, 0, z); m.rotation.y = ry || 0; g.add(m); return m; };
-  add(peakGeo(MTN.r, MTN.h, 1.3, 0.22), 0, 0);
-  add(peakGeo(MTN.r * 0.7, MTN.h * 0.5, 4.1, 0.38), -MTN.r * 0.95, 40, 1);        // כתף משמאל
-  add(peakGeo(MTN.r * 0.65, MTN.h * 0.45, 7.7, 0.40), MTN.r * 1.0, 30, 2);        // כתף מימין
+  add(peakGeo(MTN.r, MTN.h, 1.3, 0.08), 0, 0);
+  add(peakGeo(MTN.r * 0.7, MTN.h * 0.5, 4.1, 0.2), -MTN.r * 0.95, 40, 1);        // כתף משמאל
+  add(peakGeo(MTN.r * 0.65, MTN.h * 0.45, 7.7, 0.22), MTN.r * 1.0, 30, 2);        // כתף מימין
   // מקדש קטן בפסגה (גדול מספיק כדי לראות אותו מרחוק)
   const S = 1.5, top = new THREE.Group(); top.position.set(0, MTN.h - 2, 0); top.scale.setScalar(S); g.add(top);
   const F = { fog: false };
