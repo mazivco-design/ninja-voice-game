@@ -464,7 +464,8 @@ function playerPose() {
   if (act.stop > STOP_TIME - 0.8) applyStop(P);
   P = gustPlayerPose(P, now);                     // רוח: נצמד לבמבוק / עף אחורה
   P = duelPlayerPose(P, now);
-  P = liftPose(P);                                // PICK UP: הסלע מעל הראש
+  P = liftPose(P);
+  P = merchPose(P);                                // PICK UP: הסלע מעל הראש
   P = jetPose(P);                                 // תרמיל סילון – עף קדימה                     // קרב: עמידה עם חרב והנפות
   return P;
 }
@@ -527,7 +528,7 @@ function draw() {
   drawWind();
   for (const o of obstacles) if (o.type === 'chasm') drawRopeSwing(o);        // החבל (והנינג'ה התלוי עליו) – לפני הכול
   for (const o of obstacles) if (o.type === 'window') drawFireRing(o, true);
-  for (const o of obstacles) if (o.type === 'door') drawDoorWall(o);           // החומה סביב הדלת – מעל הנינג'ה: הוא עובר דרך הפתח, לא לפני הדלת   // החצי הקדמי של הטבעת – מעל הנינג'ה, נראה שהוא עובר דרכה
+  for (const o of obstacles) if (o.type === 'door') drawGateFront(o);           // החומה סביב הדלת – מעל הנינג'ה: הוא עובר דרך הפתח, לא לפני הדלת   // החצי הקדמי של הטבעת – מעל הנינג'ה, נראה שהוא עובר דרכה
   for (const o of obstacles) if (o.type === 'bridge') drawFieldSmoke(o);
   for (const o of obstacles) if (o.type === 'lake' || o.type === 'pond') {   // מים מעל השחיין – נראה חצי שקוע / צולל
     ctx.fillStyle = o.type === 'lake' ? 'rgba(20,184,166,.55)' : 'rgba(14,116,144,.6)'; waterPath(o, bottom); ctx.fill();
@@ -585,7 +586,7 @@ function drawObstacle(o, top) {
   if (o.type === 'lift') { drawLiftObstacle(o); return; }
   if (o.type === 'bramble') { drawTunnel(o); return; }   // CRAWL: סלע ענק ומחילה מתחתיו (tunnel.js)
   if (artDraw(o)) return;                        // יש ציור SVG מהסטודיו – הוא מחליף את הציור הרגיל
-  if (o.type === 'door') { drawDoor(o); drawMerchant(o); return; }   // I WANT: סוחר ודלת נעולה
+  if (o.type === 'door') { drawGate(o); drawMerchant(o); return; }   // I WANT: סוחר ודלת נעולה
   if (o.type === 'box') {                       // ארגז עץ
     const y = GROUND - BOX.h;
     ctx.fillStyle = '#c2410c'; ctx.fillRect(x, y, BOX.w, BOX.h);

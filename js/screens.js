@@ -174,8 +174,8 @@ function openDict() {
 }
 
 // קול: הקלטות של כל מילה ומשפט (קול "Michael", audio/voice/). VOICE_VER – משנים כשמחליפים הקלטות, כדי שהדפדפן לא ישתמש בישנות. אם הקלטה לא נטענת – הקול של הדפדפן כגיבוי
-const VOICE_VER = 'michael2';
-const VOICE_CLIPS = {"jump": "jump", "down": "down", "kick": "kick", "throw": "throw", "catch": "catch", "fly": "fly", "stop": "stop", "run": "run", "swim": "swim", "climb": "climb", "push": "push", "pull": "pull", "hide": "hide", "block": "block", "leap": "leap", "dive": "dive", "crawl": "crawl", "fire": "fire", "let go": "let-go", "ride": "ride", "fight": "fight", "hold": "hold", "up": "up", "want": "want", "key": "key", "rope": "rope", "torch": "torch", "what do you want?": "what-do-you-want", "i have a key": "i-have-a-key", "a rope": "a-rope", "and a torch": "and-a-torch", "which one?": "which-one", "here you go!": "here-you-go", "hmm, that won't open the door.": "hmm-that-won-t-open-the-door", "shield": "shield", "jet": "jet", "pick up": "pick-up", "put down": "put-down", "i want a key": "i-want-a-key"};
+const VOICE_VER = 'michael3';
+const VOICE_CLIPS = {"jump": "jump", "down": "down", "kick": "kick", "throw": "throw", "catch": "catch", "fly": "fly", "stop": "stop", "run": "run", "swim": "swim", "climb": "climb", "push": "push", "pull": "pull", "hide": "hide", "block": "block", "leap": "leap", "dive": "dive", "crawl": "crawl", "fire": "fire", "let go": "let-go", "ride": "ride", "fight": "fight", "hold": "hold", "up": "up", "want": "want", "key": "key", "rope": "rope", "torch": "torch", "what do you want?": "what-do-you-want", "i have a key": "i-have-a-key", "a rope": "a-rope", "and a torch": "and-a-torch", "which one?": "which-one", "here you go!": "here-you-go", "hmm, that won't open the door.": "hmm-that-won-t-open-the-door", "shield": "shield", "jet": "jet", "pick up": "pick-up", "put down": "put-down", "i want a key": "i-want-a-key", "i want a rope": "i-want-a-rope", "i want a torch": "i-want-a-torch", "hmm, that won't help here.": "hmm-that-won-t-help-here"};
 const voiceAudio = {};
 let voiceNow = null;
 // מנגנים דרך Web Audio (אותו מנגנון של צלילי המשחק): נפתח פעם אחת בנגיעה הראשונה, ואז עובד בכל מקום – גם במסע בלי הדגמה.
@@ -360,7 +360,7 @@ function finishIntro() {
   if (state !== 'intro') return;
   obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; demoSteps = []; flash = null; invulnT = 0;
   py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0; resetAct();
-  speed = runSpeed; distSinceSpawn = 0; nextGap = speed * 2.4; liftKindNext = 'wall';   // PICK UP: מתחילים מהקיר
+  speed = runSpeed; distSinceSpawn = 0; nextGap = speed * 2.4; liftKindNext = 'wall'; merchNext = 'key';   // PICK UP: מתחילים מהקיר
   seenWords = [];
   banner = { text: 'Go!', sub: '', t: 1.2 };
   $('skipBtn').classList.add('hide');

@@ -37,7 +37,7 @@ function startGame(m, idx) {
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
   world = m === 'stage' ? (STAGES[idx || 0].world ?? PAIR_WORLD[Math.floor((idx || 0) / 3)]) : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
-  learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = 'wall'; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
+  learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = 'wall'; merchNext = 'key'; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
@@ -215,7 +215,7 @@ function spawn() {
   nextGap = speed * rand(cfg.gapT[0], cfg.gapT[1]) + (o.w || 0);
   if (type === 'river') nextGap += speed * FLY.time * 0.8;   // זמן לנחות מהגלישה לפני המכשול הבא
   if (type === 'bridge') nextGap += speed * 1.0;             // אחרי RUN העולם מהיר – עוד מרווח
-  if (type === 'door') nextGap += speed * 0.6;
+  if (type === 'door') { doorSetup(o); nextGap += speed * 0.6; }
   if (type === 'duel') nextGap += speed * 0.4;
   if (type === 'gust') nextGap += speed * 0.4;
   if (type === 'lift') nextGap += speed * 0.6;
@@ -246,7 +246,7 @@ function obstacleBox(o) {
     case 'beam':  return { l: o.x, r: o.x + BEAM.w, t: -1e6, b: GROUND - BEAM.clear };
     case 'wall':  return { l: o.x, r: o.x + WALL.w, t: GROUND - WALL.h, b: GROUND };
     case 'ice':   return { l: o.x, r: o.x + ICE.w, t: GROUND - ICE.h, b: GROUND };
-    case 'door':  return { l: o.x, r: o.x + DOOR.w, t: GROUND - DOOR.h, b: GROUND };
+    case 'door':  return { l: o.x, r: o.x + (o.w || DOOR.w), t: GROUND - DOOR.h, b: GROUND };
     case 'skyrock': case 'bat': return skyBox(o);
     case 'dragon': return { l: o.x, r: o.x + o.w, t: GROUND - 10, b: GROUND };
     case 'lift': return { l: o.x, r: o.x + o.w, t: GROUND - LIFT.wallH, b: GROUND };
@@ -455,7 +455,8 @@ function update(dt) {
   // הנינג'ה
   const wasAir = py > 0;
   if (jetPhysics(dt)) {}
-  else if (liftPhysics(dt)) {}                         // PICK UP: עולה על הסלע / קופץ ממנו (lift.js)                                // תרמיל סילון – עף מעל הכול (power.js)
+  else if (liftPhysics(dt)) {}
+  else if (merchPhysics(dt)) {}                        // I WANT: מטפס על הצוק / יורד ממנו                         // PICK UP: עולה על הסלע / קופץ ממנו (lift.js)                                // תרמיל סילון – עף מעל הכול (power.js)
   else if (rideCtl()) { py = ride.py; vy = 0; flyT = 0; }   // על הדרקון – הגובה נקבע ב-dragon.js
   else if (act.climb > 0) {                     // מטפס על הסולם – עולה ומתקדם באלכסון
     climbK = Math.min(1, climbK + dt / CLIFF.time);

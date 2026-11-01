@@ -32,7 +32,7 @@ function curSpeed() {
   const ls = liftSpeed(); if (ls !== null) return ls;
   if (tunnelHolds()) return 0;                                            // CRAWL: עומד בפתח המחילה ומחכה
   if (state !== 'play' && obstacles.some(o => o.type === 'bramble' && o.inTunnel)) return (runSpeed || cfg.speed) * BRAMBLE.slow;   // בהדגמה – זוחל לאורך המחילה                     // PICK UP: עומדים ליד הסלע / הולכים איתו לאט / על הסלע
-  if (merchant && merchant.phase === 'walk') return speed * MERCHANT_WALK;   // עם המפתח ביד – הולכים לאט אל הדלת
+  const ms = merchSpeed(); if (ms !== null) return ms;                    // I WANT: הולכים עם החפץ / מטפסים על הצוק / עוברים במערה
   if (act.climb > 0) return CLIFF.ladder / CLIFF.time;         // על הסולם – מתקדמים לאט באלכסון
   if (act.stop > 0 || act.pulling > 0 || act.hiding > 0 || (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') || (rope && rope.phase !== 'done') || rideHolds() || duelHolds() || gustHolds() || learnT > 0) return 0;   // learnT: עצירה קצרה אחרי פגיעה   // …או עומדים ליד הסוחר   // עוצרים / מושכים בחבל / מתחבאים בשיח
   return speed * (act.run > 0 ? RUN_BOOST.mult : 1) * (crawling() ? BRAMBLE.slow : 1) * gustSlow();   // gustSlow: הרוח מאטה לפני הטורנדו
