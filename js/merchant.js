@@ -345,11 +345,17 @@ function caveShape(o) {
   const leftEdge = [], rightEdge = [];                            // פני ההר מעל הפתחים – שבורים, נוטים קצת החוצה למטה
   for (let k = 0; k <= 10; k++) { const y = CAVE.top + (roof[0][1] - CAVE.top) * k / 10, lean = k / 10 * 3;
     leftEdge.push([L + 1 - lean + n(k, 4), y]); rightEdge.push([R - 1 + lean + n(k + 40, 4), CAVE.top + (roof[roof.length - 1][1] - CAVE.top) * k / 10]); }
-  leftEdge.push(roof[0]); rightEdge.push(roof[roof.length - 1]);
-  const rock = [[leftEdge[0][0], CAVE.top], ...leftEdge, ...roof, ...rightEdge.slice().reverse()];   // הסלע: מעל התקרה בלבד – הפתח פתוח עד הקצוות
-  const hollow = [[L, GROUND], ...roof, [R, GROUND]];             // החלל: מהתקרה עד הקרקע
+  // שפות הפתח: סלעים לא אחידים מהתקרה עד הקרקע (בלי קו ישר), ובבסיס – אבן בולטת
+  const mouth = (side, x0, seed) => { const pts = [], y0 = (side < 0 ? roof[0] : roof[roof.length - 1])[1];
+    for (let k = 0; k <= 7; k++) { const q = k / 7, y = y0 + (GROUND - y0) * q, base = q > 0.7 ? (q - 0.7) / 0.3 * 2.5 : 0;
+      pts.push([x0 - side * (1.5 + base + Math.abs(n(k + seed, 4)) + (k % 2) * 0.8), y]); }
+    return pts; };
+  const mouthL = mouth(-1, L, 300), mouthR = mouth(1, R, 340);
+  const outL = [L - 3 + n(1, 2), GROUND], outR = [R + 3 + n(2, 2), GROUND];   // פני ההר יורדים עד הקרקע מחוץ לפתח
+  const rock = [[leftEdge[0][0], CAVE.top], ...leftEdge, outL, ...mouthL.slice().reverse(), ...roof, ...mouthR, outR, ...rightEdge.slice().reverse()];   // הסלע: מעל התקרה ושפה סלעית צרה בצדי הפתח
+  const hollow = [...mouthL.slice().reverse(), ...roof.slice(1, -1), ...mouthR];   // החלל: בין שפות הפתח ומתחת לתקרה
   const lumps = []; for (const [ex, sgn] of [[L, 1], [R, -1]]) for (let k = 0; k < 4; k++) lumps.push([ex + sgn * (3 + n(k + 200, 5)), roof[0][1] - 5 - k * 9 + n(k + 210, 3), 4 + hash(k + 220) * 3]);
-  o._cave = { x, L, R, rock, hollow, roof, leftEdge, rightEdge, lumps };
+  o._cave = { x, L, R, rock, hollow, roof, leftEdge, rightEdge, lumps, mouthL, mouthR };
   return o._cave;
 }
 function drawCaveDark(o) {
@@ -360,7 +366,7 @@ function drawCaveDark(o) {
   const rg = ctx.createLinearGradient(0, CAVE.top, 0, GROUND); rg.addColorStop(0, '#57534e'); rg.addColorStop(1, '#8a817a');
   ctx.fillStyle = rg; ctx.beginPath(); pathPts(P.rock); ctx.fill();
   ctx.strokeStyle = 'rgba(40,34,28,.55)'; ctx.lineWidth = 0.6; ctx.lineJoin = 'round';   // קו מתאר כהה – כמו שפת סלע
-  ctx.beginPath(); pathPts(P.roof, true); ctx.stroke();
+  ctx.beginPath(); pathPts([...P.mouthL.slice().reverse(), ...P.roof.slice(1, -1), ...P.mouthR], true); ctx.stroke();
   ctx.beginPath(); pathPts(P.leftEdge, true); ctx.stroke(); ctx.beginPath(); pathPts(P.rightEdge, true); ctx.stroke();
   ctx.fillStyle = 'rgba(255,255,255,.07)';                        // פאות מוארות על הסלעים שליד הפתח
   for (const [bx, by, r] of P.lumps) { ctx.beginPath(); ctx.ellipse(bx, by, r, r * 0.7, -0.4, Math.PI, Math.PI * 1.9); ctx.fill(); }
