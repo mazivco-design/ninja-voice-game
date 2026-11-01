@@ -6,7 +6,7 @@
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
 let merchant = null;          // { o, phase: 'ask' | 'choose' | 'give' | 'walk' | 'open' | 'hook' | 'climb' | 'top' | 'down' | 'cave' | 'done', t, hi, bubble, item, said }
-const GATES = { key: { w: 15 }, rope: { w: 22, h: 38 }, torch: { w: 60, h: 24 } };   // הצוק / המערה
+const GATES = { key: { w: 15 }, rope: { w: 22, h: 38 }, torch: { w: 150, h: 24 } };   // הצוק / המערה
 let merchNext = 'key';
 function doorSetup(o) { o.need = merchNext; merchNext = { key: 'rope', rope: 'torch', torch: 'key' }[merchNext]; o.w = GATES[o.need].w; }
 function needOf(o) { return (o && o.need) || 'key'; }
@@ -17,7 +17,7 @@ const SAY_ASK = [[0.3, -1, 'What do you want?']];
 const GATE_CLIMB = 1.6;
 const MERCH = { turn: 1.7, hint: 5.5, hintEvery: 7, choiceHint: 4 };   // turn: מתי מופיעה בועת "תורך" (אחרי שהשאלה נגמרה)
 
-function cartX(o) { return o.x - 32; }                        // העגלה עומדת לפני הדלת, והסוחר בינה לבין הדלת
+function cartX(o) { return o.x - 46; }                        // העגלה עומדת לפני הדלת, והסוחר בינה לבין הדלת
 const ITEM_GAP = 7;
 
 function merchantUpdate(dt, pb) {
@@ -271,7 +271,7 @@ function merchSpeed() {                                          // null = לא 
   const m = merchant; if (!m) return null;
   if (m.phase === 'walk') return speed * MERCHANT_WALK;
   if (m.phase === 'top' || m.phase === 'down') return speed * 0.7;
-  if (m.phase === 'cave') return speed * 0.55;                  // הולכים בזהירות בחושך
+  if (m.phase === 'cave') return speed * 0.8;                   // הולכים בזהירות בחושך
   if (m.phase === 'done') return null;
   return 0;
 }
@@ -318,47 +318,56 @@ function drawClimbRope(o) {                                     // החבל עם
   ctx.beginPath(); ctx.arc(hx + 0.8, hy - 0.8, 1.1, Math.PI * 0.5, Math.PI * 1.9); ctx.stroke();
   ctx.restore();
 }
-function drawCave(o) {                                          // מערה: גוש סלע עם פתח, ובפנים חושך עם נטיפים ואבני חן קטנות
-  const x = o.x, w = o.w, H = GATES.torch.h, top = GROUND - H - 10;
-  ctx.fillStyle = '#1c1917'; ctx.fillRect(x + 2, GROUND - H, w - 4, H);                  // הפנים
-  const t = performance.now() / 1000;
-  for (let k = 0; k < 6; k++) { const gx = x + 6 + k * (w - 12) / 5, gy = GROUND - 3 - (k % 3) * 5; ctx.fillStyle = 'rgba(125,211,252,' + (0.5 + 0.3 * Math.sin(t * 3 + k)) + ')'; ctx.beginPath(); ctx.moveTo(gx, gy - 1.2); ctx.lineTo(gx + 0.7, gy); ctx.lineTo(gx, gy + 1.2); ctx.lineTo(gx - 0.7, gy); ctx.fill(); }
-  ctx.fillStyle = '#44403c'; for (let k = 0; k < 7; k++) { const sx = x + 5 + k * (w - 10) / 6; ctx.beginPath(); ctx.moveTo(sx - 1.4, GROUND - H); ctx.lineTo(sx, GROUND - H + 3 + hash(k) * 3); ctx.lineTo(sx + 1.4, GROUND - H); ctx.fill(); }   // נטיפים
+function drawCave(o) {                                          // הקיר האחורי של המערה (מאחורי הנינג'ה) – בפנים רואים סלע, לא את הנוף שבחוץ
+  const x = o.x, w = o.w, ceil = GROUND - GATES.torch.h;
+  const g = ctx.createLinearGradient(0, ceil, 0, GROUND); g.addColorStop(0, '#3a332d'); g.addColorStop(1, '#5a4f45');
+  ctx.fillStyle = g; ctx.fillRect(x, ceil - 1, w, GROUND - ceil + 1);
+  ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 0.5;        // שכבות וסדקים בקיר
+  for (let k = 0; k < Math.floor(w / 6); k++) { const cx = x + k * 6 + hash(k * 1.9) * 4, cy = ceil + 3 + hash(k * 3.7) * (GATES.torch.h - 6); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 2.5 + hash(k) * 2, cy + 1.2); ctx.stroke(); }
+  ctx.fillStyle = 'rgba(255,255,255,.05)'; for (let k = 0; k < Math.floor(w / 11); k++) { const bx = x + k * 11 + hash(k * 2.2) * 5; ctx.beginPath(); ctx.ellipse(bx, ceil + 6 + hash(k * 4.4) * 12, 3 + hash(k) * 2, 1.6, 0, 0, Math.PI * 2); ctx.fill(); }
 }
-function drawCaveDark(o) {                                      // גוף הסלע מעל ומסביב, וחושך בפנים – הלפיד מאיר עיגול סביב הנינג'ה
-  const x = o.x, w = o.w, H = GATES.torch.h, top = GROUND - H - 12, m = merchant && merchant.o === o ? merchant : null;
-  const inCave = m && m.phase === 'cave' && PLAYER.x + 8 > x && PLAYER.x < x + w;
-  ctx.save();
-  if (!o.passed) {                                              // חושך בתוך המערה (חוץ מעיגול האור של הלפיד)
-    ctx.beginPath(); ctx.rect(x + 2, GROUND - H, w - 4, H);
-    ctx.clip();
-    const lx = PLAYER.x + 7, ly = GROUND - 12, R = 15 + Math.sin(performance.now() / 90) * 0.6;
-    if (inCave) {
-      const g = ctx.createRadialGradient(lx, ly, 2, lx, ly, R);
-      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(0.6, 'rgba(10,6,2,.35)'); g.addColorStop(1, 'rgba(8,6,4,.97)');
-      ctx.fillStyle = g; ctx.fillRect(x, GROUND - H - 2, w, H + 4);
-      ctx.fillStyle = 'rgba(8,6,4,.97)';                       // מחוץ לרדיוס – חושך מלא
-      ctx.beginPath(); ctx.rect(x, GROUND - H - 2, w, H + 4); ctx.arc(lx, ly, R, 0, Math.PI * 2, true); ctx.fill();
-      ctx.fillStyle = 'rgba(251,146,60,.12)'; ctx.beginPath(); ctx.arc(lx, ly, R * 0.7, 0, Math.PI * 2); ctx.fill();   // אור חם
-    } else { ctx.fillStyle = 'rgba(8,6,4,.92)'; ctx.fillRect(x, GROUND - H - 2, w, H + 4); }
+// מערה ארוכה בתוך הר: מעל הפתח סלע עד ראש המסך (אין שמיים בפנים). החושך מתחזק בהדרגה בכניסה ונחלש ביציאה.
+// בפנים – רק עיגול האור של הלפיד מאיר (נטיפים ואבני חן נראים רק לידו)
+const CAVE = { fade: 34, dark: 0.95, top: -140, bottom: 160 };
+function drawCaveDark(o) {
+  const x = o.x, w = o.w, CH = GATES.torch.h, ceil = GROUND - CH, m = merchant && merchant.o === o ? merchant : null, t = performance.now() / 1000;
+  const inCave = m && m.phase === 'cave';
+  // ההר: סלע מעל התקרה לכל אורך המערה, עם פנים סלע משופעות בכניסה וביציאה
+  const rg = ctx.createLinearGradient(0, CAVE.top, 0, ceil); rg.addColorStop(0, '#57534e'); rg.addColorStop(1, '#8a817a');
+  ctx.fillStyle = rg; ctx.beginPath();
+  ctx.moveTo(x - 10, CAVE.top); ctx.lineTo(x + w + 10, CAVE.top); ctx.lineTo(x + w + 6, ceil - 14); ctx.quadraticCurveTo(x + w + 1, ceil - 4, x + w - 2, ceil);
+  ctx.lineTo(x + 2, ceil); ctx.quadraticCurveTo(x - 1, ceil - 4, x - 6, ceil - 14); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.2)'; ctx.lineWidth = 0.5;        // סדקים ושכבות
+  for (let k = 0; k < 14; k++) { const cx = x + hash(k * 2.3 + 1) * w, cy = ceil - 6 - hash(k * 4.1) * 50; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 3 + hash(k) * 3, cy + 2); ctx.stroke(); }
+  ctx.fillStyle = '#44403c';                                      // נטיפים מהתקרה
+  for (let k = 0; k < Math.floor(w / 9); k++) { const sx = x + 6 + k * 9 + hash(k) * 3; ctx.beginPath(); ctx.moveTo(sx - 1.4, ceil); ctx.lineTo(sx, ceil + 3 + hash(k * 1.7) * 3.5); ctx.lineTo(sx + 1.4, ceil); ctx.fill(); }
+  for (let k = 0; k < Math.floor(w / 14); k++) {                  // אבני חן קטנות בקירות
+    const gx = x + 8 + k * 14 + hash(k * 3.1) * 5, gy = GROUND - 3 - hash(k * 5.3) * 14;
+    ctx.fillStyle = 'rgba(125,211,252,' + (0.55 + 0.35 * Math.sin(t * 3 + k)) + ')'; ctx.beginPath(); ctx.moveTo(gx, gy - 1.2); ctx.lineTo(gx + 0.7, gy); ctx.lineTo(gx, gy + 1.2); ctx.lineTo(gx - 0.7, gy); ctx.fill();
+  }
+  // החושך: מתחזק בהדרגה מהכניסה, חזק באמצע, ונחלש לקראת היציאה. בכל הגובה – גם על הסלע והקרקע
+  const f = Math.min(0.45, CAVE.fade / w), dk = 'rgba(8,6,4,';
+  const dg = ctx.createLinearGradient(x, 0, x + w, 0);
+  dg.addColorStop(0, dk + '0)'); dg.addColorStop(f, dk + CAVE.dark + ')'); dg.addColorStop(1 - f, dk + CAVE.dark + ')'); dg.addColorStop(1, dk + '0)');
+  const lx = PLAYER.x + 7, ly = GROUND - 12, R = 16 + Math.sin(t * 11) * 0.5;
+  const darkAt = xx => { const r = (xx - x) / w; return CAVE.dark * Math.max(0, Math.min(1, Math.min(r, 1 - r) / f)); };
+  ctx.save(); ctx.fillStyle = dg; ctx.beginPath(); ctx.rect(x, CAVE.top, w, CAVE.bottom - CAVE.top);
+  if (inCave) ctx.arc(lx, ly, R, 0, Math.PI * 2, true);           // חור באור הלפיד
+  ctx.fill('evenodd');
+  if (inCave) {                                                   // בתוך העיגול: מעבר רך מהאור אל החושך שמסביב
+    const a = darkAt(lx), g = ctx.createRadialGradient(lx, ly, 2, lx, ly, R);
+    g.addColorStop(0, dk + '0)'); g.addColorStop(0.55, dk + (a * 0.25) + ')'); g.addColorStop(1, dk + a + ')');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(lx, ly, R, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(251,146,60,.10)'; ctx.beginPath(); ctx.arc(lx, ly, R * 0.75, 0, Math.PI * 2); ctx.fill();   // אור חם
   }
   ctx.restore();
-  // הסלע עצמו – כיפה מעל המערה, עם קשתות פתח משני הצדדים
-  const g = ctx.createLinearGradient(0, top, 0, GROUND); g.addColorStop(0, '#a8a29e'); g.addColorStop(1, '#78716c');
-  ctx.fillStyle = g; ctx.beginPath();
-  ctx.moveTo(x - 4, GROUND); ctx.lineTo(x - 3, GROUND - H * 0.6); ctx.quadraticCurveTo(x - 1, top + 2, x + w * 0.25, top);
-  ctx.quadraticCurveTo(x + w * 0.5, top - 4, x + w * 0.75, top); ctx.quadraticCurveTo(x + w + 1, top + 2, x + w + 3, GROUND - H * 0.6); ctx.lineTo(x + w + 4, GROUND);
-  ctx.lineTo(x + w - 2, GROUND); ctx.lineTo(x + w - 2, GROUND - H + 3); ctx.quadraticCurveTo(x + w - 2, GROUND - H, x + w - 5, GROUND - H);
-  ctx.lineTo(x + 5, GROUND - H); ctx.quadraticCurveTo(x + 2, GROUND - H, x + 2, GROUND - H + 3); ctx.lineTo(x + 2, GROUND); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,.2)'; ctx.lineWidth = 0.5;
-  for (let k = 0; k < 6; k++) { const cx = x + 4 + k * w / 6; ctx.beginPath(); ctx.moveTo(cx, top + 3 + hash(k) * 3); ctx.lineTo(cx + 3, top + 6 + hash(k + 2) * 3); ctx.stroke(); }
-  if (inCave) {                                                 // הלפיד ביד – להבה
-    const fx = PLAYER.x + 7, fy = GROUND - 13, f = Math.sin(performance.now() / 70) * 0.4;
+  if (inCave) {                                                   // הלפיד ביד
+    const fx = PLAYER.x + 7, fy = GROUND - 13, fl = Math.sin(t * 14) * 0.4;
     ctx.fillStyle = '#7c2d12'; ctx.fillRect(fx - 0.35, fy, 0.7, 4);
-    ctx.fillStyle = '#fb923c'; ctx.beginPath(); ctx.ellipse(fx, fy - 1 + f * 0.3, 1.2, 2 + f, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fb923c'; ctx.beginPath(); ctx.ellipse(fx, fy - 1 + fl * 0.3, 1.2, 2 + fl, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.ellipse(fx, fy - 0.6, 0.6, 1.1, 0, 0, Math.PI * 2); ctx.fill();
   }
-  if (!o.unlocked && labelsVisible() && !merchant) label('TORCH', x + w / 2, top - 6, 4, '#fde047', '#1e293b');
+  if (!o.unlocked && labelsVisible() && !merchant) label('TORCH', x + 12, ceil - 6, 4, '#fde047', '#1e293b');
 }
 function drawTorchItem(x, y) {                                  // לפיד: מקל עם להבה (אמריקאית – torch זה לפיד, לא פנס)
   const f = Math.sin(performance.now() / 80) * 0.3;

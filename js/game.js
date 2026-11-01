@@ -215,7 +215,7 @@ function spawn() {
   nextGap = speed * rand(cfg.gapT[0], cfg.gapT[1]) + (o.w || 0);
   if (type === 'river') nextGap += speed * FLY.time * 0.8;   // זמן לנחות מהגלישה לפני המכשול הבא
   if (type === 'bridge') nextGap += speed * 1.0;             // אחרי RUN העולם מהיר – עוד מרווח
-  if (type === 'door') { doorSetup(o); nextGap += speed * 0.6; }
+  if (type === 'door') { doorSetup(o); nextGap += speed * 0.6 + o.w; }   // o.w נקבע כאן (צוק / מערה ארוכה) – הרווח עד המכשול הבא כולל אותו
   if (type === 'duel') nextGap += speed * 0.4;
   if (type === 'gust') nextGap += speed * 0.4;
   if (type === 'lift') nextGap += speed * 0.6;
