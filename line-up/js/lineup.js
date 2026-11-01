@@ -17,7 +17,15 @@ const SEATS = [473, 531, 589, 647].map(x => ({ x, y: TABLE.y - TABLE.hd - 10 }))
 const QN = [[270, 372], [274, 434], [266, 496], [270, 558]];       // התור לנודלס (הראשון ליד הדוכן)
 const QS = [[850, 372], [846, 434], [854, 496], [850, 558]];       // התור לקינוחים
 const DESSERTS = ['cake', 'ice cream', 'cookie'];
-const VIEW = { x0: 105, x1: 1015, y0: 40, y1: 452 };              // מה שרואים (x בקרקע, y על המסך)
+// המצלמה: בכל שלב רואים רק את האזור של השלב, קרוב. (x בקרקע, y על המסך)
+const VIEWS = {
+  noodle: { x0: 125, x1: 545, y0: 32, y1: 356 },
+  table: { x0: 360, x1: 760, y0: 200, y1: 388 },
+  sweet: { x0: 575, x1: 995, y0: 32, y1: 356 },
+};
+const WORLD = { x0: -40, x1: 1160, y0: -20, y1: 520 };             // השטח שהקרקע מצוירת בו (y על המסך)
+let camView = 'noodle';
+function lookAt(v) { camView = v; }
 
 // ---------- הדמויות ----------
 const look = accent => Object.assign({}, NINJA_LOOK, { accent });
@@ -133,6 +141,7 @@ function allToSeats() {
 async function run() {
   const id = myRun = ++runId;
   reset();
+  lookAt('noodle'); updateCam(0, true);
   document.getElementById('end').style.display = 'none';
   try {
     await W(0.3);
@@ -142,6 +151,7 @@ async function run() {
     await serve(NOODLE, cook, [...chars], () => 'noodles', 1);
     window.luStep = step = 'toTable';
     await W(0.4);
+    lookAt('table');
     await allToSeats();
     window.luStep = step = 'eat';
     await W(1.0);
@@ -150,11 +160,13 @@ async function run() {
     await speakLine(npcs[0], 'Dessert time!', 0); hush(npcs[0]);
     // קמים לפי הסדר והולכים לתור של הקינוחים
     tableItems = tableItems.map(t => null);
+    lookAt('sweet');
     await Promise.all(chars.map((c, i) => W(i * 0.5).then(() => walkTo(c, [[700 + i * 8, 500 - i * 6], QS[i]])).then(() => { c.dir = 'up'; })));
     await W(0.3);
     await serve(SWEET, baker, [...chars], c => DESSERTS[npcs.indexOf(c)], -1);
     window.luStep = step = 'toTable2';
     await W(0.4);
+    lookAt('table');
     await allToSeats();
     window.luStep = step = 'end';
     await W(2.4);
@@ -219,14 +231,24 @@ function updateTurn() {
 // ============================================================
 //   ציור
 // ============================================================
-let z = 1, ox = 0, oy = 0, groundCv = null;
+let z = 1, ox = 0, oy = 0, groundCv = null, groundScale = 0;
+const cam = { cx: 0, cy: 0, z: 0 };
+function camTarget() {
+  const V = VIEWS[camView];
+  return { cx: (V.x0 + V.x1) / 2, cy: (V.y0 + V.y1) / 2, z: Math.min(SW / (V.x1 - V.x0), SH / (V.y1 - V.y0)) };
+}
+function updateCam(dt, snap) {
+  const T = camTarget(), k = snap ? 1 : 1 - Math.exp(-dt * 2.2);
+  cam.cx += (T.cx - cam.cx) * k; cam.cy += (T.cy - cam.cy) * k; cam.z += (T.z - cam.z) * k;
+  z = cam.z; ox = SW / 2 - cam.cx * z; oy = SH / 2 - cam.cy * z;
+}
 function resize() {
   DPR = Math.min(2, window.devicePixelRatio || 1);
   SW = innerWidth; SH = innerHeight;
   cv.width = Math.round(SW * DPR); cv.height = Math.round(SH * DPR);
-  z = Math.min(SW / (VIEW.x1 - VIEW.x0), SH / (VIEW.y1 - VIEW.y0));
-  ox = SW / 2 - (VIEW.x0 + VIEW.x1) / 2 * z; oy = SH / 2 - (VIEW.y0 + VIEW.y1) / 2 * z;
-  groundCv = null;
+  updateCam(0, true);
+  const gs = Math.min(3.2, Math.max(...Object.keys(VIEWS).map(v => { const V = VIEWS[v]; return Math.min(SW / (V.x1 - V.x0), SH / (V.y1 - V.y0)); })) * DPR);
+  if (Math.abs(gs - groundScale) > 0.01) { groundScale = gs; groundCv = null; }
 }
 addEventListener('resize', resize);
 const toScreen = (x, ys) => [ox + x * z, oy + ys * z];
@@ -245,11 +267,11 @@ function pathBlobs(pts, seed, base) {
   return out;
 }
 function buildGround() {
-  const c = document.createElement('canvas');
-  c.width = Math.ceil(SW * DPR); c.height = Math.ceil(SH * DPR);
+  const c = document.createElement('canvas'), GS = groundScale;
+  c.width = Math.ceil((WORLD.x1 - WORLD.x0) * GS); c.height = Math.ceil((WORLD.y1 - WORLD.y0) * GS);
   const g = c.getContext('2d');
-  g.setTransform(DPR * z, 0, 0, DPR * z * K, DPR * ox, DPR * oy);       // קואורדינטות קרקע
-  const X0 = (-ox) / z - 40, X1 = (SW - ox) / z + 40, Y0 = (-oy) / z / K - 40, Y1 = (SH - oy) / z / K + 40;
+  g.setTransform(GS, 0, 0, GS * K, -WORLD.x0 * GS, -WORLD.y0 * GS);    // קואורדינטות קרקע
+  const X0 = WORLD.x0, X1 = WORLD.x1, Y0 = WORLD.y0 / K, Y1 = WORLD.y1 / K;
   g.fillStyle = '#5d8f45'; g.fillRect(X0, Y0, X1 - X0, Y1 - Y0);
   const R = rng(7);
   for (let i = 0; i < 70; i++) { g.fillStyle = R() < 0.5 ? 'rgba(40,80,30,.18)' : 'rgba(150,190,90,.14)'; ell(g, X0 + R() * (X1 - X0), Y0 + R() * (Y1 - Y0), 30 + R() * 70, 20 + R() * 40); }
@@ -275,11 +297,11 @@ function buildGround() {
     g.fillStyle = R() < 0.5 ? '#b6aa8c' : '#e2d9c2'; ell(g, x + (R() - 0.5) * w * 1.4, y + (R() - 0.5) * w, 1.6 + R() * 1.6, 1.3 + R() * 1.2);
   }
   // גבעולי דשא
-  g.strokeStyle = 'rgba(40,85,30,.55)'; g.lineWidth = 1.4;
+  g.strokeStyle = 'rgba(40,85,30,.32)'; g.lineWidth = 1;
   for (let i = 0; i < 320; i++) {
     const x = X0 + R() * (X1 - X0), y = Y0 + R() * (Y1 - Y0);
     if (blobs.some(([bx, by, w]) => Math.abs(bx - x) < w + 6 && Math.abs(by - y) < w + 6)) continue;
-    g.beginPath(); g.moveTo(x, y); g.lineTo(x - 2, y - 9); g.moveTo(x, y); g.lineTo(x + 2.5, y - 10); g.stroke();
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x - 1.2, y - 5); g.moveTo(x, y); g.lineTo(x + 0.3, y - 6); g.moveTo(x, y); g.lineTo(x + 1.6, y - 5); g.stroke();
   }
   // כריות ישיבה ליד השולחן
   SEATS.forEach((s, i) => {
@@ -462,15 +484,16 @@ function frame(now) {
   draw(now);
   requestAnimationFrame(frame);
 }
-function luUpdate(dt) { [...chars, cook, baker].forEach(c => updateChar(c, dt)); updateTurn(); }
+function luUpdate(dt) { [...chars, cook, baker].forEach(c => updateChar(c, dt)); updateTurn(); updateCam(dt); }
 window.luUpdate = luUpdate;
 
 function draw(now) {
   if (!groundCv) buildGround();
   ctx.direction = 'ltr';
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.drawImage(groundCv, 0, 0);
+  ctx.fillStyle = '#5d8f45'; ctx.fillRect(0, 0, cv.width, cv.height);
   ctx.setTransform(DPR * z, 0, 0, DPR * z, DPR * ox, DPR * oy);
+  ctx.drawImage(groundCv, WORLD.x0, WORLD.y0, WORLD.x1 - WORLD.x0, WORLD.y1 - WORLD.y0);
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   const items = DECOR.map(o => ({ y: o.y, d: g => o.d(g, now) }));
   items.push({ y: NOODLE.y, d: g => drawStallFull(g, NOODLE, cook, now) });
