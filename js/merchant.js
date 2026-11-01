@@ -391,14 +391,17 @@ function drawCaveDark(o) {
   const og = ctx.createLinearGradient(DL, 0, DL + DW, 0);         // מסביב לחלל: מתחיל מאפס בקצוות – בלי קו חד על הקרקע ועל ההר
   og.addColorStop(0, dk + '0)'); og.addColorStop(f * 1.4, dk + CAVE.dark + ')'); og.addColorStop(1 - f * 1.4, dk + CAVE.dark + ')'); og.addColorStop(1, dk + '0)');
   ctx.save(); ctx.globalAlpha = 0.85; ctx.fillStyle = og; ctx.beginPath(); ctx.rect(DL, CAVE.top, DW, CAVE.bottom - CAVE.top); pathPts(P.hollow); ctx.fill('evenodd'); ctx.restore();   // ההר והקרקע מסביב – כהים, קצת פחות מהחלל
-  ctx.save(); ctx.fillStyle = dg; ctx.beginPath(); pathPts(P.hollow);                    // בתוך החלל – החושך המלא (חוץ מאור הלפיד)
+  ctx.save(); ctx.beginPath(); pathPts(P.hollow); ctx.clip();       // הכול מכאן – רק בתוך החלל: האור לא נכנס לאדמה ולא לסלע שמעל
+  ctx.fillStyle = dg; ctx.beginPath(); ctx.rect(DL - 2, CAVE.top, DW + 4, CAVE.bottom - CAVE.top);
   if (inCave) ctx.arc(lx, ly, R, 0, Math.PI * 2, true);           // חור באור הלפיד
   ctx.fill('evenodd');
-  if (inCave) {                                                   // בתוך העיגול: מעבר רך מהאור אל החושך שמסביב
-    const a = darkAt(lx), g = ctx.createRadialGradient(lx, ly, 2, lx, ly, R);
-    g.addColorStop(0, dk + '0)'); g.addColorStop(0.55, dk + (a * 0.25) + ')'); g.addColorStop(1, dk + a + ')');
+  if (inCave) {                                                   // בתוך העיגול: מעבר רך מהאור אל החושך שמסביב – בלי טבעת כהה
+    const a = darkAt(lx), g = ctx.createRadialGradient(lx, ly, 1, lx, ly, R);
+    g.addColorStop(0, dk + '0)'); g.addColorStop(0.45, dk + '0)'); g.addColorStop(0.8, dk + (a * 0.55) + ')'); g.addColorStop(1, dk + a + ')');
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(lx, ly, R, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = 'rgba(251,146,60,.10)'; ctx.beginPath(); ctx.arc(lx, ly, R * 0.75, 0, Math.PI * 2); ctx.fill();   // אור חם
+    const warm = ctx.createRadialGradient(lx, ly - 1, 0.5, lx, ly, R * 0.8);   // הילה חמה ובהירה סביב הלהבה
+    warm.addColorStop(0, 'rgba(253,186,116,.28)'); warm.addColorStop(1, 'rgba(253,186,116,0)');
+    ctx.fillStyle = warm; ctx.beginPath(); ctx.arc(lx, ly, R * 0.8, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
   if (inCave) {                                                   // הלפיד ביד
