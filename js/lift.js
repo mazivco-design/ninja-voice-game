@@ -10,16 +10,34 @@
 
 let lift = null;   // { o, phase: 'atRock' | 'lifting' | 'carry' | 'atTarget' | 'placing' | 'climb' | 'onRock' | 'jumping' | 'crossing' | 'throwing' | 'bite' | 'waitPull' | 'pulling' | 'thanks', t, idle, hinted }
 const RESC = { pitAt: 44, half: 8, deep: 23, throwT: 0.65, biteT: 0.6, pullT: 2.2, thanksT: 1.4, coins: 5 };   // בור צר ועמוק בדרך – רואים אותו בחתך, והגור בתחתית
+const GRAB = { w: 12, coins: 3 }, GRAB_ITEMS = ['chest', 'bag', 'scroll'], GRAB_ICON = { chest: '🎁', bag: '💰', scroll: '📜' };   // אוצרות להרים (שיעור PICK UP)
 const FAM = { cross: 1.8 };   // הגור שעובר על הקרש אל אמא שלו
 const PLANK = { len: 42, th: 2.6, gapAt: 52, gapW: 32, deep: 22, cross: 0.55 };   // קרש מעל בור
 const LIFT = { rockW: 10, rockH: 8, gap: 46, wallW: 10, wallH: 22, starDY: 39, starAhead: 7, starR: 4.2, carry: 0.7,
                liftT: 0.5, putT: 0.45, climbT: 0.45, hint: 3.5, hintEvery: 6, prizeCoins: 5 };
-let liftKindNext = 'wall';
+let liftKindNext = null, liftIdx = 0;
+// אילו סצנות מתאימות למצב הנוכחי – למידה הדרגתית:
+// שיעור PICK UP – רק אוצרות להרים · PICK UP + PUT DOWN – קיר / כוכב / קרש · PICK UP + THROW – הצלת הגור (ואוצר)
+// במסע – לפי המילים שכבר נלמדו
+function liftKinds() {
+  if (mode === 'stage') {
+    const ws = (STAGES[stageIdx] || {}).words || [];
+    if (ws.includes('put down')) return ['wall', 'prize', 'plank'];
+    if (ws.includes('throw')) return ['rescue', 'grab'];
+    return ['grab'];
+  }
+  const k = ['grab'];
+  if (mode === 'free' || isLearned('put down')) k.push('wall', 'prize', 'plank');
+  if (mode === 'free' || (isLearned('throw') && isLearned('pull'))) k.push('rescue');
+  return k;
+}
 
 function liftSetup(o) {                                                         // נקרא ב-spawn
-  o.kind = liftKindNext; liftKindNext = { wall: 'prize', prize: 'rescue', rescue: 'plank', plank: 'wall' }[liftKindNext];   // קיר → כוכב → הצלה → קרש (הגור לפני הקרש)
+  o.item = GRAB_ITEMS[Math.floor(Math.random() * GRAB_ITEMS.length)];
+  if (liftKindNext) { o.kind = liftKindNext; liftKindNext = null; }           // בהדגמה / בבדיקות – סצנה מסוימת
+  else { const ks = liftKinds(); o.kind = ks[liftIdx++ % ks.length]; }
   o.rock = 'ground';                                                            // ground | carried | placed
-  o.w = o.kind === 'rescue' ? RESC.pitAt + RESC.half + 6 : o.kind === 'plank' ? PLANK.gapAt + PLANK.gapW + 26 : LIFT.gap + (o.kind === 'wall' ? LIFT.wallW : 0) + 4;
+  o.w = o.kind === 'grab' ? GRAB.w : o.kind === 'rescue' ? RESC.pitAt + RESC.half + 6 : o.kind === 'plank' ? PLANK.gapAt + PLANK.gapW + 26 : LIFT.gap + (o.kind === 'wall' ? LIFT.wallW : 0) + 4;
 }
 function liftWallX(o) { return o.x + LIFT.gap; }                                // הקיר (או הסימן של הפרס) – תחילתו
 function liftPlaceX(o) { return o.kind === 'rescue' ? o.x + RESC.pitAt - RESC.half - 14 : o.kind === 'plank' ? o.x + PLANK.gapAt - 13 : o.x + LIFT.gap - LIFT.rockW; }   // איפה הסלע מונח (בקרש: שפת הבור)
@@ -57,6 +75,12 @@ function liftUpdate(dt, pb) {
     if (L.idle >= LIFT.hint + L.hinted * LIFT.hintEvery && state === 'play') { L.hinted++; sayWords([liftExpected()[0]], 1.6); }
   }
   if (o.kind === 'rescue' && liftRescueStep(L, o, dt, pb)) return;
+  if (L.phase === 'lifting' && L.t >= LIFT.liftT && o.kind === 'grab') {   // אוצר: נכנס לתיק – מטבעות, והולכים הלאה
+    o.rock = 'taken'; sfx('coin'); burst(PLAYER.x + 4, GROUND - 18, '#fde047', 14, 34);
+    if (mode === 'journey' && state === 'play') { picked += GRAB.coins; coinsFlying++; flyCoinToHud({ x: PLAYER.x + 1 }, GROUND - 18); floatText(PLAYER.x + 4, GROUND - 24, '+' + GRAB.coins + ' 🟡', '#ca8a04'); }
+    else floatText(PLAYER.x + 4, GROUND - 24, GRAB_ICON[o.item] || '⭐', '#ca8a04');
+    cleared(o); lift = null; return;
+  }
   if (L.phase === 'lifting' && L.t >= LIFT.liftT) { L.phase = 'carry'; L.t = 0; }
   else if (L.phase === 'carry') {
     const over = pb.r - liftPlaceX(o);
@@ -166,14 +190,15 @@ function drawLiftRock(x, y, s) {                                                
 }
 function drawLiftObstacle(o) {
   const placing = lift && lift.o === o && lift.phase === 'placing';
-  if (o.kind === 'rescue') { drawRescue(o); }
+  if (o.kind === 'grab') { if (o.rock === 'ground') drawTreasure(o.item, o.x + 5, GROUND); }
+  else if (o.kind === 'rescue') { drawRescue(o); }
   else if (o.kind === 'plank') { drawPlankScene(o, placing); }
   else {
     if (o.rock === 'ground') drawLiftRock(o.x, GROUND);
     if (o.rock === 'placed') drawLiftRock(liftPlaceX(o), GROUND);
   }
   const tx = liftWallX(o);
-  if (o.kind === 'plank' || o.kind === 'rescue') {}
+  if (o.kind === 'plank' || o.kind === 'rescue' || o.kind === 'grab') {}
   else if (o.kind === 'wall') {                                                     // קיר אבנים גבוה
     const h = LIFT.wallH, top = GROUND - h;
     ctx.fillStyle = '#78716c'; ctx.fillRect(tx, top, LIFT.wallW, h);
@@ -214,6 +239,7 @@ function drawLiftCarry(fx, fy) {
   const L = lift, o = L.o, top = fy - 13.6;
   if (o.kind === 'plank') { drawPlankCarry(fx, fy); return; }
   if (o.kind === 'rescue') { drawCoilCarry(fx, fy); return; }
+  if (o.kind === 'grab') { const k = Math.min(1, L.t / LIFT.liftT), e = k * k * (3 - 2 * k); drawTreasure(o.item, lerp(o.x + 5, fx + 1, e), lerp(GROUND, fy - 14, e), 1 - e * 0.35); return; }
   let x = fx - LIFT.rockW / 2, y = top;                                         // מעל הראש
   if (L.phase === 'lifting') { const k = Math.min(1, L.t / LIFT.liftT), e = k * k * (3 - 2 * k); x = lerp(o.x, x, e); y = lerp(GROUND, top, e); }
   if (L.phase === 'placing') { const k = Math.min(1, L.t / LIFT.putT), e = k * k * (3 - 2 * k); x = lerp(x, liftPlaceX(o), e); y = lerp(top, GROUND, e); }
@@ -445,4 +471,26 @@ function rescuePose(P) {
   if (L.phase === 'bite' || L.phase === 'waitPull') { P.arms = [[0.9, 1.1], [1.0, 1.2]]; P.lean = 0.25; }   // אוחז בחבל, ידיים קדימה-למטה
   if (L.phase === 'pulling') { P = posePull(performance.now() / 1000); P.lean = -0.25; }                      // מושך אחורה
   return P;
+}
+
+// אוצר על הקרקע: תיבה / שק מטבעות / מגילה. (x, y) = מרכז-למטה
+function drawTreasure(item, x, y, sc) {
+  const s = sc || 1, t = performance.now() / 1000;
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+  const glow = ctx.createRadialGradient(0, -3, 0.5, 0, -3, 7); glow.addColorStop(0, 'rgba(253,224,71,' + (0.35 + 0.15 * Math.sin(t * 4)) + ')'); glow.addColorStop(1, 'rgba(253,224,71,0)');
+  ctx.fillStyle = glow; circle(0, -3, 7);
+  if (item === 'chest') {
+    ctx.fillStyle = '#92400e'; roundRect(-4, -5.5, 8, 5.5, 0.6); ctx.fill();
+    ctx.fillStyle = '#b45309'; ctx.beginPath(); ctx.moveTo(-4, -5.5); ctx.quadraticCurveTo(0, -9, 4, -5.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#facc15'; ctx.fillRect(-4, -5.8, 8, 0.7); ctx.fillRect(-0.6, -6.5, 1.2, 3); ctx.fillRect(-4, -0.7, 8, 0.7);
+  } else if (item === 'bag') {
+    ctx.fillStyle = '#a16207'; ctx.beginPath(); ctx.ellipse(0, -2.8, 3.6, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#854d0e'; ctx.beginPath(); ctx.moveTo(-1.6, -5.4); ctx.lineTo(1.6, -5.4); ctx.lineTo(2.2, -7); ctx.lineTo(-2.2, -7); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fde047'; ctx.font = '900 3px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('$', 0, -2.6);
+  } else {
+    ctx.fillStyle = '#fef3c7'; roundRect(-4, -3.6, 8, 3, 1.2); ctx.fill();
+    ctx.fillStyle = '#d97706'; circle(-4, -2.1, 1.5); circle(4, -2.1, 1.5);
+    ctx.fillStyle = '#dc2626'; ctx.fillRect(-0.5, -3.7, 1, 3.2);
+  }
+  ctx.restore();
 }
