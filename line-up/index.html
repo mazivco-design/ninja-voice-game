@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Line Up!</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #3f6b33; touch-action: none;
+               -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  .chip { position: fixed; padding: 6px 12px; border-radius: 10px; background: rgba(15, 23, 42, .55); color: #f8fafc;
+          font: 14px system-ui, sans-serif; text-decoration: none; border: 0; }
+  #back { top: 10px; right: 12px; }
+  #dbgBtn { top: 10px; left: 12px; opacity: .55; }
+  #status { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); padding: 5px 14px; border-radius: 999px;
+            background: rgba(15, 23, 42, .55); color: #f8fafc; font: 14px system-ui, sans-serif; pointer-events: none; white-space: nowrap; }
+  #status:empty { display: none; }
+  #start, #end { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+                 background: rgba(15, 23, 42, .45); font-family: system-ui, sans-serif; color: #fff; text-align: center; }
+  #start h1, #end h1 { margin: 0; font-size: 54px; font-weight: 900; letter-spacing: 1px; text-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  #start p, #end p { margin: 0; font-size: 19px; opacity: .92; }
+  .big { padding: 16px 44px; border-radius: 18px; border: 0; background: #facc15; color: #1e3a8a; font: 900 26px system-ui, sans-serif;
+         box-shadow: 0 6px 0 #a16207; }
+  .big:active { transform: translateY(4px); box-shadow: 0 2px 0 #a16207; }
+  #end { display: none; }
+  #dbg { position: fixed; left: 10px; top: 50px; bottom: 50px; width: min(520px, 92vw); display: none; flex-direction: column; gap: 8px;
+         background: rgba(15, 23, 42, .92); color: #e2e8f0; border-radius: 12px; padding: 10px; font: 12px ui-monospace, monospace; direction: ltr; }
+  #dbg pre { flex: 1; overflow: auto; margin: 0; white-space: pre-wrap; }
+  #dbg button { align-self: flex-start; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hint" hidden></div>
+<a id="back" class="chip" href="../">חזרה למשחק</a>
+<button id="dbgBtn" class="chip">🐞</button>
+<div id="status"></div>
+<div id="start">
+  <h1>Line Up!</h1>
+  <p>עומדים בתור, מקשיבים לנינג'ות – וכשמגיע התור שלך, אומרים בעצמך</p>
+  <button class="big" id="go">התחל ▶</button>
+</div>
+<div id="end">
+  <h1>Great job! 🍜🍰</h1>
+  <p>הזמנת אוכל וקינוח באנגלית!</p>
+  <button class="big" id="again">שוב ↻</button>
+</div>
+<div id="dbg"><b>Heard log</b><pre id="dbgLog"></pre><div><button id="dbgShare">Share</button> <button id="dbgClose">Close</button></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js"></script>
+<!-- ציורי הכפר הדו־ממדי (הדמויות, עצים, פנסים, דוכנים) – נטענים מהכפר, לא מועתקים -->
+<script src="../village/js/core.js?v=lu1"></script>
+<script src="../village/js/world.js?v=lu1"></script>
+<script src="js/voice.js?v=lu1"></script>
+<script src="js/lineup.js?v=lu1"></script>
+</body>
+</html>
