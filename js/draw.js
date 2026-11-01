@@ -508,6 +508,7 @@ function draw() {
     ctx.fillStyle = '#fef9c3'; ctx.fillRect(-0.9, -1, 0.5, 0.9);
     ctx.restore();
   }
+  if (sk > 0.3) drawSkyPrizes();                                              // מטבעות וכוכבים בשמיים (דרקון)
   if (mode === 'journey' && (state === 'play' || state === 'paused')) for (const o of obstacles) if (!o.passed && !o.hit && o.pts) drawPoints(o);
 
   // דגל סיום

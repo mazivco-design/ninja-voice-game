@@ -66,7 +66,7 @@ const STAGES = [
   { name: 'CRAWL + FIRE', words: ['crawl', 'fire'],  count: 10, hint: 'Read the word!' },
   { name: 'I WANT',       words: ['want'],           count: 4,  hint: 'Say I WANT, then the thing you need' },
   { name: 'LET GO',       words: ['let go'],         count: 4,  hint: 'Say CATCH to grab the rope, then LET GO', world: 5 },
-  { name: 'RIDE',         words: ['ride'],           count: 8,  hint: 'RIDE the dragon · UP / DOWN past rocks · FIRE at storms', world: 2 },
+  { name: 'RIDE',         words: ['ride'],           count: 8,  hint: 'RIDE the dragon · UP / DOWN past rocks · FIRE at bats · grab the coins', world: 2 },
   { name: 'FIGHT',        words: ['fight'],          count: 4,  hint: 'Say FIGHT, FIGHT, FIGHT to win the duel', world: 4 },
   { name: 'HOLD',         words: ['hold'],           count: 4,  hint: 'Say HOLD to grab the bamboo before the wind', world: 0 },
   { name: 'PICK UP',      words: ['pick up'],        count: 4,  hint: 'PICK UP the rock · PUT DOWN · JUMP', world: 3 }
@@ -85,11 +85,11 @@ const OBSTACLE_WORDS = Object.fromEntries(Object.entries(WORD_OBSTACLE).map(([w,
 OBSTACLE_WORDS.river = ['jump', 'fly'];
 OBSTACLE_WORDS.chasm = ['catch', 'let go'];
 OBSTACLE_WORDS.skyrock = ['up', 'down'];
-OBSTACLE_WORDS.storm = ['fire'];
+OBSTACLE_WORDS.bat = ['fire'];
 OBSTACLE_WORDS.lift = ['pick up', 'put down', 'jump'];
 const HIT_WORD = { box: 'JUMP!', beam: 'DOWN!', wall: 'KICK!', enemy: 'THROW!', river: 'JUMP + FLY!',
                    rock: 'STOP!', bridge: 'RUN!', lake: 'SWIM!', cliff: 'CLIMB!', boulder: 'PUSH!', gate: 'PULL!', guard: 'HIDE!', arrows: 'BLOCK!',
-                   window: 'LEAP!', pond: 'DIVE!', coin: 'CATCH!', bramble: 'CRAWL!', ice: 'FIRE!', door: 'I WANT A KEY!', chasm: 'CATCH… LET GO!', dragon: 'RIDE!', duel: 'FIGHT!', gust: 'HOLD!', lift: 'PICK UP!', skyrock: 'UP or DOWN!', storm: 'FIRE!' };
+                   window: 'LEAP!', pond: 'DIVE!', coin: 'CATCH!', bramble: 'CRAWL!', ice: 'FIRE!', door: 'I WANT A KEY!', chasm: 'CATCH… LET GO!', dragon: 'RIDE!', duel: 'FIGHT!', gust: 'HOLD!', lift: 'PICK UP!', skyrock: 'UP or DOWN!', bat: 'FIRE!' };
 
 // "העולם" של המשחק: 160 על 100 יחידות, מוגדל לגודל המסך
 const W = 160, H = 100, GROUND = 72;   // קרקע גבוהה יותר – מקום לעומק מתחתיה (בורות, צלילה, נתיב קדמי)

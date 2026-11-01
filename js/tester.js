@@ -50,7 +50,7 @@ function testerAuto(pb, dt) {
       cliff: dd <= CLIFF.ladder + CLIFF.range + speed * 0.3, boulder: dd <= BOULDER.range + speed * 0.2, gate: dd <= GATE.rope + speed * 0.5,
       window: dd <= WINDOW.range + speed * 0.5, tramp: dd <= speed * 0.5, bramble: dd <= speed * 0.3, ice: dd <= 55,
       pond: (netX(o) - pb.r) <= speed * 0.4, guard: dd <= (speed + GUARD.walk) * 0.9, arrows: dd <= (curSpeed() + ARROWS.speed) * 0.35,
-      skyrock: dd <= speed * 0.7, storm: dd <= 55
+      skyrock: dd <= speed * 0.7, bat: dd <= 55
     }[o.type];
     if (!fire) continue;
     o._a = 1;

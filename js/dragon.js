@@ -1,13 +1,16 @@
 /* ninja-voice-game – dragon.js
    RIDE: דרקון שוכב ומחכה. אומרים RIDE – הנינג'ה קופץ על הגב והם ממריאים.
-   בשמיים: סלע מרחף בגובה שלך → UP / DOWN כדי לעבור לגובה השני. ענן סערה → FIRE (הדרקון יורק אש).
+   בשמיים: סלע מרחף בגובה שלך → UP / DOWN כדי לעבור לגובה השני. עטלף ענק שעף מולך → FIRE (הדרקון יורק אש והעטלף בורח).
+   לאורך הטיסה יש מטבעות וכוכבים לאיסוף.
    אחרי כמה מכשולים בשמיים הדרקון נוחת, הנינג'ה קופץ למטה והדרקון עף משם.
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
 let ride = null;   // { o, phase: 'wait' | 'mount' | 'takeoff' | 'fly' | 'land' | 'leave', t, py, lane, left, dist, gap, demo }
-const DRAGON = { w: 34, saddle: 20, stopAt: 4, lie: 6, hi: 34, lo: 12, climb: 60, mount: 0.7, takeoff: 0.9, land: 1.0, sky: 3, leave: 1.6 };
-const SKY_TYPES = ['skyrock', 'storm'];
-const SKYROCK = { w: 11 }, STORM = { w: 22 };
+const DRAGON = { w: 34, saddle: 20, stopAt: 4, lie: 6, hi: 34, lo: 12, climb: 60, mount: 0.7, takeoff: 0.9, land: 1.0, sky: 7, leave: 1.6, gapMul: 1.35 };   // sky = כמה מכשולים בטיסה
+const SKY_TYPES = ['skyrock', 'bat'];
+const SKYROCK = { w: 11 }, BAT = { w: 12, h: 9, fly: 10, flee: 1.2 };
+let skyPrizes = [];   // מטבעות וכוכבים בשמיים: { x, y, star, got }
+function laneY(lane) { return GROUND - (lane ? DRAGON.hi : DRAGON.lo) - 4; }   // גובה הנינג'ה היושב בכל נתיב
 
 // כמה "גבוה" המצלמה: 0 על הקרקע, 1 בשמיים (הקרקע וההרים מתרחקים למטה)
 function skyAmount() {
@@ -82,14 +85,47 @@ function rideUpdate(dt, pb) {
   }
 }
 
-// מכשול בשמיים: סלע בגובה שבו הדרקון נמצא (צריך לעבור לגובה השני), או ענן סערה בכל הגובה (צריך FIRE)
+// מכשול בשמיים: סלע בגובה שבו הדרקון נמצא (צריך לעבור לגובה השני), או עטלף שעף מולך באותו גובה (FIRE – או לעקוף ב-UP/DOWN)
 function skySpawn(r) {
-  const storm = Math.random() < 0.4 && !(r.lastStorm >= 2);
-  const o = storm ? { type: 'storm', x: W + 2, w: STORM.w } : { type: 'skyrock', x: W + 2, w: SKYROCK.w, lane: r.lane };
-  r.lastStorm = storm ? (r.lastStorm || 0) + 1 : 0;
+  const bat = Math.random() < 0.4 && !(r.lastBat >= 2);
+  const o = bat ? { type: 'bat', x: W + 2, w: BAT.w, lane: r.lane } : { type: 'skyrock', x: W + 2, w: SKYROCK.w, lane: r.lane };
+  r.lastBat = bat ? (r.lastBat || 0) + 1 : 0;
   o.passed = false; o.hit = false; o.pts = obstacleValue(o.type); o.seed = Math.random() * 100;
   obstacles.push(o); spawned++; r.left--; r.dist = 0;
-  r.gap = speed * rand(cfg.gapT[0], cfg.gapT[1]) + o.w;
+  r.gap = speed * rand(cfg.gapT[0], cfg.gapT[1]) * DRAGON.gapMul + o.w;     // רווחים נדיבים – לא קשה מדי
+  // פרסים ברווח שאחרי המכשול: שורת מטבעות בנתיב הבטוח (ליד סלע – בנתיב השני), ולפעמים כוכב גדול
+  const lane = o.type === 'skyrock' ? 1 - o.lane : o.lane, x0 = o.x + o.w + speed * 0.6, n = 4;
+  for (let i = 0; i < n; i++) skyPrizes.push({ x: x0 + i * 5, y: laneY(lane) - Math.sin(i / (n - 1) * Math.PI) * 2, star: false });
+  if (Math.random() < 0.45) skyPrizes.push({ x: x0 + n * 5 + 6, y: laneY(1 - lane), star: true });   // כוכב בנתיב השני – צריך לעבור כדי לקחת אותו
+}
+function skyPrizesUpdate(dt) {
+  if (!skyPrizes.length) return;
+  const v = curSpeed(), pb = rideCtl() ? rideBox() : playerBox();
+  for (const c of skyPrizes) {
+    c.x -= v * dt;
+    const R = c.star ? 3 : 1.6;
+    if (!c.got && rideCtl() && c.x + R > pb.l && c.x - R < pb.r && c.y + R > pb.t && c.y - R < pb.b) {
+      c.got = true; sfx('coin');
+      if (c.star) { burst(c.x, c.y, '#fde047', 14, 36); floatText(c.x, c.y - 5, '+5 ⭐', '#ca8a04'); }
+      if (mode === 'journey' && state === 'play') { picked += c.star ? 5 : 1; coinsFlying++; flyCoinToHud({ x: c.x - 3 }, c.y); }
+    }
+  }
+  skyPrizes = skyPrizes.filter(c => !c.got && c.x > -10);
+}
+function drawSkyPrizes() {
+  const tc = performance.now() / 1000;
+  for (const c of skyPrizes) {
+    const bob = Math.sin(tc * 4 + c.x) * 0.5;
+    if (c.star) {
+      const g = ctx.createRadialGradient(c.x, c.y + bob, 0.5, c.x, c.y + bob, 6); g.addColorStop(0, 'rgba(253,224,71,.55)'); g.addColorStop(1, 'rgba(253,224,71,0)');
+      ctx.fillStyle = g; circle(c.x, c.y + bob, 6); starShape(c.x, c.y + bob, 3, 1.35, tc * 1.2, '#facc15', '#a16207');
+    } else {
+      const sx = Math.max(0.2, Math.abs(Math.cos(tc * 4 + c.x * 0.2)));
+      ctx.save(); ctx.translate(c.x, c.y + bob); ctx.scale(sx, 1);
+      ctx.fillStyle = '#b45309'; circle(0, 0, 2.2); ctx.fillStyle = '#facc15'; circle(0, 0, 1.8); ctx.fillStyle = '#fef9c3'; ctx.fillRect(-0.9, -1, 0.5, 0.9);
+      ctx.restore();
+    }
+  }
 }
 
 function rideCmd() {                                               // RIDE: עולים על הדרקון
@@ -104,7 +140,7 @@ function rideLane(up) {                                            // UP / DOWN 
 }
 
 function skyBox(o) {
-  if (o.type === 'storm') return { l: o.x + 1, r: o.x + o.w - 1, t: -1e6, b: GROUND - 4 };
+  if (o.type === 'bat') { if (o.broken) return { l: -1e6, r: -1e6, t: 0, b: 0 }; const y = laneY(o.lane) + batBob(o); return { l: o.x + 2, r: o.x + o.w - 2, t: y - 3.5, b: y + 3 }; }
   return o.lane ? { l: o.x, r: o.x + o.w, t: GROUND - 51, b: GROUND - 31 } : { l: o.x, r: o.x + o.w, t: GROUND - 27, b: GROUND - 6 };
 }
 function rideBox() {                                               // הנינג'ה יושב + הדרקון מתחתיו
@@ -178,33 +214,28 @@ function drawSky(o) {
     ctx.fillStyle = '#a8a29e'; ctx.fillRect(b.l + 2, b.t + 5, 2, 0.6); ctx.fillRect(cx, b.t + 8, 2.4, 0.6);
     ctx.restore();
     label(o.lane ? 'DOWN' : 'UP', cx, (o.lane ? b.b + 5 : b.t - 4) + bob, 3.4, '#fde047', '#1e293b');
-  } else if (o.type === 'storm' && !o.broken) {                    // ענן סערה – גוש עננים כהה מהשמיים עד הקרקע, גשם וברקים
-    const t = performance.now() / 1000, cx = o.x + o.w / 2;
-    const bot = GROUND + 40;                                                                   // מסך גשם כהה מהענן ומטה – חוסם את שני הגבהים, ונעלם בהדרגה למטה
-    const rg = ctx.createLinearGradient(0, GROUND - 56, 0, bot);
-    rg.addColorStop(0, 'rgba(71,85,105,.85)'); rg.addColorStop(0.7, 'rgba(100,116,139,.5)'); rg.addColorStop(1, 'rgba(100,116,139,0)');
-    ctx.fillStyle = rg; ctx.beginPath(); ctx.moveTo(o.x - 1, GROUND - 56);
-    for (let yy = GROUND - 56; yy <= bot; yy += 4) ctx.lineTo(o.x + 1 + Math.sin(yy * 0.3 + t * 2) * 1.2 + (yy - GROUND + 56) * 0.04, yy);
-    for (let yy = bot; yy >= GROUND - 56; yy -= 4) ctx.lineTo(o.x + o.w - 1 + Math.sin(yy * 0.27 + t * 2 + 1) * 1.2 - (yy - GROUND + 56) * 0.04, yy);
-    ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = 'rgba(226,232,240,.7)'; ctx.lineWidth = 0.35;
-    for (let k = 0; k < 10; k++) { const xx = o.x + 2 + k * 2, yy = GROUND - 52 + ((t * 45 + k * 13) % 82); ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx - 0.9, yy + 3); ctx.stroke(); }
-    const puffs = [];
-    for (let k = 0; k < 13; k++) {                                 // ענן גדול ורחב למעלה
-      const u = hash(k + o.seed), v = hash(k * 2.7 + o.seed);
-      puffs.push({ x: cx + (u - 0.5) * (o.w + 10), y: GROUND - 68 + v * 14, r: 6.5 + v * 3 });
+  } else if (o.type === 'bat') {                                  // עטלף ענק – כנפיים מנפנפות, עיניים אדומות. אחרי FIRE הוא בורח למעלה
+    const t = performance.now() / 1000, k = o.broken ? Math.min(1, (o.ft || 0) / BAT.flee) : 0;
+    const cx = o.x + o.w / 2 + k * 20, cy = laneY(o.lane) + batBob(o) - k * k * 50;
+    if (k >= 1) return;
+    const flap = Math.sin(t * (o.broken ? 26 : 14) + o.seed), s = 1;
+    ctx.save(); ctx.translate(cx, cy); if (o.broken) ctx.rotate(-0.5 * k); ctx.globalAlpha = 1 - k * 0.6;
+    for (const dir of [-1, 1]) {                                   // כנפיים
+      ctx.fillStyle = dir < 0 ? '#3b0764' : '#4c1d95'; ctx.beginPath(); ctx.moveTo(0, -1);
+      const tipY = -3 - flap * 4;
+      ctx.lineTo(dir * 4 * s, tipY - 1); ctx.lineTo(dir * 8 * s, tipY + 1); ctx.lineTo(dir * 7 * s, 0.5); ctx.lineTo(dir * 5.5 * s, 1.6);
+      ctx.lineTo(dir * 4 * s, 0.6); ctx.lineTo(dir * 2.4 * s, 1.8); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = 'rgba(167,139,250,.6)'; ctx.lineWidth = 0.25; ctx.beginPath(); ctx.moveTo(dir * 1, -0.8); ctx.lineTo(dir * 4 * s, tipY - 0.8); ctx.moveTo(dir * 1, -0.5); ctx.lineTo(dir * 7.5 * s, tipY + 1.2); ctx.stroke();
     }
-    for (const p of puffs) { ctx.fillStyle = '#475569'; circle(p.x + Math.sin(t * 0.8 + p.y) * 0.6, p.y, p.r); }
-    for (const p of puffs) { ctx.fillStyle = '#64748b'; circle(p.x - p.r * 0.25 + Math.sin(t * 0.8 + p.y) * 0.6, p.y - p.r * 0.3, p.r * 0.62); }
-    for (const p of puffs) if (p.y < GROUND - 60) { ctx.fillStyle = 'rgba(203,213,225,.5)'; circle(p.x - p.r * 0.35 + Math.sin(t * 0.8 + p.y) * 0.6, p.y - p.r * 0.5, p.r * 0.3); }
-    if ((t + o.seed) % 1.3 < 0.13) {                               // ברק
-      ctx.strokeStyle = '#fde047'; ctx.lineWidth = 1; ctx.beginPath();
-      ctx.moveTo(cx + 1, GROUND - 46); ctx.lineTo(cx - 3, GROUND - 34); ctx.lineTo(cx + 2, GROUND - 31); ctx.lineTo(cx - 2, GROUND - 16); ctx.stroke();
-      ctx.fillStyle = 'rgba(254,249,195,.18)'; ctx.fillRect(o.x - 6, GROUND - 70, o.w + 12, 70);
-    }
-    label('FIRE', o.x + o.w / 2, GROUND - 72, 3.4, '#fde047', '#1e293b');
+    ctx.fillStyle = '#2e1065'; ctx.beginPath(); ctx.ellipse(0, 0.6, 2.1, 2.7, 0, 0, Math.PI * 2); ctx.fill();   // גוף
+    ctx.beginPath(); ctx.moveTo(-1.6, -1.4); ctx.lineTo(-1.2, -3.8); ctx.lineTo(-0.3, -1.8); ctx.moveTo(1.6, -1.4); ctx.lineTo(1.2, -3.8); ctx.lineTo(0.3, -1.8); ctx.fill();   // אוזניים
+    ctx.fillStyle = o.broken ? '#fde68a' : '#ef4444'; circle(-0.8, -0.6, 0.55); circle(0.8, -0.6, 0.55);         // עיניים
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(-0.6, 1.3); ctx.lineTo(-0.3, 2.1); ctx.lineTo(0, 1.3); ctx.moveTo(0.3, 1.3); ctx.lineTo(0.6, 2.1); ctx.lineTo(0.9, 1.3); ctx.fill();   // ניבים קטנים
+    ctx.restore();
+    if (!o.broken) label('FIRE', cx, cy - 9, 3.4, '#fde047', '#1e293b');
   }
 }
+function batBob(o) { return Math.sin(performance.now() / 260 + o.seed) * 1.2; }
 
 function drawRideDragon(fx, fy) {                                  // מתחת לנינג'ה בזמן שהוא על הדרקון
   if (!ride) return;

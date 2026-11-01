@@ -37,7 +37,7 @@ function startGame(m, idx) {
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
   world = m === 'stage' ? (STAGES[idx || 0].world ?? PAIR_WORLD[Math.floor((idx || 0) / 3)]) : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
-  learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = 'wall'; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; tunnelWait = null; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
+  learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = 'wall'; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
@@ -247,7 +247,7 @@ function obstacleBox(o) {
     case 'wall':  return { l: o.x, r: o.x + WALL.w, t: GROUND - WALL.h, b: GROUND };
     case 'ice':   return { l: o.x, r: o.x + ICE.w, t: GROUND - ICE.h, b: GROUND };
     case 'door':  return { l: o.x, r: o.x + DOOR.w, t: GROUND - DOOR.h, b: GROUND };
-    case 'skyrock': case 'storm': return skyBox(o);
+    case 'skyrock': case 'bat': return skyBox(o);
     case 'dragon': return { l: o.x, r: o.x + o.w, t: GROUND - 10, b: GROUND };
     case 'lift': return { l: o.x, r: o.x + o.w, t: GROUND - LIFT.wallH, b: GROUND };
     case 'gust': return { l: o.x, r: o.x + GUST.stalks[2] + 4, t: GROUND - GUST.h, b: GROUND };   // כל החורשה
@@ -306,7 +306,7 @@ function collides(o, pb) {
 // כישלון שני ברצף באותו מכשול – כשהמכשול כבר מאחורי הנינג'ה, הריצה עוצרת לרגע, והמילה מופיעה בגדול ונשמעת. הצלחה מאפסת
 const LEARN = { pause: 1.5, gap: 0.7 };
 let learnT = 0, learnWait = null, missCount = {};
-const LEARN_SAY = { river: ['jump', 'fly'], chasm: ['let go'], door: ['want'], storm: ['fire'] };
+const LEARN_SAY = { river: ['jump', 'fly'], chasm: ['let go'], door: ['want'], bat: ['fire'] };
 function learnWords(o) { return o.type === 'skyrock' ? [o.lane ? 'down' : 'up'] : (LEARN_SAY[o.type] || (OBSTACLE_WORDS[o.type] || []).slice(0, 1)); }
 function sayWords(say, t) {
   speak(say[0]);
@@ -511,6 +511,7 @@ function update(dt) {
   rideUpdate(dt, pb);
   duelUpdate(dt, pb);
   gustUpdate(dt, pb);
+  skyPrizesUpdate(dt);
   liftUpdate(dt, pb);
   tunnelUpdate(dt, pb);
   powerTick(dt);
@@ -537,11 +538,10 @@ function update(dt) {
     f.x += FIREBALL.speed * dt; f.t += dt;
     if (Math.random() < 0.7) particles.push({ x: f.x - 2, y: f.y + (Math.random() - 0.5) * 2, vx: -20, vy: -4, g: -6, life: 0.35, color: Math.random() < 0.5 ? '#fb923c' : '#fde047', size: 0.9 });
     for (const o of obstacles) {
-      if ((o.type !== 'ice' && o.type !== 'storm') || o.broken) continue;
-      if (o.type === 'storm' && f.x + 2 >= o.x) {                       // ענן סערה – האש מפזרת אותו
-        o.broken = true; f.dead = true; sfx('hit');
-        for (let i = 0; i < 18; i++) particles.push({ x: o.x + Math.random() * o.w, y: GROUND - 8 - Math.random() * 54, vx: 10 + Math.random() * 30, vy: (Math.random() - 0.5) * 20, g: 0, life: 0.7 + Math.random() * 0.4, color: ['#64748b', '#94a3b8', '#cbd5e1'][i % 3], size: 2 + Math.random() * 2 });
-        burst(o.x + 3, f.y, '#fb923c', 10); cleared(o); break;
+      if ((o.type !== 'ice' && o.type !== 'bat') || o.broken) continue;
+      if (o.type === 'bat' && f.x + 2 >= o.x) {                         // עטלף – האש מבהילה אותו והוא בורח למעלה (בכל גובה – לא צריך לכוון)
+        o.broken = true; o.ft = 0; f.dead = true; sfx('squawk');
+        burst(o.x + o.w / 2, laneY(o.lane), '#fb923c', 10); cleared(o); break;
       }
       if (o.type === 'ice' && f.x + 2 >= o.x && f.x - 2 <= o.x + ICE.w) {
         o.broken = true; f.dead = true; sfx('hit');
@@ -568,6 +568,7 @@ function update(dt) {
   for (const o of obstacles) {
     o.x -= dx;
     if (o.type === 'enemy' && !o.defeated) o.x -= speed * ENEMY.extra * dt;   // אויב רץ לקראתך
+    if (o.type === 'bat') { if (o.broken) o.ft = (o.ft || 0) + dt; else o.x -= BAT.fly * dt; }   // עטלף עף לקראתך / בורח
     if (o.type === 'guard') {
       if (o.rx === undefined) {                                          // הסלע: מגיע לנינג'ה כשהשומרים עוד 25 יחידות מאחוריו
         const vv = Math.max(v, 0.001);
