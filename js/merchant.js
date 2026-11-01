@@ -321,7 +321,7 @@ function drawClimbRope(o) {                                     // החבל עם
 function drawCave(o) {                                          // הקיר האחורי של המערה (מאחורי הנינג'ה) – בפנים רואים סלע, לא את הנוף שבחוץ
   const x = o.x, w = o.w, ceil = GROUND - GATES.torch.h;
   const g = ctx.createLinearGradient(0, ceil, 0, GROUND); g.addColorStop(0, '#3a332d'); g.addColorStop(1, '#5a4f45');
-  ctx.fillStyle = g; ctx.beginPath(); pathPts(caveShape(o).inner); ctx.fill();   // בצורת הפתח השבור
+  ctx.fillStyle = g; ctx.beginPath(); pathPts(caveShape(o).hollow); ctx.fill();   // החלל מתחת לתקרה – עד הקצוות
   ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 0.5;        // שכבות וסדקים בקיר
   for (let k = 0; k < Math.floor(w / 6); k++) { const cx = x + k * 6 + hash(k * 1.9) * 4, cy = ceil + 3 + hash(k * 3.7) * (GATES.torch.h - 6); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 2.5 + hash(k) * 2, cy + 1.2); ctx.stroke(); }
   ctx.fillStyle = 'rgba(255,255,255,.05)'; for (let k = 0; k < Math.floor(w / 11); k++) { const bx = x + k * 11 + hash(k * 2.2) * 5; ctx.beginPath(); ctx.ellipse(bx, ceil + 6 + hash(k * 4.4) * 12, 3 + hash(k) * 2, 1.6, 0, 0, Math.PI * 2); ctx.fill(); }
@@ -332,18 +332,24 @@ const CAVE = { fade: 34, dark: 0.95, top: -140, bottom: 160 };
 function pathPts(pts, open) { pts.forEach(([px, py2], i) => i ? ctx.lineTo(px, py2) : ctx.moveTo(px, py2)); if (!open) ctx.closePath(); }
 // צורת ההר והפתח – נקודות עם רעש קבוע (hash), כך שהקו נראה כמו סלע שבור ולא זז בין פריימים
 function caveShape(o) {
-  if (o._cave && o._cave.x === o.x) return o._cave;
-  const x = o.x, w = o.w, ceil = GROUND - GATES.torch.h, n = (k, a) => (hash(k * 7.3 + 11) - 0.5) * a;
-  const leftEdge = [], rightEdge = [], innerL = [], innerR = [], roof = [], lumps = [];
-  for (let k = 0; k <= 12; k++) { const y = CAVE.top + (GROUND - CAVE.top) * k / 12; const bulge = y > ceil - 30 ? (y - (ceil - 30)) / 34 * 5 : 0;   // למטה ההר מתרחב קצת – כמו בסיס
-    leftEdge.push([x - 6 - bulge + n(k, 4), y]); rightEdge.push([x + w + 6 + bulge + n(k + 40, 4), y]); }
-  for (let k = 0; k <= 7; k++) { const q = k / 7, y = GROUND - (GROUND - ceil) * q;   // דפנות הפתח: עולות מהקרקע ומתעגלות אל התקרה
-    innerL.push([x + 2 + q * q * 5 + n(k + 80, 2.4), y]); innerR.push([x + w - 2 - q * q * 5 + n(k + 120, 2.4), y]); }
-  for (let k = 1; k < Math.floor(w / 6); k++) roof.push([x + 7 + k * (w - 14) / Math.floor(w / 6), ceil + n(k + 160, 2.6)]);   // התקרה – שבורה
-  const inner = [...innerL, ...roof, ...innerR.slice().reverse()];
-  const outer = [[leftEdge[0][0], CAVE.top], ...leftEdge, ...rightEdge.slice().reverse()];
-  for (const [ex, sgn] of [[x, 1], [x + w, -1]]) for (let k = 0; k < 4; k++) lumps.push([ex + sgn * (n(k + 200, 6) - 2), ceil - 6 - k * 9 + n(k + 210, 3), 4 + hash(k + 220) * 3]);
-  o._cave = { x, outer, inner, leftEdge, rightEdge, lumps };
+  const x = o.x, w = o.w, n = (k, a) => (hash(k * 7.3 + 11) - 0.5) * a;
+  if (o._cave && o._cave.x === x) return o._cave;
+  const L = x - 7, R = x + w + 7, span = R - L;
+  // התקרה: נמוכה בפתחים, ובפנים עולה ויורדת – אולמות ומעברים צרים, עם בליטות סלע (לא צינור ישר)
+  const roof = [];
+  for (let k = 0, N = Math.floor(span / 3.5); k <= N; k++) {
+    const q = k / N, mid = Math.pow(Math.sin(Math.PI * q), 0.6);
+    const h = 21 + mid * (7 + 5 * Math.sin(q * 11 + 1.3) + 3 * Math.sin(q * 23 + 0.4)) + n(k + 160, 2.4);
+    roof.push([L + span * q, GROUND - Math.max(20, h)]);
+  }
+  const leftEdge = [], rightEdge = [];                            // פני ההר מעל הפתחים – שבורים, נוטים קצת החוצה למטה
+  for (let k = 0; k <= 10; k++) { const y = CAVE.top + (roof[0][1] - CAVE.top) * k / 10, lean = k / 10 * 3;
+    leftEdge.push([L + 1 - lean + n(k, 4), y]); rightEdge.push([R - 1 + lean + n(k + 40, 4), CAVE.top + (roof[roof.length - 1][1] - CAVE.top) * k / 10]); }
+  leftEdge.push(roof[0]); rightEdge.push(roof[roof.length - 1]);
+  const rock = [[leftEdge[0][0], CAVE.top], ...leftEdge, ...roof, ...rightEdge.slice().reverse()];   // הסלע: מעל התקרה בלבד – הפתח פתוח עד הקצוות
+  const hollow = [[L, GROUND], ...roof, [R, GROUND]];             // החלל: מהתקרה עד הקרקע
+  const lumps = []; for (const [ex, sgn] of [[L, 1], [R, -1]]) for (let k = 0; k < 4; k++) lumps.push([ex + sgn * (3 + n(k + 200, 5)), roof[0][1] - 5 - k * 9 + n(k + 210, 3), 4 + hash(k + 220) * 3]);
+  o._cave = { x, L, R, rock, hollow, roof, leftEdge, rightEdge, lumps };
   return o._cave;
 }
 function drawCaveDark(o) {
@@ -352,27 +358,30 @@ function drawCaveDark(o) {
   // ההר: גוש סלע עם קו מתאר שבור (לא ישר), ופתח מערה שבור בכניסה וביציאה
   const P = caveShape(o);
   const rg = ctx.createLinearGradient(0, CAVE.top, 0, GROUND); rg.addColorStop(0, '#57534e'); rg.addColorStop(1, '#8a817a');
-  ctx.fillStyle = rg; ctx.beginPath(); pathPts(P.outer); pathPts(P.inner); ctx.fill('evenodd');
+  ctx.fillStyle = rg; ctx.beginPath(); pathPts(P.rock); ctx.fill();
   ctx.strokeStyle = 'rgba(40,34,28,.55)'; ctx.lineWidth = 0.6; ctx.lineJoin = 'round';   // קו מתאר כהה – כמו שפת סלע
-  ctx.beginPath(); pathPts(P.inner, true); ctx.stroke();
+  ctx.beginPath(); pathPts(P.roof, true); ctx.stroke();
   ctx.beginPath(); pathPts(P.leftEdge, true); ctx.stroke(); ctx.beginPath(); pathPts(P.rightEdge, true); ctx.stroke();
   ctx.fillStyle = 'rgba(255,255,255,.07)';                        // פאות מוארות על הסלעים שליד הפתח
   for (const [bx, by, r] of P.lumps) { ctx.beginPath(); ctx.ellipse(bx, by, r, r * 0.7, -0.4, Math.PI, Math.PI * 1.9); ctx.fill(); }
   ctx.strokeStyle = 'rgba(0,0,0,.2)'; ctx.lineWidth = 0.5;        // סדקים ושכבות
   for (let k = 0; k < 14; k++) { const cx = x + hash(k * 2.3 + 1) * w, cy = ceil - 6 - hash(k * 4.1) * 50; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 3 + hash(k) * 3, cy + 2); ctx.stroke(); }
-  ctx.fillStyle = '#44403c';                                      // נטיפים מהתקרה
-  for (let k = 0; k < Math.floor(w / 9); k++) { const sx = x + 6 + k * 9 + hash(k) * 3; ctx.beginPath(); ctx.moveTo(sx - 1.4, ceil); ctx.lineTo(sx, ceil + 3 + hash(k * 1.7) * 3.5); ctx.lineTo(sx + 1.4, ceil); ctx.fill(); }
+  ctx.fillStyle = '#44403c';                                      // נטיפים מהתקרה – תלויים מהתקרה הלא אחידה
+  P.roof.forEach(([sx, sy], k) => { if (k % 3 || k < 2 || k > P.roof.length - 3) return; ctx.beginPath(); ctx.moveTo(sx - 1.4, sy - 0.5); ctx.lineTo(sx + 0.3, sy + 2.5 + hash(k * 1.7) * 3.5); ctx.lineTo(sx + 1.6, sy - 0.5); ctx.fill(); });
   for (let k = 0; k < Math.floor(w / 14); k++) {                  // אבני חן קטנות בקירות
     const gx = x + 8 + k * 14 + hash(k * 3.1) * 5, gy = GROUND - 3 - hash(k * 5.3) * 14;
     ctx.fillStyle = 'rgba(125,211,252,' + (0.55 + 0.35 * Math.sin(t * 3 + k)) + ')'; ctx.beginPath(); ctx.moveTo(gx, gy - 1.2); ctx.lineTo(gx + 0.7, gy); ctx.lineTo(gx, gy + 1.2); ctx.lineTo(gx - 0.7, gy); ctx.fill();
   }
   // החושך: מתחזק בהדרגה מהכניסה, חזק באמצע, ונחלש לקראת היציאה. בכל הגובה – גם על הסלע והקרקע
-  const f = Math.min(0.45, CAVE.fade / w), dk = 'rgba(8,6,4,';
-  const dg = ctx.createLinearGradient(x, 0, x + w, 0);
-  dg.addColorStop(0, dk + '0)'); dg.addColorStop(f, dk + CAVE.dark + ')'); dg.addColorStop(1 - f, dk + CAVE.dark + ')'); dg.addColorStop(1, dk + '0)');
+  const DL = P.L, DW = P.R - P.L, f = Math.min(0.45, CAVE.fade / DW), dk = 'rgba(8,6,4,', e0 = 0.3;   // בפתח כבר צל, ובפנים חושך
+  const dg = ctx.createLinearGradient(DL, 0, DL + DW, 0);
+  dg.addColorStop(0, dk + (e0 * CAVE.dark) + ')'); dg.addColorStop(f, dk + CAVE.dark + ')'); dg.addColorStop(1 - f, dk + CAVE.dark + ')'); dg.addColorStop(1, dk + (e0 * CAVE.dark) + ')');
   const lx = PLAYER.x + 7, ly = GROUND - 12, R = 16 + Math.sin(t * 11) * 0.5;
-  const darkAt = xx => { const r = (xx - x) / w; return CAVE.dark * Math.max(0, Math.min(1, Math.min(r, 1 - r) / f)); };
-  ctx.save(); ctx.fillStyle = dg; ctx.beginPath(); ctx.rect(x, CAVE.top, w, CAVE.bottom - CAVE.top);
+  const darkAt = xx => { const r = (xx - DL) / DW; return CAVE.dark * (e0 + (1 - e0) * Math.max(0, Math.min(1, Math.min(r, 1 - r) / f))); };
+  const og = ctx.createLinearGradient(DL, 0, DL + DW, 0);         // מסביב לחלל: מתחיל מאפס בקצוות – בלי קו חד על הקרקע ועל ההר
+  og.addColorStop(0, dk + '0)'); og.addColorStop(f * 1.4, dk + CAVE.dark + ')'); og.addColorStop(1 - f * 1.4, dk + CAVE.dark + ')'); og.addColorStop(1, dk + '0)');
+  ctx.save(); ctx.globalAlpha = 0.85; ctx.fillStyle = og; ctx.beginPath(); ctx.rect(DL, CAVE.top, DW, CAVE.bottom - CAVE.top); pathPts(P.hollow); ctx.fill('evenodd'); ctx.restore();   // ההר והקרקע מסביב – כהים, קצת פחות מהחלל
+  ctx.save(); ctx.fillStyle = dg; ctx.beginPath(); pathPts(P.hollow);                    // בתוך החלל – החושך המלא (חוץ מאור הלפיד)
   if (inCave) ctx.arc(lx, ly, R, 0, Math.PI * 2, true);           // חור באור הלפיד
   ctx.fill('evenodd');
   if (inCave) {                                                   // בתוך העיגול: מעבר רך מהאור אל החושך שמסביב
@@ -388,7 +397,7 @@ function drawCaveDark(o) {
     ctx.fillStyle = '#fb923c'; ctx.beginPath(); ctx.ellipse(fx, fy - 1 + fl * 0.3, 1.2, 2 + fl, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.ellipse(fx, fy - 0.6, 0.6, 1.1, 0, 0, Math.PI * 2); ctx.fill();
   }
-  if (!o.unlocked && labelsVisible() && !merchant) label('TORCH', x + 12, ceil - 6, 4, '#fde047', '#1e293b');
+  if (!o.unlocked && labelsVisible() && !merchant) label('TORCH', x + 12, P.roof[0][1] - 6, 4, '#fde047', '#1e293b');
 }
 function drawTorchItem(x, y) {                                  // לפיד: מקל עם להבה (אמריקאית – torch זה לפיד, לא פנס)
   const f = Math.sin(performance.now() / 80) * 0.3;
