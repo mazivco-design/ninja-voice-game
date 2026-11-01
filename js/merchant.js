@@ -1,13 +1,15 @@
 /* ninja-voice-game – merchant.js
-   I WANT: לפני דלת נעולה עומד סוחר עם עגלה. הוא שואל "What do you want?" ומציג את החפצים בקול ובהצבעה.
-   הילד אומר I WANT (העגלה נפתחת) ואז את שם החפץ. המפתח פותח את הדלת.
+   I WANT: לפני דלת נעולה עומד סוחר עם עגלה. הוא שואל פעם אחת "What do you want?" (בבועת קומיקס), והחפצים מוצגים עם השמות שלהם.
+   כשהוא מסיים לשאול – בועה מעל הנינג'ה עם מיקרופון מהבהב: תורך. אומרים I WANT A KEY (במשפט אחד), או I WANT ואז KEY.
+   אחרי שתיקה – המשחק אומר את המשפט בקול ומדגיש את המפתח. המפתח פותח את הדלת.
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
 let merchant = null;          // { o, phase: 'ask' | 'choose' | 'give' | 'walk' | 'open' | 'done', t, hi, bubble, item, said }
 const MERCHANT_WALK = 0.4;    // מהירות ההליכה אל הדלת (חלק מהמהירות הרגילה)
 const KEY_HAND = { dx: 6, dy: 9 };   // איפה המפתח ביד הנינג'ה
 const MERCHANT_OFFER = ['key', 'rope', 'torch'];
-const SAY_ASK = [[0.3, -1, 'What do you want?'], [2.0, 0, 'I have ' + ITEMS.key.say], [3.3, 1, ITEMS.rope.say], [4.6, 2, 'and ' + ITEMS.torch.say], [5.9, -1, 'What do you want?']];
+const SAY_ASK = [[0.3, -1, 'What do you want?']];
+const MERCH = { turn: 1.7, hint: 5.5, hintEvery: 7, choiceHint: 4 };   // turn: מתי מופיעה בועת "תורך" (אחרי שהשאלה נגמרה)
 
 function cartX(o) { return o.x - 32; }                        // העגלה עומדת לפני הדלת, והסוחר בינה לבין הדלת
 const ITEM_GAP = 7;
@@ -15,36 +17,41 @@ const ITEM_GAP = 7;
 function merchantUpdate(dt, pb) {
   if (!merchant) {
     const d = obstacles.find(o => o.type === 'door' && !o.unlocked && !o.hit && o.x - pb.r <= DOOR.stopAt && o.x > pb.l);
-    if (d) { merchant = { o: d, phase: 'ask', t: 0, hi: -1, bubble: '', said: 0 }; duckT = 0; }
+    if (d) { merchant = { o: d, phase: 'ask', t: 0, hi: -1, bubble: '', said: 0, hinted: 0, bT: 0 }; duckT = 0; }
     return;
   }
-  const m = merchant; m.t += dt;
+  const m = merchant; m.t += dt; m.bT += dt;
   if (!obstacles.includes(m.o)) { merchant = null; return; }
-  if (m.phase === 'ask') {                                      // שואל ומציג את החפצים אחד אחרי השני
+  if (m.phase === 'ask') {                                      // שואל פעם אחת, ואז מחכה. החפצים מהבהבים בתורם (בלי קול) – רואים מה יש
     while (m.said < SAY_ASK.length && m.t >= SAY_ASK[m.said][0]) {
-      const [, hi, text] = SAY_ASK[m.said++]; m.hi = hi; m.bubble = text; speak(text);
+      const [, hi, text] = SAY_ASK[m.said++]; m.hi = hi; setBubble(m, text); speak(text);
     }
-    if (m.t > 14) { m.t = 0; m.said = 0; }                      // אם הילד שותק – שואל שוב
+    if (m.t > MERCH.turn && m.hinted === 0) m.hi = Math.floor((m.t - MERCH.turn) / 0.9) % MERCHANT_OFFER.length;
+    if (m.t >= MERCH.hint + m.hinted * MERCH.hintEvery && state === 'play') {   // שתיקה – המשחק אומר את המשפט ומדגיש את המפתח
+      m.hinted++; m.hi = MERCHANT_OFFER.indexOf(DOOR.needs); speak('I want a key'); flash = { text: '🙋 I WANT A KEY!', t: 2 };
+    }
+  } else if (m.phase === 'choose') {
+    if (m.t >= MERCH.choiceHint + m.hinted * MERCH.hintEvery && state === 'play') { m.hinted++; m.hi = MERCHANT_OFFER.indexOf(DOOR.needs); speak(DOOR.needs); flash = { text: ITEMS[DOOR.needs].icon + ' ' + DOOR.needs.toUpperCase() + '!', t: 1.6 }; }
   } else if (m.phase === 'give') {                              // החפץ עף מהעגלה לנינג'ה
     if (m.t > 0.7) { m.phase = 'walk'; m.t = 0; }
   } else if (m.phase === 'walk') {                              // הנינג'ה הולך עם המפתח עד הדלת
     if (m.o.x - pb.r <= 1.5 || m.t > 6) { m.phase = 'open'; m.t = 0; }
   } else if (m.phase === 'open') {                              // המפתח נכנס למנעול והדלת נפתחת
     if (m.t > 0.35 && !m.o.unlocked) { m.o.unlocked = true; m.o.uT = 0; sfx('clear'); burst(m.o.x + 2, GROUND - 14, '#facc15', 12, 30); cleared(m.o); }
-    if (m.t > 1.0) { m.phase = 'done'; m.bubble = 'Good luck!'; m.hi = -1; }
+    if (m.t > 1.0) { m.phase = 'done'; setBubble(m, 'Good luck!'); m.hi = -1; }
   }
   if (m.o.unlocked) m.o.uT = (m.o.uT || 0) + dt;
 }
 
 function merchantWant() {
   const m = merchant; if (!m || m.phase !== 'ask') return;
-  m.phase = 'choose'; m.t = 0; m.hi = -1; m.bubble = 'Which one?'; speak('Which one?');
+  m.phase = 'choose'; m.t = 0; m.hi = -1; m.hinted = 0; setBubble(m, 'Which one?');   // בלי קול – כדי שהמילה הבאה של הילד ("key") לא תיבלע
 }
 function merchantItem(w) {
   const m = merchant; if (!m || m.phase !== 'choose') return;  // צריך קודם להגיד I WANT
   m.hi = MERCHANT_OFFER.indexOf(w);
-  if (w === DOOR.needs) { m.phase = 'give'; m.t = 0; m.item = w; m.bubble = 'Here you go!'; speak('Here you go!'); sfx('coin'); return; }
-  m.bubble = 'Hmm… a ' + w + ' won\'t open the door!'; speak('Hmm, that won\'t open the door.');   // חפץ לא מתאים – מנסים שוב
+  if (w === DOOR.needs) { m.phase = 'give'; m.t = 0; m.item = w; setBubble(m, 'Here you go!'); speak('Here you go!'); sfx('coin'); return; }
+  setBubble(m, 'Hmm… a ' + w + ' won\'t open the door!'); speak('Hmm, that won\'t open the door.');   // חפץ לא מתאים – מנסים שוב
   shakeT = 0.2;
   if (state === 'play') hits++;
 }
@@ -101,13 +108,22 @@ function ropeStroke(pts, w, fill, line) {
   }
   ctx.stroke();
 }
-function drawBubble(text, x, y) {                               // בועת דיבור עם זנב למטה
-  ctx.font = '800 3.4px -apple-system, system-ui, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const w = ctx.measureText(text).width + 4, h = 6;
-  ctx.fillStyle = '#fff'; ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 0.35;
-  roundRect(x - w / 2, y - h, w, h, 2); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x + 1, y - 0.2); ctx.lineTo(x + 3.5, y + 2.2); ctx.lineTo(x + 3.6, y - 0.2); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#1e293b'; ctx.fillText(text, x, y - h / 2 + 0.2);
+function setBubble(m, text) { if (m.bubble !== text) { m.bubble = text; m.bT = 0; } }
+// בועת קומיקס: לבנה עם קו מתאר עבה, פינות עגולות, זנב משולש אל הדובר, ו"קפיצה" קטנה כשהיא מופיעה. tail: 1 = הזנב ימינה-למטה, -1 = שמאלה-למטה
+function drawBubble(text, x, y, opt) {
+  const o = opt || {}, size = o.size || 4.2, pop = o.age === undefined ? 1 : Math.min(1, o.age / 0.18), sc = 0.6 + 0.4 * pop + Math.sin(Math.min(1, pop) * Math.PI) * 0.08;
+  ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc);
+  ctx.font = '900 ' + size + 'px -apple-system, system-ui, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = ctx.measureText(text).width + size * 1.6, h = size * 2, tail = o.tail || 1, tx = tail * Math.min(w / 2 - 2.5, 4);
+  ctx.lineJoin = 'round'; ctx.lineWidth = 0.6; ctx.strokeStyle = '#111827'; ctx.fillStyle = o.fill || '#ffffff';
+  ctx.beginPath();                                                // גוף הבועה + הזנב בצורה אחת – בלי קו באמצע
+  const r = h / 2.2, L = -w / 2, R = w / 2, T = -h - 2.4, B = -2.4;
+  ctx.moveTo(L + r, T); ctx.lineTo(R - r, T); ctx.quadraticCurveTo(R, T, R, T + r); ctx.lineTo(R, B - r); ctx.quadraticCurveTo(R, B, R - r, B);
+  ctx.lineTo(tx + 1.6 * tail, B); ctx.lineTo(tx + 2.8 * tail, 0.6); ctx.lineTo(tx - 0.4 * tail, B);   // הזנב
+  ctx.lineTo(L + r, B); ctx.quadraticCurveTo(L, B, L, B - r); ctx.lineTo(L, T + r); ctx.quadraticCurveTo(L, T, L + r, T); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = o.color || '#111827'; ctx.fillText(text, 0, (T + B) / 2 + 0.2);
+  ctx.restore();
 }
 
 function drawMerchant(o) {
@@ -158,7 +174,12 @@ function drawMerchant(o) {
   // הסוחר מצויר אחרי העגלה – כדי שהיד המצביעה תיראה מעל הדוכן
   drawFigure({ fx: mx, fy: GROUND, facing: -1, scale: 1.15, kind: 'guard', friendly: true, pose: P,
                suit: { body: '#166534', back: '#14532d', front: '#15803d', edge: '#052e16' } });
-  if (m && m.bubble) drawBubble(m.bubble, mx - 4, GROUND - 26);
+  const myTurn = m && ((m.phase === 'ask' && m.t > MERCH.turn) || (m.phase === 'choose' && m.t > 1.1));   // תור הילד – הבועה של הסוחר נעלמת
+  if (m && m.bubble && !myTurn) drawBubble(m.bubble, mx - 4, GROUND - 25, { age: m.bT, tail: 1 });   // הסוחר מדבר
+  if (myTurn) {   // תורך! בועה מעל הנינג'ה עם מיקרופון מהבהב
+    const blink = Math.floor(now * 3) % 2, txt = (blink ? '🎤 ' : '🎙️ ') + (m.phase === 'ask' ? 'I want a …?' : 'KEY? ROPE? TORCH?');
+    drawBubble(txt, PLAYER.x + 9, GROUND - 22, { age: m.phase === 'ask' ? m.t - MERCH.turn : m.t - 1.1, tail: -1, fill: '#fef9c3', color: '#1d4ed8', size: 3.8 });
+  }
   if (!m && !o.unlocked && labelsVisible()) label('I WANT', x + 8, GROUND - 28, 4, '#fde047', '#1e293b');
 }
 

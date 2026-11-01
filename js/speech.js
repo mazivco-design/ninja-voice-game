@@ -79,8 +79,8 @@ async function ensureAudio() {
 function handleText(text, isFinal, detail) {
   const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'put down' || POWER_WORDS.includes(w);
   const { words, confs } = tokenize(text, detail);
-  const exp = expectedWords();
   for (let i = 0; i < words.length; i++) {
+    const exp = expectedWords();                                   // מחושב לכל מילה – "I WANT KEY": אחרי WANT מצפים כבר לשם החפץ
     const w = words[i], conf = confs ? confs[i] : undefined, fresh = i >= seenWords.length || (i === words.length - 1 && w !== seenWords[i].w);
     if (!isFinal) {
       if (!fresh) continue;
