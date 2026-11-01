@@ -34,7 +34,7 @@ const COOK_LOOK = Object.assign({}, MERCHANT_LOOK, { body: '#f8fafc', limb: '#e2
 const BAKER_LOOK = Object.assign({}, VILLAGER_LOOK, { accent: '#fde68a' });
 
 function mk(L, x, y, dir, rate) {
-  return { look: L, x, y, dir: dir || 'down', phase: Math.random() * 6, walking: false, path: [], speed: 82, sit: 0, sitTo: 0,
+  return { look: L, x, y, dir: dir || 'down', phase: Math.random() * 6, walking: false, path: [], speed: 95, sit: 0, sitTo: 0,
            hold: null, bubble: null, rate: rate || 1, arrive: null, bob: 0 };
 }
 let npcs, me, cook, baker, chars, tableItems, step, runId = 0;
@@ -75,51 +75,59 @@ function updateChar(c, dt) {
 // kind: say (לבנה) · whisper (קטנה, תכלת – רמז) · mic (צהובה – "תורך") · think (בחירה)
 function say(c, text, opts) { c.bubble = Object.assign({ text, t0: performance.now(), kind: 'say' }, opts || {}); }
 function hush(c) { c.bubble = null; }
-async function speakLine(c, text, side) {
+async function speakLine(c, text, side, gap) {
   say(c, text, { side });
   const dur = await playLine(text, c.rate);
-  await W(dur + 0.35);
+  await W(dur + (gap === undefined ? 0.35 : gap));
 }
 
 // ============================================================
 //   הרצף
 // ============================================================
-async function serve(stall, keeper, queue, itemFor, toSeat, side) {
+// כל מי שקיבל את האוכל עומד בצד ומחכה. כשגם הילד מקבל – כולם הולכים יחד לשולחן
+const WAIT_N = [[350, 396], [398, 410], [446, 398]], WAIT_S = [[770, 396], [722, 410], [674, 398]];
+async function serve(stall, keeper, queue, itemFor, side) {
+  const Q = stall === NOODLE ? QN : QS, spots = stall === NOODLE ? WAIT_N : WAIT_S;
+  let k = 0;
   while (queue.length) {
     const c = queue[0];
     window.luStep = step = (stall === NOODLE ? 'noodles' : 'sweets') + ':' + (c.isMe ? 'me' : npcs.indexOf(c));
     c.dir = 'up';
-    await W(0.35);
-    await speakLine(keeper, 'What do you want?', 0);
+    await W(0.15);
+    await speakLine(keeper, 'What do you want?', 0, 0.1);
     let item;
     if (c.isMe) item = await myTurn(stall, keeper, c);
     else {
       item = itemFor(c);
       hush(keeper);
-      await speakLine(c, 'I want ' + itemText(item) + ', please.', side);
+      await speakLine(c, SENT(item), side, 0.15);
     }
     hush(c);
-    await speakLine(keeper, 'Here you go!', 0);
-    hush(keeper);
+    say(keeper, 'Here you go!', { side: 0 }); playLine('Here you go!', 1);
     c.hold = item; c.bob = 1;
-    await W(0.35);
+    await W(0.7);
+    hush(keeper);
     queue.shift();
-    toSeat(c);                                                        // הולך לשבת – בלי לחכות
-    await W(0.5);
-    const moves = queue.map((q, i) => walkTo(q, [(stall === NOODLE ? QN : QS)[i]]));
-    await Promise.all(moves);
+    if (!c.isMe) {                                                    // הולך לצד ומחכה לחברים
+      const sp = spots[k++];
+      walkTo(c, [[c.x + (sp[0] - c.x) * 0.5, c.y + 22], sp]).then(() => { c.dir = stall === NOODLE ? 'left' : 'right'; });
+      await W(0.25);
+      await Promise.all(queue.map((q, i) => walkTo(q, [Q[i]])));
+    }
   }
 }
 function itemText(item) { return item === 'cookie' ? 'a cookie' : item; }
 const SENT = item => 'I want ' + itemText(item) + ', please.';
 
-function seatPath(c, from) {
-  const i = chars.indexOf(c), s = SEATS[i];
-  const mid = from === 'noodles' ? [[330 + i * 12, 470]] : [[760 - i * 10, 486 - i * 4]];
-  return walkTo(c, [...mid, [s.x, s.y]]).then(() => {
-    c.dir = 'down'; c.sitTo = 1;
-    tableItems[i] = { kind: c.hold, left: 1, next: performance.now() + 900 + i * 400 }; c.hold = null;
-  });
+// כולם הולכים יחד לשולחן (עם הפרש קטן ביניהם) ומתיישבים
+function allToSeats() {
+  return Promise.all(chars.map((c, i) => W(i * 0.25).then(() => {
+    const s = SEATS[i];
+    return walkTo(c, [[s.x, s.y - 34], [s.x, s.y]]).then(() => {
+      c.dir = 'down'; c.sitTo = 1;
+      tableItems[i] = { kind: c.hold, left: 1, next: performance.now() + 900 + i * 400 }; c.hold = null;
+    });
+  })));
 }
 
 async function run() {
@@ -127,13 +135,14 @@ async function run() {
   reset();
   document.getElementById('end').style.display = 'none';
   try {
-    await W(0.4);
+    await W(0.3);
     await walkTo(me, [[270, 640], QN[3]]);                            // הנינג'ה של הילד מצטרף לסוף התור
     me.dir = 'up';
+    await W(0.3);
+    await serve(NOODLE, cook, [...chars], () => 'noodles', 1);
+    window.luStep = step = 'toTable';
     await W(0.4);
-    const seated = [];
-    await serve(NOODLE, cook, [...chars], () => 'noodles', c => seated.push(seatPath(c, 'noodles')), 1);
-    await Promise.all(seated);
+    await allToSeats();
     window.luStep = step = 'eat';
     await W(1.0);
     await speakLine(npcs[1], 'Yum!', 0); hush(npcs[1]);
@@ -141,12 +150,12 @@ async function run() {
     await speakLine(npcs[0], 'Dessert time!', 0); hush(npcs[0]);
     // קמים לפי הסדר והולכים לתור של הקינוחים
     tableItems = tableItems.map(t => null);
-    const goes = chars.map((c, i) => W(i * 0.7).then(() => walkTo(c, [[700 + i * 8, 500 - i * 6], QS[i]])).then(() => { c.dir = 'up'; }));
-    await Promise.all(goes);
+    await Promise.all(chars.map((c, i) => W(i * 0.5).then(() => walkTo(c, [[700 + i * 8, 500 - i * 6], QS[i]])).then(() => { c.dir = 'up'; })));
+    await W(0.3);
+    await serve(SWEET, baker, [...chars], c => DESSERTS[npcs.indexOf(c)], -1);
+    window.luStep = step = 'toTable2';
     await W(0.4);
-    const seated2 = [];
-    await serve(SWEET, baker, [...chars], c => DESSERTS[npcs.indexOf(c)], c => seated2.push(seatPath(c, 'sweets')), -1);
-    await Promise.all(seated2);
+    await allToSeats();
     window.luStep = step = 'end';
     await W(2.4);
     await speakLine(baker, 'Great job!', 0); hush(baker);
@@ -196,8 +205,9 @@ function hint(how) {
   helper = npcs[2];
   const item = turn.stall === NOODLE ? 'noodles' : DESSERTS[(turn.hints) % 3];
   const text = turn.stall === NOODLE ? SENT(item) : SENT(item);
-  if (how === 'aloud') { say(helper, text, { side: -1 }); playLine(text, helper.rate); }
-  else say(helper, text, { kind: 'whisper', side: -1 });
+  const side = turn.stall === NOODLE ? 1 : -1;                      // הבועה נפתחת הרחק מהבועה של הילד
+  if (how === 'aloud') { say(helper, text, { side }); playLine(text, helper.rate); }
+  else say(helper, text, { kind: 'whisper', side });
 }
 function updateTurn() {
   if (!turn) return;
