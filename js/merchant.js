@@ -329,6 +329,8 @@ function drawCave(o) {                                          // הקיר הא
 // מערה ארוכה בתוך הר: מעל הפתח סלע עד ראש המסך (אין שמיים בפנים). החושך מתחזק בהדרגה בכניסה ונחלש ביציאה.
 // בפנים – רק עיגול האור של הלפיד מאיר (נטיפים ואבני חן נראים רק לידו)
 const CAVE = { fade: 34, dark: 0.95, top: -140, bottom: 160 };
+let caveCv = null;
+function caveLayer(w, h) { if (!caveCv) caveCv = document.createElement('canvas'); if (caveCv.width !== w || caveCv.height !== h) { caveCv.width = w; caveCv.height = h; } return caveCv; }
 function pathPts(pts, open) { pts.forEach(([px, py2], i) => i ? ctx.lineTo(px, py2) : ctx.moveTo(px, py2)); if (!open) ctx.closePath(); }
 // צורת ההר והפתח – נקודות עם רעש קבוע (hash), כך שהקו נראה כמו סלע שבור ולא זז בין פריימים
 function caveShape(o) {
@@ -353,7 +355,7 @@ function caveShape(o) {
   const mouthL = mouth(-1, L, 300), mouthR = mouth(1, R, 340);
   const outL = [L - 3 + n(1, 2), GROUND], outR = [R + 3 + n(2, 2), GROUND];   // פני ההר יורדים עד הקרקע מחוץ לפתח
   const rock = [[leftEdge[0][0], CAVE.top], ...leftEdge, outL, ...mouthL.slice().reverse(), ...roof, ...mouthR, outR, ...rightEdge.slice().reverse()];   // הסלע: מעל התקרה ושפה סלעית צרה בצדי הפתח
-  const hollow = [...mouthL.slice().reverse(), ...roof.slice(1, -1), ...mouthR];   // החלל: בין שפות הפתח ומתחת לתקרה
+  const hollow = [...mouthL.slice().reverse(), ...roof, ...mouthR];   // החלל: בין שפות הפתח ומתחת לתקרה (כולל קצות התקרה – בלי חור לשמיים)
   const lumps = []; for (const [ex, sgn] of [[L, 1], [R, -1]]) for (let k = 0; k < 4; k++) lumps.push([ex + sgn * (3 + n(k + 200, 5)), roof[0][1] - 5 - k * 9 + n(k + 210, 3), 4 + hash(k + 220) * 3]);
   o._cave = { x, L, R, rock, hollow, roof, leftEdge, rightEdge, lumps, mouthL, mouthR, outL, outR };
   return o._cave;
@@ -370,7 +372,7 @@ function drawCaveDark(o) {
     ctx.beginPath(); pathPts([top, out, ...mo.slice().reverse()]); ctx.fill();
   }
   ctx.strokeStyle = 'rgba(40,34,28,.55)'; ctx.lineWidth = 0.6; ctx.lineJoin = 'round';   // קו מתאר כהה – כמו שפת סלע
-  ctx.beginPath(); pathPts([...P.mouthL.slice().reverse(), ...P.roof.slice(1, -1), ...P.mouthR], true); ctx.stroke();
+  ctx.beginPath(); pathPts([...P.mouthL.slice().reverse(), ...P.roof, ...P.mouthR], true); ctx.stroke();
   ctx.beginPath(); pathPts(P.leftEdge, true); ctx.stroke(); ctx.beginPath(); pathPts(P.rightEdge, true); ctx.stroke();
   ctx.fillStyle = 'rgba(255,255,255,.07)';                        // פאות מוארות על הסלעים שליד הפתח
   for (const [bx, by, r] of P.lumps) { ctx.beginPath(); ctx.ellipse(bx, by, r, r * 0.7, -0.4, Math.PI, Math.PI * 1.9); ctx.fill(); }
@@ -391,17 +393,24 @@ function drawCaveDark(o) {
   const og = ctx.createLinearGradient(DL, 0, DL + DW, 0);         // מסביב לחלל: מתחיל מאפס בקצוות – בלי קו חד על הקרקע ועל ההר
   og.addColorStop(0, dk + '0)'); og.addColorStop(f * 1.4, dk + CAVE.dark + ')'); og.addColorStop(1 - f * 1.4, dk + CAVE.dark + ')'); og.addColorStop(1, dk + '0)');
   ctx.save(); ctx.globalAlpha = 0.85; ctx.fillStyle = og; ctx.beginPath(); ctx.rect(DL, CAVE.top, DW, CAVE.bottom - CAVE.top); pathPts(P.hollow); ctx.fill('evenodd'); ctx.restore();   // ההר והקרקע מסביב – כהים, קצת פחות מהחלל
-  ctx.save(); ctx.beginPath(); pathPts(P.hollow); ctx.clip();       // הכול מכאן – רק בתוך החלל: האור לא נכנס לאדמה ולא לסלע שמעל
-  ctx.fillStyle = dg; ctx.beginPath(); ctx.rect(DL - 2, CAVE.top, DW + 4, CAVE.bottom - CAVE.top);
-  if (inCave) ctx.arc(lx, ly, R, 0, Math.PI * 2, true);           // חור באור הלפיד
-  ctx.fill('evenodd');
-  if (inCave) {                                                   // בתוך העיגול: מעבר רך מהאור אל החושך שמסביב – בלי טבעת כהה
-    const a = darkAt(lx), g = ctx.createRadialGradient(lx, ly, 1, lx, ly, R);
-    g.addColorStop(0, dk + '0)'); g.addColorStop(0.45, dk + '0)'); g.addColorStop(0.8, dk + (a * 0.55) + ')'); g.addColorStop(1, dk + a + ')');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(lx, ly, R, 0, Math.PI * 2); ctx.fill();
-    const warm = ctx.createRadialGradient(lx, ly - 1, 0.5, lx, ly, R * 0.8);   // הילה חמה ובהירה סביב הלהבה
-    warm.addColorStop(0, 'rgba(253,186,116,.28)'); warm.addColorStop(1, 'rgba(253,186,116,0)');
-    ctx.fillStyle = warm; ctx.beginPath(); ctx.arc(lx, ly, R * 0.8, 0, Math.PI * 2); ctx.fill();
+  // החושך בתוך החלל מצויר על שכבה נפרדת, והאור "מוחק" ממנה בעדינות (destination-out) – בלי טבעת ובלי גבול חד
+  const T = ctx.getTransform(), cv = ctx.canvas, oc = caveLayer(cv.width, cv.height), oct = oc.getContext('2d');
+  oct.setTransform(1, 0, 0, 1, 0, 0); oct.clearRect(0, 0, oc.width, oc.height); oct.save(); oct.setTransform(T);   // save/restore – כדי שה-clip לא יצטבר בין פריימים
+  oct.beginPath(); P.hollow.forEach(([px, py2], i) => i ? oct.lineTo(px, py2) : oct.moveTo(px, py2)); oct.closePath(); oct.clip();   // רק בתוך החלל: לא באדמה ולא בסלע
+  oct.fillStyle = dg; oct.fillRect(DL - 2, CAVE.top, DW + 4, CAVE.bottom - CAVE.top);
+  if (inCave) {
+    const g = oct.createRadialGradient(lx, ly, 1, lx, ly, R * 1.15);
+    g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.4, 'rgba(0,0,0,.95)'); g.addColorStop(0.75, 'rgba(0,0,0,.45)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    oct.globalCompositeOperation = 'destination-out'; oct.fillStyle = g; oct.beginPath(); oct.arc(lx, ly, R * 1.15, 0, Math.PI * 2); oct.fill();
+    oct.globalCompositeOperation = 'source-over';
+  }
+  oct.restore();
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(oc, 0, 0); ctx.restore();
+  ctx.save(); ctx.beginPath(); pathPts(P.hollow); ctx.clip();
+  if (inCave) {                                                   // הילה חמה ובהירה סביב הלהבה – רק בתוך החלל
+    const warm = ctx.createRadialGradient(lx, ly - 1, 0.5, lx, ly, R * 0.85);
+    warm.addColorStop(0, 'rgba(253,186,116,.26)'); warm.addColorStop(1, 'rgba(253,186,116,0)');
+    ctx.fillStyle = warm; ctx.beginPath(); ctx.arc(lx, ly, R * 0.85, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
   if (inCave) {                                                   // הלפיד ביד
