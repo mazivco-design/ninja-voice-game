@@ -321,7 +321,7 @@ function drawClimbRope(o) {                                     // החבל עם
 function drawCave(o) {                                          // הקיר האחורי של המערה (מאחורי הנינג'ה) – בפנים רואים סלע, לא את הנוף שבחוץ
   const x = o.x, w = o.w, ceil = GROUND - GATES.torch.h;
   const g = ctx.createLinearGradient(0, ceil, 0, GROUND); g.addColorStop(0, '#3a332d'); g.addColorStop(1, '#5a4f45');
-  ctx.fillStyle = g; ctx.fillRect(x, ceil - 1, w, GROUND - ceil + 1);
+  ctx.fillStyle = g; ctx.beginPath(); pathPts(caveShape(o).inner); ctx.fill();   // בצורת הפתח השבור
   ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 0.5;        // שכבות וסדקים בקיר
   for (let k = 0; k < Math.floor(w / 6); k++) { const cx = x + k * 6 + hash(k * 1.9) * 4, cy = ceil + 3 + hash(k * 3.7) * (GATES.torch.h - 6); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 2.5 + hash(k) * 2, cy + 1.2); ctx.stroke(); }
   ctx.fillStyle = 'rgba(255,255,255,.05)'; for (let k = 0; k < Math.floor(w / 11); k++) { const bx = x + k * 11 + hash(k * 2.2) * 5; ctx.beginPath(); ctx.ellipse(bx, ceil + 6 + hash(k * 4.4) * 12, 3 + hash(k) * 2, 1.6, 0, 0, Math.PI * 2); ctx.fill(); }
@@ -329,14 +329,35 @@ function drawCave(o) {                                          // הקיר הא
 // מערה ארוכה בתוך הר: מעל הפתח סלע עד ראש המסך (אין שמיים בפנים). החושך מתחזק בהדרגה בכניסה ונחלש ביציאה.
 // בפנים – רק עיגול האור של הלפיד מאיר (נטיפים ואבני חן נראים רק לידו)
 const CAVE = { fade: 34, dark: 0.95, top: -140, bottom: 160 };
+function pathPts(pts, open) { pts.forEach(([px, py2], i) => i ? ctx.lineTo(px, py2) : ctx.moveTo(px, py2)); if (!open) ctx.closePath(); }
+// צורת ההר והפתח – נקודות עם רעש קבוע (hash), כך שהקו נראה כמו סלע שבור ולא זז בין פריימים
+function caveShape(o) {
+  if (o._cave && o._cave.x === o.x) return o._cave;
+  const x = o.x, w = o.w, ceil = GROUND - GATES.torch.h, n = (k, a) => (hash(k * 7.3 + 11) - 0.5) * a;
+  const leftEdge = [], rightEdge = [], innerL = [], innerR = [], roof = [], lumps = [];
+  for (let k = 0; k <= 12; k++) { const y = CAVE.top + (GROUND - CAVE.top) * k / 12; const bulge = y > ceil - 30 ? (y - (ceil - 30)) / 34 * 5 : 0;   // למטה ההר מתרחב קצת – כמו בסיס
+    leftEdge.push([x - 6 - bulge + n(k, 4), y]); rightEdge.push([x + w + 6 + bulge + n(k + 40, 4), y]); }
+  for (let k = 0; k <= 7; k++) { const q = k / 7, y = GROUND - (GROUND - ceil) * q;   // דפנות הפתח: עולות מהקרקע ומתעגלות אל התקרה
+    innerL.push([x + 2 + q * q * 5 + n(k + 80, 2.4), y]); innerR.push([x + w - 2 - q * q * 5 + n(k + 120, 2.4), y]); }
+  for (let k = 1; k < Math.floor(w / 6); k++) roof.push([x + 7 + k * (w - 14) / Math.floor(w / 6), ceil + n(k + 160, 2.6)]);   // התקרה – שבורה
+  const inner = [...innerL, ...roof, ...innerR.slice().reverse()];
+  const outer = [[leftEdge[0][0], CAVE.top], ...leftEdge, ...rightEdge.slice().reverse()];
+  for (const [ex, sgn] of [[x, 1], [x + w, -1]]) for (let k = 0; k < 4; k++) lumps.push([ex + sgn * (n(k + 200, 6) - 2), ceil - 6 - k * 9 + n(k + 210, 3), 4 + hash(k + 220) * 3]);
+  o._cave = { x, outer, inner, leftEdge, rightEdge, lumps };
+  return o._cave;
+}
 function drawCaveDark(o) {
   const x = o.x, w = o.w, CH = GATES.torch.h, ceil = GROUND - CH, m = merchant && merchant.o === o ? merchant : null, t = performance.now() / 1000;
   const inCave = m && m.phase === 'cave';
-  // ההר: סלע מעל התקרה לכל אורך המערה, עם פנים סלע משופעות בכניסה וביציאה
-  const rg = ctx.createLinearGradient(0, CAVE.top, 0, ceil); rg.addColorStop(0, '#57534e'); rg.addColorStop(1, '#8a817a');
-  ctx.fillStyle = rg; ctx.beginPath();
-  ctx.moveTo(x - 10, CAVE.top); ctx.lineTo(x + w + 10, CAVE.top); ctx.lineTo(x + w + 6, ceil - 14); ctx.quadraticCurveTo(x + w + 1, ceil - 4, x + w - 2, ceil);
-  ctx.lineTo(x + 2, ceil); ctx.quadraticCurveTo(x - 1, ceil - 4, x - 6, ceil - 14); ctx.closePath(); ctx.fill();
+  // ההר: גוש סלע עם קו מתאר שבור (לא ישר), ופתח מערה שבור בכניסה וביציאה
+  const P = caveShape(o);
+  const rg = ctx.createLinearGradient(0, CAVE.top, 0, GROUND); rg.addColorStop(0, '#57534e'); rg.addColorStop(1, '#8a817a');
+  ctx.fillStyle = rg; ctx.beginPath(); pathPts(P.outer); pathPts(P.inner); ctx.fill('evenodd');
+  ctx.strokeStyle = 'rgba(40,34,28,.55)'; ctx.lineWidth = 0.6; ctx.lineJoin = 'round';   // קו מתאר כהה – כמו שפת סלע
+  ctx.beginPath(); pathPts(P.inner, true); ctx.stroke();
+  ctx.beginPath(); pathPts(P.leftEdge, true); ctx.stroke(); ctx.beginPath(); pathPts(P.rightEdge, true); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.07)';                        // פאות מוארות על הסלעים שליד הפתח
+  for (const [bx, by, r] of P.lumps) { ctx.beginPath(); ctx.ellipse(bx, by, r, r * 0.7, -0.4, Math.PI, Math.PI * 1.9); ctx.fill(); }
   ctx.strokeStyle = 'rgba(0,0,0,.2)'; ctx.lineWidth = 0.5;        // סדקים ושכבות
   for (let k = 0; k < 14; k++) { const cx = x + hash(k * 2.3 + 1) * w, cy = ceil - 6 - hash(k * 4.1) * 50; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 3 + hash(k) * 3, cy + 2); ctx.stroke(); }
   ctx.fillStyle = '#44403c';                                      // נטיפים מהתקרה
