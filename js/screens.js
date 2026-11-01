@@ -173,7 +173,8 @@ function openDict() {
   $('dict').classList.add('show');
 }
 
-// קול: הקלטות של כל מילה ומשפט (קול "Fenrir", audio/voice/). אם הקלטה לא נטענת – הקול של הדפדפן כגיבוי
+// קול: הקלטות של כל מילה ומשפט (קול "Michael", audio/voice/). VOICE_VER – משנים כשמחליפים הקלטות, כדי שהדפדפן לא ישתמש בישנות. אם הקלטה לא נטענת – הקול של הדפדפן כגיבוי
+const VOICE_VER = 'michael1';
 const VOICE_CLIPS = {"jump": "jump", "down": "down", "kick": "kick", "throw": "throw", "catch": "catch", "fly": "fly", "stop": "stop", "run": "run", "swim": "swim", "climb": "climb", "push": "push", "pull": "pull", "hide": "hide", "block": "block", "leap": "leap", "dive": "dive", "crawl": "crawl", "fire": "fire", "let go": "let-go", "ride": "ride", "fight": "fight", "hold": "hold", "up": "up", "want": "want", "key": "key", "rope": "rope", "torch": "torch", "what do you want?": "what-do-you-want", "i have a key": "i-have-a-key", "a rope": "a-rope", "and a torch": "and-a-torch", "which one?": "which-one", "here you go!": "here-you-go", "hmm, that won't open the door.": "hmm-that-won-t-open-the-door", "shield": "shield", "jet": "jet", "pick up": "pick-up", "put down": "put-down"};
 const voiceAudio = {};
 let voiceNow = null;
@@ -190,7 +191,7 @@ function voiceChain() {
 }
 function voiceLoad(slug) {
   if (voiceBuf[slug] || voiceLoading[slug] || !sfxCtx) return voiceLoading[slug];
-  return voiceLoading[slug] = fetch('audio/voice/' + slug + '.mp3').then(r => r.arrayBuffer())
+  return voiceLoading[slug] = fetch('audio/voice/' + slug + '.mp3?v=' + VOICE_VER).then(r => r.arrayBuffer())
     .then(b => new Promise((res, rej) => sfxCtx.decodeAudioData(b, res, rej)))
     .then(buf => { voiceBuf[slug] = buf; return buf; }).catch(() => { delete voiceLoading[slug]; return null; });
 }
@@ -225,7 +226,7 @@ function speakFile(w, slug) {                                                   
   try {
     try { speechSynthesis.cancel(); } catch (e) {}
     if (voiceNow) { voiceNow.pause(); voiceNow.currentTime = 0; }
-    const a = voiceAudio[slug] || (voiceAudio[slug] = new Audio('audio/voice/' + slug + '.mp3'));
+    const a = voiceAudio[slug] || (voiceAudio[slug] = new Audio('audio/voice/' + slug + '.mp3?v=' + VOICE_VER));
     voiceNow = a; a.currentTime = 0; a.muted = muted; a.volume = 1;
     ignoreVoiceUntil = performance.now() + 1600;
     a.onended = () => { ignoreVoiceUntil = performance.now() + 400; };
