@@ -208,3 +208,28 @@ function drawDoor(o) {                                          // דלת עץ �
     ctx.fillStyle = '#78350f'; circle(x + 2, GROUND - 14.3, 0.45); ctx.fillRect(x + 1.8, GROUND - 14.2, 0.4, 1);
   }
 }
+
+// חומת אבן גבוהה שהדלת בתוכה – מצוירת אחרי הנינג'ה. הפתח (הדלת) שקוף, כך שרואים אותו עובר בתוך הפתח
+const DOOR_WALL = { left: 0, right: 7, top: 62 };   // החומה מתחילה במסגרת הדלת – הנינג'ה שעומד לפני הדלת לא מוסתר
+function drawDoorWall(o) {
+  const x = o.x, w = DOOR.w, h = DOOR.h, dTop = GROUND - h - 3, top = GROUND - DOOR_WALL.top, L = x - 2 - DOOR_WALL.left, R = x + w + 2 + DOOR_WALL.right;
+  ctx.save();
+  ctx.beginPath();                                              // החומה כולה פחות הפתח
+  ctx.rect(L, top, R - L, GROUND - top); ctx.rect(x + w, dTop + 3, -w, h);   // מלבן הפתח בכיוון הפוך – "חור"
+  const g = ctx.createLinearGradient(L, 0, R, 0);
+  g.addColorStop(0, '#8b8178'); g.addColorStop(0.5, '#a39a90'); g.addColorStop(1, '#7d746b');
+  ctx.fillStyle = g; ctx.fill('evenodd'); ctx.clip('evenodd');
+  ctx.strokeStyle = 'rgba(60,52,45,.45)'; ctx.lineWidth = 0.4;  // שורות אבנים
+  for (let y = top + 4, r = 0; y < GROUND; y += 4, r++) {
+    ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(R, y); ctx.stroke();
+    for (let bx = L + (r % 2 ? 3.5 : 0); bx < R; bx += 7) { ctx.beginPath(); ctx.moveTo(bx, y - 4); ctx.lineTo(bx, y); ctx.stroke(); }
+  }
+  ctx.fillStyle = 'rgba(255,255,255,.08)'; for (let y = top + 0.5; y < GROUND; y += 8) ctx.fillRect(L, y, R - L, 1.2);
+  ctx.restore();
+  ctx.fillStyle = '#6b625a';                                    // שיניים בראש החומה
+  for (let bx = L; bx < R - 0.5; bx += 6) ctx.fillRect(bx, top - 3.5, 3.6, 3.6);
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(L, top, R - L, 0.8);
+  ctx.fillStyle = '#57534e'; ctx.fillRect(x - 2, dTop, w + 4, 3.2);   // משקוף מעל הפתח
+  ctx.fillRect(x - 2, dTop, 2, h + 3); ctx.fillRect(x + w, dTop, 2, h + 3);   // מסגרת
+  ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(x, dTop + 3, 1.2, h);           // צל בתוך הפתח
+}

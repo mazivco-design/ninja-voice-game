@@ -526,7 +526,8 @@ function draw() {
   drawDuelFx();
   drawWind();
   for (const o of obstacles) if (o.type === 'chasm') drawRopeSwing(o);        // החבל (והנינג'ה התלוי עליו) – לפני הכול
-  for (const o of obstacles) if (o.type === 'window') drawFireRing(o, true);   // החצי הקדמי של הטבעת – מעל הנינג'ה, נראה שהוא עובר דרכה
+  for (const o of obstacles) if (o.type === 'window') drawFireRing(o, true);
+  for (const o of obstacles) if (o.type === 'door') drawDoorWall(o);           // החומה סביב הדלת – מעל הנינג'ה: הוא עובר דרך הפתח, לא לפני הדלת   // החצי הקדמי של הטבעת – מעל הנינג'ה, נראה שהוא עובר דרכה
   for (const o of obstacles) if (o.type === 'bridge') drawFieldSmoke(o);
   for (const o of obstacles) if (o.type === 'lake' || o.type === 'pond') {   // מים מעל השחיין – נראה חצי שקוע / צולל
     ctx.fillStyle = o.type === 'lake' ? 'rgba(20,184,166,.55)' : 'rgba(14,116,144,.6)'; waterPath(o, bottom); ctx.fill();
