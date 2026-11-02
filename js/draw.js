@@ -465,6 +465,7 @@ function playerPose() {
   P = gustPlayerPose(P, now);                     // רוח: נצמד לבמבוק / עף אחורה
   P = duelPlayerPose(P, now);
   P = liftPose(P);
+  P = mudPose(P);                                  // HELP: תקוע בבוץ / אוחז בחבל
   P = merchPose(P);                                // PICK UP: הסלע מעל הראש
   P = jetPose(P);                                 // תרמיל סילון – עף קדימה                     // קרב: עמידה עם חרב והנפות
   return P;
@@ -530,6 +531,7 @@ function draw() {
   for (const o of obstacles) if (o.type === 'window') drawFireRing(o, true);
   for (const o of obstacles) if (o.type === 'door') drawGateFront(o);           // החומה סביב הדלת – מעל הנינג'ה: הוא עובר דרך הפתח, לא לפני הדלת   // החצי הקדמי של הטבעת – מעל הנינג'ה, נראה שהוא עובר דרכה
   for (const o of obstacles) if (o.type === 'bridge') drawFieldSmoke(o);
+  for (const o of obstacles) if (o.type === 'mud') drawMudFront(o);            // הבוץ מעל הרגליים, החבל והבועות
   for (const o of obstacles) if (o.type === 'lake' || o.type === 'pond') {   // מים מעל השחיין – נראה חצי שקוע / צולל
     ctx.fillStyle = o.type === 'lake' ? 'rgba(20,184,166,.55)' : 'rgba(14,116,144,.6)'; waterPath(o, bottom); ctx.fill();
     if (o.type === 'pond') drawNet(o, true);                                  // הרשת לפני הצולל
@@ -584,6 +586,7 @@ function drawObstacle(o, top) {
   if (o.type === 'duel') { drawDuelEnemy(o); return; }
   if (o.type === 'gust') { drawGustBamboo(o); return; }
   if (o.type === 'lift') { drawLiftObstacle(o); return; }
+  if (o.type === 'mud') { drawMudBack(o); return; }
   if (o.type === 'bramble') { drawTunnel(o); return; }   // CRAWL: סלע ענק ומחילה מתחתיו (tunnel.js)
   if (artDraw(o)) return;                        // יש ציור SVG מהסטודיו – הוא מחליף את הציור הרגיל
   if (o.type === 'door') { drawGate(o); drawMerchant(o); return; }   // I WANT: סוחר ודלת נעולה
@@ -1377,7 +1380,7 @@ function drawNinjaBody() {
   const tunO = crawl ? tunnelHere() : null;                                     // זוחל בתוך המחילה – על הרצפה שלה                     // בשפה של הבריכה: הולך בתוך המים הרדודים, על השיפוע
   const riding = rideCtl() && ride.phase !== 'mount';
   const duck = duckT > 0, fx = riding ? PLAYER.x + 4 : rope && rope.phase === 'fall' && rope.fallX !== undefined ? rope.fallX : leap || dive || crawl ? PLAYER.x + 3 : pb.l + (duck ? 5.5 : swim ? 3 : 4);
-  const fy = riding ? GROUND - py : dive ? diveFit(fx).y : leap ? GROUND - py : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : wading ? wadeY(fx) : tunO ? tunnelFloor(tunO, fx) : pb.b;
+  const fy = riding ? GROUND - py : dive ? diveFit(fx).y : leap ? GROUND - py : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : wading ? wadeY(fx) : tunO ? tunnelFloor(tunO, fx) : pb.b + mudSink(fx);   // בבוץ – שקוע עד המותניים
   const now = performance.now() / 1000;
   if (sinkT > 0 && sinkType === 'burn') {                                       // נשרף בשדה האש – מושחר ועשן עולה
     const k = 1 - sinkT / SINK_TIME;
@@ -1404,7 +1407,7 @@ function drawNinjaBody() {
     for (let k = 0; k < 3; k++) { const yy = fy - 4 - k * 3.5, o2 = ((now * 60 + k * 7) % 10); ctx.beginPath(); ctx.moveTo(fx - 6 - o2, yy); ctx.lineTo(fx - 13 - o2, yy); ctx.stroke(); }
   }
   // צל על הקרקע
-  if (!swim && !drowning && !dive && !tunO && !(act.hiding > 0)) ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';   // כשכורעים – בלי צל (הברך על הקרקע)
+  if (!swim && !drowning && !dive && !tunO && !(act.hiding > 0) && mudSink(fx) < 0.3) ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';   // כשכורעים – בלי צל (הברך על הקרקע)
   else ctx.fillStyle = 'rgba(0,0,0,0)';
   if (riding) ctx.fillStyle = 'rgba(0,0,0,0)';                       // על הדרקון – בלי צל על הקרקע
   ctx.beginPath(); ctx.ellipse(fx + 0.5, GROUND + 0.6, Math.max(1.5, 4.5 - py * 0.08), 0.9, 0, 0, Math.PI * 2); ctx.fill();

@@ -7,7 +7,7 @@
 
 const POWER_WORDS = ['shield', 'jet'];
 const JET = { time: 5, alt: 30, rise: 3.5, land: 0.45, guard: 75 };
-const SPECIAL_TYPES = ['chasm', 'dragon', 'duel', 'gust', 'door', 'lift', 'bramble'];
+const SPECIAL_TYPES = ['chasm', 'dragon', 'duel', 'gust', 'door', 'lift', 'bramble', 'mud'];
 let shieldOn = false, shieldPop = 0, jetT = 0, jetGrace = 0, jetPh = 0;
 
 function getPowers() { return Object.assign({ shield: 0, jet: 0 }, pLoad('powers', {})); }
@@ -21,7 +21,7 @@ function powerWordsOwned() { return POWER_WORDS.filter(w => powerCount(w) > 0); 
 function resetPowers() { shieldOn = false; shieldPop = 0; jetT = 0; jetGrace = 0; }
 
 function specialNear(range) {                                                   // שלב מיוחד קרוב / פעיל – לא עפים לידו
-  if ((rope && rope.phase !== 'done') || (ride && ride.phase !== 'leave') || duel || gust || lift || (merchant && merchant.phase !== 'done')) return true;
+  if ((rope && rope.phase !== 'done') || (ride && ride.phase !== 'leave') || duel || gust || lift || mud || (merchant && merchant.phase !== 'done')) return true;
   const pb = playerBox();
   return obstacles.some(o => SPECIAL_TYPES.includes(o.type) && !o.passed && o.x - pb.r < range && o.x + (o.w || 10) > pb.l - 10);
 }

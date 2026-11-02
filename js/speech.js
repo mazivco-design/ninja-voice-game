@@ -125,6 +125,7 @@ function expectedWords() { return [...expectedWords0(), ...powerWordsOwned()]; }
 function expectedWords0() {
   if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? ['want'] : merchant.phase === 'choose' ? [...ITEM_WORDS] : [];
   if (duelActive()) return ['fight'];
+  const me = mudExpected(); if (me) return me;
   if (gustActive()) return ['hold'];
   const le = liftExpected(); if (le) return le;
   if (tunnelWait) return ['crawl'];
@@ -240,6 +241,7 @@ function command(word, source) {
   heard = { text: word.toUpperCase(), t: 0.8 };
 
   if (word === 'jump') {
+    if (mudBusy()) return;                 // תקוע בבוץ – אי אפשר לקפוץ
     if (liftJump()) return;                // על הסלע – קופץ מעל הקיר / אל הכוכב
     if (py === 0) { vy = cfg.jumpV; py = 0.001; duckT = 0; sfx('jump'); }   // קופץ גם מתוך התכופפות
   } else if (word === 'up') { rideLane(true); }                       // UP – הדרקון עולה לגובה העליון
@@ -260,6 +262,7 @@ function command(word, source) {
       throwCd = SHURIKEN.cooldown; throwT = 0.25;
     }
   } else if (word === 'catch') {
+    if (mudCatch()) return;                // תופס את החבל שהחבר זרק לבוץ
     if (ropeCatch()) return;               // תופס את החבל מעל התהום
     catchT = 0.4;                          // תופס מטבע שקרוב מספיק
     const s = obstacles.find(o => o.type === 'coin' && !o.caught && !o.passed &&
@@ -292,7 +295,7 @@ function command(word, source) {
   }
   else if (word === 'shield') shieldCmd();                                // SHIELD – בועת מגן (מהחנות)
   else if (word === 'jet') jetCmd();                                      // JET – תרמיל סילון (מהחנות)
-  else if (word === 'hold') holdCmd();                                    // HOLD – נתפס בגזע הבמבוק
+  else if (word === 'hold') { if (!mudHold()) holdCmd(); }                                                  // HOLD – נתפס בגזע הבמבוק
   else if (word === 'pick up') liftPick();                               // PICK UP – מרים את הסלע
   else if (word === 'put down') liftPut();                               // PUT DOWN – מניח אותו
   else if (word === 'fight') fightCmd();                                  // FIGHT – הנפת חרב

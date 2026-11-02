@@ -24,6 +24,7 @@ function testerTap() {
   if (duelActive()) return command('fight', 'tap');
   if (gustActive()) return command('hold', 'tap');
   if (lift) { const w = liftExpected()[0]; if (w) command(w, 'tap'); return; }
+  if (mud) { const w = mudExpected()[0]; if (w) command(w, 'tap'); return; }
   if (ride && ride.phase === 'wait') return command('ride', 'tap');
   if (rope && rope.phase === 'wait') return command('catch', 'tap');
   if (rope && rope.phase === 'hang') return command('let go', 'tap');
@@ -61,6 +62,7 @@ function testerAuto(pb, dt) {
   if (ride && ride.phase === 'wait') command('ride', 'auto');
   if (duel && duel.phase === 'face' && duel.t > 0.35) command('fight', 'auto');
   liftAuto();
+  mudAuto();
   if (tunnelWait && tunnelWait.idle > 0.3) command('crawl', 'auto');
   if (gust && gust.phase === 'storm' && gust.held === null && gust.t > 1.0) command('hold', 'auto');
   if (rope && rope.phase === 'wait') command('catch', 'auto'); else if (rope && rope.phase === 'hang' && rope.theta >= ROPE.amp * ROPE.farAt) command('let go', 'auto');

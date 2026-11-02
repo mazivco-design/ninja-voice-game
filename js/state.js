@@ -30,6 +30,7 @@ let hideT = 0;               // כמה זמן הנינג'ה כבר בשיח (ל�
 // מהירות העולם בפועל: STOP ו-CLIMB עוצרים אותו, RUN מאיץ
 function curSpeed() {
   const ls = liftSpeed(); if (ls !== null) return ls;
+  const mds = mudSpeed(); if (mds !== null) return mds;                   // HELP: תקוע בבוץ / נשלף החוצה
   if (tunnelHolds()) return 0;                                            // CRAWL: עומד בפתח המחילה ומחכה
   if (state !== 'play' && obstacles.some(o => o.type === 'bramble' && o.inTunnel)) return (runSpeed || cfg.speed) * BRAMBLE.slow;   // בהדגמה – זוחל לאורך המחילה                     // PICK UP: עומדים ליד הסלע / הולכים איתו לאט / על הסלע
   const ms = merchSpeed(); if (ms !== null) return ms;                    // I WANT: הולכים עם החפץ / מטפסים על הצוק / עוברים במערה
