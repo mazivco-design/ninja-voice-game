@@ -7,7 +7,7 @@
    בשלב הזה הילד לא אומר HELP – המשחק אומר. (בהמשך הילד יגיד HELP בעצמו.)
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const MUD = { w: 100, stuck: 24, deep: 4.3, pit: 9, sinkT: 0.6, helpT: 1.1, run: 62, stand: 7, throwT: 0.35, flyT: 0.7,
+const MUD = { w: 100, stuck: 24, deep: 5.2, pit: 9, sinkT: 0.6, helpT: 1.1, run: 62, stand: 7, throwT: 0.35, flyT: 0.7,
               catchWin: 4.5, dropT: 0.6, reelT: 1.1, caughtT: 0.7, holdWin: 4.5, slipT: 0.9, pullT: 3.6, thanksT: 1.6, coins: 4 };
 let mud = null;   // { o, phase: 'sink' | 'help' | 'come' | 'throw' | 'fly' | 'dangle' | 'drop' | 'reel' | 'caught' | 'tug' | 'slip' | 'pull' | 'thanks', t, throws, slips }
 
@@ -20,7 +20,7 @@ function mudPullDist() { return MUD.w + 1 - MUD.stuck; }
 
 // עומק הבוץ בנקודה x (0 מחוץ לשלולית). שפות משופעות
 function mudDepthAt(o, x) {
-  const r = x - o.x, s = 10, ease = q => q * q * (3 - 2 * q);
+  const r = x - o.x, s = 15, ease = q => q * q * (3 - 2 * q);
   if (r <= 0 || r >= MUD.w) return 0;
   if (r < s) return MUD.pit * ease(r / s);
   if (r > MUD.w - s) return MUD.pit * ease((MUD.w - r) / s);
@@ -162,45 +162,71 @@ function friendPose(o) {
 function friendHand(o) { return [friendX(o) - 3.4, GROUND - 8.2]; }
 function ninjaHand() { const nx = PLAYER.x + 4; return [nx + 3.4, GROUND + mudSink(nx) - 9.2]; }
 
-// מאחורי הנינג'ה: החבר (ועוד לא נכנס – כלום)
-function drawMudBack(o) {
-  const fx = friendX(o);
-  if (fx > W + 10) return;
-  const M = mud && mud.o === o ? mud : null;
-  drawFigure({ fx, fy: GROUND, facing: -1, scale: 1, kind: 'ninja', accent: mudAccent(), pose: friendPose(o) });
-  const p = M ? M.phase : 'done';
-  if (['sink', 'help', 'come', 'throw', 'reel'].includes(p)) drawCoil(fx - 1.8, GROUND - 5.6, p === 'reel' ? 0.45 + 0.25 * Math.min(1, M.t / MUD.reelT) : 0.7, false);   // החבל המגולגל ביד
-  else if (M) drawCoil(fx - 2.2, GROUND - 6.2, 0.42, false);                     // מה שנשאר מהחבל ביד
+// השלולית בנויה כמו האגם (draw.js): אגן עם גדות משופעות, ופני הבוץ קצת מתחת לקרקע – לא בולט מעליה
+function mudPool(o) { return { x: o.x, w: MUD.w }; }
+function mudGrad() {
+  const g = ctx.createLinearGradient(0, waterY(), 0, GROUND + 34);
+  g.addColorStop(0, '#a47c55'); g.addColorStop(0.08, '#8a6440'); g.addColorStop(0.45, '#6e4c2e'); g.addColorStop(1, '#4e3420');
+  return g;
+}
+function mudShore(o) {                                                           // שפה רטובה כהה בגדות, וגוש דשא שנוטה מעל הבוץ
+  const P = mudPool(o), wy = waterY(), wd = WORLDS[world];
+  for (const [dir, ex] of [[1, P.x], [-1, P.x + P.w]]) {
+    ctx.strokeStyle = 'rgba(74,47,23,.55)'; ctx.lineWidth = 1.4; ctx.lineCap = 'round';
+    ctx.beginPath(); for (let y = wy; y <= GROUND + SHORE.slope + 6; y += 1) ctx.lineTo(ex + dir * (bankOff(P, y) - 0.6), y); ctx.stroke();
+    ctx.fillStyle = '#7a5838'; ctx.beginPath(); ctx.ellipse(ex + dir * (bankOff(P, wy) + 0.6), wy + 0.35, 2, 0.6, 0, 0, Math.PI * 2); ctx.fill();   // בוץ שנמרח על השפה
+    ctx.fillStyle = wd.top; ctx.beginPath(); ctx.ellipse(ex - dir * 0.6, GROUND - 0.1, 2.6, 0.9, dir * 0.12, 0, Math.PI * 2); ctx.fill();
+  }
+}
+// החבל המגולגל על הגוף של החבר – באלכסון על הכתף, כמו מטפס
+function drawShoulderCoil(fx) {
+  ctx.save(); ctx.translate(fx - 0.2, GROUND - 8.6); ctx.rotate(-0.55);
+  for (let i = 0; i < 3; i++) {
+    const rx = 2.3 + i * 0.25, ry = 4.4 + i * 0.2;
+    ctx.strokeStyle = '#854d0e'; ctx.lineWidth = 0.95; ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#d97706'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
 }
 
-// מעל הנינג'ה: הבוץ עצמו (מכסה את הרגליים), החבל והבועות
+// לפני הנינג'ה: הדופן הרחוקה, הבוץ, והחבר על הגדה
+function drawMudBack(o) {
+  const P = mudPool(o), bottom = GROUND + 40, t = performance.now() / 1000, wy = waterY();
+  drawBasinWall(P, bottom);
+  ctx.fillStyle = mudGrad(); waterPath(P, bottom); ctx.fill();
+  mudShore(o);
+  const fx = friendX(o);
+  if (fx > W + 10) return;
+  const M = mud && mud.o === o ? mud : null, p = M ? M.phase : 'done';
+  drawFigure({ fx, fy: GROUND, facing: -1, scale: 1, kind: 'ninja', accent: mudAccent(), pose: friendPose(o) });
+  if (['sink', 'help', 'come'].includes(p)) drawShoulderCoil(fx);               // מגיע עם החבל עליו
+  else if (p === 'throw' || p === 'reel') drawCoil(fx - 1.8, GROUND - 5.6, p === 'reel' ? 0.45 + 0.25 * Math.min(1, M.t / MUD.reelT) : 0.7, false);   // החבל המגולגל ביד
+  else if (M) drawCoil(fx - 2.2, GROUND - 6.2, 0.42, false);                     // מה שנשאר מהחבל ביד
+  else drawShoulderCoil(fx);
+}
+
+// אחרי הנינג'ה: הבוץ שוב (מכסה את הרגליים), ברק, בועות, החבל והבועות של הדיבור
 function drawMudFront(o) {
-  const t = performance.now() / 1000, S = GROUND - 0.2, x0 = o.x, x1 = o.x + MUD.w;
+  const t = performance.now() / 1000, P = mudPool(o), wy = waterY(), x0 = o.x, x1 = o.x + MUD.w, bottom = GROUND + 40;
   ctx.save();
-  ctx.beginPath(); ctx.moveTo(x0 - 0.5, S);
-  for (let x = x0 - 0.5; x <= x1 + 0.5; x += 1) ctx.lineTo(x, S + Math.sin(x * 0.7 + t * 1.6) * 0.18);
-  for (let x = x1; x >= x0; x -= 1) ctx.lineTo(x, GROUND + Math.max(0.6, mudDepthAt(o, x)) + 0.8);
-  ctx.closePath();
-  const g = ctx.createLinearGradient(0, S, 0, GROUND + MUD.pit);
-  g.addColorStop(0, '#9a7048'); g.addColorStop(0.12, '#7a5230'); g.addColorStop(0.4, '#5c3b1f'); g.addColorStop(1, '#3a2412');
-  ctx.fillStyle = g; ctx.fill();
+  ctx.fillStyle = mudGrad(); waterPath(P, bottom); ctx.fill();
   ctx.clip();
-  ctx.fillStyle = 'rgba(255,236,200,.22)';                                        // ברק רטוב על פני הבוץ
-  for (let k = 0; k < MUD.w / 9; k++) { const xx = x0 + 5 + ((k * 9.7 + t * 0.8) % (MUD.w - 10)); ctx.beginPath(); ctx.ellipse(xx, S + 0.45, 2.2, 0.28, 0, 0, Math.PI * 2); ctx.fill(); }
-  ctx.fillStyle = 'rgba(40,22,8,.35)';                                            // כתמים כהים
-  for (let k = 0; k < MUD.w / 4.6 - 2; k++) { ctx.beginPath(); ctx.ellipse(x0 + 5 + k * 4.6, GROUND + 3 + (k % 3) * 1.8, 1.4, 0.5, 0, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = 'rgba(255,240,215,.28)';                                        // ברק רטוב על פני הבוץ
+  for (let k = 0; k < MUD.w / 9; k++) { const xx = x0 + 8 + ((k * 9.7 + t * 0.8) % (MUD.w - 16)); ctx.beginPath(); ctx.ellipse(xx, wy + 0.5, 2.4, 0.3, 0, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = 'rgba(70,45,25,.28)';                                           // כתמים וגושים בתוך הבוץ
+  for (let k = 0; k < MUD.w / 5; k++) { ctx.beginPath(); ctx.ellipse(x0 + 10 + k * 5 + Math.sin(k * 3) * 1.5, wy + 4 + (k % 4) * 2.6, 1.6, 0.55, 0, 0, Math.PI * 2); ctx.fill(); }
   ctx.restore();
-  ctx.fillStyle = '#4a2f17';                                                      // שפות רטובות וכתמי בוץ על הדשא
-  for (const [x, w] of [[x0 - 1.2, 3.2], [x1 + 1.2, 3.2], [x0 - 4, 1.2], [x1 + 4.5, 1]]) { ctx.beginPath(); ctx.ellipse(x, GROUND - 0.05, w, 0.55, 0, 0, Math.PI * 2); ctx.fill(); }
-  for (let k = 0; k < MUD.w / 10 - 1; k++) {                                       // בועות שמתנפחות ומתפוצצות
-    const ph = (t * 0.6 + k * 0.37) % 1, bx = x0 + 8 + k * 9.5 + Math.sin(k * 5) * 2, r = 0.3 + ph * 0.9;
-    if (ph < 0.85) { ctx.strokeStyle = 'rgba(120,80,45,.9)'; ctx.lineWidth = 0.3; ctx.beginPath(); ctx.arc(bx, S, r, Math.PI, 0); ctx.stroke(); }
+  mudShore(o);
+  for (let k = 0; k < MUD.w / 12; k++) {                                          // בועות שמתנפחות ומתפוצצות
+    const ph = (t * 0.6 + k * 0.37) % 1, bx = x0 + 18 + k * 11 + Math.sin(k * 5) * 2, r = 0.3 + ph * 0.9;
+    if (bx > x1 - 16) break;
+    if (ph < 0.85) { ctx.strokeStyle = 'rgba(110,76,46,.95)'; ctx.lineWidth = 0.3; ctx.beginPath(); ctx.arc(bx, wy + 0.3, r, Math.PI, 0); ctx.stroke(); }
   }
   if (mud && mud.o === o) {
     const nx = PLAYER.x + 4, sk = mudSink(nx);
     if (sk > 1) {                                                                 // טבעת בוץ סביב המותניים
-      ctx.fillStyle = '#4a2f17'; ctx.beginPath(); ctx.ellipse(nx + 0.5, S + 0.2, 4.2, 0.75, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = 'rgba(255,236,200,.25)'; ctx.beginPath(); ctx.ellipse(nx - 0.5, S - 0.05, 2.4, 0.25, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#6e4c2e'; ctx.beginPath(); ctx.ellipse(nx + 0.5, wy + 0.2, 4.2, 0.75, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,236,200,.25)'; ctx.beginPath(); ctx.ellipse(nx - 0.5, wy - 0.05, 2.4, 0.25, 0, 0, Math.PI * 2); ctx.fill();
     }
   }
   drawMudRope(o);
@@ -216,7 +242,7 @@ function ropeLine(a, b, sag, wob) {
 function drawMudRope(o) {
   const M = mud && mud.o === o ? mud : null; if (!M) return;
   const p = M.phase, t = performance.now() / 1000, fh = friendHand(o), nh = ninjaHand(), nx = PLAYER.x + 4;
-  const floatAt = [nx + 5.5, GROUND + 0.3];                                       // קצה החבל צף על הבוץ מול הנינג'ה
+  const floatAt = [nx + 5.5, waterY() + 0.3];                                       // קצה החבל צף על הבוץ מול הנינג'ה
   ctx.save(); ctx.lineCap = 'round';
   if (p === 'fly') {
     const k = Math.min(1, M.t / MUD.flyT), ex = lerp(fh[0], floatAt[0], k), ey = lerp(fh[1], floatAt[1], k) - Math.sin(Math.PI * k) * 18;
