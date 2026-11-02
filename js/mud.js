@@ -164,16 +164,19 @@ function ninjaHand() { const nx = PLAYER.x + 4; return [nx + 3.4, GROUND + mudSi
 
 // השלולית בנויה כמו האגם (draw.js): אגן עם גדות משופעות, ופני הבוץ קצת מתחת לקרקע – לא בולט מעליה
 function mudPool(o) { return { x: o.x, w: MUD.w }; }
+const MUD_BOTTOM = () => GROUND + 27;                                            // קרקעית האגן – סגור מלמטה, לא נמשך עד סוף המסך
 function mudGrad() {
   const g = ctx.createLinearGradient(0, waterY(), 0, GROUND + 34);
   g.addColorStop(0, '#a47c55'); g.addColorStop(0.08, '#8a6440'); g.addColorStop(0.45, '#6e4c2e'); g.addColorStop(1, '#4e3420');
   return g;
 }
-function mudShore(o) {                                                           // שפה רטובה כהה בגדות, וגוש דשא שנוטה מעל הבוץ
+function mudShore(o) {                                                           // קו רטוב כהה לאורך כל האגן (גדות וקרקעית), וגוש דשא שנוטה מעל הבוץ
   const P = mudPool(o), wy = waterY(), wd = WORLDS[world];
+  ctx.save(); ctx.strokeStyle = 'rgba(74,47,23,.55)'; ctx.lineWidth = 1.4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.beginPath(); for (let y = wy; y <= MUD_BOTTOM(); y += 1) ctx.lineTo(P.x + Math.min(P.w / 2 - 1, bankOff(P, y)) - 0.6, y);
+  for (let y = MUD_BOTTOM(); y >= wy; y -= 1) ctx.lineTo(P.x + P.w - Math.min(P.w / 2 - 1, bankOff(P, y)) + 0.6, y);
+  ctx.stroke(); ctx.restore();
   for (const [dir, ex] of [[1, P.x], [-1, P.x + P.w]]) {
-    ctx.strokeStyle = 'rgba(74,47,23,.55)'; ctx.lineWidth = 1.4; ctx.lineCap = 'round';
-    ctx.beginPath(); for (let y = wy; y <= GROUND + SHORE.slope + 6; y += 1) ctx.lineTo(ex + dir * (bankOff(P, y) - 0.6), y); ctx.stroke();
     ctx.fillStyle = '#7a5838'; ctx.beginPath(); ctx.ellipse(ex + dir * (bankOff(P, wy) + 0.6), wy + 0.35, 2, 0.6, 0, 0, Math.PI * 2); ctx.fill();   // בוץ שנמרח על השפה
     ctx.fillStyle = wd.top; ctx.beginPath(); ctx.ellipse(ex - dir * 0.6, GROUND - 0.1, 2.6, 0.9, dir * 0.12, 0, Math.PI * 2); ctx.fill();
   }
@@ -191,7 +194,7 @@ function drawShoulderCoil(fx) {
 
 // לפני הנינג'ה: הדופן הרחוקה, הבוץ, והחבר על הגדה
 function drawMudBack(o) {
-  const P = mudPool(o), bottom = GROUND + 40, t = performance.now() / 1000, wy = waterY();
+  const P = mudPool(o), bottom = MUD_BOTTOM(), t = performance.now() / 1000, wy = waterY();
   drawBasinWall(P, bottom);
   ctx.fillStyle = mudGrad(); waterPath(P, bottom); ctx.fill();
   mudShore(o);
@@ -207,7 +210,7 @@ function drawMudBack(o) {
 
 // אחרי הנינג'ה: הבוץ שוב (מכסה את הרגליים), ברק, בועות, החבל והבועות של הדיבור
 function drawMudFront(o) {
-  const t = performance.now() / 1000, P = mudPool(o), wy = waterY(), x0 = o.x, x1 = o.x + MUD.w, bottom = GROUND + 40;
+  const t = performance.now() / 1000, P = mudPool(o), wy = waterY(), x0 = o.x, x1 = o.x + MUD.w, bottom = MUD_BOTTOM();
   ctx.save();
   ctx.fillStyle = mudGrad(); waterPath(P, bottom); ctx.fill();
   ctx.clip();
