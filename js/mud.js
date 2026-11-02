@@ -26,6 +26,12 @@ function mudDepthAt(o, x) {
   if (r > MUD.w - s) return MUD.pit * ease((MUD.w - r) / s);
   return MUD.pit;
 }
+// מאבק בבוץ: מחזור של דחיפה מהירה למעלה (הידיים לוחצות על הבוץ) ושקיעה איטית בחזרה (הידיים למעלה)
+const STRUGGLE = 1.5;
+function mudStruggle() {
+  const c = (performance.now() / 1000 % STRUGGLE) / STRUGGLE, ease = q => q * q * (3 - 2 * q);
+  return { c, push: c < 0.28, lift: c < 0.28 ? ease(c / 0.28) : 1 - ease((c - 0.28) / 0.72) };
+}
 // כמה הנינג'ה שקוע (לציור)
 function mudSink(fx) {
   if (mud) {
@@ -33,7 +39,8 @@ function mudSink(fx) {
     if (p === 'sink') { const k = Math.min(1, M.t / MUD.sinkT); return MUD.deep * k * k * (3 - 2 * k); }
     if (p === 'pull') { const k = Math.min(1, M.t / MUD.pullT); return Math.min(MUD.deep, mudDepthAt(M.o, fx) * 0.7) * (1 - k * 0.15); }
     if (p === 'thanks') return 0;
-    return MUD.deep + Math.sin(performance.now() / 1000 * 2.2) * 0.25;
+    if (['caught', 'tug'].includes(p)) return MUD.deep + Math.sin(performance.now() / 1000 * 2.2) * 0.25;
+    return MUD.deep + 1 - 2.4 * mudStruggle().lift;                              // נאבק: נדחף למעלה ושוקע בחזרה, כל פעם קצת יותר עמוק
   }
   if (py > 0) return 0;
   const o = obstacles.find(o => o.type === 'mud' && !o.passed && fx > o.x && fx < o.x + MUD.w);   // הולך פנימה – שוקע בהדרגה
@@ -60,6 +67,11 @@ function mudUpdate(dt, pb) {
     return;
   }
   const M = mud, o = M.o; M.t += dt;
+  if (!['caught', 'tug', 'pull', 'thanks', 'sink'].includes(M.phase)) {          // בכל דחיפה למעלה – התזת בוץ
+    const st = mudStruggle(), nx = PLAYER.x + 4;
+    if (st.push && !M.pushed) { M.pushed = true; for (let k = 0; k < 7; k++) particles.push({ x: nx + (Math.random() - 0.5) * 7, y: waterY(), vx: (Math.random() - 0.5) * 16, vy: -10 - Math.random() * 12, g: 70, life: 0.5, color: Math.random() < 0.5 ? '#6e4c2e' : '#8a6440', size: 0.8 + Math.random() * 0.6 }); }
+    if (!st.push) M.pushed = false;
+  }
   if (!obstacles.includes(o)) { mud = null; return; }
   const demo = state !== 'play';
   const go = (ph) => { M.phase = ph; M.t = 0; };
@@ -137,10 +149,16 @@ function mudPose(P) {
     return P;
   }
   if (p === 'thanks') { P = poseIdle(now); P.arms[1] = [2.7, 3.2 + Math.sin(now * 10) * 0.35]; return P; }   // מנופף לחבר
-  P = poseIdle(now);                                                              // תקוע – מנופף בשתי הידיים
-  const w = Math.sin(now * 7);
-  P.arms = [[-2.6 - w * 0.25, -3.0 - w * 0.2], [2.6 + w * 0.25, 3.0 + w * 0.2]];
-  P.lean = Math.sin(now * 3) * 0.06;
+  P = poseIdle(now);                                                              // תקוע – נאבק כדי לצאת
+  const st = mudStruggle(), w = Math.sin(now * 9);
+  if (st.push) {                                                                  // לוחץ בשתי הידיים על הבוץ ומנסה להרים את עצמו
+    const k = st.c / 0.28;
+    P.arms = [[-0.9 + k * 0.5, -0.3], [0.9 - k * 0.5, 0.3]];
+    P.lean = 0.25 * Math.sin(Math.PI * k); P.headTilt = -0.15; P.eyes = 'squint';
+  } else {                                                                        // שוקע בחזרה – הידיים מושטות למעלה ומתנפנפות, מסתכל למעלה
+    P.arms = [[-2.5 - w * 0.35, -2.9 - w * 0.4], [2.5 + Math.sin(now * 9 + 1.7) * 0.35, 2.9 + Math.sin(now * 9 + 1.7) * 0.4]];
+    P.lean = -0.18 + Math.sin(now * 5) * 0.12; P.headTilt = -0.35 + Math.sin(now * 4) * 0.1;
+  }
   return P;
 }
 function friendPose(o) {

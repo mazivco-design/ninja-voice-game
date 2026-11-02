@@ -1433,7 +1433,7 @@ function drawNinjaBody() {
     return;
   }
   const P = drowning ? poseFly(now * 4) : playerPose();          // שוקע – מנופף בידיים
-  P.eyes = invulnT > 0 || drowning ? 'wide' : (py > 0 || kickT > 0 || act.push > 0 || act.pulling > 0 || act.leap > 0) ? 'squint' : null;   // הבעה: בהלה אחרי פגיעה, מאמץ בפעולה
+  P.eyes = invulnT > 0 || drowning || (mud && !['tug', 'pull', 'thanks'].includes(mud.phase)) ? 'wide' : mud && mud.phase === 'tug' ? 'squint' : (py > 0 || kickT > 0 || act.push > 0 || act.pulling > 0 || act.leap > 0) ? 'squint' : null;   // הבעה: בהלה אחרי פגיעה, מאמץ בפעולה
   if (riding) drawRideDragon(fx, fy);                            // הדרקון מתחת לנינג'ה
   drawPowerBack(fx, fy, P);                                       // תרמיל הסילון על הגב
   if (hasGear('katana') && P.swordA === undefined && jetT <= 0) drawKatana(fx, fy, P);   // קטאנה על הגב – מאחורי הגוף (בקרב היא ביד)
