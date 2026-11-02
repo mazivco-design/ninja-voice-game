@@ -7,8 +7,8 @@
    בשלב הזה הילד לא אומר HELP – המשחק אומר. (בהמשך הילד יגיד HELP בעצמו.)
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const MUD = { w: 32, stuck: 12, deep: 4.3, pit: 9, sinkT: 0.6, helpT: 1.1, run: 62, stand: 7, throwT: 0.35, flyT: 0.7,
-              catchWin: 4.5, dropT: 0.6, reelT: 1.1, caughtT: 0.7, holdWin: 4.5, slipT: 0.9, pullT: 1.9, thanksT: 1.6, coins: 4 };
+const MUD = { w: 100, stuck: 24, deep: 4.3, pit: 9, sinkT: 0.6, helpT: 1.1, run: 62, stand: 7, throwT: 0.35, flyT: 0.7,
+              catchWin: 4.5, dropT: 0.6, reelT: 1.1, caughtT: 0.7, holdWin: 4.5, slipT: 0.9, pullT: 3.6, thanksT: 1.6, coins: 4 };
 let mud = null;   // { o, phase: 'sink' | 'help' | 'come' | 'throw' | 'fly' | 'dangle' | 'drop' | 'reel' | 'caught' | 'tug' | 'slip' | 'pull' | 'thanks', t, throws, slips }
 
 function mudWin(base) { return base * (cfg && cfg.forgive ? 1.3 : 1); }           // ברמה הקלה – יותר זמן לענות
@@ -20,7 +20,7 @@ function mudPullDist() { return MUD.w + 1 - MUD.stuck; }
 
 // עומק הבוץ בנקודה x (0 מחוץ לשלולית). שפות משופעות
 function mudDepthAt(o, x) {
-  const r = x - o.x, s = 6, ease = q => q * q * (3 - 2 * q);
+  const r = x - o.x, s = 10, ease = q => q * q * (3 - 2 * q);
   if (r <= 0 || r >= MUD.w) return 0;
   if (r < s) return MUD.pit * ease(r / s);
   if (r > MUD.w - s) return MUD.pit * ease((MUD.w - r) / s);
@@ -186,14 +186,14 @@ function drawMudFront(o) {
   ctx.fillStyle = g; ctx.fill();
   ctx.clip();
   ctx.fillStyle = 'rgba(255,236,200,.22)';                                        // ברק רטוב על פני הבוץ
-  for (let k = 0; k < 4; k++) { const xx = x0 + 4 + ((k * 9 + t * 0.8) % (MUD.w - 8)); ctx.beginPath(); ctx.ellipse(xx, S + 0.45, 2.2, 0.28, 0, 0, Math.PI * 2); ctx.fill(); }
+  for (let k = 0; k < MUD.w / 9; k++) { const xx = x0 + 5 + ((k * 9.7 + t * 0.8) % (MUD.w - 10)); ctx.beginPath(); ctx.ellipse(xx, S + 0.45, 2.2, 0.28, 0, 0, Math.PI * 2); ctx.fill(); }
   ctx.fillStyle = 'rgba(40,22,8,.35)';                                            // כתמים כהים
-  for (let k = 0; k < 6; k++) { ctx.beginPath(); ctx.ellipse(x0 + 4 + k * 4.6, GROUND + 3 + (k % 3) * 1.8, 1.4, 0.5, 0, 0, Math.PI * 2); ctx.fill(); }
+  for (let k = 0; k < MUD.w / 4.6 - 2; k++) { ctx.beginPath(); ctx.ellipse(x0 + 5 + k * 4.6, GROUND + 3 + (k % 3) * 1.8, 1.4, 0.5, 0, 0, Math.PI * 2); ctx.fill(); }
   ctx.restore();
   ctx.fillStyle = '#4a2f17';                                                      // שפות רטובות וכתמי בוץ על הדשא
   for (const [x, w] of [[x0 - 1.2, 3.2], [x1 + 1.2, 3.2], [x0 - 4, 1.2], [x1 + 4.5, 1]]) { ctx.beginPath(); ctx.ellipse(x, GROUND - 0.05, w, 0.55, 0, 0, Math.PI * 2); ctx.fill(); }
-  for (let k = 0; k < 3; k++) {                                                   // בועות שמתנפחות ומתפוצצות
-    const ph = (t * 0.6 + k * 0.37) % 1, bx = x0 + 6 + k * 9 + Math.sin(k * 5) * 2, r = 0.3 + ph * 0.9;
+  for (let k = 0; k < MUD.w / 10 - 1; k++) {                                       // בועות שמתנפחות ומתפוצצות
+    const ph = (t * 0.6 + k * 0.37) % 1, bx = x0 + 8 + k * 9.5 + Math.sin(k * 5) * 2, r = 0.3 + ph * 0.9;
     if (ph < 0.85) { ctx.strokeStyle = 'rgba(120,80,45,.9)'; ctx.lineWidth = 0.3; ctx.beginPath(); ctx.arc(bx, S, r, Math.PI, 0); ctx.stroke(); }
   }
   if (mud && mud.o === o) {
@@ -219,7 +219,7 @@ function drawMudRope(o) {
   const floatAt = [nx + 5.5, GROUND + 0.3];                                       // קצה החבל צף על הבוץ מול הנינג'ה
   ctx.save(); ctx.lineCap = 'round';
   if (p === 'fly') {
-    const k = Math.min(1, M.t / MUD.flyT), ex = lerp(fh[0], floatAt[0], k), ey = lerp(fh[1], floatAt[1], k) - Math.sin(Math.PI * k) * 12;
+    const k = Math.min(1, M.t / MUD.flyT), ex = lerp(fh[0], floatAt[0], k), ey = lerp(fh[1], floatAt[1], k) - Math.sin(Math.PI * k) * 18;
     ropeLine(fh, [ex, ey], 2 + 4 * k);
     drawCoil(ex, ey, 0.38 * (1 - k) + 0.12, false);
   } else if (p === 'dangle' || p === 'drop') {
