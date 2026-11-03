@@ -93,6 +93,46 @@
    "count": 3,
    "description": "A high-pitched, bright cartoon hero voice for an animated kids' game. American accent. Playful, energetic and expressive, comedic panic, shouting for help.",
    "text": "Help! Help! I'm stuck in the mud and I can't get out! Somebody please help me! I'm sinking! Help! Help!"
+  },
+  {
+   "file": "help4-panic",
+   "type": "tts",
+   "model": "eleven_v3",
+   "text": "[panicked] Help! Help!",
+   "voice": "Liam",
+   "settings": {
+    "stability": 0.0
+   }
+  },
+  {
+   "file": "help4-scared",
+   "type": "tts",
+   "model": "eleven_v3",
+   "text": "[scared] Help! Help!",
+   "voice": "Liam",
+   "settings": {
+    "stability": 0.5
+   }
+  },
+  {
+   "file": "help4-urgent",
+   "type": "tts",
+   "model": "eleven_v3",
+   "text": "[urgent] Help! Help!",
+   "voice": "Liam",
+   "settings": {
+    "stability": 0.5
+   }
+  },
+  {
+   "file": "help4-shout",
+   "type": "tts",
+   "model": "eleven_v3",
+   "text": "[shouting] Help! Help!",
+   "voice": "Liam",
+   "settings": {
+    "stability": 0.5
+   }
   }
  ]
 }
