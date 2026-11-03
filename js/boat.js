@@ -33,7 +33,7 @@ function boatKeelY(o) {
   for (const [l, r] of sandRanges(o)) d = Math.max(d, Math.min(m - l, r - m));
   const kw = Math.max(0, Math.min(1, (6 - d) / 12));
   let y = lerp(GROUND, waterY() + 2.2 + boatBob(), kw);
-  if (boat && boat.o === o && boat.phase === 'wave') y -= Math.sin(Math.PI * Math.min(1, boat.t / BOAT.waveT)) * 6;
+  if (boat && boat.o === o && boat.phase === 'wave') y -= Math.sin(Math.PI * Math.min(1, boat.t / BOAT.waveT)) * 2.5;
   return y;
 }
 function boatDeck(o) { return boatKeelY(o) - 3.4; }                                // איפה יושבים בתוך הסירה
@@ -172,7 +172,7 @@ function boatPose(P) {
 /* ---------- ציור ---------- */
 function friendSpot(o) {                                                          // איפה החבר ובאיזו תנוחה
   const B = boat && boat.o === o ? boat : null, p = B ? B.phase : (o.waving ? 'bye' : 'alone'), now = performance.now() / 1000, st = boatStern(o);
-  const side = st + 8, sy = GROUND - 4.6, seat = st + BOAT.len * 0.72, deck = boatDeck(o), sc = 0.92;
+  const side = st + 8, sy = GROUND - 2.6, seat = st + BOAT.len * 0.72, deck = boatDeck(o), sc = 0.92;
   const ease = q => q * q * (3 - 2 * q);
   if (p === 'alone') { const P = posePush(); P.lean += Math.sin(now * 14) * 0.06; return { x: st - 3.4, y: GROUND, P, scale: sc, alone: true }; }   // דוחף לבד ולא מצליח
   if (p === 'ask') {                                                             // מסתובב, מבקש עזרה וזז לצד הסירה
@@ -238,6 +238,7 @@ function drawBoatBack(o) {
   drawShore(P);
   ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 0.35;              // זרם – פסים קטנים שזזים
   for (let i = 0; i < P.w / 9; i++) { const xx = P.x + 8 + ((i * 9 + t * 6) % (P.w - 16)); if (xx < viewL() - 5 || xx > viewR() + 5) continue; ctx.beginPath(); ctx.moveTo(xx, wy + 2 + (i % 3) * 1.6); ctx.lineTo(xx + 2.6, wy + 2 + (i % 3) * 1.6); ctx.stroke(); }
+  drawCrows(P.x + 10, P.x + P.w - 10, 3, GROUND - 17);              // עורבים מעל הנהר – אי אפשר פשוט לקפוץ
   for (const s of o.isl) { const l = o.x + s.l, r = o.x + s.r; if (r < viewL() - 10 || l > viewR() + 10) continue; drawSand(l, r, true); drawPalm(r - 9); }
   const B = boat && boat.o === o ? boat : null;
   if (B && B.phase === 'wave') drawWave(o, Math.min(1, B.t / BOAT.waveT));
@@ -271,7 +272,7 @@ function drawRiverLife(o, P, t) {                                               
   }
 }
 function drawWave(o, k) {                                                         // גל גדול מאחורי הסירה שמרים אותה
-  const x = boatStern(o) - 6, wy = waterY(), h = Math.sin(Math.PI * k) * 12, w = 22;
+  const x = boatStern(o) - 6, wy = waterY(), h = Math.sin(Math.PI * k) * 7, w = 20;
   ctx.fillStyle = 'rgba(56,189,248,.92)'; ctx.beginPath(); ctx.moveTo(x - w, wy + 2);
   ctx.quadraticCurveTo(x - 6, wy + 1, x, wy - h); ctx.quadraticCurveTo(x + 3, wy - h - 1.5, x + 5, wy - h + 2.5);   // הקצה המתקפל קדימה
   ctx.quadraticCurveTo(x + 7, wy, x + 14, wy + 2); ctx.closePath(); ctx.fill();

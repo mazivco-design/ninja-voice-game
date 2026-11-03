@@ -132,18 +132,39 @@ function drawPet(fx, fy) {
   ctx.save(); ctx.translate(petX, petY);
   if (pet === 'dragon') {
     if (dragonUsed) ctx.globalAlpha = 0.55;                                        // כבר הציל בריצה הזאת
-    ctx.fillStyle = '#7c3aed';                                                     // כנפיים
-    ctx.beginPath(); ctx.moveTo(-0.5, -1); ctx.lineTo(-3.5, -4.5 - flap * 2.2); ctx.lineTo(1.5, -2); ctx.fill();
-    ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 1.1; ctx.lineCap = 'round';      // זנב
-    ctx.beginPath(); ctx.moveTo(-2.5, 0.5); ctx.quadraticCurveTo(-5.5, 2.5, -6.5, -0.5); ctx.stroke();
-    ctx.fillStyle = '#f97316'; ctx.beginPath(); ctx.moveTo(-6.5, -0.5); ctx.lineTo(-7.6, -1.6); ctx.lineTo(-6.0, -1.4); ctx.fill();
+    // זנב: מתפתל בגל, מתחדד, ובקצה עלה (חוד) שמסתובב לפי כיוון הזנב
+    const tailPt = k => { const x = -2.4 - k * 5.6, y = 0.6 + Math.sin(now * 5 - k * 3.2) * (0.4 + k * 1.3) + k * 0.4; return [x, y]; };
+    const N = 10, up = [], dn = [];
+    for (let i = 0; i <= N; i++) {
+      const k = i / N, [x, y] = tailPt(k), [x2, y2] = tailPt(Math.min(1, k + 0.05)), a = Math.atan2(y2 - y, x2 - x), w = 0.75 * (1 - k * 0.8);
+      up.push([x - Math.sin(a) * w, y + Math.cos(a) * w]); dn.push([x + Math.sin(a) * w, y - Math.cos(a) * w]);
+    }
+    ctx.fillStyle = '#16a34a'; ctx.beginPath(); ctx.moveTo(up[0][0], up[0][1]);
+    for (const p of up) ctx.lineTo(p[0], p[1]); for (const p of dn.reverse()) ctx.lineTo(p[0], p[1]); ctx.closePath(); ctx.fill();
+    { const [x, y] = tailPt(1), [xb, yb] = tailPt(0.94), a = Math.atan2(y - yb, x - xb);   // חוד הזנב – עלה קטן בהמשך הזנב
+      ctx.save(); ctx.translate(x, y); ctx.rotate(a); ctx.fillStyle = '#f97316';
+      ctx.beginPath(); ctx.moveTo(-0.3, 0); ctx.quadraticCurveTo(0.6, -1.1, 1.6, 0); ctx.quadraticCurveTo(0.6, 1.1, -0.3, 0); ctx.fill(); ctx.restore(); }
+    ctx.fillStyle = '#6d28d9';                                                     // כנף רחוקה
+    ctx.beginPath(); ctx.moveTo(0.2, -1.2); ctx.quadraticCurveTo(-1.2, -4 - flap * 2, -3.2, -4.6 - flap * 2.4); ctx.quadraticCurveTo(-2, -2.6 - flap, -0.8, -1.2); ctx.fill();
     ctx.fillStyle = '#22c55e'; ctx.beginPath(); ctx.ellipse(0, 0, 3, 2, -0.1, 0, Math.PI * 2); ctx.fill();   // גוף
     ctx.fillStyle = '#bbf7d0'; ctx.beginPath(); ctx.ellipse(0.6, 0.8, 1.8, 0.9, 0, 0, Math.PI * 2); ctx.fill();   // בטן
-    ctx.fillStyle = '#22c55e'; circle(3, -1.6, 1.8);                                // ראש
-    ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.moveTo(2.2, -3.1); ctx.lineTo(2.0, -4.4); ctx.lineTo(2.9, -3.3); ctx.fill();   // קרניים
-    ctx.beginPath(); ctx.moveTo(3.4, -3.3); ctx.lineTo(3.6, -4.6); ctx.lineTo(4.1, -3.2); ctx.fill();
-    ctx.fillStyle = '#fff'; circle(3.6, -1.9, 0.7); ctx.fillStyle = '#111'; circle(3.8, -1.9, 0.38);   // עין
-    if (!dragonUsed && Math.random() < 0.06) particles.push({ x: petX + 4.8, y: petY - 1.2, vx: 14, vy: -2, g: -3, life: 0.35, color: '#fb923c', size: 0.7 });   // ניצוץ אש קטן
+    ctx.fillStyle = '#8b5cf6';                                                     // כנף קרובה – עם קרום בין שתי אצבעות
+    ctx.beginPath(); ctx.moveTo(0.6, -1.4); ctx.quadraticCurveTo(-0.2, -4.4 - flap * 2.2, -2.6, -5.4 - flap * 2.8); ctx.lineTo(-1.6, -3.6 - flap * 1.6); ctx.lineTo(-0.6, -3.4 - flap * 1.4); ctx.quadraticCurveTo(-0.4, -2.2, -0.2, -1.2); ctx.fill();
+    // ראש עם לוע: חרטום מוארך, לסת תחתונה שנפתחת ונסגרת, שיניים לבנות
+    const jaw = 0.25 + Math.max(0, Math.sin(now * 2.2)) * 0.35;
+    ctx.fillStyle = '#16a34a'; ctx.save(); ctx.translate(3.3, -1.0); ctx.rotate(jaw);  // לסת תחתונה
+    ctx.beginPath(); ctx.moveTo(-0.6, 0); ctx.lineTo(2.6, 0.1); ctx.quadraticCurveTo(2.7, 0.9, 1.6, 1.0); ctx.lineTo(-0.6, 0.9); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff'; for (const tx of [0.6, 1.4, 2.1]) { ctx.beginPath(); ctx.moveTo(tx - 0.3, 0.05); ctx.lineTo(tx, -0.5); ctx.lineTo(tx + 0.3, 0.05); ctx.fill(); }   // שיניים תחתונות
+    ctx.restore();
+    ctx.fillStyle = '#7f1d1d'; ctx.beginPath(); ctx.moveTo(3.2, -1.0); ctx.lineTo(5.6, -0.9); ctx.lineTo(3.3 + Math.cos(jaw) * 2.2, -1.0 + Math.sin(jaw) * 2.2); ctx.closePath(); ctx.fill();   // פנים הפה
+    ctx.fillStyle = '#22c55e'; circle(2.7, -1.9, 1.75);                             // ראש
+    ctx.beginPath(); ctx.moveTo(3.2, -3.1); ctx.quadraticCurveTo(5.4, -2.7, 6.1, -1.5); ctx.quadraticCurveTo(5.8, -0.9, 3.4, -0.9); ctx.closePath(); ctx.fill();   // חרטום עליון
+    ctx.fillStyle = '#fff'; for (const tx of [4.0, 4.8, 5.5]) { ctx.beginPath(); ctx.moveTo(tx - 0.3, -1.0); ctx.lineTo(tx, -0.45); ctx.lineTo(tx + 0.3, -1.0); ctx.fill(); }   // שיניים עליונות
+    ctx.fillStyle = '#14532d'; circle(5.5, -2.0, 0.22);                              // נחיר
+    ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.moveTo(1.8, -3.2); ctx.lineTo(1.3, -4.6); ctx.lineTo(2.5, -3.5); ctx.fill();   // קרניים
+    ctx.beginPath(); ctx.moveTo(2.9, -3.5); ctx.lineTo(2.9, -4.9); ctx.lineTo(3.6, -3.4); ctx.fill();
+    ctx.fillStyle = '#fff'; circle(3.3, -2.3, 0.7); ctx.fillStyle = '#111'; circle(3.55, -2.3, 0.38);   // עין
+    if (!dragonUsed && Math.random() < 0.06) particles.push({ x: petX + 6.2, y: petY - 0.6, vx: 14, vy: -2, g: -3, life: 0.35, color: '#fb923c', size: 0.7 });   // ניצוץ אש קטן
   } else if (pet === 'owl') {
     ctx.fillStyle = '#92400e';                                                     // כנפיים
     ctx.beginPath(); ctx.ellipse(-2.6, 0, 1.2, 2.6 + flap * 0.6, 0.5 + flap * 0.4, 0, Math.PI * 2); ctx.fill();
