@@ -28,6 +28,10 @@ function resize() {
   oy = (ch - H * scale) * 0.75;   // במצב לאורך – יותר שמיים, פחות אדמה
 }
 window.addEventListener('resize', resize);
+// מה שרואים בפועל ביחידות העולם. במסך רחב (יחס רחב מ-160:100) רואים גם משמאל ל-0 ומימין ל-W –
+// המכשולים מצוירים, נכנסים ויוצאים לפי הקצוות האמיתיים, כדי שלא ייחתכו באמצע המסך
+function viewL() { return scale ? Math.min(0, -ox / scale) : 0; }
+function viewR() { return scale ? Math.max(W, (cw - ox) / scale) : W; }
 window.addEventListener('orientationchange', () => setTimeout(resize, 300));
 // חזרה לדפדפן: לפעמים הדפדפן מדווח רגע על גודל קטן (במעבר בין אפליקציות) ואחר כך לא מודיע שחזר לגודל המלא – והמשחק נשאר "חתוך".
 // לכן: מחשבים שוב כשחוזרים, ובודקים כל חצי שנייה אם גודל המסך השתנה בלי הודעה
@@ -499,7 +503,7 @@ function draw() {
 
   // מכאן – רק בתוך שטח העולם
   ctx.save();
-  ctx.beginPath(); ctx.rect(0, top, W, bottom - top); ctx.clip();
+  ctx.beginPath(); ctx.rect(viewL() - 1, top, viewR() - viewL() + 2, bottom - top); ctx.clip();
 
   const WIDE = { river: drawRiver, lake: drawLake, bridge: drawBridge, pond: drawPond, chasm: drawChasm };
   for (const o of obstacles) if (WIDE[o.type]) WIDE[o.type](o, bottom);

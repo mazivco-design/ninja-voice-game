@@ -262,8 +262,8 @@ function drawCartFront(o) {
   const kx = C && ['ask', 'step', 'count', 'push', 'early', 'late'].includes(C.phase) ? rear - 1.8 : rear + CART.len / 2 + 4.5, ky = hillYo(o, Math.min(kx, rear + CART.len)) - 16;
   const say = (txt, opt) => drawBubble(txt, kx, ky, Object.assign({ tail: -1, color: '#1d4ed8' }, opt));
   if (!C) {
-    if (o.waving) { const fx = rear + CART.len / 2; if (fx < W + 4 && fx > -6) drawBubble('Thank you! 👋', fx + 4, hillYo(o, fx) - 20, { tail: -1, size: 3.4, color: '#be185d' }); }
-    else if (rear < W - 4) drawBubble('Ugh! Too heavy!', rear - 3.6, hillYo(o, rear) - 15, { tail: -1, size: 3.4 });
+    if (o.waving) { const fx = rear + CART.len / 2; if (fx < viewR() + 4 && fx > viewL() - 6) drawBubble('Thank you! 👋', fx + 4, hillYo(o, fx) - 20, { tail: -1, size: 3.4, color: '#be185d' }); }
+    else if (rear < viewR() - 4) drawBubble('Ugh! Too heavy!', rear - 3.6, hillYo(o, rear) - 15, { tail: -1, size: 3.4 });
     return;
   }
   const p = C.phase;

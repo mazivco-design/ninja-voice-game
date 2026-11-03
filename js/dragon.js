@@ -88,7 +88,7 @@ function rideUpdate(dt, pb) {
 // מכשול בשמיים: סלע בגובה שבו הדרקון נמצא (צריך לעבור לגובה השני), או עטלף שעף מולך באותו גובה (FIRE – או לעקוף ב-UP/DOWN)
 function skySpawn(r) {
   const bat = Math.random() < 0.4 && !(r.lastBat >= 2);
-  const o = bat ? { type: 'bat', x: W + 2, w: BAT.w, lane: r.lane } : { type: 'skyrock', x: W + 2, w: SKYROCK.w, lane: r.lane };
+  const o = bat ? { type: 'bat', x: viewR() + 2, w: BAT.w, lane: r.lane } : { type: 'skyrock', x: viewR() + 2, w: SKYROCK.w, lane: r.lane };
   r.lastBat = bat ? (r.lastBat || 0) + 1 : 0;
   o.passed = false; o.hit = false; o.pts = obstacleValue(o.type); o.seed = Math.random() * 100;
   obstacles.push(o); spawned++; r.left--; r.dist = 0;

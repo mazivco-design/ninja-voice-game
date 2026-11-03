@@ -14,7 +14,7 @@ let mud = null;   // { o, phase: 'sink' | 'help' | 'come' | 'throw' | 'fly' | 'd
 function mudWin(base) { return base * (cfg && cfg.forgive ? 1.3 : 1); }           // ברמה הקלה – יותר זמן לענות
 function mudStuckX(o) { return o.x + MUD.stuck; }
 function mudStand(o) { return MUD.w + MUD.stand; }                                // איפה החבר עומד (יחסית ל-o.x)
-function friendX(o) { return o.x + (o.fr === undefined ? W + 12 - o.x : o.fr); }
+function friendX(o) { return o.x + (o.fr === undefined ? viewR() + 12 - o.x : o.fr); }
 function mudAccent() { const c = typeof playerColor === 'function' ? playerColor() : '#dc2626'; return c === '#2563eb' ? '#f59e0b' : '#2563eb'; }
 function mudPullDist() { return MUD.w + 1 - MUD.stuck; }
 
@@ -63,7 +63,7 @@ function mudUpdate(dt, pb) {
     const over = cx - mudStuckX(o); if (over > 0) ropeShiftBy(over);           // נתקע בדיוק באמצע השלולית
     py = 0; vy = 0; duckT = 0; flyT = 0; act.crawl = 0; act.run = 0;
     mud = { o, phase: 'sink', t: 0, throws: 0, slips: 0 };
-    o.fr = W + 12 - o.x; sfx('pop'); burst(PLAYER.x + 4, GROUND, '#6b4423', 10, 22);
+    o.fr = viewR() + 12 - o.x; sfx('pop'); burst(PLAYER.x + 4, GROUND, '#6b4423', 10, 22);
     return;
   }
   const M = mud, o = M.o; M.t += dt;
@@ -213,7 +213,7 @@ function drawMudBack(o) {
   ctx.fillStyle = mudGrad(); waterPath(P, bottom); ctx.fill();
   mudShore(o);
   const fx = friendX(o);
-  if (fx > W + 10) return;
+  if (fx > viewR() + 10) return;
   const M = mud && mud.o === o ? mud : null, p = M ? M.phase : 'done';
   drawFigure({ fx, fy: GROUND, facing: -1, scale: 1, kind: 'ninja', accent: mudAccent(), pose: friendPose(o) });
   if (['sink', 'help', 'come'].includes(p)) drawShoulderCoil(fx);               // מגיע עם החבל עליו
@@ -285,10 +285,10 @@ function drawMudRope(o) {
 }
 function drawMudTalk(o) {                                                         // בועות קומיקס
   const M = mud && mud.o === o ? mud : null, fx = friendX(o), nx = PLAYER.x + 4;
-  if (!M) { if (o.waving && fx < W + 4 && fx > -6) drawBubble('Bye! 👋', fx, GROUND - 17, { tail: -1, size: 3.4 }); return; }
+  if (!M) { if (o.waving && fx < viewR() + 4 && fx > viewL() - 6) drawBubble('Bye! 👋', fx, GROUND - 17, { tail: -1, size: 3.4 }); return; }
   const p = M.phase, ny = GROUND + mudSink(nx) - 17;
   if (['help', 'come', 'throw', 'reel'].includes(p) || (p === 'drop')) drawBubble('Help! 😱', nx + 1, ny, { age: p === 'help' ? M.t : undefined, tail: 1, color: '#b91c1c' });
-  if (p === 'come' && fx < W - 4) drawBubble("I'm coming!", fx, GROUND - 17, { age: M.t, tail: -1, size: 3.6 });
+  if (p === 'come' && fx < viewR() - 4) drawBubble("I'm coming!", fx, GROUND - 17, { age: M.t, tail: -1, size: 3.6 });
   if (p === 'fly' || p === 'dangle') drawBubble('Catch!', fx, GROUND - 17, { age: p === 'fly' ? M.t : undefined, tail: -1, color: '#1d4ed8' });
   if (p === 'tug') drawBubble('Hold on!', fx, GROUND - 17, { age: M.t, tail: -1, color: '#1d4ed8' });
   if (p === 'slip') drawBubble('Oops!', fx, GROUND - 15, { age: M.t, tail: -1, size: 3.6 });

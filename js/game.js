@@ -197,7 +197,7 @@ function spawn() {
   if (mode === 'free') world = Math.floor(spawned / 12) % RUN_WORLDS;   // ב-Free Play העולם מתחלף כל 12 מכשולים
   let type = nextType;
   if (type === 'boat') type = ptIdx++ % 2 === 0 ? 'cart' : 'boat';   // PUSH TOGETHER: עגלה וסירה לסירוגין
-  const o = { type, x: W + 2, passed: false, hit: false };
+  const o = { type, x: viewR() + 2, passed: false, hit: false };
   if (type === 'river') o.w = riverWidth();
   if (type === 'chasm') o.w = CHASM.w;
   if (type === 'dragon') o.w = DRAGON.w;
@@ -347,7 +347,7 @@ function learnRequeue(o) {
     if (a.x < W) for (let i = 0; i < 10; i++) particles.push({ x: a.x + 3 + (Math.random() - 0.5) * 6, y: GROUND - 6 - Math.random() * 10, vx: (Math.random() - 0.5) * 16, vy: -6 - Math.random() * 10, g: -4, life: 0.5, color: i % 2 ? '#e2e8f0' : '#cbd5e1', size: 1.6 });
   }
   nextType = o.type;
-  distSinceSpawn = (W + 2) - o.x;                                                            // כאילו המכשול הבא נבחר עכשיו, מיד אחרי זה שנכשלו בו
+  distSinceSpawn = (viewR() + 2) - o.x;                                                            // כאילו המכשול הבא נבחר עכשיו, מיד אחרי זה שנכשלו בו
   nextGap = speed * (rand(cfg.gapT[0], cfg.gapT[1]) + LEARN.gap) + (o.w || 0);
   return true;
 }
@@ -517,7 +517,7 @@ function update(dt) {
   distSinceSpawn += dx;
   if (state === 'play' && distSinceSpawn >= nextGap && !rideBusy()) {
     if (mode === 'free' || spawned < (mode === 'journey' ? segLen(jStation) : STAGES[stageIdx].count)) spawn();
-    else if (!flag) flag = { x: W + 2 };
+    else if (!flag) flag = { x: viewR() + 2 };
   }
 
   const pb = playerBox();
@@ -551,7 +551,7 @@ function update(dt) {
       }
     }
   }
-  shurikens = shurikens.filter(s => !s.dead && s.x < W + 10);
+  shurikens = shurikens.filter(s => !s.dead && s.x < viewR() + 10);
   for (const f of fireballs) {                                              // כדורי אש – מנפצים קיר קרח
     f.x += FIREBALL.speed * dt; f.t += dt;
     if (Math.random() < 0.7) particles.push({ x: f.x - 2, y: f.y + (Math.random() - 0.5) * 2, vx: -20, vy: -4, g: -6, life: 0.35, color: Math.random() < 0.5 ? '#fb923c' : '#fde047', size: 0.9 });
@@ -571,7 +571,7 @@ function update(dt) {
       }
     }
   }
-  fireballs = fireballs.filter(f => !f.dead && f.x < W + 10);
+  fireballs = fireballs.filter(f => !f.dead && f.x < viewR() + 10);
   for (const c of pickups) {                                                // מטבעות קטנים – נאספים בנגיעה
     c.x -= curSpeed() * dt;
     if (hasGear('owl') && !c.got && c.x - pb.r < 16 && c.x > pb.l - 2) { c.x += (pb.r - 2 - c.x) * 0.2; c.y += (pb.t + 6 - c.y) * 0.2; }   // הינשוף מושך מטבעות
@@ -594,7 +594,8 @@ function update(dt) {
         o.rx += dx;
       }
       o.rx -= dx;
-      o.x -= (hidingFrom === o ? GUARD_PASS : GUARD.walk) * dt;          // שומרים הולכים לקראתך (ועוברים מהר כשמתחבאים)
+      if (hidingFrom === o) o.x -= GUARD_PASS * dt;                      // עוברים מהר מאחורי הסלעים
+      else if (v > 0 || o.rx === undefined) o.x -= GUARD.walk * dt;      // הולכים לקראתך. כשהעולם עומד (מתחבאים מזוג אחר) – מחכים, כדי שלא יקדימו את הסלע שלהם
     }
     if (o.type === 'arrows' && !o.deflected) o.x -= ARROWS.speed * dt;       // חיצים עפים
     if (o.pushed) { o.x += (v + 60) * dt; o.rot = (o.rot || 0) + dt * 6; }   // סלע שנדחף מתגלגל קדימה
@@ -725,7 +726,7 @@ function update(dt) {
   }
   obstacles = obstacles.filter(o => {
     const r = o.w ? o.x + o.w : Math.max(o.x, o.rx === undefined ? -1e9 : o.rx) + 25;
-    return r > -10 && o.x < W + 40 && !(o.caught && o.ct > 0.35);
+    return r > viewL() - 10 && o.x < viewR() + 40 && !(o.caught && o.ct > 0.35);
   });
 
   if (flag) {

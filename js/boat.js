@@ -237,8 +237,8 @@ function drawBoatBack(o) {
   ctx.save(); waterPath(P, bottom); ctx.clip(); drawRiverLife(o, P, t); ctx.restore();   // קצת דגים וצמחים מתחת למים
   drawShore(P);
   ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 0.35;              // זרם – פסים קטנים שזזים
-  for (let i = 0; i < P.w / 9; i++) { const xx = P.x + 8 + ((i * 9 + t * 6) % (P.w - 16)); if (xx < -5 || xx > W + 5) continue; ctx.beginPath(); ctx.moveTo(xx, wy + 2 + (i % 3) * 1.6); ctx.lineTo(xx + 2.6, wy + 2 + (i % 3) * 1.6); ctx.stroke(); }
-  for (const s of o.isl) { const l = o.x + s.l, r = o.x + s.r; if (r < -10 || l > W + 10) continue; drawSand(l, r, true); drawPalm(r - 9); }
+  for (let i = 0; i < P.w / 9; i++) { const xx = P.x + 8 + ((i * 9 + t * 6) % (P.w - 16)); if (xx < viewL() - 5 || xx > viewR() + 5) continue; ctx.beginPath(); ctx.moveTo(xx, wy + 2 + (i % 3) * 1.6); ctx.lineTo(xx + 2.6, wy + 2 + (i % 3) * 1.6); ctx.stroke(); }
+  for (const s of o.isl) { const l = o.x + s.l, r = o.x + s.r; if (r < viewL() - 10 || l > viewR() + 10) continue; drawSand(l, r, true); drawPalm(r - 9); }
   const B = boat && boat.o === o ? boat : null;
   if (B && B.phase === 'wave') drawWave(o, Math.min(1, B.t / BOAT.waveT));
   const F = friendSpot(o);
@@ -249,7 +249,7 @@ function drawBoatBack(o) {
 function drawRiverLife(o, P, t) {                                                 // מעט צמחי מים שמתנופפים מהקרקעית, ודגים ששוחים לאט הלוך ושוב
   const bed = GROUND + 27;
   for (let i = 0, x = P.x + 22; x < P.x + P.w - 22; i++, x += 38 + hash(i * 3.3) * 22) {
-    if (x < -10 || x > W + 10) continue;
+    if (x < viewL() - 10 || x > viewR() + 10) continue;
     for (let b = 0; b < 3; b++) {
       const bx = x + b * 1.6, h = 7 + hash(i * 5 + b) * 7, sw = Math.sin(t * 1.3 + i + b * 0.8) * 1.6;
       ctx.strokeStyle = b % 2 ? 'rgba(34,197,94,.75)' : 'rgba(21,128,61,.8)'; ctx.lineWidth = 0.9; ctx.lineCap = 'round';
@@ -260,7 +260,7 @@ function drawRiverLife(o, P, t) {                                               
   for (let i = 0; i < P.w / 55; i++) {
     const home = P.x + 30 + i * 55 + hash(i * 7.1) * 20, dir = Math.cos(t * 0.35 + i * 1.7) >= 0 ? 1 : -1;
     const x = home + Math.sin(t * 0.35 + i * 1.7) * 9, y = GROUND + 9 + hash(i * 2.9) * 11 + Math.sin(t * 1.2 + i) * 0.6;
-    if (x < -6 || x > W + 6) continue;
+    if (x < viewL() - 6 || x > viewR() + 6) continue;
     const tail = Math.sin(t * 9 + i) * 0.5;
     ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
     ctx.fillStyle = cols[i % cols.length];
@@ -321,7 +321,7 @@ function drawBoatHull(o, inner) {                                               
 function drawBoatTalk(o) {
   const B = boat && boat.o === o ? boat : null, F = friendSpot(o), by = F.y - 15.5;
   if (!B) {
-    if (o.waving) { if (F.x < W + 4 && F.x > -6) drawBubble('Bye! 👋', F.x, by, { tail: -1, size: 3.4 }); }
+    if (o.waving) { if (F.x < viewR() + 4 && F.x > viewL() - 6) drawBubble('Bye! 👋', F.x, by, { tail: -1, size: 3.4 }); }
     else if (F.alone && F.x < W - 6) drawBubble('Ugh! Too heavy!', F.x, by, { tail: -1, size: 3.4 });
     return;
   }
