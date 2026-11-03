@@ -234,6 +234,7 @@ function drawBoatBack(o) {
   const g = ctx.createLinearGradient(0, wy, 0, GROUND + 30);
   g.addColorStop(0, '#38bdf8'); g.addColorStop(1, '#0c4a6e');
   ctx.fillStyle = g; waterPath(P, bottom); ctx.fill();
+  ctx.save(); waterPath(P, bottom); ctx.clip(); drawRiverLife(o, P, t); ctx.restore();   // קצת דגים וצמחים מתחת למים
   drawShore(P);
   ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 0.35;              // זרם – פסים קטנים שזזים
   for (let i = 0; i < P.w / 9; i++) { const xx = P.x + 8 + ((i * 9 + t * 6) % (P.w - 16)); if (xx < -5 || xx > W + 5) continue; ctx.beginPath(); ctx.moveTo(xx, wy + 2 + (i % 3) * 1.6); ctx.lineTo(xx + 2.6, wy + 2 + (i % 3) * 1.6); ctx.stroke(); }
@@ -244,6 +245,30 @@ function drawBoatBack(o) {
   if (!F.inBoat) drawFigure({ fx: F.x, fy: F.y, facing: 1, scale: F.scale, kind: 'ninja', accent: mudAccent(), pose: F.P });
   drawBoatHull(o, true);                                                          // פנים הסירה (הדופן הרחוקה)
   if (F.inBoat) drawFigure({ fx: F.x, fy: F.y, facing: 1, scale: F.scale, kind: 'ninja', accent: mudAccent(), pose: F.P });
+}
+function drawRiverLife(o, P, t) {                                                 // מעט צמחי מים שמתנופפים מהקרקעית, ודגים ששוחים לאט הלוך ושוב
+  const bed = GROUND + 27;
+  for (let i = 0, x = P.x + 22; x < P.x + P.w - 22; i++, x += 38 + hash(i * 3.3) * 22) {
+    if (x < -10 || x > W + 10) continue;
+    for (let b = 0; b < 3; b++) {
+      const bx = x + b * 1.6, h = 7 + hash(i * 5 + b) * 7, sw = Math.sin(t * 1.3 + i + b * 0.8) * 1.6;
+      ctx.strokeStyle = b % 2 ? 'rgba(34,197,94,.75)' : 'rgba(21,128,61,.8)'; ctx.lineWidth = 0.9; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(bx, bed); ctx.quadraticCurveTo(bx + sw, bed - h * 0.5, bx + sw * 0.4, bed - h); ctx.stroke();
+    }
+  }
+  const cols = ['#fb923c', '#facc15', '#f472b6'];
+  for (let i = 0; i < P.w / 55; i++) {
+    const home = P.x + 30 + i * 55 + hash(i * 7.1) * 20, dir = Math.cos(t * 0.35 + i * 1.7) >= 0 ? 1 : -1;
+    const x = home + Math.sin(t * 0.35 + i * 1.7) * 9, y = GROUND + 9 + hash(i * 2.9) * 11 + Math.sin(t * 1.2 + i) * 0.6;
+    if (x < -6 || x > W + 6) continue;
+    const tail = Math.sin(t * 9 + i) * 0.5;
+    ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
+    ctx.fillStyle = cols[i % cols.length];
+    ctx.beginPath(); ctx.ellipse(0, 0, 2.1, 1.05, 0, 0, Math.PI * 2); ctx.fill();                  // גוף
+    ctx.beginPath(); ctx.moveTo(-1.7, 0); ctx.lineTo(-3.2, -1 + tail); ctx.lineTo(-3.2, 1 + tail); ctx.closePath(); ctx.fill();   // זנב
+    ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(1.1, -0.25, 0.25, 0, Math.PI * 2); ctx.fill();   // עין
+    ctx.restore();
+  }
 }
 function drawWave(o, k) {                                                         // גל גדול מאחורי הסירה שמרים אותה
   const x = boatStern(o) - 6, wy = waterY(), h = Math.sin(Math.PI * k) * 12, w = 22;
