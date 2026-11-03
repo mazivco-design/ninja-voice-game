@@ -163,14 +163,19 @@ function mudPose(P) {
   }
   return P;
 }
+// משיכה יד אחרי יד, בגובה החזה (לא מעל הראש): יד מושטת קדימה על החבל, תופסת ומושכת אל המותן – והשנייה באותו זמן חוזרת קדימה
+function handOverHand(ph) {
+  const s = q => (1 - Math.cos(2 * Math.PI * q)) / 2, arm = v => [lerp(1.5, 0.55, v), lerp(1.58, 2.35, v)];
+  return [arm(s(ph + 0.5)), arm(s(ph))];
+}
 function friendPose(o) {
   const now = performance.now() / 1000, M = mud && mud.o === o ? mud : null, p = M ? M.phase : 'done';
   let P;
   if (p === 'come') P = poseRun(now * 20);
-  else if (p === 'tug') { P = posePull(now * 0.7); P.lean = -0.3; }
+  else if (p === 'tug') { P = poseIdle(now); P.arms = handOverHand(0.15 + Math.sin(now * 9) * 0.03); P.lean = -0.3; P.legs = [[-0.55, -0.2], [0.6, 0.05]]; }   // מחזיק חזק, מוכן למשוך
   else if (p === 'pull') {                                                      // יד אחרי יד, לאט ובמאמץ, וצעד אחורה בכל משיכה
     const ph = M.t / MUD.pullCyc, q = Math.PI * 4 * ph, eff = Math.abs(Math.sin(Math.PI * 2 * ph));
-    P = posePull(ph * 0.7); P.lean = -0.38 - eff * 0.12; P.headTilt = -0.25;
+    P = poseIdle(now); P.arms = handOverHand(ph); P.lean = -0.38 - eff * 0.12; P.headTilt = -0.2; P.hipY = -4.4 + eff * 0.3;
     P.legs = [[-0.5 + Math.sin(q) * 0.28, -0.15 - Math.max(0, Math.sin(q)) * 0.35], [0.6 - Math.sin(q) * 0.28, 0.05 - Math.max(0, -Math.sin(q)) * 0.35]];
     P.bob = -eff * 0.4;
   }
@@ -237,10 +242,11 @@ function drawMudBack(o) {
   const fx = friendX(o);
   if (fx > viewR() + 10) return;
   const M = mud && mud.o === o ? mud : null, p = M ? M.phase : 'done';
-  const FP = friendPose(o), hand = figHand(fx, GROUND, -1, 1, FP, 1);
-  o._fh = hand;
+  const FP = friendPose(o), h1 = figHand(fx, GROUND, -1, 1, FP, 1), h0 = figHand(fx, GROUND, -1, 1, FP, 0);
+  const hand = h1[0] <= h0[0] ? h1 : h0, back = hand === h1 ? h0 : h1;           // החבל עובר דרך שתי הידיים: מהיד הקדמית אל הנינג'ה, ומהאחורית אל הקרקע
+  o._fh = hand; o._fb = back;
   const coiled = ['sink', 'help', 'come', 'throw', 'reel'].includes(p) && !(p === 'throw' && M.t > MUD.throwT * 0.8);
-  if (!coiled) drawSlack(fx, hand, p === 'pull' || p === 'thanks' || p === 'done' ? 3 : 2);   // אחרי הזריקה – שאר החבל מאחוריו
+  if (!coiled) drawSlack(fx, back, p === 'pull' || p === 'thanks' || p === 'done' ? 3 : 2);   // אחרי הזריקה – שאר החבל מאחוריו
   drawFigure({ fx, fy: GROUND, facing: -1, scale: 1, kind: 'ninja', accent: mudAccent(), pose: FP });
   if (coiled) {                                                                   // לפני הזריקה / באיסוף: החבל המגולגל תלוי מהיד ומתנדנד
     const sw = p === 'come' ? Math.sin(t * 16) * 0.35 : Math.sin(t * 2.2) * 0.08;
@@ -302,6 +308,7 @@ function drawMudRope(o) {
   } else if (p === 'caught' || p === 'tug' || p === 'pull') {
     const taut = p === 'caught' ? 2.2 : 0.35, wob = p === 'tug' ? Math.sin(t * 22) * 0.4 : 0;
     ropeLine(fh, nh, taut, wob);
+    if (o._fb) ropeLine(o._fb, fh, 0.3, 0);                                      // החבל בין שתי הידיים
     if (p === 'tug' && labelsVisible()) label('HOLD', nx, GROUND - 26, 4, '#fde047', '#1e293b');
   } else if (p === 'slip') {                                                      // החבל בורח מהידיים
     const k = Math.min(1, M.t / 0.35), end = [lerp(nh[0], fh[0] - 6, k), lerp(nh[1], GROUND - 1, k)];
