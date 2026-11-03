@@ -319,7 +319,7 @@ function setupDemo(w) {
   if (w === 'fight') obstacles.push({ type: 'duel', x: near + 40, w: 8 });
   if (w === 'pick up' || w === 'put down') { const o = { type: 'lift', x: near + 1 }; liftKindNext = w === 'pick up' ? 'grab' : 'wall'; liftSetup(o); obstacles.push(o); }
   if (w === 'help') { const o = { type: 'mud', x: PLAYER.x + 4 - MUD.stuck, w: MUD.w + MUD.stand + 8 }; obstacles.push(o); }   // נתקע מיד – והחבר בא (mud.js מפעיל CATCH / HOLD בהדגמה)
-  if (w === 'push together') { const o = { type: 'cart' }; cartSetup(o); o.x = PLAYER.x + PLAYER.w + CART.stepDX - CART.cp0; obstacles.push(o); }   // מתחיל צמוד לסירה (boat.js מפעיל PUSH / JUMP בהדגמה)
+  if (w === 'push together') { const o = { type: 'cart' }; cartSetup(o); o.x = PLAYER.x + PLAYER.w + CART.stepDX + CART.watch - CART.cp0; obstacles.push(o); }   // מתחיל צמוד לסירה (boat.js מפעיל PUSH / JUMP בהדגמה)
   if (w === 'hold') obstacles.push({ type: 'gust', x: near + 1 - GUST.stalks[2], w: GUST.stalks[2] + 4 });
   obstacles.forEach(o => { o.passed = false; o.hit = false; o.demo = true; });   // בהדגמה – בלי פגיעות
   demoSteps = w === 'fly' ? [{ at: 0.9, w: 'jump' }, { at: 1.3, w: 'fly' }]
@@ -357,7 +357,7 @@ function introNext() {
   setupDemo(w);
   if (w !== 'help' && w !== 'push together') speak(w);                                                  // HELP: הנינג'ה עצמו צועק בסצנה
   banner = { text: w === 'help' ? 'CATCH the rope, then HOLD!' : w === 'push together' ? 'PUSH on THREE, then JUMP in!' : 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
-  introT = w === 'fly' ? 4.6 : w === 'want' || w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'put down' ? 6.8 : w === 'pick up' ? 2.8 : w === 'crawl' ? 5.2 : w === 'help' ? 12 : w === 'push together' ? 19 : 2.8;
+  introT = w === 'fly' ? 4.6 : w === 'want' || w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'put down' ? 6.8 : w === 'pick up' ? 2.8 : w === 'crawl' ? 5.2 : w === 'help' ? 12 : w === 'push together' ? 23 : 2.8;
 }
 
 function finishIntro() {

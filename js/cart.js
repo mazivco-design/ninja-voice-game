@@ -10,7 +10,7 @@
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
 const HILL = { up: 46, top: 26, down: 46, h: 19 };
-const CART = { len: 18, cp0: 4, pushes: 4, step: 11, pushT: 0.75, askT: 1.8, stepT: 0.5, stepDX: 7, beat: 0.9, win: 2.4, backT: 1.0,
+const CART = { watch: 26, tryT: 1.9, watchT: 3.8, walkT: 1.1, len: 18, cp0: 4, pushes: 4, step: 11, pushT: 0.75, askT: 1.8, stepT: 0.5, stepDX: 7, beat: 0.9, win: 2.4, backT: 1.0,
                boardT: 0.6, boardDX: 9, outT: 0.7, outDX: 16, coins: 5 };
 let cart = null;   // { o, phase: 'ask' | 'step' | 'count' | 'push' | 'early' | 'late' | 'kidIn' | 'jumpWait' | 'board' | 'ride' | 'out', t, idle, n, late, beats }
 
@@ -28,7 +28,13 @@ function cartHillLift(x) { let L = 0; for (const o of obstacles) if (o.type === 
 function hillYo(o, x) { return GROUND - hillLiftAt(o, x); }
 function hillAo(o, x) { return Math.atan2(hillYo(o, x + 1) - hillYo(o, x - 1), 2); }
 // כמה העגלה זזה קדימה בזמן שהילד מנסה לבד – קצת קדימה, ואז מתגלגלת בחזרה
-function soloOff(o) { if (cart && cart.o === o) return 0; if (o.passed || o.waving) return 0; const s = Math.sin(performance.now() / 1000 * 1.5); return Math.max(0, s) * 5; }
+function attempt(t) {                                                             // ניסיון לבד: דוחף – העגלה עולה קצת – ומתגלגלת בחזרה
+  const u = (t % CART.tryT) / CART.tryT;
+  return u < 0.55 ? { off: 7 * cartEase(u / 0.55), back: false } : { off: 7 * (1 - cartEase((u - 0.55) / 0.45)), back: true };
+}
+function soloT(o) { return cart && cart.o === o ? cart.t : performance.now() / 1000; }
+function soloing(o) { return (!cart || cart.o !== o || cart.phase === 'watch') && !o.passed && !o.waving; }
+function soloOff(o) { return soloing(o) ? attempt(soloT(o)).off : 0; }
 function cartRear(o) { return o.x + o.cp + soloOff(o); }
 function cartBusy() { return !!cart; }
 function cartRiding() { return !!cart && cart.phase === 'ride'; }
@@ -37,7 +43,7 @@ function cartRiding() { return !!cart && cart.phase === 'ride'; }
 function cartSpeed() {
   if (!cart) return null;
   const C = cart, p = C.phase, o = C.o;
-  if (p === 'step') return CART.stepDX / CART.stepT;
+  if (p === 'step') return (CART.stepDX + CART.watch) / CART.walkT;
   if (p === 'push') return CART.step / CART.pushT;
   if (p === 'early' || p === 'late') return C.back ? -C.back / CART.backT : 0;     // מחליקה אחורה – העולם זז ימינה
   if (p === 'board') return CART.boardDX / CART.boardT;
@@ -48,12 +54,11 @@ function cartSpeed() {
 
 function cartUpdate(dt, pb) {
   if (!cart) {
-    const o = obstacles.find(o => o.type === 'cart' && !o.passed && !o.waving && pb.r >= o.x + o.cp - CART.stepDX - 0.3 && pb.l < o.x + o.w);
+    const o = obstacles.find(o => o.type === 'cart' && !o.passed && !o.waving && pb.r >= o.x + o.cp - CART.stepDX - CART.watch - 0.3 && pb.l < o.x + o.w);
     if (!o) return;
-    const over = pb.r - (o.x + o.cp - CART.stepDX); if (over > 0) ropeShiftBy(over);   // נעצר מאחורי הילד
+    const over = pb.r - (o.x + o.cp - CART.stepDX - CART.watch); if (over > 0) ropeShiftBy(over);   // נעצר קצת לפני – ורואה את הילד מנסה לבד
     py = 0; vy = 0; duckT = 0; flyT = 0; act.run = 0;
-    cart = { o, phase: 'ask', t: 0, idle: 0, n: 0, late: 0, beats: 0 };
-    speak('kid: can you help me push?');
+    cart = { o, phase: 'watch', t: 0, idle: 0, n: 0, late: 0, beats: 0 };
     return;
   }
   const C = cart, o = C.o, v = cartSpeed(); C.t += dt;
@@ -62,8 +67,9 @@ function cartUpdate(dt, pb) {
   const go = ph => { C.phase = ph; C.t = 0; C.idle = 0; };
   if (['push', 'ride', 'early', 'late'].includes(C.phase)) o.cp += v * dt;        // העגלה זזה יחד עם הנינג'ה
   switch (C.phase) {
+    case 'watch': if (C.t >= CART.watchT - 0.02) { go('ask'); speak('kid: can you help me push?'); } break;   // שני ניסיונות לבד, ואז מבקש עזרה
     case 'ask': if (C.t >= CART.askT) go('step'); break;
-    case 'step': if (C.t >= CART.stepT) { go('count'); C.beats = 0; } break;
+    case 'step': if (C.t >= CART.walkT) { go('count'); C.beats = 0; } break;
     case 'count':                                                                 // One… two… THREE! – ואז חלון ל-PUSH
       if (C.beats === 0) { C.beats = 1; speak('kid: one'); }
       if (C.beats === 1 && C.t >= CART.beat) { C.beats = 2; speak('kid: two'); }
@@ -140,6 +146,7 @@ function cartPose(P) {
   const C = cart, p = C.phase, now = performance.now() / 1000;
   if (p === 'push') return posePush();
   if (p === 'step') return poseRun(now * 18);
+  if (p === 'watch') return poseIdle(now);
   if (p === 'count' || p === 'kidIn' || p === 'jumpWait') { P = poseIdle(now); P.arms = [[1.2, 1.5], [1.3, 1.6]]; P.lean = 0.2; if (p === 'count' && C.beats === 3) { P = posePush(); P.lean = 0.45; } return P; }   // ידיים על העגלה, מוכן
   if (p === 'early' || p === 'late') { P = poseIdle(now); P.lean = -0.25; P.arms = [[1.0, 1.3], [1.1, 1.4]]; return P; }   // העגלה דוחפת אותו אחורה
   if (p === 'board' || p === 'out') return poseAir(C.t < (p === 'board' ? CART.boardT : CART.outT) / 2);
@@ -234,8 +241,8 @@ function drawCartBack(o) {
   const inCart = ['kidIn', 'jumpWait', 'board', 'ride', 'out', 'bye'].includes(p);
   if (!inCart) {
     drawCartBody(o, rear);
-    if (p === 'alone') {                                                          // דוחף לבד: נשען קדימה, ונהדף אחורה כשהעגלה חוזרת
-      const s = Math.sin(now * 1.5), P = posePush(); P.lean += s > 0 ? 0.1 : -0.35;
+    if (p === 'alone' || p === 'watch') {                                        // דוחף לבד: נשען קדימה, ונהדף אחורה כשהעגלה חוזרת
+      const P = posePush(); P.lean += attempt(soloT(o)).back ? -0.4 : 0.1;
       drawKid(rear - 3.6, kidY(rear - 3.6), 1, 0.8, P, 'sad');
     }
     return;
@@ -262,7 +269,8 @@ function drawCartFront(o) {
   // בועות
   const kx = C && ['ask', 'step', 'count', 'push', 'early', 'late'].includes(C.phase) ? rear - 1.8 : rear + CART.len / 2 + 4.5, ky = hillYo(o, Math.min(kx, rear + CART.len)) - 16;
   const say = (txt, opt) => drawBubble(txt, kx, ky, Object.assign({ tail: -1, color: '#1d4ed8' }, opt));
-  if (!C) {
+  if (!C || C.phase === 'watch') {
+    if (C) { drawBubble(attempt(C.t).back ? 'Oh no!' : 'Ugh! Too heavy!', rear - 3.6, hillYo(o, rear) - 15, { tail: -1, size: 3.4 }); return; }
     if (o.waving) { const fx = rear + CART.len / 2; if (fx < viewR() + 4 && fx > viewL() - 6) drawBubble('Thank you! 👋', fx + 4, hillYo(o, fx) - 20, { tail: -1, size: 3.4, color: '#be185d' }); }
     else if (rear < viewR() - 4) drawBubble('Ugh! Too heavy!', rear - 3.6, hillYo(o, rear) - 15, { tail: -1, size: 3.4 });
     return;
