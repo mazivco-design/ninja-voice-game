@@ -133,6 +133,36 @@
    "settings": {
     "stability": 0.5
    }
+  },
+  {
+   "file": "help5-a",
+   "type": "tts",
+   "model": "eleven_v3",
+   "text": "[panicked] [shouting] Help! Help!",
+   "voice": "Liam",
+   "settings": {
+    "stability": 0.0
+   }
+  },
+  {
+   "file": "help5-b",
+   "type": "tts",
+   "model": "eleven_v3",
+   "text": "[panicked] [shouting] Help! Help!",
+   "voice": "Liam",
+   "settings": {
+    "stability": 0.5
+   }
+  },
+  {
+   "file": "help5-c",
+   "type": "tts",
+   "model": "eleven_v3",
+   "text": "[shouting] [panicked] Help! Help!",
+   "voice": "Liam",
+   "settings": {
+    "stability": 0.5
+   }
   }
  ]
 }
