@@ -126,6 +126,7 @@ function expectedWords0() {
   if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? ['want'] : merchant.phase === 'choose' ? [...ITEM_WORDS] : [];
   if (duelActive()) return ['fight'];
   const me = mudExpected(); if (me) return me;
+  const be = boatExpected(); if (be) return be;
   if (gustActive()) return ['hold'];
   const le = liftExpected(); if (le) return le;
   if (tunnelWait) return ['crawl'];
@@ -242,6 +243,7 @@ function command(word, source) {
 
   if (word === 'jump') {
     if (mudBusy()) return;                 // תקוע בבוץ – אי אפשר לקפוץ
+    if (boatJump()) return;                // קופץ לתוך הסירה
     if (liftJump()) return;                // על הסלע – קופץ מעל הקיר / אל הכוכב
     if (py === 0) { vy = cfg.jumpV; py = 0.001; duckT = 0; sfx('jump'); }   // קופץ גם מתוך התכופפות
   } else if (word === 'up') { rideLane(true); }                       // UP – הדרקון עולה לגובה העליון
@@ -277,6 +279,7 @@ function command(word, source) {
   else if (word === 'run')   { act.run = RUN_BOOST.time; act.stop = 0; }   // דוהר מהר
   else if (word === 'swim')  { act.swim = SWIM_TIME; duckT = 0; }
   else if (word === 'climb') { act.climbWant = 0.8; }                     // מטפס כשהנינג'ה מגיע לסולם (אם זה קורה בשנייה הקרובה)
+  else if (word === 'push' && boatPush()) {}                            // דוחפים את הסירה עם החבר
   else if (word === 'push')  { act.push = 0.6; duckT = 0; }
   else if (word === 'pull' && liftPull()) {}                             // מושך את הגור מהבור
   else if (word === 'pull')  { act.pull = 0.6; act.pullWant = GATE.want; duckT = 0; }   // מושך כשמגיעים לחבל
