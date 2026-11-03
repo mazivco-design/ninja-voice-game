@@ -7,8 +7,8 @@
    בשלב הזה הילד לא אומר HELP – המשחק אומר. (בהמשך הילד יגיד HELP בעצמו.)
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const MUD = { w: 100, stuck: 24, deep: 5.2, pit: 9, sinkT: 0.6, helpT: 1.1, run: 62, stand: 7, throwT: 0.35, flyT: 0.7,
-              catchWin: 4.5, dropT: 0.6, reelT: 1.1, caughtT: 0.7, holdWin: 4.5, slipT: 0.9, pullT: 3.6, pullCyc: 1.2, thanksT: 1.6, coins: 4 };
+const MUD = { w: 100, stuck: 24, deep: 5.2, pit: 9, sinkT: 1.6, helpT: 1.9, run: 58, stand: 7, readyT: 0.8, throwT: 1.0, release: 0.72, flyT: 0.7, drown: 2.2,
+              catchWin: 4.5, dropT: 0.6, reelT: 1.1, caughtT: 0.7, holdWin: 4.5, slipT: 0.9, pullT: 4.6, pullCyc: 1.2, thanksT: 3.2, coins: 4 };
 let mud = null;   // { o, phase: 'sink' | 'help' | 'come' | 'throw' | 'fly' | 'dangle' | 'drop' | 'reel' | 'caught' | 'tug' | 'slip' | 'pull' | 'thanks', t, throws, slips }
 
 function mudWin(base) { return base * (cfg && cfg.forgive ? 1.3 : 1); }           // ברמה הקלה – יותר זמן לענות
@@ -36,11 +36,12 @@ function mudStruggle() {
 function mudSink(fx) {
   if (mud) {
     const M = mud, p = M.phase;
-    if (p === 'sink') { const k = Math.min(1, M.t / MUD.sinkT); return MUD.deep * k * k * (3 - 2 * k); }
-    if (p === 'pull') { const k = Math.min(1, M.t / MUD.pullT); return Math.min(MUD.deep, mudDepthAt(M.o, fx) * 0.7) * (1 - k * 0.15); }
+    if (p === 'sink') { const k = Math.min(1, M.t / MUD.sinkT); return MUD.deep * k * k * (3 - 2 * k) + Math.sin(M.t * 9) * 0.3 * k; }
+    if (p === 'pull') { const k = Math.min(1, M.t / MUD.pullT), d = Math.min(MUD.deep + (M.held || 0), mudDepthAt(M.o, fx) * 0.75); return d * (1 - k * 0.1) + (k < 0.3 ? Math.sin(M.t * 20) * 0.15 : 0); }
     if (p === 'thanks') return 0;
-    if (['caught', 'tug'].includes(p)) return MUD.deep + Math.sin(performance.now() / 1000 * 2.2) * 0.25;
-    return MUD.deep + 1 - 2.4 * mudStruggle().lift;                              // נאבק: נדחף למעלה ושוקע בחזרה, כל פעם קצת יותר עמוק
+    const extra = Math.min(MUD.drown, (M.total || 0) * 0.28);                    // ככל שעובר זמן – שוקע עוד ועוד (עד שתופס את החבל)
+    if (['caught', 'tug'].includes(p)) return MUD.deep + (M.held || extra) + Math.sin(performance.now() / 1000 * 2.2) * 0.25;
+    return MUD.deep + 1 - 2.4 * mudStruggle().lift + extra;                      // נאבק: נדחף למעלה ושוקע בחזרה
   }
   if (py > 0) return 0;
   const o = obstacles.find(o => o.type === 'mud' && !o.passed && fx > o.x && fx < o.x + MUD.w);   // הולך פנימה – שוקע בהדרגה
@@ -49,7 +50,17 @@ function mudSink(fx) {
 function mudBusy() { return !!mud; }
 
 // המשיכה בגלים: כל משיכת יד גוררת את הנינג'ה קדימה, ובין משיכה למשיכה כמעט עוצרים (ממוצע = כל המרחק בזמן המשיכה)
-function mudPullV(t) { return mudPullDist() / MUD.pullT * (Math.PI / 2) * Math.abs(Math.sin(Math.PI * 2 * t / MUD.pullCyc)); }
+// המשיכה לא אחידה: בהתחלה הבוץ כמעט לא משחרר, אחר כך "פלופ" – הנינג'ה נשלף קדימה, ומשם בגלים עם כל משיכת יד
+function pullShape(t) {
+  const k = t / MUD.pullT, hand = 0.25 + 1.5 * Math.abs(Math.sin(Math.PI * 2 * t / MUD.pullCyc));
+  const res = k < 0.28 ? 0.18 : k < 0.42 ? 2.6 : k < 0.75 ? 1.0 : 0.75;            // התנגדות הבוץ לאורך הזמן
+  return hand * res;
+}
+let pullNorm = 0;
+function mudPullV(t) {
+  if (!pullNorm) { let s = 0; const N = 300; for (let i = 0; i < N; i++) s += pullShape((i + 0.5) / N * MUD.pullT) * MUD.pullT / N; pullNorm = s; }
+  return t >= MUD.pullT ? 0 : mudPullDist() * pullShape(t) / pullNorm;
+}
 // מהירות העולם בזמן השלב (null = לא בשליטה שלנו)
 function mudSpeed() {
   if (!mud) return null;
@@ -68,7 +79,7 @@ function mudUpdate(dt, pb) {
     o.fr = viewR() + 12 - o.x; sfx('splash'); burst(PLAYER.x + 4, GROUND, '#6b4423', 10, 22);
     return;
   }
-  const M = mud, o = M.o; M.t += dt;
+  const M = mud, o = M.o; M.t += dt; if (!['caught', 'tug', 'pull', 'thanks'].includes(M.phase)) M.total = (M.total || 0) + dt;
   if (!['caught', 'tug', 'pull', 'thanks', 'sink'].includes(M.phase)) {          // בכל דחיפה למעלה – התזת בוץ
     const st = mudStruggle(), nx = PLAYER.x + 4;
     if (st.push && !M.pushed) { M.pushed = true; for (let k = 0; k < 7; k++) particles.push({ x: nx + (Math.random() - 0.5) * 7, y: waterY(), vx: (Math.random() - 0.5) * 16, vy: -10 - Math.random() * 12, g: 70, life: 0.5, color: Math.random() < 0.5 ? '#6e4c2e' : '#8a6440', size: 0.8 + Math.random() * 0.6 }); }
@@ -82,10 +93,11 @@ function mudUpdate(dt, pb) {
     case 'help': if (M.t >= MUD.helpT) go('come'); break;
     case 'come': {                                                                // החבר רץ אליו
       o.fr = Math.max(mudStand(o), o.fr - MUD.run * dt);
-      if (o.fr <= mudStand(o)) go('throw');
+      if (o.fr <= mudStand(o)) go('ready');                                        // נעצר לרגע בשפה ומתכונן
       break;
     }
-    case 'throw': if (M.t >= MUD.throwT) { go('fly'); M.throws++; sfx('swish'); speak('catch'); } break;
+    case 'ready': if (M.t >= MUD.readyT) go('throw'); break;
+    case 'throw': if (M.t >= MUD.throwT) { go('fly'); M.throws++; sfx('swish'); speak('catch'); } break;   // מסובב את החבל מעל הראש – ואז משחרר
     case 'fly': if (M.t >= MUD.flyT) { go('dangle'); burst(PLAYER.x + 9, GROUND + 0.5, '#6b4423', 5, 12); } break;
     case 'dangle':
       if (demo && M.t >= 0.9) { if (banner) banner.text = 'Say CATCH!'; command('catch', 'demo'); }
@@ -104,13 +116,21 @@ function mudUpdate(dt, pb) {
     case 'slip': if (M.t >= MUD.slipT) go('reel'); break;                         // החבל ברח – החבר נופל אחורה ואוסף אותו
     case 'pull':
       o.fr += mudPullV(M.t) * 0.85 * dt;                                           // החבר צועד אחורה צעד בכל משיכה
+      if (!M.plop && M.t >= MUD.pullT * 0.28) { M.plop = 1; sfx('splash'); burst(PLAYER.x + 4, waterY(), '#6e4c2e', 16, 26); }   // הבוץ משחרר – "פלופ"
       if (Math.random() < 0.3) particles.push({ x: PLAYER.x + 2 + Math.random() * 4, y: GROUND, vx: -6 - Math.random() * 6, vy: -8 - Math.random() * 6, g: 50, life: 0.4, color: '#6b4423', size: 0.9 });
       if (M.t >= MUD.pullT) {
-        go('thanks'); sfx('clear'); speak('great job!'); burst(PLAYER.x + 4, GROUND - 6, '#fde68a', 12, 28);
+        go('thanks'); sfx('clear'); burst(PLAYER.x + 4, GROUND - 6, '#fde68a', 12, 28); o.frFrom = o.fr;
         if (mode === 'journey' && state === 'play') { picked += MUD.coins; coinsFlying++; flyCoinToHud({ x: PLAYER.x + 1 }, GROUND - 18); floatText(PLAYER.x + 4, GROUND - 26, '+' + MUD.coins + ' 🟡', '#ca8a04'); }
       }
       break;
-    case 'thanks': if (M.t >= MUD.thanksT) { cleared(o); o.waving = true; mud = null; } break;
+    case 'thanks': {                                                              // קידה ותודה, החבר מתקרב – והיי פייב
+      if (M.t >= 1.1 && !M.said) { M.said = 1; speak('great job!'); }
+      const target = PLAYER.x + 4 + 10.5 - o.x;                                      // החבר מתקרב עד מרחק יד
+      if (M.t >= 1.2 && M.t < 2.0) o.fr = lerp(o.frFrom, target, cartEase(Math.min(1, (M.t - 1.2) / 0.8)));
+      if (M.t >= 2.25 && !M.five) { M.five = 1; sfx('pop'); const hx = PLAYER.x + 4 + 5.2; burst(hx, GROUND - 15, '#fde047', 14, 24); burst(hx, GROUND - 15, '#ffffff', 6, 16); }
+      if (M.t >= MUD.thanksT) { cleared(o); o.waving = true; mud = null; }
+      break;
+    }
   }
 }
 
@@ -118,7 +138,7 @@ function mudUpdate(dt, pb) {
 function mudCatch() {
   if (!mud) return false;
   const M = mud;
-  if ((M.phase === 'fly' && M.t >= MUD.flyT * 0.45) || M.phase === 'dangle') { M.phase = 'caught'; M.t = 0; M.hinted = 0; sfx('thud'); }
+  if ((M.phase === 'fly' && M.t >= MUD.flyT * 0.45) || M.phase === 'dangle') { M.held = Math.min(MUD.drown, (M.total || 0) * 0.28); M.phase = 'caught'; M.t = 0; M.hinted = 0; sfx('thud'); }
   return true;
 }
 function mudHold() {
@@ -150,7 +170,12 @@ function mudPose(P) {
     P.lean = p === 'tug' ? -0.12 + Math.sin(now * 9) * 0.03 : p === 'pull' ? 0.12 : 0;
     return P;
   }
-  if (p === 'thanks') { P = poseIdle(now); P.arms[1] = [2.7, 3.2 + Math.sin(now * 10) * 0.35]; return P; }   // מנופף לחבר
+  if (p === 'thanks') {                                                          // קידה, ואז היי פייב עם החבר
+    const t = mud.t; P = poseIdle(now);
+    if (t < 1.2) { const b = Math.sin(Math.PI * Math.min(1, t / 1.1)); P.lean = 0.75 * b; P.headTilt = 0.3 * b; P.arms = [[0.1, 0.15], [0.1, 0.15]]; }
+    else if (t > 1.8 && t < 2.75) { const k = Math.min(1, (t - 1.8) / 0.4); P.arms[1] = [lerp(0.3, 2.45, k), lerp(0.4, 2.6, k)]; P.lean = 0.08; }
+    return P;
+  }
   P = poseIdle(now);                                                              // תקוע – נאבק כדי לצאת
   const st = mudStruggle(), w = Math.sin(now * 9);
   if (st.push) {                                                                  // לוחץ בשתי הידיים על הבוץ ומנסה להרים את עצמו
@@ -172,6 +197,8 @@ function friendPose(o) {
   const now = performance.now() / 1000, M = mud && mud.o === o ? mud : null, p = M ? M.phase : 'done';
   let P;
   if (p === 'come') P = poseRun(now * 20);
+  else if (p === 'ready') { P = poseIdle(now); P.hipY = -4.1; P.lean = 0.15; P.legs = [[-0.55, -0.3], [0.5, -0.1]]; P.arms[1] = [0.9, 1.6]; }   // נעצר בשפה, מתכופף קצת ומתכונן
+  else if (p === 'throw') { P = poseIdle(now); P.legs = [[-0.55, -0.3], [0.5, -0.1]]; const tt = M.t; if (tt < MUD.release) { const a = tt * 13; P.arms[1] = [2.4 + Math.sin(a) * 0.55, 2.6 + Math.sin(a) * 0.5]; P.lean = -0.1; } else applyThrow(P, Math.min(1, (tt - MUD.release) / (MUD.throwT - MUD.release))); }
   else if (p === 'tug') { P = poseIdle(now); P.arms = handOverHand(0.15 + Math.sin(now * 9) * 0.03); P.lean = -0.3; P.legs = [[-0.55, -0.2], [0.6, 0.05]]; }   // מחזיק חזק, מוכן למשוך
   else if (p === 'pull') {                                                      // יד אחרי יד, לאט ובמאמץ, וצעד אחורה בכל משיכה
     const ph = M.t / MUD.pullCyc, q = Math.PI * 4 * ph, eff = Math.abs(Math.sin(Math.PI * 2 * ph));
@@ -182,9 +209,13 @@ function friendPose(o) {
   else if (p === 'reel') P = posePull(now * 1.8);
   else if (p === 'slip') { const k = Math.min(1, M.t / MUD.slipT); P = poseIdle(now); P.lean = -0.7 * Math.sin(Math.PI * k); P.arms = [[-1.2, -0.8], [1.9, 2.4]]; }
   else if (p === 'caught') { P = poseIdle(now); P.arms = [[0.9, 1.1], [1.0, 1.25]]; P.lean = 0.1; }
-  else if (p === 'thanks' || o.waving) { P = poseIdle(now); P.arms[1] = [2.7, 3.2 + Math.sin(now * 10) * 0.35]; }
+  else if (p === 'thanks') {                                                     // משיב קידה קטנה, מתקרב – והיי פייב
+    const t = M.t;
+    if (t >= 1.2 && t < 2.0) P = poseRun(now * 9);
+    else { P = poseIdle(now); if (t < 1.1) { const b = Math.sin(Math.PI * Math.min(1, Math.max(0, t - 0.3) / 0.8)); P.lean = 0.35 * b; P.headTilt = 0.2 * b; } if (t > 1.8 && t < 2.75) { const k = Math.min(1, (t - 1.8) / 0.4); P.arms[1] = [lerp(0.3, 2.45, k), lerp(0.4, 2.6, k)]; } }
+  }
+  else if (o.waving) { P = poseIdle(now); P.arms[1] = [2.7, 3.2 + Math.sin(now * 10) * 0.35]; }
   else { P = poseIdle(now); if (p !== 'sink' && p !== 'help') P.arms[1] = [0.6, 1.2]; }
-  if (p === 'throw') { const k = Math.min(1, M.t / MUD.throwT); applyThrow(P, k); }
   return P;
 }
 
@@ -245,11 +276,11 @@ function drawMudBack(o) {
   const FP = friendPose(o), h1 = figHand(fx, GROUND, -1, 1, FP, 1), h0 = figHand(fx, GROUND, -1, 1, FP, 0);
   const hand = h1[0] <= h0[0] ? h1 : h0, back = hand === h1 ? h0 : h1;           // החבל עובר דרך שתי הידיים: מהיד הקדמית אל הנינג'ה, ומהאחורית אל הקרקע
   o._fh = hand; o._fb = back;
-  const coiled = ['sink', 'help', 'come', 'throw', 'reel'].includes(p) && !(p === 'throw' && M.t > MUD.throwT * 0.8);
+  const coiled = ['sink', 'help', 'come', 'ready', 'throw', 'reel'].includes(p) && !(p === 'throw' && M.t > MUD.release + 0.05);
   if (!coiled) drawSlack(fx, back, p === 'pull' || p === 'thanks' || p === 'done' ? 3 : 2);   // אחרי הזריקה – שאר החבל מאחוריו
   drawFigure({ fx, fy: GROUND, facing: -1, scale: 1, kind: 'ninja', accent: mudAccent(), pose: FP });
   if (coiled) {                                                                   // לפני הזריקה / באיסוף: החבל המגולגל תלוי מהיד ומתנדנד
-    const sw = p === 'come' ? Math.sin(t * 16) * 0.35 : Math.sin(t * 2.2) * 0.08;
+    const sw = p === 'come' ? Math.sin(t * 16) * 0.35 : p === 'throw' ? M.t * 13 : Math.sin(t * 2.2) * 0.08;   // בזריקה – החבל מסתובב מעל הראש
     drawHangCoil(hand[0], hand[1], p === 'reel' ? 0.55 + 0.45 * Math.min(1, M.t / MUD.reelT) : 1, sw);
   }
 }
@@ -320,13 +351,18 @@ function drawMudTalk(o) {                                                       
   const M = mud && mud.o === o ? mud : null, fx = friendX(o), nx = PLAYER.x + 4;
   if (!M) { if (o.waving && fx < viewR() + 4 && fx > viewL() - 6) drawBubble('Bye! 👋', fx, GROUND - 21, { tail: -1, size: 3.4 }); return; }
   const p = M.phase, ny = GROUND + mudSink(nx) - 20;
-  if (['help', 'come', 'throw', 'reel'].includes(p) || (p === 'drop')) drawBubble('Help! 😱', nx + 1, ny, { age: p === 'help' ? M.t : undefined, tail: 1, color: '#b91c1c' });
+  if (['help', 'come', 'ready', 'throw', 'reel'].includes(p) || (p === 'drop')) drawBubble('Help! 😱', nx + 1, ny, { age: p === 'help' ? M.t : undefined, tail: 1, color: '#b91c1c' });
   if (p === 'come' && fx < viewR() - 4) drawBubble("I'm coming!", fx, GROUND - 21, { age: M.t, tail: -1, size: 3.6 });
   if (p === 'fly' || p === 'dangle') drawBubble('Catch!', fx, GROUND - 21, { age: p === 'fly' ? M.t : undefined, tail: -1, color: '#1d4ed8' });
   if (p === 'pull') drawBubble('Hnnng!', fx, GROUND - 21, { age: M.t, tail: -1, size: 3.4, color: '#7c2d12' });
   if (p === 'tug') drawBubble('Hold on!', fx, GROUND - 21, { age: M.t, tail: -1, color: '#1d4ed8' });
   if (p === 'slip') drawBubble('Oops!', fx, GROUND - 20, { age: M.t, tail: -1, size: 3.6 });
-  if (p === 'thanks') { drawBubble('Great job!', fx + 3, GROUND - 21, { age: M.t, tail: -1, color: '#15803d' }); if (M.t > 0.5) drawBubble('Thank you!', nx - 3, GROUND - 21, { age: M.t - 0.5, tail: 1, color: '#be185d', size: 3.6 }); }
+  if (p === 'ready') drawBubble('Get ready!', fx, GROUND - 21, { age: M.t, tail: -1, size: 3.6 });
+  if (p === 'thanks') {
+    if (M.t < 1.6) drawBubble('Thank you!', nx - 3, GROUND - 21, { age: M.t, tail: 1, color: '#be185d', size: 3.6 });
+    if (M.t > 1.1 && M.t < 2.0) drawBubble('Great job!', fx + 3, GROUND - 21, { age: M.t - 1.1, tail: -1, color: '#15803d' });
+    if (M.t > 2.0) drawBubble('High five! ✋', fx + 2, GROUND - 22, { age: M.t - 2.0, tail: -1, color: '#b45309', size: 3.6 });
+  }
 }
 
 /* ---------- עורבים ---------- */
