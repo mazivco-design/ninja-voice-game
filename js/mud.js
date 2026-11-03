@@ -349,14 +349,21 @@ function drawCrows(o, x0, x1, seed, y0) {
       continue;
     }
     if (x < viewL() - 6 || x > viewR() + 6) continue;
-    if (!B && state === 'play' && petDragonNear(x, y)) { o.crowBurn[i] = { fire: t }; if (typeof petFireUntil !== 'undefined') petFireUntil = t + 0.45; sfx('swish'); }
+    if (!B && state === 'play' && petDragonNear(x, y)) { o.crowBurn[i] = { fire: t }; petFireUntil = t + 0.55; sfx('swish'); }
     const F = o.crowBurn[i];
     if (F && F.fire && !F.hit) {                                                  // להבה מהפה של הדרקון אל העורב
-      const a = (t - F.fire) / 0.32, mx = petX + 6.2, my = petY - 0.6, ex = lerp(mx, x, Math.min(1, a)), ey = lerp(my, y, Math.min(1, a));
-      const g = ctx.createLinearGradient(mx, my, ex, ey); g.addColorStop(0, 'rgba(254,240,138,.95)'); g.addColorStop(0.5, 'rgba(251,146,60,.9)'); g.addColorStop(1, 'rgba(220,38,38,.7)');
-      ctx.strokeStyle = g; ctx.lineCap = 'round'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(mx, my); ctx.quadraticCurveTo((mx + ex) / 2, (my + ey) / 2 - 1.5, ex, ey); ctx.stroke();
-      ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.stroke();
-      if (Math.random() < 0.7) particles.push({ x: ex, y: ey, vx: (Math.random() - 0.5) * 10, vy: -4 - Math.random() * 4, g: -2, life: 0.35, color: Math.random() < 0.5 ? '#f97316' : '#fde047', size: 0.9 });
+      petAimX = x; petAimY = y; petFireUntil = Math.max(petFireUntil, t + 0.2);   // הראש עוקב אחרי העורב
+      const a = (t - F.fire - 0.12) / 0.3, [mx, my] = petMouth();                    // קודם מסתובב אליו, ואז הלהבה יוצאת בקו ישר
+      if (a > 0) {
+        const ex = lerp(mx, x, Math.min(1, a)), ey = lerp(my, y, Math.min(1, a)), ang = Math.atan2(ey - my, ex - mx), L = Math.hypot(ex - mx, ey - my);
+        ctx.save(); ctx.translate(mx, my); ctx.rotate(ang);
+        const g = ctx.createLinearGradient(0, 0, L, 0); g.addColorStop(0, 'rgba(254,240,138,.95)'); g.addColorStop(0.5, 'rgba(251,146,60,.92)'); g.addColorStop(1, 'rgba(220,38,38,.75)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, -0.5); ctx.lineTo(L, -1.6); ctx.quadraticCurveTo(L + 1.6, 0, L, 1.6); ctx.lineTo(0, 0.5); ctx.closePath(); ctx.fill();   // להבה ישרה שמתרחבת לכיוון העורב
+        ctx.fillStyle = 'rgba(255,255,255,.65)'; ctx.beginPath(); ctx.moveTo(0, -0.2); ctx.lineTo(L * 0.8, -0.5); ctx.lineTo(L * 0.8, 0.5); ctx.lineTo(0, 0.2); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+      const ex = lerp(mx, x, Math.max(0, Math.min(1, a))), ey = lerp(my, y, Math.max(0, Math.min(1, a)));
+      if (a > 0 && Math.random() < 0.7) particles.push({ x: ex, y: ey, vx: (Math.random() - 0.5) * 10, vy: -4 - Math.random() * 4, g: -2, life: 0.35, color: Math.random() < 0.5 ? '#f97316' : '#fde047', size: 0.9 });
       if (a >= 1) { F.hit = t; F.x = x; F.y = y; F.ox = o.x; burst(x, y, '#f97316', 10, 18); }
     }
     drawCrow(x, y, dir, Math.sin(t * 11 + i * 1.7));

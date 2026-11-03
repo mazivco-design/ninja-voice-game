@@ -121,7 +121,8 @@ function drawKatana(fx, fy, P) {
 }
 
 // החבר שמלווה את הנינג'ה – דרקון קטן או ינשוף, עף מאחוריו
-let petX = 0, petY = 0, petFireUntil = 0;   // petFireUntil: הדרקון נושף אש (פה פתוח לרווחה)
+let petX = 0, petY = 0, petFireUntil = 0, petAimX = 0, petAimY = 0, petAng = 0;   // petFireUntil: הדרקון נושף אש (פה פתוח לרווחה). petAim: לאן הוא מכוון את הראש
+function petMouth() { const c = Math.cos(petAng), s = Math.sin(petAng), mx = 6.2, my = -0.8; return [petX + c * mx - s * my, petY + s * mx + c * my]; }   // הפה – אחרי הסיבוב
 function drawPet(fx, fy) {
   const pet = getEquip().pet; if (!pet || !player) return;
   const now = performance.now() / 1000;
@@ -129,7 +130,9 @@ function drawPet(fx, fy) {
   if (!petX) { petX = tx; petY = ty; }
   petX += (tx - petX) * 0.15; petY += (ty - petY) * 0.15;
   const flap = Math.sin(now * 14);
-  ctx.save(); ctx.translate(petX, petY);
+  const aim = now < petFireUntil ? Math.max(-1.1, Math.min(1.1, Math.atan2(petAimY - petY, petAimX - petX))) : 0;   // בזמן הנשיפה – פונה אל המטרה
+  petAng += (aim - petAng) * 0.35;
+  ctx.save(); ctx.translate(petX, petY); if (pet === 'dragon') ctx.rotate(petAng);
   if (pet === 'dragon') {
     if (dragonUsed) ctx.globalAlpha = 0.55;                                        // כבר הציל בריצה הזאת
     // זנב: מתפתל בגל, מתחדד, ובקצה עלה (חוד) שמסתובב לפי כיוון הזנב
