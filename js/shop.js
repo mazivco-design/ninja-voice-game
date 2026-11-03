@@ -121,7 +121,7 @@ function drawKatana(fx, fy, P) {
 }
 
 // החבר שמלווה את הנינג'ה – דרקון קטן או ינשוף, עף מאחוריו
-let petX = 0, petY = 0;
+let petX = 0, petY = 0, petFireUntil = 0;   // petFireUntil: הדרקון נושף אש (פה פתוח לרווחה)
 function drawPet(fx, fy) {
   const pet = getEquip().pet; if (!pet || !player) return;
   const now = performance.now() / 1000;
@@ -151,7 +151,7 @@ function drawPet(fx, fy) {
     ctx.fillStyle = '#8b5cf6';                                                     // כנף קרובה – עם קרום בין שתי אצבעות
     ctx.beginPath(); ctx.moveTo(0.6, -1.4); ctx.quadraticCurveTo(-0.2, -4.4 - flap * 2.2, -2.6, -5.4 - flap * 2.8); ctx.lineTo(-1.6, -3.6 - flap * 1.6); ctx.lineTo(-0.6, -3.4 - flap * 1.4); ctx.quadraticCurveTo(-0.4, -2.2, -0.2, -1.2); ctx.fill();
     // ראש עם לוע: חרטום מוארך, לסת תחתונה שנפתחת ונסגרת, שיניים לבנות
-    const jaw = 0.25 + Math.max(0, Math.sin(now * 2.2)) * 0.35;
+    const jaw = now < petFireUntil ? 0.75 : 0.25 + Math.max(0, Math.sin(now * 2.2)) * 0.35;
     ctx.fillStyle = '#16a34a'; ctx.save(); ctx.translate(3.3, -1.0); ctx.rotate(jaw);  // לסת תחתונה
     ctx.beginPath(); ctx.moveTo(-0.6, 0); ctx.lineTo(2.6, 0.1); ctx.quadraticCurveTo(2.7, 0.9, 1.6, 1.0); ctx.lineTo(-0.6, 0.9); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#fff'; for (const tx of [0.6, 1.4, 2.1]) { ctx.beginPath(); ctx.moveTo(tx - 0.3, 0.05); ctx.lineTo(tx, -0.5); ctx.lineTo(tx + 0.3, 0.05); ctx.fill(); }   // שיניים תחתונות

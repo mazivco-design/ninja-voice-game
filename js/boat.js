@@ -62,7 +62,7 @@ function boatUpdate(dt, pb) {
     const over = pb.r - (boatStern(o) - BOAT.stepDX); if (over > 0) ropeShiftBy(over);   // נעצר מאחורי החבר שדוחף לבד
     py = 0; vy = 0; duckT = 0; flyT = 0; act.run = 0;
     boat = { o, phase: 'ask', t: 0, idle: 0, hinted: 0, n: 0 };
-    speak('can you help me push?');
+    speak('friend: can you help me push?');
     return;
   }
   const B = boat, o = B.o, v = boatSpeed(); B.t += dt;
@@ -88,7 +88,7 @@ function boatUpdate(dt, pb) {
         else go('wait');
       }
       break;
-    case 'friendIn': if (B.t >= 0.8) { go('jumpWait'); speak('jump in!'); } break;   // החבר קופץ פנימה ראשון
+    case 'friendIn': if (B.t >= 0.8) { go('jumpWait'); speak('friend: jump in!'); } break;   // החבר קופץ פנימה ראשון
     case 'board': if (B.t >= BOAT.boardT) { go('row'); burst(PLAYER.x + 4, boatDeck(o), '#e0f2fe', 6, 14); } break;
     case 'row':
       B.fishT = (B.fishT || 0) - dt;                                               // דגים קופצים מהמים ליד הסירה
@@ -101,7 +101,7 @@ function boatUpdate(dt, pb) {
       if (B.t >= BOAT.waveT) { go('stuck'); sfx('thud'); burst(boatMid(o), GROUND - 0.5, '#e7cf9a', 12, 20); }
       break;
     case 'stuck': if (B.t >= BOAT.stuckT) go('out'); break;                        // הסירה על האי – יוצאים
-    case 'out': if (B.t >= BOAT.outT) { py = 0; vy = 0; o.c++; go('hi'); speak("let's push!"); burst(PLAYER.x + 4, GROUND - 0.5, '#e7cf9a', 6, 12); } break;
+    case 'out': if (B.t >= BOAT.outT) { py = 0; vy = 0; o.c++; go('hi'); speak('friend: stuck again!'); burst(PLAYER.x + 4, GROUND - 0.5, '#e7cf9a', 6, 12); } break;
     case 'land':
       if (B.t >= BOAT.landT) {
         py = 0; vy = 0; burst(PLAYER.x + 4, GROUND - 0.5, WORLDS[world].dust, 7, 14); sfx('clear');
@@ -260,7 +260,7 @@ function drawBoatBack(o) {
   drawBeach(P, 1); drawBeach(P, -1);                                            // החול יורד בשיפוע עדין עד המים בשתי הגדות
   ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 0.35;              // זרם – פסים קטנים שזזים
   for (let i = 0; i < P.w / 9; i++) { const xx = P.x + 8 + ((i * 9 + t * 6) % (P.w - 16)); if (xx < viewL() - 5 || xx > viewR() + 5) continue; ctx.beginPath(); ctx.moveTo(xx, wy + 2 + (i % 3) * 1.6); ctx.lineTo(xx + 2.6, wy + 2 + (i % 3) * 1.6); ctx.stroke(); }
-  drawCrows(P.x + 10, P.x + P.w - 10, 3, GROUND - 27);              // עורבים מעל הנהר – אי אפשר פשוט לקפוץ
+  drawCrows(o, P.x + 10, P.x + P.w - 10, 3, GROUND - 27);              // עורבים מעל הנהר – אי אפשר פשוט לקפוץ
   for (const s of o.isl) { const l = o.x + s.l, r = o.x + s.r; if (r < viewL() - 10 || l > viewR() + 10) continue; drawSand(l, r, true); drawPalm(r - 9); }
   const B = boat && boat.o === o ? boat : null;
   if (B && B.phase === 'wave') drawWave(o, Math.min(1, B.t / BOAT.waveT));

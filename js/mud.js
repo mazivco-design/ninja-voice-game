@@ -238,7 +238,7 @@ function drawMudBack(o) {
   drawBasinWall(P, bottom);
   ctx.fillStyle = mudGrad(); waterPath(P, bottom); ctx.fill();
   mudShore(o);
-  drawCrows(o.x + 8, o.x + MUD.w - 8, 1, GROUND - 26);                          // עורבים מעל הבוץ – מסבירים למה לא קופצים מעליו
+  drawCrows(o, o.x + 8, o.x + MUD.w - 8, 1, GROUND - 26);                          // עורבים מעל הבוץ – מסבירים למה לא קופצים מעליו
   const fx = friendX(o);
   if (fx > viewR() + 10) return;
   const M = mud && mud.o === o ? mud : null, p = M ? M.phase : 'done';
@@ -331,21 +331,43 @@ function drawMudTalk(o) {                                                       
 
 /* ---------- עורבים ---------- */
 // להקה קטנה שעפה הלוך ושוב מעל מכשול רחב (בוץ, נהר) בגובה של קפיצה – רואים שאי אפשר פשוט לקפוץ מעליו
-function drawCrows(x0, x1, seed, y0) {
+// אם הנינג'ה מלווה בדרקון ועורב מתקרב אליו – הדרקון נושף אש ושורף אותו (העורב נופל מפויח ונעלם)
+function petDragonNear(x, y) { return typeof petX !== 'undefined' && petX && typeof getEquip === 'function' && player && getEquip().pet === 'dragon' && Math.hypot(x - (petX + 5), y - petY) < 24 && x > petX - 2; }
+function drawCrows(o, x0, x1, seed, y0) {
   const t = performance.now() / 1000, span = x1 - x0, n = Math.max(2, Math.min(4, Math.round(span / 35)));
+  o.crowBurn = o.crowBurn || {};
   for (let i = 0; i < n; i++) {
     const ph = t * (0.32 + i * 0.05) + i * 2.1 + seed, u = (Math.sin(ph) + 1) / 2, dir = Math.cos(ph) >= 0 ? 1 : -1;
-    const x = x0 + span * (0.1 + 0.8 * ((u + i / n) % 1)), y = y0 - i % 2 * 4 + Math.sin(t * 2.3 + i) * 1.2;
+    let x = x0 + span * (0.1 + 0.8 * ((u + i / n) % 1)), y = y0 - i % 2 * 4 + Math.sin(t * 2.3 + i) * 1.2;
+    const B = o.crowBurn[i];
+    if (B && B.hit) {                                                             // נשרף: נופל מפויח, מעשן, ונעלם
+      const a = t - B.hit; if (a > 1.3) continue;
+      x = B.x + a * 4 + (o.x - B.ox); y = B.y + 26 * a * a;
+      ctx.save(); ctx.globalAlpha = Math.max(0, 1 - a / 1.3); ctx.translate(x, y); ctx.rotate(a * 5); ctx.translate(-x, -y);
+      drawCrow(x, y, dir, 0.4, '#3f3f46'); ctx.restore();
+      if (Math.random() < 0.4) particles.push({ x, y: y - 1, vx: (Math.random() - 0.5) * 3, vy: -6, g: -3, life: 0.6, color: 'rgba(87,83,78,.7)', size: 1.1 });
+      continue;
+    }
     if (x < viewL() - 6 || x > viewR() + 6) continue;
+    if (!B && state === 'play' && petDragonNear(x, y)) { o.crowBurn[i] = { fire: t }; if (typeof petFireUntil !== 'undefined') petFireUntil = t + 0.45; sfx('swish'); }
+    const F = o.crowBurn[i];
+    if (F && F.fire && !F.hit) {                                                  // להבה מהפה של הדרקון אל העורב
+      const a = (t - F.fire) / 0.32, mx = petX + 6.2, my = petY - 0.6, ex = lerp(mx, x, Math.min(1, a)), ey = lerp(my, y, Math.min(1, a));
+      const g = ctx.createLinearGradient(mx, my, ex, ey); g.addColorStop(0, 'rgba(254,240,138,.95)'); g.addColorStop(0.5, 'rgba(251,146,60,.9)'); g.addColorStop(1, 'rgba(220,38,38,.7)');
+      ctx.strokeStyle = g; ctx.lineCap = 'round'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(mx, my); ctx.quadraticCurveTo((mx + ex) / 2, (my + ey) / 2 - 1.5, ex, ey); ctx.stroke();
+      ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.stroke();
+      if (Math.random() < 0.7) particles.push({ x: ex, y: ey, vx: (Math.random() - 0.5) * 10, vy: -4 - Math.random() * 4, g: -2, life: 0.35, color: Math.random() < 0.5 ? '#f97316' : '#fde047', size: 0.9 });
+      if (a >= 1) { F.hit = t; F.x = x; F.y = y; F.ox = o.x; burst(x, y, '#f97316', 10, 18); }
+    }
     drawCrow(x, y, dir, Math.sin(t * 11 + i * 1.7));
     if (Math.sin(t * 0.9 + i * 2.7) > 0.985) drawBubble('Caw!', x, y - 3, { tail: dir, size: 2.8, color: '#111827' });
   }
 }
-function drawCrow(x, y, dir, flap) {
+function drawCrow(x, y, dir, flap, burnt) {
   ctx.save(); ctx.translate(x, y); ctx.scale(dir * 1.25, 1.25);
   const wing = (dy, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(-0.8, -0.2); ctx.quadraticCurveTo(-1.6, dy * 0.6, -3.2, dy); ctx.quadraticCurveTo(-1.4, dy * 0.25 + 0.3, 0.8, 0.2); ctx.closePath(); ctx.fill(); };
-  wing(-2.4 - flap * 1.6, '#374151');                                             // כנף רחוקה
-  ctx.fillStyle = '#111827'; ctx.beginPath(); ctx.ellipse(0, 0.2, 2.2, 1.0, -0.08, 0, Math.PI * 2); ctx.fill();   // גוף
+  wing(-2.4 - flap * 1.6, burnt || '#374151');                                             // כנף רחוקה
+  ctx.fillStyle = burnt || '#111827'; ctx.beginPath(); ctx.ellipse(0, 0.2, 2.2, 1.0, -0.08, 0, Math.PI * 2); ctx.fill();   // גוף
   ctx.beginPath(); ctx.moveTo(-1.9, 0.1); ctx.lineTo(-3.4, -0.4); ctx.lineTo(-3.3, 0.9); ctx.closePath(); ctx.fill();   // זנב
   ctx.beginPath(); ctx.arc(2.0, -0.4, 0.85, 0, Math.PI * 2); ctx.fill();          // ראש
   ctx.fillStyle = '#9ca3af'; ctx.beginPath(); ctx.moveTo(2.7, -0.55); ctx.lineTo(3.9, -0.2); ctx.lineTo(2.7, -0.05); ctx.closePath(); ctx.fill();   // מקור

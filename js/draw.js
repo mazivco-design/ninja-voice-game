@@ -30,6 +30,7 @@ function resize() {
 window.addEventListener('resize', resize);
 // מה שרואים בפועל ביחידות העולם. במסך רחב (יחס רחב מ-160:100) רואים גם משמאל ל-0 ומימין ל-W –
 // המכשולים מצוירים, נכנסים ויוצאים לפי הקצוות האמיתיים, כדי שלא ייחתכו באמצע המסך
+function playerFacing() { return typeof cart !== 'undefined' && cart && cart.phase === 'bow' ? -1 : 1; }   // נפרד מהילד בעגלה – פונה אחורה אליו
 function viewL() { return scale ? Math.min(0, -ox / scale) : 0; }
 function viewR() { return scale ? Math.max(W, (cw - ox) / scale) : W; }
 window.addEventListener('orientationchange', () => setTimeout(resize, 300));
@@ -1448,7 +1449,7 @@ function drawNinjaBody() {
   if (riding) drawRideDragon(fx, fy);                            // הדרקון מתחת לנינג'ה
   drawPowerBack(fx, fy, P);                                       // תרמיל הסילון על הגב
   if (hasGear('katana') && P.swordA === undefined && jetT <= 0) drawKatana(fx, fy, P);   // קטאנה על הגב – מאחורי הגוף (בקרב היא ביד)
-  drawFigure({ fx, fy, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
+  drawFigure({ fx, fy, facing: playerFacing(), scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
   drawPlayerSword(fx, fy, P);
   drawPowerFront(fx, fy);                                         // בועת מגן / טיימר הסילון
   drawLiftCarry(fx, fy);                                          // הסלע בידיים

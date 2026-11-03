@@ -68,7 +68,8 @@ function cartUpdate(dt, pb) {
   if (['push', 'ride', 'early', 'late'].includes(C.phase)) o.cp += v * dt;        // העגלה זזה יחד עם הנינג'ה
   switch (C.phase) {
     case 'watch': if (C.t >= CART.watchT - 0.02) { go('ask'); speak('kid: can you help me push?'); } break;   // שני ניסיונות לבד, ואז מבקש עזרה
-    case 'ask': if (C.t >= CART.askT) go('step'); break;
+    case 'ask': if (C.t >= CART.askT) go('nod'); break;
+    case 'nod': if (C.t >= 0.95) go('step'); break;                                // הנינג'ה מהנהן "כן" ורק אז רץ
     case 'step': if (C.t >= CART.walkT) { go('count'); C.beats = 0; } break;
     case 'count':                                                                 // One… two… THREE! – ואז חלון ל-PUSH
       if (C.beats === 0) { C.beats = 1; speak('kid: one'); }
@@ -98,11 +99,11 @@ function cartUpdate(dt, pb) {
       break;
     case 'out':
       if (C.t >= CART.outT) {
-        py = 0; vy = 0; burst(PLAYER.x + 4, GROUND - 0.5, WORLDS[world].dust, 7, 14); sfx('clear'); speak('kid: thank you!');
+        py = 0; vy = 0; burst(PLAYER.x + 4, GROUND - 0.5, WORLDS[world].dust, 7, 14); sfx('clear'); speak('kid: thank you!'); go('bow');
         if (mode === 'journey' && state === 'play') { picked += CART.coins; coinsFlying++; flyCoinToHud({ x: PLAYER.x + 1 }, GROUND - 18); floatText(PLAYER.x + 4, GROUND - 26, '+' + CART.coins + ' 🟡', '#ca8a04'); }
-        cleared(o); o.waving = true; cart = null;
       }
       break;
+    case 'bow': if (C.t >= 1.7) { cleared(o); o.waving = true; cart = null; } break;   // מסתובב לילד, קד לשלום – ורק אז ממשיך
   }
 }
 function cartPhysics(dt) {
@@ -147,6 +148,8 @@ function cartPose(P) {
   if (p === 'push') return posePush();
   if (p === 'step') return poseRun(now * 18);
   if (p === 'watch') return poseIdle(now);
+  if (p === 'nod') { P = poseIdle(now); P.headTilt = 0.32 * (1 - Math.cos(2 * Math.PI * C.t / 0.45)) / 2; return P; }   // כן עם הראש, פעמיים
+  if (p === 'bow') { P = poseIdle(now); const b = Math.sin(Math.PI * Math.min(1, Math.max(0, (C.t - 0.25) / 1.0))); P.lean = 0.75 * b; P.headTilt = 0.3 * b; P.arms = [[0.1, 0.15], [0.1, 0.15]]; return P; }   // קידה
   if (p === 'count' || p === 'kidIn' || p === 'jumpWait') { P = poseIdle(now); P.arms = [[1.2, 1.5], [1.3, 1.6]]; P.lean = 0.2; if (p === 'count' && C.beats === 3) { P = posePush(); P.lean = 0.45; } return P; }   // ידיים על העגלה, מוכן
   if (p === 'early' || p === 'late') { P = poseIdle(now); P.lean = -0.25; P.arms = [[1.0, 1.3], [1.1, 1.4]]; return P; }   // העגלה דוחפת אותו אחורה
   if (p === 'board' || p === 'out') return poseAir(C.t < (p === 'board' ? CART.boardT : CART.outT) / 2);
@@ -238,7 +241,7 @@ function drawCartBack(o) {
   drawCartHill(o);
   const C = cart && cart.o === o ? cart : null, p = C ? C.phase : (o.waving ? 'bye' : 'alone'), now = performance.now() / 1000, rear = cartRear(o);
   const kidY = x => hillYo(o, x), wave = P => { P.arms[1] = [2.7, 3.2 + Math.sin(now * 10) * 0.35]; return P; };
-  const inCart = ['kidIn', 'jumpWait', 'board', 'ride', 'out', 'bye'].includes(p);
+  const inCart = ['kidIn', 'jumpWait', 'board', 'ride', 'out', 'bow', 'bye'].includes(p);
   if (!inCart) {
     drawCartBody(o, rear);
     if (p === 'alone' || p === 'watch') {                                        // דוחף לבד: נשען קדימה, ונהדף אחורה כשהעגלה חוזרת
@@ -247,7 +250,7 @@ function drawCartBack(o) {
     }
     return;
   }
-  const kidP = p === 'ride' ? Object.assign(kidSit(poseIdle(now)), { arms: [[-2.6, -3.0], [2.6, 3.0]] }) : (p === 'bye' || p === 'out') ? wave(kidSit(poseIdle(now))) : p === 'kidIn' && C.t < 0.45 ? poseAir(C.t < 0.22) : (p === 'jumpWait' ? wave(kidSit(poseIdle(now))) : kidSit(poseIdle(now)));
+  const kidP = p === 'ride' ? Object.assign(kidSit(poseIdle(now)), { arms: [[-2.6, -3.0], [2.6, 3.0]] }) : (p === 'bye' || p === 'out' || p === 'bow') ? wave(kidSit(poseIdle(now))) : p === 'kidIn' && C.t < 0.45 ? poseAir(C.t < 0.22) : (p === 'jumpWait' ? wave(kidSit(poseIdle(now))) : kidSit(poseIdle(now)));
   drawCartBody(o, rear, { bounce: p === 'ride', riders: () => {
     if (p === 'ride') { const Pn = kidSit(poseIdle(now)); Pn.arms = [[-2.5, -2.9], [2.5, 2.9]]; Pn.lean = -0.2; drawFigure({ fx: -3.5, fy: -9.6, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: Pn, suit: playerSuit() }); }
     drawKid(4.5, -9.6 - (p === 'kidIn' && C.t < 0.45 ? Math.sin(Math.PI * C.t / 0.45) * 6 : 0), 1, 0.8, kidP, p === 'ride' ? 'wow' : 'smile');
@@ -261,13 +264,13 @@ function drawCartBack(o) {
 // הילד שדוחף ליד הנינג'ה – לפני הנינג'ה (קרוב יותר אלינו), ובועות הדיבור
 function drawCartFront(o) {
   const C = cart && cart.o === o ? cart : null, now = performance.now() / 1000, rear = cartRear(o);
-  if (C && ['ask', 'step', 'count', 'push', 'early', 'late'].includes(C.phase)) {
+  if (C && ['ask', 'nod', 'step', 'count', 'push', 'early', 'late'].includes(C.phase)) {
     let x = rear - 1.8, P;
     if (C.phase === 'ask') { const k = cartEase(Math.min(1, Math.max(0, (C.t - 0.9) / 0.6))); x = lerp(rear - 3.6, rear - 1.8, k); P = poseIdle(now); if (C.t < 1.2) P.arms[1] = [2.7, 3.2 + Math.sin(now * 10) * 0.35]; drawKid(x, hillYo(o, x) + 1.3 * k, C.t < 0.9 ? -1 : 1, 0.8, P, 'smile'); }
     else { P = C.phase === 'push' ? posePush() : C.phase === 'count' && C.beats === 3 ? posePush() : poseIdle(now); if (C.phase === 'count' && C.beats < 3) { P.arms = [[1.2, 1.5], [1.3, 1.6]]; P.lean = 0.2; } drawKid(x, hillYo(o, x) + 1.3, 1, 0.8, P, C.phase === 'early' || C.phase === 'late' ? 'sad' : 'smile'); }
   }
   // בועות
-  const kx = C && ['ask', 'step', 'count', 'push', 'early', 'late'].includes(C.phase) ? rear - 1.8 : rear + CART.len / 2 + 4.5, ky = hillYo(o, Math.min(kx, rear + CART.len)) - 22;
+  const kx = C && ['ask', 'nod', 'step', 'count', 'push', 'early', 'late'].includes(C.phase) ? rear - 1.8 : rear + CART.len / 2 + 4.5, ky = hillYo(o, Math.min(kx, rear + CART.len)) - 22;
   const say = (txt, opt) => drawBubble(txt, kx, ky, Object.assign({ tail: -1, color: '#1d4ed8' }, opt));
   if (!C || C.phase === 'watch') {
     if (C) { drawBubble(attempt(C.t).back ? 'Oh no!' : 'Ugh! Too heavy!', rear - 3.6, hillYo(o, rear) - 21, { tail: -1, size: 3.4 }); return; }
@@ -286,5 +289,6 @@ function drawCartFront(o) {
   if (p === 'early') say('Wait for three!', { age: C.t, size: 3.6, color: '#b91c1c' });
   if (p === 'late') say('Again!', { age: C.t, size: 3.8, color: '#b91c1c' });
   if (p === 'jumpWait' || (p === 'kidIn' && C.t > 0.5)) { say('Jump in!', { age: p === 'jumpWait' ? C.t + 0.3 : 0 }); if (labelsVisible() && p === 'jumpWait') label('JUMP', PLAYER.x + 4, hillYo(o, PLAYER.x + 4) - 24, 4, '#fde047', '#1e293b'); }
+  if (p === 'bow') { const fx = rear + CART.len / 2 + 4; drawBubble('Thank you! 👋', fx, hillYo(o, fx) - 24, { age: C.t, tail: -1, size: 3.4, color: '#be185d' }); if (C.t > 0.5) drawBubble('Bye!', PLAYER.x + 4, GROUND - 21, { age: C.t - 0.5, tail: 1, size: 3.4, color: '#1d4ed8' }); }
   if (p === 'ride') say('Wheee!', { age: C.t, color: '#be185d', size: 4.2 });
 }
