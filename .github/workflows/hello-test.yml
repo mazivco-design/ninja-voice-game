@@ -1,0 +1,10 @@
+# בדיקה: האם אפשר להפעיל פעולות אוטומטיות מהשיחה עם Claude.
+# לא נוגע במשחק. יוחלף בהמשך בפעולה שמייצרת קולות.
+name: hello-test
+on:
+  workflow_dispatch:
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "שלום"
