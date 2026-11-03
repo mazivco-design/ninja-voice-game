@@ -9,7 +9,7 @@
    סבלני: העולם מחכה למילה. אחרי שתיקה ארוכה המשחק אומר את המילה בקול.
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const BOAT = { shore: 72, sail: 105, isl: 50, islands: 2, len: 28, h: 6.5, bx0: 30, pushes: 3, step: 10, pushT: 0.7,
+const BOAT = { shore: 72, sail: 230, isl: 50, islands: 2, len: 28, h: 6.5, bx0: 30, pushes: 3, step: 10, pushT: 0.7,
                askT: 1.6, stepT: 0.5, stepDX: 7, hiT: 1.3, boardT: 0.7, boardDX: 13, row: 26, waveT: 1.4, waveAt: 24, stuckT: 0.7,
                outT: 0.7, landT: 0.75, landDX: 21, hint: 3.5, hintEvery: 6, coins: 6 };
 let boat = null;   // { o, phase, t, idle, hinted, n }
@@ -55,6 +55,7 @@ function boatSpeed() {
 }
 
 function boatUpdate(dt, pb) {
+  for (const ob of obstacles) if (ob.type === 'boat' && ob.jumps) { for (const j of ob.jumps) j.t += dt; ob.jumps = ob.jumps.filter(j => j.t < 1.2); }   // הדגים הקופצים
   if (!boat) {
     const o = obstacles.find(o => o.type === 'boat' && !o.passed && !o.waving && pb.r >= boatStern(o) - BOAT.stepDX - 0.3 && pb.l < o.x + o.end);
     if (!o) return;
@@ -90,6 +91,8 @@ function boatUpdate(dt, pb) {
     case 'friendIn': if (B.t >= 0.8) { go('jumpWait'); speak('jump in!'); } break;   // החבר קופץ פנימה ראשון
     case 'board': if (B.t >= BOAT.boardT) { go('row'); burst(PLAYER.x + 4, boatDeck(o), '#e0f2fe', 6, 14); } break;
     case 'row':
+      B.fishT = (B.fishT || 0) - dt;                                               // דגים קופצים מהמים ליד הסירה
+      if (B.fishT <= 0) { B.fishT = 0.9 + Math.random() * 1.1; (o.jumps = o.jumps || []).push({ rx: o.bx + (Math.random() < 0.5 ? -6 - Math.random() * 14 : BOAT.len + 4 + Math.random() * 22), t: 0, dir: Math.random() < 0.5 ? 1 : -1, h: 7 + Math.random() * 5, col: ['#fb923c', '#facc15', '#f472b6', '#38bdf8'][Math.floor(Math.random() * 4)] }); }
       if (o.c < o.isl.length) { if (waveDist(o) <= BOAT.waveAt + 8) { B.waveV = waveDist(o) / BOAT.waveT; go('wave'); sfx('wind'); } }   // גל גדול מתקרב
       else if (boatStern(o) + BOAT.len >= o.x + o.end - 1) go('land');            // החרטום נגע בחוף
       break;
@@ -298,6 +301,23 @@ function drawWave(o, k) {                                                       
   ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x - 4, wy - h * 0.7); ctx.quadraticCurveTo(x, wy - h - 1, x + 4.5, wy - h + 2.2); ctx.stroke();   // קצף
 }
 // אחרי הנינג'ה: הדופן הקרובה של הסירה (מסתירה את הרגליים של היושבים), מים מעל תחתית הסירה, ובועות דיבור
+function drawJumpingFish(o) {                                                     // דג קופץ בקשת מעל המים, עם התזה ביציאה ובכניסה
+  if (!o.jumps) return;
+  const wy = waterY();
+  for (const j of o.jumps) {
+    const k = Math.min(1, j.t / 0.9), x = o.x + j.rx + j.dir * (k - 0.5) * 9, y = wy + 0.5 - Math.sin(Math.PI * k) * j.h;
+    if (k < 1) {
+      const a = Math.atan2(-Math.cos(Math.PI * k) * j.h * Math.PI, 9 * j.dir);   // הדג פונה לכיוון התנועה
+      ctx.save(); ctx.translate(x, y); ctx.rotate(j.dir > 0 ? a : a + Math.PI); ctx.scale(1, j.dir > 0 ? 1 : -1);
+      ctx.fillStyle = j.col; ctx.beginPath(); ctx.ellipse(0, 0, 2.1, 1.0, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-1.7, 0); ctx.lineTo(-3.2, -1); ctx.lineTo(-3.2, 1); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(1.1, -0.25, 0.25, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+    if (!j.s1 && j.t > 0.02) { j.s1 = 1; burst(x, wy + 0.3, '#e0f2fe', 5, 14); }
+    if (!j.s2 && k >= 1) { j.s2 = 1; burst(x, wy + 0.3, '#e0f2fe', 6, 16); }
+  }
+}
 function drawBoatFront(o) {
   drawBoatHull(o, false);
   const kd = boatKeelY(o);
@@ -307,6 +327,7 @@ function drawBoatFront(o) {
     ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 0.35;
     const t = performance.now() / 1000; for (const dx of [-1.5, BOAT.len + 1.5]) { ctx.beginPath(); ctx.ellipse(boatStern(o) + dx, waterY() + 0.4, 1.6 + Math.sin(t * 3) * 0.3, 0.35, 0, 0, Math.PI * 2); ctx.stroke(); }
   }
+  drawJumpingFish(o);
   drawBoatTalk(o);
 }
 function drawBoatHull(o, inner) {                                                 // סירת עץ: דופן מעוגלת, קרשים, שפה עליונה, משוטים
