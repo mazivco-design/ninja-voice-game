@@ -73,7 +73,7 @@ const STAGES = [
   { name: 'PICK UP + PUT DOWN', words: ['put down'],  count: 4,  hint: 'PICK UP the rock · PUT DOWN · JUMP', world: 3 },
   { name: 'PICK UP + THROW', words: ['pick up', 'throw'], count: 8, hint: 'PICK UP the rope · THROW · PULL', world: 3 },
   { name: 'HELP',         words: ['help'],           count: 4,  hint: 'Stuck in the mud! Your friend throws a rope · CATCH · HOLD', world: 0 },
-  { name: 'PUSH TOGETHER', words: ['push together'], count: 4, hint: 'PUSH the boat with your friend · JUMP in', world: 0 }   // הילד אומר PUSH ו-JUMP (boat.js)   // הילד עוד לא אומר HELP – רק CATCH ו-HOLD (mud.js)
+  { name: 'PUSH TOGETHER', words: ['push together'], count: 2, hint: 'PUSH the boat with your friend · JUMP in', world: 0 }   // הילד אומר PUSH ו-JUMP (boat.js)   // הילד עוד לא אומר HELP – רק CATCH ו-HOLD (mud.js)
 ];
 // איזה עולם לכל זוג מילים (0 במבוק, 1 כפר בלילה, 2 שלג, 3 קניון, 4 מקדש)
 const PAIR_WORLD = [0, 1, 2, 3, 0, 4, 1, 2, 3, 0, 3];

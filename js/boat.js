@@ -1,55 +1,74 @@
 /* ninja-voice-game – boat.js
-   PUSH TOGETHER (סירה): סירת עץ עומדת על החוף ליד נהר רחב, ונינג'ה חבר מחכה לידה.
-   הנינג'ה נעצר מאחורי הסירה. החבר אומר "Let's push!" – הילד אומר PUSH, ושניהם דוחפים: הסירה זזה צעד על החול.
-   אחרי כמה דחיפות הסירה במים. החבר קופץ פנימה ואומר "Jump in!" – הילד אומר JUMP וקופץ לסירה.
-   שניהם חותרים לצד השני (לבד, בלי מילה), הנינג'ה קופץ לגדה, והחבר נשאר בסירה ומנופף.
+   PUSH TOGETHER (מסע בסירה): תרגול של דחיפה משותפת וקפיצה לסירה – שלוש פעמים בכל מסע.
+   · חוף חול ארוך, סירת עץ, ונינג'ה חבר שמנסה לדחוף אותה לבד – מתאמץ, הסירה רק רועדת.
+     הנינג'ה שלנו מגיע ונעצר. החבר זז הצידה ומבקש "Can you help me push?". הנינג'ה ניגש לסירה.
+   · PUSH – דוחפים ביחד, הסירה זזה צעד. שלוש דחיפות והיא במים. החבר קופץ פנימה וקורא "Jump in!" – JUMP.
+   · שטים בנהר (לבד, בלי מילה). גל גדול מרים את הסירה ומעלה אותה על אי – היא שוב תקועה.
+     שניהם קופצים החוצה, החבר אומר "Stuck again! Let's push!" – ושוב PUSH ×3 ו-JUMP.
+   · אחרי האי האחרון מגיעים לחוף, הנינג'ה קופץ לגדה, והחבר נשאר בסירה ומנופף.
    סבלני: העולם מחכה למילה. אחרי שתיקה ארוכה המשחק אומר את המילה בקול.
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const BOAT = { sand: 40, river: 96, len: 28, h: 6.5, bx0: 4, pushes: 3, step: 9, pushT: 0.7, hiT: 1.2, boardT: 0.7, boardDX: 13,
-               row: 26, landT: 0.75, landDX: 21, byeT: 1.0, hint: 3.5, hintEvery: 6, coins: 4 };
-let boat = null;   // { o, phase: 'hi' | 'wait' | 'push' | 'friendIn' | 'jumpWait' | 'board' | 'row' | 'land', t, idle, hinted, n }
+const BOAT = { shore: 72, sail: 105, isl: 50, islands: 2, len: 28, h: 6.5, bx0: 30, pushes: 3, step: 10, pushT: 0.7,
+               askT: 1.6, stepT: 0.5, stepDX: 7, hiT: 1.3, boardT: 0.7, boardDX: 13, row: 26, waveT: 1.4, waveAt: 24, stuckT: 0.7,
+               outT: 0.7, landT: 0.75, landDX: 21, hint: 3.5, hintEvery: 6, coins: 6 };
+let boat = null;   // { o, phase, t, idle, hinted, n }
+// phase: ask → step → wait ⇄ push → friendIn → jumpWait → board → row → wave → stuck → out → hi → wait … → row → land
 
-function boatStern(o) { return o.x + o.bx; }                                       // הקצה האחורי של הסירה (שם דוחפים)
-function riverL(o) { return o.x + BOAT.sand; }
-function riverR(o) { return o.x + BOAT.sand + BOAT.river; }
-function boatPool(o) { return { x: riverL(o), w: BOAT.river }; }
-function boatAfloat(o) { return boatStern(o) + BOAT.len * 0.45 > riverL(o); }      // רוב הסירה כבר במים
+function boatSetup(o) {                                                            // נקרא ב-spawn / בהדגמה
+  o.bx = BOAT.bx0; o.c = 0;                                                        // c = האי הבא
+  o.isl = []; let x = BOAT.shore + BOAT.sail;
+  for (let i = 0; i < BOAT.islands; i++) { o.isl.push({ l: x, r: x + BOAT.isl }); x += BOAT.isl + BOAT.sail; }
+  o.end = x;                                                                       // החוף בצד השני
+  o.w = o.end + 12;
+}
+function boatStern(o) { return o.x + o.bx; }
+function boatMid(o) { return boatStern(o) + BOAT.len / 2; }
+function boatPool(o) { return { x: o.x + BOAT.shore, w: o.end - BOAT.shore }; }
 function boatBob() { return Math.sin(performance.now() / 1000 * 2.4) * 0.35; }
-// גובה תחתית הסירה: על החול – על הקרקע. במים – צפה (שוקעת קצת), בשפה – באלכסון
+function sandRanges(o) { return [[o.x - 40, o.x + BOAT.shore], ...o.isl.map(s => [o.x + s.l, o.x + s.r]), [o.x + o.end, o.x + o.end + 400]]; }
+// גובה תחתית הסירה: על חול – על הקרקע. במים – צפה. בשפה – באמצע. בגל – מורמת
 function boatKeelY(o) {
-  const mid = boatStern(o) + BOAT.len / 2, k = Math.max(0, Math.min(1, (mid - riverL(o) + 6) / 12));
-  return lerp(GROUND, waterY() + 2.2 + boatBob(), k);
+  const m = boatMid(o); let d = -1e9;
+  for (const [l, r] of sandRanges(o)) d = Math.max(d, Math.min(m - l, r - m));
+  const kw = Math.max(0, Math.min(1, (6 - d) / 12));
+  let y = lerp(GROUND, waterY() + 2.2 + boatBob(), kw);
+  if (boat && boat.o === o && boat.phase === 'wave') y -= Math.sin(Math.PI * Math.min(1, boat.t / BOAT.waveT)) * 6;
+  return y;
 }
 function boatDeck(o) { return boatKeelY(o) - 3.4; }                                // איפה יושבים בתוך הסירה
 function boatBusy() { return !!boat; }
+function waveDist(o) { return o.x + o.isl[o.c].l + 8 - boatStern(o); }
 
-// מהירות העולם בזמן השלב (null = לא בשליטה שלנו)
+// מהירות העולם בזמן השלב (null = לא בשליטה שלנו). שלילי = העולם זז ימינה (יוצאים מהסירה אחורה)
 function boatSpeed() {
   if (!boat) return null;
-  const p = boat.phase;
+  const B = boat, p = B.phase;
+  if (p === 'step') return BOAT.stepDX / BOAT.stepT;
   if (p === 'push') return BOAT.step / BOAT.pushT;
   if (p === 'board') return BOAT.boardDX / BOAT.boardT;
   if (p === 'row') return BOAT.row;
+  if (p === 'wave') return B.waveV;
+  if (p === 'out') return -BOAT.boardDX / BOAT.outT;
   if (p === 'land') return BOAT.landDX / BOAT.landT;
   return 0;
 }
 
 function boatUpdate(dt, pb) {
   if (!boat) {
-    const o = obstacles.find(o => o.type === 'boat' && !o.passed && pb.r >= boatStern(o) - 0.3 && pb.l < riverR(o));
+    const o = obstacles.find(o => o.type === 'boat' && !o.passed && !o.waving && pb.r >= boatStern(o) - BOAT.stepDX - 0.3 && pb.l < o.x + o.end);
     if (!o) return;
-    const over = pb.r - boatStern(o); if (over > 0) ropeShiftBy(over);         // בדיוק מאחורי הסירה
+    const over = pb.r - (boatStern(o) - BOAT.stepDX); if (over > 0) ropeShiftBy(over);   // נעצר מאחורי החבר שדוחף לבד
     py = 0; vy = 0; duckT = 0; flyT = 0; act.run = 0;
-    boat = { o, phase: 'hi', t: 0, idle: 0, hinted: 0, n: 0 };
+    boat = { o, phase: 'ask', t: 0, idle: 0, hinted: 0, n: 0 };
+    speak('can you help me push?');
     return;
   }
   const B = boat, o = B.o, v = boatSpeed(); B.t += dt;
   if (!obstacles.includes(o)) { boat = null; return; }
   const demo = state !== 'play';
   const go = ph => { B.phase = ph; B.t = 0; B.idle = 0; B.hinted = 0; };
-  if (B.phase === 'push' || B.phase === 'row') o.bx += v * dt;                   // הסירה זזה יחד עם הנינג'ה (העולם זז אחורה)
-  if (B.phase === 'land') o.bx += 0;                                              // הסירה נשארת בגדה
+  if (['push', 'row', 'wave'].includes(B.phase)) o.bx += v * dt;                 // הסירה זזה יחד עם הנינג'ה (העולם זז אחורה)
   if (B.phase === 'wait' || B.phase === 'jumpWait') {                             // מחכים למילה – אחרי שתיקה ארוכה המשחק אומר אותה
     B.idle += dt;
     const w = B.phase === 'wait' ? 'push' : 'jump';
@@ -57,7 +76,9 @@ function boatUpdate(dt, pb) {
     else if (B.idle >= BOAT.hint + B.hinted * BOAT.hintEvery) { B.hinted++; sayWords([w], 1.6); }
   }
   switch (B.phase) {
-    case 'hi': if (B.t < dt * 1.5) speak("let's push!"); if (B.t >= BOAT.hiT) go('wait'); break;
+    case 'ask': if (B.t >= BOAT.askT) go('step'); break;                          // החבר זז הצידה ומבקש עזרה
+    case 'step': if (B.t >= BOAT.stepT) { go('wait'); B.n = 0; } break;           // הנינג'ה ניגש לסירה
+    case 'hi': if (B.t >= BOAT.hiT) { go('wait'); B.n = 0; } break;
     case 'push':
       if (Math.random() < 0.5) particles.push({ x: PLAYER.x + 2 + Math.random() * 3, y: GROUND, vx: -8 - Math.random() * 8, vy: -4 - Math.random() * 5, g: 40, life: 0.45, color: '#e7cf9a', size: 0.8 });   // חול שעף מהרגליים
       if (B.t >= BOAT.pushT) {
@@ -68,7 +89,16 @@ function boatUpdate(dt, pb) {
       break;
     case 'friendIn': if (B.t >= 0.8) { go('jumpWait'); speak('jump in!'); } break;   // החבר קופץ פנימה ראשון
     case 'board': if (B.t >= BOAT.boardT) { go('row'); burst(PLAYER.x + 4, boatDeck(o), '#e0f2fe', 6, 14); } break;
-    case 'row': if (boatStern(o) + BOAT.len >= riverR(o) - 1) go('land'); break;   // החרטום נגע בגדה השנייה
+    case 'row':
+      if (o.c < o.isl.length) { if (waveDist(o) <= BOAT.waveAt + 8) { B.waveV = waveDist(o) / BOAT.waveT; go('wave'); sfx('wind'); } }   // גל גדול מתקרב
+      else if (boatStern(o) + BOAT.len >= o.x + o.end - 1) go('land');            // החרטום נגע בחוף
+      break;
+    case 'wave':
+      if (Math.random() < 0.6) particles.push({ x: boatStern(o) - 2 + Math.random() * 6, y: waterY() - 1, vx: -10 - Math.random() * 10, vy: -12 - Math.random() * 8, g: 60, life: 0.6, color: '#e0f2fe', size: 0.9 });
+      if (B.t >= BOAT.waveT) { go('stuck'); sfx('hit'); burst(boatMid(o), GROUND - 0.5, '#e7cf9a', 12, 20); }
+      break;
+    case 'stuck': if (B.t >= BOAT.stuckT) go('out'); break;                        // הסירה על האי – יוצאים
+    case 'out': if (B.t >= BOAT.outT) { py = 0; vy = 0; o.c++; go('hi'); speak("let's push!"); burst(PLAYER.x + 4, GROUND - 0.5, '#e7cf9a', 6, 12); } break;
     case 'land':
       if (B.t >= BOAT.landT) {
         py = 0; vy = 0; burst(PLAYER.x + 4, GROUND - 0.5, WORLDS[world].dust, 7, 14); sfx('clear');
@@ -78,13 +108,15 @@ function boatUpdate(dt, pb) {
       break;
   }
 }
-// גובה הנינג'ה: קפיצה לסירה וקפיצה ממנה לגדה (true = השלב שולט בגובה)
+// גובה הנינג'ה: קפיצות פנימה והחוצה (true = השלב שולט בגובה)
 function boatPhysics(dt) {
   if (!boat) return false;
   const B = boat, p = B.phase;
-  if (p === 'board') { const k = Math.min(1, B.t / BOAT.boardT); py = Math.sin(Math.PI * k) * 9; vy = 0; return true; }
-  if (p === 'land') { const k = Math.min(1, B.t / BOAT.landT); py = Math.sin(Math.PI * k) * 8; vy = 0; return true; }
-  if (p === 'row') { py = 0; vy = 0; return true; }
+  const arc = (T, h) => { const k = Math.min(1, B.t / T); py = Math.sin(Math.PI * k) * h; vy = 0; return true; };
+  if (p === 'board') return arc(BOAT.boardT, 9);
+  if (p === 'out') return arc(BOAT.outT, 8);
+  if (p === 'land') return arc(BOAT.landT, 8);
+  if (['row', 'wave', 'stuck'].includes(p)) { py = 0; vy = 0; return true; }
   return false;
 }
 // כמה הנינג'ה מצויר נמוך מהקרקע (יושב בתוך הסירה)
@@ -92,7 +124,8 @@ function boatSink() {
   if (!boat) return 0;
   const B = boat, p = B.phase, d = boatDeck(B.o) - GROUND;
   if (p === 'board') return d * Math.min(1, B.t / BOAT.boardT);
-  if (p === 'row') return d;
+  if (['row', 'wave', 'stuck'].includes(p)) return d;
+  if (p === 'out') return d * (1 - Math.min(1, B.t / BOAT.outT));
   if (p === 'land') return d * (1 - Math.min(1, B.t / BOAT.landT));
   return 0;
 }
@@ -122,54 +155,102 @@ function rowArms(P, now, ph) {                                                  
   return P;
 }
 function sitLegs(P) { P.legs = [[1.45, -0.15], [1.55, -0.05]]; P.hipY = -2.2; P.bob = 0; return P; }
+function handsOnBoat(P) { P.arms = [[1.2, 1.5], [1.3, 1.6]]; P.lean = 0.15; return P; }
 function boatPose(P) {
   if (!boat) return P;
-  const p = boat.phase, now = performance.now() / 1000;
+  const B = boat, p = B.phase, now = performance.now() / 1000;
   if (p === 'push') return posePush();
-  if (p === 'wait' || p === 'hi' || p === 'friendIn' || p === 'jumpWait') { P = poseIdle(now); P.arms = [[1.3, 1.45], [1.4, 1.55]]; P.lean = 0.12; return P; }   // ידיים על הסירה
-  if (p === 'board' || p === 'land') return poseAir(boat.t < (p === 'board' ? BOAT.boardT : BOAT.landT) / 2);
+  if (p === 'step') return poseRun(now * 18);
+  if (p === 'ask') return poseIdle(now);
+  if (['wait', 'hi', 'friendIn', 'jumpWait'].includes(p)) return handsOnBoat(poseIdle(now));   // ידיים על הסירה
+  if (p === 'board' || p === 'out' || p === 'land') return poseAir(B.t < ({ board: BOAT.boardT, out: BOAT.outT, land: BOAT.landT })[p] / 2);
   if (p === 'row') return rowArms(sitLegs(poseIdle(now)), now);
+  if (p === 'wave' || p === 'stuck') { P = sitLegs(poseIdle(now)); P.arms = [[-2.4, -2.9], [2.4, 2.9]]; P.lean = -0.15; return P; }   // נאחז – ידיים למעלה
   return P;
 }
 
 /* ---------- ציור ---------- */
 function friendSpot(o) {                                                          // איפה החבר ובאיזו תנוחה
-  const B = boat && boat.o === o ? boat : null, p = B ? B.phase : 'done', now = performance.now() / 1000, st = boatStern(o);
-  const side = st + 8, sy = GROUND - 4.6;                                         // עומד בצד הרחוק של הסירה, ידיים על הדופן – דוחפים ביחד
-  if (!B && !o.waving) return { x: side, y: sy, P: poseIdle(now), scale: 0.92 };
-  if (p === 'hi' || p === 'wait') { const P = poseIdle(now); P.arms = [[1.2, 1.5], [1.3, 1.6]]; P.lean = 0.15; if (p === 'hi') P.arms[1] = [2.7, 3.2 + Math.sin(now * 10) * 0.35]; return { x: side, y: sy, P, scale: 0.92 }; }
-  if (p === 'push') return { x: side, y: sy, P: posePush(), scale: 0.92 };
-  const seat = st + BOAT.len * 0.72, deck = boatDeck(o);
-  if (p === 'friendIn') {                                                        // קופץ פנימה בקשת
-    const k = Math.min(1, B.t / 0.6), e = k * k * (3 - 2 * k);
-    return { x: lerp(side, seat, e), y: lerp(sy, deck, e) - Math.sin(Math.PI * k) * 8, P: k < 1 ? poseAir(k < 0.5) : sitLegs(poseIdle(now)), scale: 0.92 };
+  const B = boat && boat.o === o ? boat : null, p = B ? B.phase : (o.waving ? 'bye' : 'alone'), now = performance.now() / 1000, st = boatStern(o);
+  const side = st + 8, sy = GROUND - 4.6, seat = st + BOAT.len * 0.72, deck = boatDeck(o), sc = 0.92;
+  const ease = q => q * q * (3 - 2 * q);
+  if (p === 'alone') { const P = posePush(); P.lean += Math.sin(now * 14) * 0.06; return { x: st - 3.4, y: GROUND, P, scale: sc, alone: true }; }   // דוחף לבד ולא מצליח
+  if (p === 'ask') {                                                             // מסתובב, מבקש עזרה וזז לצד הסירה
+    const k = ease(Math.min(1, Math.max(0, (B.t - 0.5) / 0.8)));
+    const P = k > 0 && k < 1 ? poseRun(now * 16) : poseIdle(now); if (k === 0) P.arms[1] = [2.7, 3.2 + Math.sin(now * 10) * 0.35];
+    return { x: lerp(st - 3.4, side, k), y: lerp(GROUND, sy, k), P, scale: sc };
   }
-  if (p === 'row') return { x: seat, y: deck, P: rowArms(sitLegs(poseIdle(now)), now, 0.4), scale: 0.92 };
-  const P = sitLegs(poseIdle(now)); P.arms[1] = [2.7, 3.2 + Math.sin(now * 10) * 0.35];   // נשאר בסירה ומנופף
-  return { x: seat, y: deck, P, scale: 0.92 };
+  if (p === 'step' || p === 'wait' || p === 'hi') { const P = handsOnBoat(poseIdle(now)); if (p === 'hi' && B.t < 0.8) P.arms[1] = [2.7, 3.2 + Math.sin(now * 10) * 0.35]; return { x: side, y: sy, P, scale: sc }; }
+  if (p === 'push') return { x: side, y: sy, P: posePush(), scale: sc };
+  if (p === 'friendIn') {                                                        // קופץ פנימה בקשת
+    const k = Math.min(1, B.t / 0.6), e = ease(k);
+    return { x: lerp(side, seat, e), y: lerp(sy, deck, e) - Math.sin(Math.PI * k) * 8, P: k < 1 ? poseAir(k < 0.5) : sitLegs(poseIdle(now)), scale: sc, inBoat: k > 0.4 };
+  }
+  if (p === 'out') {                                                             // קופץ מהסירה אל צד הסירה על האי
+    const k = Math.min(1, B.t / BOAT.outT), e = ease(k);
+    return { x: lerp(seat, side, e), y: lerp(deck, sy, e) - Math.sin(Math.PI * k) * 8, P: poseAir(k < 0.5), scale: sc, inBoat: k < 0.5 };
+  }
+  if (p === 'row') return { x: seat, y: deck, P: rowArms(sitLegs(poseIdle(now)), now, 0.4), scale: sc, inBoat: true };
+  if (p === 'wave' || p === 'stuck') { const P = sitLegs(poseIdle(now)); P.arms = [[-2.4, -2.9], [2.4, 2.9]]; return { x: seat, y: deck, P, scale: sc, inBoat: true }; }
+  const P = sitLegs(poseIdle(now)); if (p === 'bye' || p === 'land') P.arms[1] = [2.7, 3.2 + Math.sin(now * 10) * 0.35];   // יושב בסירה (ומנופף בסוף)
+  return { x: seat, y: deck, P, scale: sc, inBoat: true };
 }
 
-// לפני הנינג'ה: חוף החול, הנהר, פנים הסירה, משוטים והחבר
+function drawSand(x0, x1, rise) {                                                 // חול: על החוף (rise=0) או אי שעולה מהמים
+  const wy = waterY(), top = GROUND - 0.3;
+  const g = ctx.createLinearGradient(0, top, 0, wy + 4);
+  g.addColorStop(0, '#f3dfae'); g.addColorStop(1, '#d4b373');
+  ctx.fillStyle = g; ctx.beginPath();
+  if (rise) {
+    ctx.moveTo(x0 - 4, wy + 3.5); ctx.quadraticCurveTo(x0 + 2, top - 0.2, x0 + 8, top);
+    for (let x = x0 + 8; x <= x1 - 8; x += 2) ctx.lineTo(x, top - Math.sin((x - x0) * 0.25) * 0.2);
+    ctx.quadraticCurveTo(x1 - 2, top - 0.2, x1 + 4, wy + 3.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(150,110,50,.35)'; ctx.beginPath(); ctx.ellipse((x0 + x1) / 2, wy + 2.6, (x1 - x0) / 2 + 2, 1, 0, 0, Math.PI * 2); ctx.fill();   // חול רטוב בקו המים
+  } else {
+    ctx.moveTo(x0, GROUND + 3); for (let x = x0; x <= x1; x += 2) ctx.lineTo(x, top + Math.sin(x * 0.6) * 0.15); ctx.lineTo(x1, GROUND + 3); ctx.closePath(); ctx.fill();
+  }
+  ctx.fillStyle = 'rgba(160,120,60,.35)';
+  for (let x = x0 + 3; x < x1 - 3; x += 5.3) { ctx.beginPath(); ctx.ellipse(x, GROUND + 0.9 + (Math.round(x) % 2) * 0.6, 0.5, 0.25, 0, 0, Math.PI * 2); ctx.fill(); }
+}
+function drawPalm(x) {                                                            // עץ דקל קטן על האי
+  const t = performance.now() / 1000, top = GROUND - 17;
+  ctx.strokeStyle = '#8b5a2b'; ctx.lineWidth = 1.1; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x, GROUND - 0.3); ctx.quadraticCurveTo(x - 1.5, GROUND - 9, x + 1, top); ctx.stroke();
+  ctx.fillStyle = '#16a34a';
+  for (let k = 0; k < 5; k++) {
+    const a = -Math.PI / 2 + (k - 2) * 0.75 + Math.sin(t * 1.5 + k) * 0.05;
+    ctx.save(); ctx.translate(x + 1, top); ctx.rotate(a);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(4, -1.6, 8, 1.4); ctx.quadraticCurveTo(4, 0.6, 0, 0); ctx.fill(); ctx.restore();
+  }
+  ctx.fillStyle = '#78350f'; for (const dx of [-0.4, 0.8]) { ctx.beginPath(); ctx.arc(x + 1 + dx, top + 0.8, 0.6, 0, Math.PI * 2); ctx.fill(); }   // קוקוסים
+}
+
+// לפני הנינג'ה: חוף החול, הנהר, האיים, פנים הסירה, משוטים והחבר
 function drawBoatBack(o) {
   const t = performance.now() / 1000, P = boatPool(o), bottom = GROUND + 40, wy = waterY();
-  const sx = o.x - 6, sw = BOAT.sand + 10;                                        // חול על החוף
-  const sg = ctx.createLinearGradient(0, GROUND - 0.4, 0, GROUND + 3);
-  sg.addColorStop(0, '#f3dfae'); sg.addColorStop(1, '#d9bc80');
-  ctx.fillStyle = sg; ctx.beginPath(); ctx.moveTo(sx, GROUND + 3);
-  for (let x = sx; x <= sx + sw; x += 2) ctx.lineTo(x, GROUND - 0.35 + Math.sin(x * 0.6) * 0.15);
-  ctx.lineTo(sx + sw, GROUND + 3); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = 'rgba(160,120,60,.35)'; for (let k = 0; k < 9; k++) { ctx.beginPath(); ctx.ellipse(sx + 3 + k * 5.3, GROUND + 0.9 + (k % 2) * 0.8, 0.5, 0.25, 0, 0, Math.PI * 2); ctx.fill(); }
+  drawSand(o.x - 30, o.x + BOAT.shore + 2, false);                               // חוף חול ארוך
+  drawSand(o.x + o.end - 2, o.x + o.end + 40, false);                            // וגם בצד השני
   drawBasinWall(P, bottom);                                                       // הנהר – בנוי כמו האגם
   const g = ctx.createLinearGradient(0, wy, 0, GROUND + 30);
   g.addColorStop(0, '#38bdf8'); g.addColorStop(1, '#0c4a6e');
   ctx.fillStyle = g; waterPath(P, bottom); ctx.fill();
   drawShore(P);
   ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 0.35;              // זרם – פסים קטנים שזזים
-  for (let i = 0; i < BOAT.river / 9; i++) { const xx = P.x + 8 + ((i * 9 + t * 6) % (BOAT.river - 16)); ctx.beginPath(); ctx.moveTo(xx, wy + 2 + (i % 3) * 1.6); ctx.lineTo(xx + 2.6, wy + 2 + (i % 3) * 1.6); ctx.stroke(); }
-  const F = friendSpot(o), inBoat = !!(boat && boat.o === o && ['friendIn', 'jumpWait', 'board', 'row', 'land'].includes(boat.phase) && !(boat.phase === 'friendIn' && boat.t < 0.35)) || o.waving;
-  if (!inBoat) drawFigure({ fx: F.x, fy: F.y, facing: 1, scale: F.scale, kind: 'ninja', accent: mudAccent(), pose: F.P });
+  for (let i = 0; i < P.w / 9; i++) { const xx = P.x + 8 + ((i * 9 + t * 6) % (P.w - 16)); if (xx < -5 || xx > W + 5) continue; ctx.beginPath(); ctx.moveTo(xx, wy + 2 + (i % 3) * 1.6); ctx.lineTo(xx + 2.6, wy + 2 + (i % 3) * 1.6); ctx.stroke(); }
+  for (const s of o.isl) { const l = o.x + s.l, r = o.x + s.r; if (r < -10 || l > W + 10) continue; drawSand(l, r, true); drawPalm(r - 9); }
+  const B = boat && boat.o === o ? boat : null;
+  if (B && B.phase === 'wave') drawWave(o, Math.min(1, B.t / BOAT.waveT));
+  const F = friendSpot(o);
+  if (!F.inBoat) drawFigure({ fx: F.x, fy: F.y, facing: 1, scale: F.scale, kind: 'ninja', accent: mudAccent(), pose: F.P });
   drawBoatHull(o, true);                                                          // פנים הסירה (הדופן הרחוקה)
-  if (inBoat) drawFigure({ fx: F.x, fy: F.y, facing: 1, scale: F.scale, kind: 'ninja', accent: mudAccent(), pose: F.P });
+  if (F.inBoat) drawFigure({ fx: F.x, fy: F.y, facing: 1, scale: F.scale, kind: 'ninja', accent: mudAccent(), pose: F.P });
+}
+function drawWave(o, k) {                                                         // גל גדול מאחורי הסירה שמרים אותה
+  const x = boatStern(o) - 6, wy = waterY(), h = Math.sin(Math.PI * k) * 12, w = 22;
+  ctx.fillStyle = 'rgba(56,189,248,.92)'; ctx.beginPath(); ctx.moveTo(x - w, wy + 2);
+  ctx.quadraticCurveTo(x - 6, wy + 1, x, wy - h); ctx.quadraticCurveTo(x + 3, wy - h - 1.5, x + 5, wy - h + 2.5);   // הקצה המתקפל קדימה
+  ctx.quadraticCurveTo(x + 7, wy, x + 14, wy + 2); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x - 4, wy - h * 0.7); ctx.quadraticCurveTo(x, wy - h - 1, x + 4.5, wy - h + 2.2); ctx.stroke();   // קצף
 }
 // אחרי הנינג'ה: הדופן הקרובה של הסירה (מסתירה את הרגליים של היושבים), מים מעל תחתית הסירה, ובועות דיבור
 function drawBoatFront(o) {
@@ -184,12 +265,14 @@ function drawBoatFront(o) {
   drawBoatTalk(o);
 }
 function drawBoatHull(o, inner) {                                                 // סירת עץ: דופן מעוגלת, קרשים, שפה עליונה, משוטים
-  const x0 = boatStern(o), L = BOAT.len, kb = boatKeelY(o), top = kb - BOAT.h, now = performance.now() / 1000;
-  const k = Math.max(0, Math.min(1, (x0 + L / 2 - riverL(o) + 6) / 12)), tilt = (1 - Math.abs(k * 2 - 1)) * -0.06;   // בשפה – נוטה קצת
+  const now = performance.now() / 1000, shake = !boat && !o.waving && o.c === 0 ? Math.sin(now * 30) * 0.22 : 0;   // החבר דוחף לבד – הסירה רק רועדת
+  const x0 = boatStern(o) + shake, L = BOAT.len, kb = boatKeelY(o), top = kb - BOAT.h;
+  const m = boatMid(o); let d = -1e9; for (const [l, r] of sandRanges(o)) d = Math.max(d, Math.min(m - l, r - m));
+  const kw = Math.max(0, Math.min(1, (6 - d) / 12)), tilt = (1 - Math.abs(kw * 2 - 1)) * -0.06;   // בשפה – נוטה קצת
   ctx.save(); ctx.translate(x0 + L / 2, kb); ctx.rotate(tilt); ctx.translate(-(x0 + L / 2), -kb);
   if (inner) {
     ctx.fillStyle = '#7c4a1e'; ctx.beginPath(); ctx.moveTo(x0 - 1, top + 0.4); ctx.lineTo(x0 + L + 1.5, top - 0.6); ctx.lineTo(x0 + L - 1, top + 2.2); ctx.lineTo(x0 + 1, top + 2.6); ctx.closePath(); ctx.fill();   // פנים הסירה
-    const rowing = boat && boat.o === o && boat.phase === 'row', c = Math.sin(now * 4);   // משוטים
+    const rowing = boat && boat.o === o && boat.phase === 'row';                   // משוטים
     ctx.strokeStyle = '#a16207'; ctx.lineWidth = 0.7; ctx.lineCap = 'round';
     for (const [ox, ph] of [[L * 0.35, 0], [L * 0.72, 0.4]]) {
       const a = rowing ? 0.5 + Math.sin(now * 4 + ph) * 0.45 : 0.15, hx = x0 + ox, hy = top + 0.5;
@@ -212,13 +295,20 @@ function drawBoatHull(o, inner) {                                               
 }
 function drawBoatTalk(o) {
   const B = boat && boat.o === o ? boat : null, F = friendSpot(o), by = F.y - 15.5;
-  if (!B) { if (o.waving && F.x < W + 4 && F.x > -6) drawBubble('Bye! 👋', F.x, by, { tail: -1, size: 3.4 }); return; }
-  const p = B.phase;
-  if (p === 'hi') drawBubble("Let's push!", F.x, by, { age: B.t, tail: -1, color: '#1d4ed8' });
-  if (p === 'wait' && B.n > 0) drawBubble('Again!', F.x, by, { age: B.idle, tail: -1, color: '#1d4ed8', size: 3.8 });
-  if (p === 'push') drawBubble(B.n === BOAT.pushes - 1 ? 'Yes!' : 'Hup!', F.x, by, { age: B.t, tail: -1, size: 3.6 });
-  if (p === 'jumpWait' || (p === 'friendIn' && B.t > 0.6)) drawBubble('Jump in!', F.x, by, { age: p === 'jumpWait' ? B.t + 0.3 : 0, tail: -1, color: '#1d4ed8' });
-  if (p === 'row' && B.t < 1.6) drawBubble('Row, row! 🚣', F.x, by, { age: B.t, tail: -1, size: 3.6 });
+  if (!B) {
+    if (o.waving) { if (F.x < W + 4 && F.x > -6) drawBubble('Bye! 👋', F.x, by, { tail: -1, size: 3.4 }); }
+    else if (F.alone && F.x < W - 6) drawBubble('Ugh! Too heavy!', F.x, by, { tail: -1, size: 3.4 });
+    return;
+  }
+  const p = B.phase, say = (txt, opt) => drawBubble(txt, F.x, by, Object.assign({ tail: -1, color: '#1d4ed8' }, opt));
+  if (p === 'ask') say('Can you help me push?', { age: B.t, size: 3.8 });
+  if (p === 'hi') say("Stuck again! Let's push!", { age: B.t, size: 3.6 });
+  if (p === 'wait' && B.n > 0) say('Again!', { age: B.idle, size: 3.8 });
+  if (p === 'push') say(B.n === BOAT.pushes - 1 ? 'Yes!' : 'Hup!', { age: B.t, size: 3.6, color: '#111827' });
+  if (p === 'jumpWait' || (p === 'friendIn' && B.t > 0.6)) say('Jump in!', { age: p === 'jumpWait' ? B.t + 0.3 : 0 });
+  if (p === 'row' && B.t < 1.6) say('Row, row! 🚣', { age: B.t, size: 3.6, color: '#111827' });
+  if (p === 'wave') say('Whoa! A big wave!', { age: B.t, size: 3.6, color: '#b91c1c' });
+  if (p === 'stuck') say('Oh no! Stuck!', { age: B.t, size: 3.6, color: '#b91c1c' });
   if (labelsVisible()) {
     if (p === 'wait') label('PUSH', boatStern(o) - 3, GROUND - 24, 4, '#fde047', '#1e293b');
     if (p === 'jumpWait') label('JUMP', PLAYER.x + 4, GROUND - 24, 4, '#fde047', '#1e293b');

@@ -204,7 +204,7 @@ function spawn() {
   if (type === 'gust') o.w = GUST.stalks[2] + 4;
   if (type === 'lift') liftSetup(o);
   if (type === 'mud') o.w = MUD.w + MUD.stand + 8;
-  if (type === 'boat') { o.bx = BOAT.bx0; o.w = BOAT.sand + BOAT.river + 6; }   // PUSH TOGETHER: חוף, סירה ונהר (boat.js)     // HELP: שלולית בוץ, והמקום שבו החבר עומד (mud.js)
+  if (type === 'boat') boatSetup(o);   // PUSH TOGETHER: חוף, סירה ונהר (boat.js)     // HELP: שלולית בוץ, והמקום שבו החבר עומד (mud.js)
   if (type === 'lake') o.w = speed * LAKE.factor;        // רחב מדי לקפיצה
   if (type === 'bridge') o.w = speed * BRIDGE.factor;    // רחב מדי לקפיצה, ארוך מדי להליכה
   if (type === 'pond') o.w = Math.max(54, speed * POND.factor);   // הרשת באמצע
