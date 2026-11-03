@@ -73,7 +73,7 @@ const STAGES = [
   { name: 'PICK UP + PUT DOWN', words: ['put down'],  count: 4,  hint: 'PICK UP the rock · PUT DOWN · JUMP', world: 3 },
   { name: 'PICK UP + THROW', words: ['pick up', 'throw'], count: 8, hint: 'PICK UP the rope · THROW · PULL', world: 3 },
   { name: 'HELP',         words: ['help'],           count: 4,  hint: 'Stuck in the mud! Your friend throws a rope · CATCH · HOLD', world: 0 },
-  { name: 'PUSH TOGETHER', words: ['push together'], count: 2, hint: 'PUSH the boat with your friend · JUMP in', world: 0 }   // הילד אומר PUSH ו-JUMP (boat.js)   // הילד עוד לא אומר HELP – רק CATCH ו-HOLD (mud.js)
+  { name: 'PUSH TOGETHER', words: ['push together'], count: 3, hint: 'PUSH together (on THREE!) · JUMP in', world: 0 }   // הילד אומר PUSH ו-JUMP (boat.js)   // הילד עוד לא אומר HELP – רק CATCH ו-HOLD (mud.js)
 ];
 // איזה עולם לכל זוג מילים (0 במבוק, 1 כפר בלילה, 2 שלג, 3 קניון, 4 מקדש)
 const PAIR_WORLD = [0, 1, 2, 3, 0, 4, 1, 2, 3, 0, 3];
@@ -93,9 +93,10 @@ OBSTACLE_WORDS.bat = ['fire'];
 OBSTACLE_WORDS.lift = ['pick up', 'put down', 'jump'];
 OBSTACLE_WORDS.mud = ['catch', 'hold'];
 OBSTACLE_WORDS.boat = ['push', 'jump'];
+OBSTACLE_WORDS.cart = ['push', 'jump'];
 const HIT_WORD = { box: 'JUMP!', beam: 'DOWN!', wall: 'KICK!', enemy: 'THROW!', river: 'JUMP + FLY!',
                    rock: 'STOP!', bridge: 'RUN!', lake: 'SWIM!', cliff: 'CLIMB!', boulder: 'PUSH!', gate: 'PULL!', guard: 'HIDE!', arrows: 'BLOCK!',
-                   window: 'LEAP!', pond: 'DIVE!', coin: 'CATCH!', bramble: 'CRAWL!', ice: 'FIRE!', door: 'I WANT A KEY!', chasm: 'CATCH… LET GO!', dragon: 'RIDE!', duel: 'FIGHT!', gust: 'HOLD!', lift: 'PICK UP!', mud: 'CATCH… HOLD!', boat: 'PUSH… JUMP!', skyrock: 'UP or DOWN!', bat: 'FIRE!' };
+                   window: 'LEAP!', pond: 'DIVE!', coin: 'CATCH!', bramble: 'CRAWL!', ice: 'FIRE!', door: 'I WANT A KEY!', chasm: 'CATCH… LET GO!', dragon: 'RIDE!', duel: 'FIGHT!', gust: 'HOLD!', lift: 'PICK UP!', mud: 'CATCH… HOLD!', boat: 'PUSH… JUMP!', cart: 'PUSH on THREE!', skyrock: 'UP or DOWN!', bat: 'FIRE!' };
 
 // "העולם" של המשחק: 160 על 100 יחידות, מוגדל לגודל המסך
 const W = 160, H = 100, GROUND = 72;   // קרקע גבוהה יותר – מקום לעומק מתחתיה (בורות, צלילה, נתיב קדמי)

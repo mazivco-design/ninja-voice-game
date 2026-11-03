@@ -156,7 +156,7 @@ function renderDict() {
 }
 
 function resetDemo() {
-  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null; banner = null; flash = null; heard = null;
+  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; cart = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null; banner = null; flash = null; heard = null;
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   demoSteps = []; demoClock = 0;
 }
@@ -175,7 +175,7 @@ function openDict() {
 
 // קול: הקלטות של כל מילה ומשפט (קול "Michael", audio/voice/). VOICE_VER – משנים כשמחליפים הקלטות, כדי שהדפדפן לא ישתמש בישנות. אם הקלטה לא נטענת – הקול של הדפדפן כגיבוי
 const VOICE_VER = 'michael3';
-const VOICE_CLIPS = {"jump": "jump", "down": "down", "kick": "kick", "throw": "throw", "catch": "catch", "fly": "fly", "stop": "stop", "run": "run", "swim": "swim", "climb": "climb", "push": "push", "pull": "pull", "hide": "hide", "block": "block", "leap": "leap", "dive": "dive", "crawl": "crawl", "fire": "fire", "let go": "let-go", "ride": "ride", "fight": "fight", "hold": "hold", "up": "up", "want": "want", "key": "key", "rope": "rope", "torch": "torch", "what do you want?": "what-do-you-want", "i have a key": "i-have-a-key", "a rope": "a-rope", "and a torch": "and-a-torch", "which one?": "which-one", "here you go!": "here-you-go", "hmm, that won't open the door.": "hmm-that-won-t-open-the-door", "shield": "shield", "jet": "jet", "pick up": "pick-up", "put down": "put-down", "i want a key": "i-want-a-key", "i want a rope": "i-want-a-rope", "i want a torch": "i-want-a-torch", "hmm, that won't help here.": "hmm-that-won-t-help-here", "help": "help", "help!": "help", "hold on!": "hold-on", "let's push!": "let-s-push", "jump in!": "jump-in", "can you help me push?": "can-you-help-me-push", "great job!": "great-job"};
+const VOICE_CLIPS = {"jump": "jump", "down": "down", "kick": "kick", "throw": "throw", "catch": "catch", "fly": "fly", "stop": "stop", "run": "run", "swim": "swim", "climb": "climb", "push": "push", "pull": "pull", "hide": "hide", "block": "block", "leap": "leap", "dive": "dive", "crawl": "crawl", "fire": "fire", "let go": "let-go", "ride": "ride", "fight": "fight", "hold": "hold", "up": "up", "want": "want", "key": "key", "rope": "rope", "torch": "torch", "what do you want?": "what-do-you-want", "i have a key": "i-have-a-key", "a rope": "a-rope", "and a torch": "and-a-torch", "which one?": "which-one", "here you go!": "here-you-go", "hmm, that won't open the door.": "hmm-that-won-t-open-the-door", "shield": "shield", "jet": "jet", "pick up": "pick-up", "put down": "put-down", "i want a key": "i-want-a-key", "i want a rope": "i-want-a-rope", "i want a torch": "i-want-a-torch", "hmm, that won't help here.": "hmm-that-won-t-help-here", "help": "help", "help!": "help", "hold on!": "hold-on", "let's push!": "let-s-push", "jump in!": "jump-in", "can you help me push?": "can-you-help-me-push", "kid: one": "kid-one", "kid: two": "kid-two", "kid: three": "kid-three", "kid: can you help me push?": "kid-can-you-help-me-push", "kid: jump in!": "kid-jump-in", "kid: thank you!": "kid-thank-you", "kid: wait for three!": "kid-wait-for-three", "kid: again": "kid-again", "great job!": "great-job"};
 const voiceAudio = {};
 let voiceNow = null;
 // מנגנים דרך Web Audio (אותו מנגנון של צלילי המשחק): נפתח פעם אחת בנגיעה הראשונה, ואז עובד בכל מקום – גם במסע בלי הדגמה.
@@ -295,7 +295,7 @@ let introWords = [], introT = 0, runSpeed = 0;
 
 // מציב חפץ קטן ליד הנינג'ה ומתזמן את הפעולה (משותף למילון ולהדגמה)
 function setupDemo(w) {
-  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; flash = null; invulnT = 0;
+  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; cart = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; flash = null; invulnT = 0;
   py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0; resetAct();
   demoSteps = []; demoClock = 0;
   const near = PLAYER.x + PLAYER.w;
@@ -319,7 +319,7 @@ function setupDemo(w) {
   if (w === 'fight') obstacles.push({ type: 'duel', x: near + 40, w: 8 });
   if (w === 'pick up' || w === 'put down') { const o = { type: 'lift', x: near + 1 }; liftKindNext = w === 'pick up' ? 'grab' : 'wall'; liftSetup(o); obstacles.push(o); }
   if (w === 'help') { const o = { type: 'mud', x: PLAYER.x + 4 - MUD.stuck, w: MUD.w + MUD.stand + 8 }; obstacles.push(o); }   // נתקע מיד – והחבר בא (mud.js מפעיל CATCH / HOLD בהדגמה)
-  if (w === 'push together') { const o = { type: 'boat' }; boatSetup(o); o.x = PLAYER.x + PLAYER.w + BOAT.stepDX - BOAT.bx0; obstacles.push(o); }   // מתחיל צמוד לסירה (boat.js מפעיל PUSH / JUMP בהדגמה)
+  if (w === 'push together') { const o = { type: 'cart' }; cartSetup(o); o.x = PLAYER.x + PLAYER.w + CART.stepDX - CART.cp0; obstacles.push(o); }   // מתחיל צמוד לסירה (boat.js מפעיל PUSH / JUMP בהדגמה)
   if (w === 'hold') obstacles.push({ type: 'gust', x: near + 1 - GUST.stalks[2], w: GUST.stalks[2] + 4 });
   obstacles.forEach(o => { o.passed = false; o.hit = false; o.demo = true; });   // בהדגמה – בלי פגיעות
   demoSteps = w === 'fly' ? [{ at: 0.9, w: 'jump' }, { at: 1.3, w: 'fly' }]
@@ -356,15 +356,15 @@ function introNext() {
   const w = introWords.shift();
   setupDemo(w);
   if (w !== 'help' && w !== 'push together') speak(w);                                                  // HELP: הנינג'ה עצמו צועק בסצנה
-  banner = { text: w === 'help' ? 'CATCH the rope, then HOLD!' : w === 'push together' ? 'PUSH the boat, then JUMP in!' : 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
-  introT = w === 'fly' ? 4.6 : w === 'want' || w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'put down' ? 6.8 : w === 'pick up' ? 2.8 : w === 'crawl' ? 5.2 : w === 'help' ? 12 : w === 'push together' ? 14 : 2.8;
+  banner = { text: w === 'help' ? 'CATCH the rope, then HOLD!' : w === 'push together' ? 'PUSH on THREE, then JUMP in!' : 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
+  introT = w === 'fly' ? 4.6 : w === 'want' || w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'put down' ? 6.8 : w === 'pick up' ? 2.8 : w === 'crawl' ? 5.2 : w === 'help' ? 12 : w === 'push together' ? 19 : 2.8;
 }
 
 function finishIntro() {
   if (state !== 'intro') return;
-  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; demoSteps = []; flash = null; invulnT = 0;
+  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; cart = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; demoSteps = []; flash = null; invulnT = 0;
   py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0; resetAct();
-  speed = runSpeed; distSinceSpawn = 0; nextGap = speed * 2.4; liftKindNext = null; liftIdx = 0; merchNext = 'key';   // PICK UP: הסצנות מתחילות מההתחלה
+  speed = runSpeed; distSinceSpawn = 0; nextGap = speed * 2.4; liftKindNext = null; liftIdx = 0; ptIdx = 0; merchNext = 'key';   // PICK UP: הסצנות מתחילות מההתחלה
   seenWords = [];
   banner = { text: 'Go!', sub: '', t: 1.2 };
   $('skipBtn').classList.add('hide');

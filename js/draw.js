@@ -466,7 +466,8 @@ function playerPose() {
   P = duelPlayerPose(P, now);
   P = liftPose(P);
   P = mudPose(P);
-  P = boatPose(P);                                 // סירה: דוחף / יושב וחותר                                  // HELP: תקוע בבוץ / אוחז בחבל
+  P = boatPose(P);
+  P = cartPose(P);                                 // עגלה: דוחף / מחכה לשלוש                                 // סירה: דוחף / יושב וחותר                                  // HELP: תקוע בבוץ / אוחז בחבל
   P = merchPose(P);                                // PICK UP: הסלע מעל הראש
   P = jetPose(P);                                 // תרמיל סילון – עף קדימה                     // קרב: עמידה עם חרב והנפות
   return P;
@@ -533,7 +534,8 @@ function draw() {
   for (const o of obstacles) if (o.type === 'door') drawGateFront(o);           // החומה סביב הדלת – מעל הנינג'ה: הוא עובר דרך הפתח, לא לפני הדלת   // החצי הקדמי של הטבעת – מעל הנינג'ה, נראה שהוא עובר דרכה
   for (const o of obstacles) if (o.type === 'bridge') drawFieldSmoke(o);
   for (const o of obstacles) if (o.type === 'mud') drawMudFront(o);
-  for (const o of obstacles) if (o.type === 'boat') drawBoatFront(o);          // הדופן הקרובה של הסירה מעל היושבים            // הבוץ מעל הרגליים, החבל והבועות
+  for (const o of obstacles) if (o.type === 'boat') drawBoatFront(o);
+  for (const o of obstacles) if (o.type === 'cart') drawCartFront(o);          // הדופן הקרובה של הסירה מעל היושבים            // הבוץ מעל הרגליים, החבל והבועות
   for (const o of obstacles) if (o.type === 'lake' || o.type === 'pond') {   // מים מעל השחיין – נראה חצי שקוע / צולל
     ctx.fillStyle = o.type === 'lake' ? 'rgba(20,184,166,.55)' : 'rgba(14,116,144,.6)'; waterPath(o, bottom); ctx.fill();
     if (o.type === 'pond') drawNet(o, true);                                  // הרשת לפני הצולל
@@ -590,6 +592,7 @@ function drawObstacle(o, top) {
   if (o.type === 'lift') { drawLiftObstacle(o); return; }
   if (o.type === 'mud') { drawMudBack(o); return; }
   if (o.type === 'boat') { drawBoatBack(o); return; }
+  if (o.type === 'cart') { drawCartBack(o); return; }
   if (o.type === 'bramble') { drawTunnel(o); return; }   // CRAWL: סלע ענק ומחילה מתחתיו (tunnel.js)
   if (artDraw(o)) return;                        // יש ציור SVG מהסטודיו – הוא מחליף את הציור הרגיל
   if (o.type === 'door') { drawGate(o); drawMerchant(o); return; }   // I WANT: סוחר ודלת נעולה
@@ -1374,7 +1377,8 @@ function drawNinja() {                                           // הנינג'�
 }
 function drawNinjaBody() {
   if (drawGustNinja()) return;                                                    // בטורנדו: מחזיק בקנה / עף
-  if (ropeHanging()) return;                                                      // תלוי על החבל – מצויר ב-drawRopeSwing
+  if (ropeHanging()) return;
+  if (cartRiding()) return;                                                       // יושב בעגלה – מצויר בתוכה (cart.js)                                                      // תלוי על החבל – מצויר ב-drawRopeSwing
   const pb = playerBox();
   const swim = swimShown();
   const drowning = drownK > 0 && !swim && py <= 0 && sinkT <= 0;     // במים בלי SWIM – שוקע

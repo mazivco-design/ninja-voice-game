@@ -15,7 +15,7 @@ const FAM = { cross: 1.8 };   // הגור שעובר על הקרש אל אמא �
 const PLANK = { len: 42, th: 2.6, gapAt: 52, gapW: 32, deep: 22, cross: 0.55 };   // קרש מעל בור
 const LIFT = { rockW: 10, rockH: 8, gap: 46, wallW: 10, wallH: 22, starDY: 39, starAhead: 7, starR: 4.2, carry: 0.7,
                liftT: 0.5, putT: 0.45, climbT: 0.45, hint: 3.5, hintEvery: 6, prizeCoins: 5 };
-let liftKindNext = null, liftIdx = 0;
+let liftKindNext = null, liftIdx = 0, ptIdx = 0;   // ptIdx: PUSH TOGETHER – עגלה / סירה לסירוגין
 // אילו סצנות מתאימות למצב הנוכחי – למידה הדרגתית:
 // שיעור PICK UP – רק אוצרות להרים · PICK UP + PUT DOWN – קיר / כוכב / קרש · PICK UP + THROW – הצלת הגור (ואוצר)
 // במסע – לפי המילים שכבר נלמדו
