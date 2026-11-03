@@ -7,7 +7,7 @@
    בשלב הזה הילד לא אומר HELP – המשחק אומר. (בהמשך הילד יגיד HELP בעצמו.)
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const MUD = { w: 100, stuck: 24, deep: 5.2, pit: 9, sinkT: 1.6, helpT: 1.9, run: 58, stand: 7, readyT: 0.8, throwT: 1.0, release: 0.72, flyT: 0.7, drown: 2.2,
+const MUD = { w: 100, stuck: 24, deep: 5.2, pit: 9, sinkT: 1.6, helpT: 2.6, run: 58, stand: 7, readyT: 0.8, throwT: 1.0, release: 0.72, flyT: 0.7, drown: 2.2,
               catchWin: 4.5, dropT: 0.6, reelT: 1.1, caughtT: 0.7, holdWin: 4.5, slipT: 0.9, pullT: 4.6, pullCyc: 1.2, thanksT: 4.3, walkA: 1.2, walkB: 2.5, hugA: 2.5, hugB: 3.9, hugGap: 5.4, coins: 4 };
 let mud = null;   // { o, phase: 'sink' | 'help' | 'come' | 'throw' | 'fly' | 'dangle' | 'drop' | 'reel' | 'caught' | 'tug' | 'slip' | 'pull' | 'thanks', t, throws, slips }
 

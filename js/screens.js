@@ -174,7 +174,7 @@ function openDict() {
 }
 
 // קול: הקלטות של כל מילה ומשפט (קול "Michael", audio/voice/). VOICE_VER – משנים כשמחליפים הקלטות, כדי שהדפדפן לא ישתמש בישנות. אם הקלטה לא נטענת – הקול של הדפדפן כגיבוי
-const VOICE_VER = 'michael3';
+const VOICE_VER = 'michael4';
 const VOICE_CLIPS = {"jump": "jump", "down": "down", "kick": "kick", "throw": "throw", "catch": "catch", "fly": "fly", "stop": "stop", "run": "run", "swim": "swim", "climb": "climb", "push": "push", "pull": "pull", "hide": "hide", "block": "block", "leap": "leap", "dive": "dive", "crawl": "crawl", "fire": "fire", "let go": "let-go", "ride": "ride", "fight": "fight", "hold": "hold", "up": "up", "want": "want", "key": "key", "rope": "rope", "torch": "torch", "what do you want?": "what-do-you-want", "i have a key": "i-have-a-key", "a rope": "a-rope", "and a torch": "and-a-torch", "which one?": "which-one", "here you go!": "here-you-go", "hmm, that won't open the door.": "hmm-that-won-t-open-the-door", "shield": "shield", "jet": "jet", "pick up": "pick-up", "put down": "put-down", "i want a key": "i-want-a-key", "i want a rope": "i-want-a-rope", "i want a torch": "i-want-a-torch", "hmm, that won't help here.": "hmm-that-won-t-help-here", "help": "help", "help!": "help", "hold on!": "hold-on", "let's push!": "let-s-push", "jump in!": "jump-in", "can you help me push?": "can-you-help-me-push", "kid: one": "kid-one", "friend: can you help me push?": "friend-can-you-help-me-push", "friend: jump in!": "friend-jump-in", "friend: stuck again!": "friend-stuck-again", "friend: let's push!": "friend-lets-push", "kid: two": "kid-two", "kid: three": "kid-three", "kid: can you help me push?": "kid-can-you-help-me-push", "kid: jump in!": "kid-jump-in", "kid: thank you!": "kid-thank-you", "kid: wait for three!": "kid-wait-for-three", "kid: again": "kid-again", "great job!": "great-job"};
 const voiceAudio = {};
 let voiceNow = null;
@@ -357,7 +357,7 @@ function introNext() {
   setupDemo(w);
   if (w !== 'help' && w !== 'push together') speak(w);                                                  // HELP: הנינג'ה עצמו צועק בסצנה
   banner = { text: w === 'help' ? 'CATCH the rope, then HOLD!' : w === 'push together' ? 'PUSH on THREE, then JUMP in!' : 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
-  introT = w === 'fly' ? 4.6 : w === 'want' || w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'put down' ? 6.8 : w === 'pick up' ? 2.8 : w === 'crawl' ? 5.2 : w === 'help' ? 12 : w === 'push together' ? 23 : 2.8;
+  introT = w === 'fly' ? 4.6 : w === 'want' || w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'put down' ? 6.8 : w === 'pick up' ? 2.8 : w === 'crawl' ? 5.2 : w === 'help' ? 12.7 : w === 'push together' ? 23 : 2.8;
 }
 
 function finishIntro() {
