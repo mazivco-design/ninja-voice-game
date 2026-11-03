@@ -8,7 +8,7 @@
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
 const MUD = { w: 100, stuck: 24, deep: 5.2, pit: 9, sinkT: 0.6, helpT: 1.1, run: 62, stand: 7, throwT: 0.35, flyT: 0.7,
-              catchWin: 4.5, dropT: 0.6, reelT: 1.1, caughtT: 0.7, holdWin: 4.5, slipT: 0.9, pullT: 3.6, thanksT: 1.6, coins: 4 };
+              catchWin: 4.5, dropT: 0.6, reelT: 1.1, caughtT: 0.7, holdWin: 4.5, slipT: 0.9, pullT: 3.6, pullCyc: 1.2, thanksT: 1.6, coins: 4 };
 let mud = null;   // { o, phase: 'sink' | 'help' | 'come' | 'throw' | 'fly' | 'dangle' | 'drop' | 'reel' | 'caught' | 'tug' | 'slip' | 'pull' | 'thanks', t, throws, slips }
 
 function mudWin(base) { return base * (cfg && cfg.forgive ? 1.3 : 1); }           // ברמה הקלה – יותר זמן לענות
@@ -48,10 +48,12 @@ function mudSink(fx) {
 }
 function mudBusy() { return !!mud; }
 
+// המשיכה בגלים: כל משיכת יד גוררת את הנינג'ה קדימה, ובין משיכה למשיכה כמעט עוצרים (ממוצע = כל המרחק בזמן המשיכה)
+function mudPullV(t) { return mudPullDist() / MUD.pullT * (Math.PI / 2) * Math.abs(Math.sin(Math.PI * 2 * t / MUD.pullCyc)); }
 // מהירות העולם בזמן השלב (null = לא בשליטה שלנו)
 function mudSpeed() {
   if (!mud) return null;
-  if (mud.phase === 'pull') return mudPullDist() / MUD.pullT;
+  if (mud.phase === 'pull') return mudPullV(mud.t);
   return 0;
 }
 
@@ -101,7 +103,7 @@ function mudUpdate(dt, pb) {
       break;
     case 'slip': if (M.t >= MUD.slipT) go('reel'); break;                         // החבל ברח – החבר נופל אחורה ואוסף אותו
     case 'pull':
-      o.fr += mudPullDist() / MUD.pullT * 0.8 * dt;                               // החבר צועד אחורה תוך כדי משיכה
+      o.fr += mudPullV(M.t) * 0.85 * dt;                                           // החבר צועד אחורה צעד בכל משיכה
       if (Math.random() < 0.3) particles.push({ x: PLAYER.x + 2 + Math.random() * 4, y: GROUND, vx: -6 - Math.random() * 6, vy: -8 - Math.random() * 6, g: 50, life: 0.4, color: '#6b4423', size: 0.9 });
       if (M.t >= MUD.pullT) {
         go('thanks'); sfx('clear'); speak('great job!'); burst(PLAYER.x + 4, GROUND - 6, '#fde68a', 12, 28);
@@ -166,7 +168,12 @@ function friendPose(o) {
   let P;
   if (p === 'come') P = poseRun(now * 20);
   else if (p === 'tug') { P = posePull(now * 0.7); P.lean = -0.3; }
-  else if (p === 'pull') { P = posePull(now * 1.6); P.lean = -0.35; }
+  else if (p === 'pull') {                                                      // יד אחרי יד, לאט ובמאמץ, וצעד אחורה בכל משיכה
+    const ph = M.t / MUD.pullCyc, q = Math.PI * 4 * ph, eff = Math.abs(Math.sin(Math.PI * 2 * ph));
+    P = posePull(ph * 0.7); P.lean = -0.38 - eff * 0.12; P.headTilt = -0.25;
+    P.legs = [[-0.5 + Math.sin(q) * 0.28, -0.15 - Math.max(0, Math.sin(q)) * 0.35], [0.6 - Math.sin(q) * 0.28, 0.05 - Math.max(0, -Math.sin(q)) * 0.35]];
+    P.bob = -eff * 0.4;
+  }
   else if (p === 'reel') P = posePull(now * 1.8);
   else if (p === 'slip') { const k = Math.min(1, M.t / MUD.slipT); P = poseIdle(now); P.lean = -0.7 * Math.sin(Math.PI * k); P.arms = [[-1.2, -0.8], [1.9, 2.4]]; }
   else if (p === 'caught') { P = poseIdle(now); P.arms = [[0.9, 1.1], [1.0, 1.25]]; P.lean = 0.1; }
@@ -291,6 +298,7 @@ function drawMudTalk(o) {                                                       
   if (['help', 'come', 'throw', 'reel'].includes(p) || (p === 'drop')) drawBubble('Help! 😱', nx + 1, ny, { age: p === 'help' ? M.t : undefined, tail: 1, color: '#b91c1c' });
   if (p === 'come' && fx < viewR() - 4) drawBubble("I'm coming!", fx, GROUND - 21, { age: M.t, tail: -1, size: 3.6 });
   if (p === 'fly' || p === 'dangle') drawBubble('Catch!', fx, GROUND - 21, { age: p === 'fly' ? M.t : undefined, tail: -1, color: '#1d4ed8' });
+  if (p === 'pull') drawBubble('Hnnng!', fx, GROUND - 21, { age: M.t, tail: -1, size: 3.4, color: '#7c2d12' });
   if (p === 'tug') drawBubble('Hold on!', fx, GROUND - 21, { age: M.t, tail: -1, color: '#1d4ed8' });
   if (p === 'slip') drawBubble('Oops!', fx, GROUND - 20, { age: M.t, tail: -1, size: 3.6 });
   if (p === 'thanks') { drawBubble('Great job!', fx + 3, GROUND - 21, { age: M.t, tail: -1, color: '#15803d' }); if (M.t > 0.5) drawBubble('Thank you!', nx - 3, GROUND - 21, { age: M.t - 0.5, tail: 1, color: '#be185d', size: 3.6 }); }
