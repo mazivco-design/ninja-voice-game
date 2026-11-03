@@ -207,11 +207,11 @@ function drawSand(x0, x1, rise, taper) {                                        
     ctx.quadraticCurveTo(x1 - 2, top - 0.2, x1 + 4, wy + 3.5); ctx.closePath(); ctx.fill();
     ctx.fillStyle = 'rgba(150,110,50,.35)'; ctx.beginPath(); ctx.ellipse((x0 + x1) / 2, wy + 2.6, (x1 - x0) / 2 + 2, 1, 0, 0, Math.PI * 2); ctx.fill();   // חול רטוב בקו המים
   } else {                                                                        // חוף: שכבת חול שמתעבה בהדרגה מהדשא, עם קצה לא ישר (taper = באיזה צד הוא נגמר בדשא)
-    const th = x => { const r = x - x0, l = x1 - x, e = Math.min(1, (taper < 0 ? r : l) / 14); return Math.max(0, e * e * (3 - 2 * e)) * (0.82 + 0.18 * Math.sin(r * 1.1 + 0.7)); };
+    const th = x => { const r = x - x0, l = x1 - x, e = Math.min(1, (taper < 0 ? r : l) / 14); return Math.max(0, e * e * (3 - 2 * e)); };
     const st = 1;
     ctx.moveTo(x0, GROUND + 0.8);
-    for (let x = x0; x <= x1 + 0.01; x += st) ctx.lineTo(x, GROUND + 0.8 - (1.15 + Math.sin((x - x0) * 0.6) * 0.15) * th(x));
-    for (let x = x1; x >= x0 - 0.01; x -= st) ctx.lineTo(x, GROUND + 0.8 + 2.4 * th(x));
+    for (let x = x0; x <= x1 + 0.01; x += st) ctx.lineTo(x, GROUND + 0.8 - (1.15 + Math.sin((x - x0) * 0.35) * 0.08) * th(x));
+    for (let x = x1; x >= x0 - 0.01; x -= st) ctx.lineTo(x, GROUND + 0.8 + 3.2 * th(x));   // עמוק מספיק כדי לכסות את פס הדשא של הקרקע – החול לא נראה צף
     ctx.closePath(); ctx.fill();
   }
   ctx.fillStyle = 'rgba(160,120,60,.35)';                                           // גרגרים – צמודים לחול (לא לפיקסלים של המסך), אז לא מרצדים
