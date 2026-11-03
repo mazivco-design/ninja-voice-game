@@ -83,7 +83,7 @@ function boatUpdate(dt, pb) {
     case 'push':
       if (Math.random() < 0.5) particles.push({ x: PLAYER.x + 2 + Math.random() * 3, y: GROUND, vx: -8 - Math.random() * 8, vy: -4 - Math.random() * 5, g: 40, life: 0.45, color: '#e7cf9a', size: 0.8 });   // חול שעף מהרגליים
       if (B.t >= BOAT.pushT) {
-        B.n++; sfx('hit');
+        B.n++; sfx('thud');
         if (B.n >= BOAT.pushes) { go('friendIn'); burst(boatStern(o) + BOAT.len * 0.8, waterY(), '#e0f2fe', 12, 24); sfx('pop'); }   // הסירה במים – התזה
         else go('wait');
       }
@@ -98,7 +98,7 @@ function boatUpdate(dt, pb) {
       break;
     case 'wave':
       if (Math.random() < 0.6) particles.push({ x: boatStern(o) - 2 + Math.random() * 6, y: waterY() - 1, vx: -10 - Math.random() * 10, vy: -12 - Math.random() * 8, g: 60, life: 0.6, color: '#e0f2fe', size: 0.9 });
-      if (B.t >= BOAT.waveT) { go('stuck'); sfx('hit'); burst(boatMid(o), GROUND - 0.5, '#e7cf9a', 12, 20); }
+      if (B.t >= BOAT.waveT) { go('stuck'); sfx('thud'); burst(boatMid(o), GROUND - 0.5, '#e7cf9a', 12, 20); }
       break;
     case 'stuck': if (B.t >= BOAT.stuckT) go('out'); break;                        // הסירה על האי – יוצאים
     case 'out': if (B.t >= BOAT.outT) { py = 0; vy = 0; o.c++; go('hi'); speak("let's push!"); burst(PLAYER.x + 4, GROUND - 0.5, '#e7cf9a', 6, 12); } break;
@@ -260,7 +260,7 @@ function drawBoatBack(o) {
   drawBeach(P, 1); drawBeach(P, -1);                                            // החול יורד בשיפוע עדין עד המים בשתי הגדות
   ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 0.35;              // זרם – פסים קטנים שזזים
   for (let i = 0; i < P.w / 9; i++) { const xx = P.x + 8 + ((i * 9 + t * 6) % (P.w - 16)); if (xx < viewL() - 5 || xx > viewR() + 5) continue; ctx.beginPath(); ctx.moveTo(xx, wy + 2 + (i % 3) * 1.6); ctx.lineTo(xx + 2.6, wy + 2 + (i % 3) * 1.6); ctx.stroke(); }
-  drawCrows(P.x + 10, P.x + P.w - 10, 3, GROUND - 17);              // עורבים מעל הנהר – אי אפשר פשוט לקפוץ
+  drawCrows(P.x + 10, P.x + P.w - 10, 3, GROUND - 27);              // עורבים מעל הנהר – אי אפשר פשוט לקפוץ
   for (const s of o.isl) { const l = o.x + s.l, r = o.x + s.r; if (r < viewL() - 10 || l > viewR() + 10) continue; drawSand(l, r, true); drawPalm(r - 9); }
   const B = boat && boat.o === o ? boat : null;
   if (B && B.phase === 'wave') drawWave(o, Math.min(1, B.t / BOAT.waveT));

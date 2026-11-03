@@ -212,7 +212,7 @@ function drawMudBack(o) {
   drawBasinWall(P, bottom);
   ctx.fillStyle = mudGrad(); waterPath(P, bottom); ctx.fill();
   mudShore(o);
-  drawCrows(o.x + 8, o.x + MUD.w - 8, 1, GROUND - 16);                          // עורבים מעל הבוץ – מסבירים למה לא קופצים מעליו
+  drawCrows(o.x + 8, o.x + MUD.w - 8, 1, GROUND - 26);                          // עורבים מעל הבוץ – מסבירים למה לא קופצים מעליו
   const fx = friendX(o);
   if (fx > viewR() + 10) return;
   const M = mud && mud.o === o ? mud : null, p = M ? M.phase : 'done';

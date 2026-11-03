@@ -37,6 +37,7 @@ const SFX = {
   woof: () => { tone(520, 300, 0.09, 'square', 0.06); tone(560, 320, 0.11, 'square', 0.06, 0.14); },
   squawk: () => { tone(1400, 900, 0.09, 'square', 0.05); tone(1500, 1000, 0.1, 'square', 0.05, 0.11); },
   wind: () => noiseBurst(1.2, 0.22),
+  thud: () => tone(150, 95, 0.16, 'sine', 0.07),                               // דחיפה רכה (סירה / עגלה)
   swish: () => tone(900, 260, 0.11, 'sawtooth', 0.025),
   over: () => [440, 349, 262].forEach((f, i) => tone(f, 0, 0.3, 'triangle', 0.1, i * 0.18))
 };

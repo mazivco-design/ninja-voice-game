@@ -82,7 +82,7 @@ function cartUpdate(dt, pb) {
       break;
     case 'push':
       if (Math.random() < 0.5) particles.push({ x: PLAYER.x + 2 + Math.random() * 3, y: GROUND - cartHillLift(PLAYER.x + 4), vx: -8 - Math.random() * 6, vy: -3 - Math.random() * 3, g: 8, life: 0.3, color: WORLDS[world].dust, size: 0.8 });
-      if (C.t >= CART.pushT) { C.n++; sfx('hit'); if (C.n >= CART.pushes) { go('kidIn'); } else { go('count'); C.beats = 0; } }
+      if (C.t >= CART.pushT) { C.n++; sfx('thud'); if (C.n >= CART.pushes) { go('kidIn'); } else { go('count'); C.beats = 0; } }
       break;
     case 'early': case 'late': if (C.t >= CART.backT + 0.4) { C.back = 0; go('count'); C.beats = 0; } break;
     case 'kidIn': if (C.t >= 0.7) { go('jumpWait'); speak('kid: jump in!'); } break;
