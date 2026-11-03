@@ -188,12 +188,8 @@ function mudGrad() {
   g.addColorStop(0, '#a47c55'); g.addColorStop(0.08, '#8a6440'); g.addColorStop(0.45, '#6e4c2e'); g.addColorStop(1, '#4e3420');
   return g;
 }
-function mudShore(o) {                                                           // קו רטוב כהה לאורך כל האגן (גדות וקרקעית), וגוש דשא שנוטה מעל הבוץ
+function mudShore(o) {                                                           // בוץ שנמרח על השפה, וגוש דשא שנוטה מעל הבוץ
   const P = mudPool(o), wy = waterY(), wd = WORLDS[world];
-  ctx.save(); ctx.strokeStyle = 'rgba(74,47,23,.55)'; ctx.lineWidth = 1.4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-  ctx.beginPath(); for (let y = wy; y <= MUD_BOTTOM(); y += 1) ctx.lineTo(P.x + Math.min(P.w / 2 - 1, bankOff(P, y)) - 0.6, y);
-  for (let y = MUD_BOTTOM(); y >= wy; y -= 1) ctx.lineTo(P.x + P.w - Math.min(P.w / 2 - 1, bankOff(P, y)) + 0.6, y);
-  ctx.stroke(); ctx.restore();
   for (const [dir, ex] of [[1, P.x], [-1, P.x + P.w]]) {
     ctx.fillStyle = '#7a5838'; ctx.beginPath(); ctx.ellipse(ex + dir * (bankOff(P, wy) + 0.6), wy + 0.35, 2, 0.6, 0, 0, Math.PI * 2); ctx.fill();   // בוץ שנמרח על השפה
     ctx.fillStyle = wd.top; ctx.beginPath(); ctx.ellipse(ex - dir * 0.6, GROUND - 0.1, 2.6, 0.9, dir * 0.12, 0, Math.PI * 2); ctx.fill();
