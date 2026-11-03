@@ -1,0 +1,16 @@
+{
+  "budget_chars": 2000,
+  "max_sfx": 10,
+  "model": "eleven_multilingual_v2",
+  "items": [
+    {"file": "help-liam",     "type": "tts", "text": "Help! Help!",           "voice": "Liam"},
+    {"file": "help-will",     "type": "tts", "text": "Help! Help!",           "voice": "Will"},
+    {"file": "kidpush-jessica","type": "tts", "text": "Can you help me push?", "voice": "Jessica"},
+    {"file": "kidpush-laura", "type": "tts", "text": "Can you help me push?", "voice": "Laura"},
+    {"file": "jumpin-chris",  "type": "tts", "text": "Jump in!",              "voice": "Chris"},
+    {"file": "jumpin-charlie","type": "tts", "text": "Jump in!",              "voice": "Charlie"},
+    {"file": "sfx-mud",       "type": "sfx", "text": "soft cartoon mud splash, gentle squelch, kids game", "seconds": 1.0},
+    {"file": "sfx-push",      "type": "sfx", "text": "wooden boat sliding on wet sand, soft push, kids game", "seconds": 1.0},
+    {"file": "sfx-jump",      "type": "sfx", "text": "light cartoon jump whoosh, playful, kids game", "seconds": 0.6}
+  ]
+}
