@@ -239,6 +239,7 @@ function updateMic() {
    ============================================================ */
 function command(word, source) {
   dbg('command', word + ' (' + source + ')');
+  if (state === 'sushi') { if (word === 'catch') sushiCatch(); return; }   // בונוס סושי
   if (state !== 'play' && !((state === 'demo' || state === 'intro') && source === 'demo')) return;   // במילון ובהדגמה – רק ההדגמה מזיזה את הנינג'ה
   heard = { text: word.toUpperCase(), t: 0.8 };
 

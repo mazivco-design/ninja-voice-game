@@ -12,7 +12,9 @@ function loop(t) {
   if (state === 'play' || state === 'demo' || state === 'intro') update(dt);
   updateEffects(dt);
   updateMic();
-  if (state === 'lab') drawLab(dt); else if (state === 'studio') drawStudio(dt); else draw();
+  if (state === 'sushi') updateSushi(dt);
+  if (state === 'lab') drawLab(dt); else if (state === 'studio') drawStudio(dt); else if (state === 'sushi') drawSushi(); else draw();
+  $('sushiBtn').classList.toggle('hide', state !== 'menu');   // 🍣 בונוס סושי (אב-טיפוס) – רק בתפריט
   $('introBar').classList.toggle('hide', state !== 'intro');   // כפתורי Again / START רק בתחילת שלב
   requestAnimationFrame(loop);
 }
