@@ -184,8 +184,13 @@ function friendPose(o) {
 }
 
 /* ---------- ציור ---------- */
-function friendHand(o) { return [friendX(o) - 3.4, GROUND - 8.2]; }
-function ninjaHand() { const nx = PLAYER.x + 4; return [nx + 3.4, GROUND + mudSink(nx) - 9.2]; }
+function figHand(fx, fy, facing, sc, P, i) {                                     // איפה כף היד של דמות (i: 0 אחורית, 1 קדמית) – לפי השלד של ninja-figure.js
+  const S = RIG.shape, J = figureJoints(P), sh = i ? J.shF : J.shB, a = P.arms[i];
+  const k = endOf(sh[0], sh[1], a[0], S.upper), e = endOf(k[0], k[1], a[1], S.fore);
+  return [fx + facing * sc * e[0], fy + (P.bob || 0) * sc + sc * e[1]];
+}
+function friendHand(o) { return o._fh || [friendX(o) - 3.4, GROUND - 8.2]; }      // נקבע בכל פריים ב-drawMudBack – החבל צמוד ליד
+function ninjaHand() { const nx = PLAYER.x + 4; return figHand(nx, GROUND + mudSink(nx), 1, 1, mudPose(poseIdle(performance.now() / 1000)), 1); }   // היד של הנינג'ה האוחז בחבל
 
 // השלולית בנויה כמו האגם (draw.js): אגן עם גדות משופעות, ופני הבוץ קצת מתחת לקרקע – לא בולט מעליה
 function mudPool(o) { return { x: o.x, w: MUD.w }; }
@@ -202,14 +207,23 @@ function mudShore(o) {                                                          
     ctx.fillStyle = wd.top; ctx.beginPath(); ctx.ellipse(ex - dir * 0.6, GROUND - 0.1, 2.6, 0.9, dir * 0.12, 0, Math.PI * 2); ctx.fill();
   }
 }
-// החבל המגולגל על הגוף של החבר – באלכסון על הכתף, כמו מטפס
-function drawShoulderCoil(fx) {
-  ctx.save(); ctx.translate(fx - 0.2, GROUND - 8.6); ctx.rotate(-0.55);
+// החבל ביד: לולאות שתלויות מכף היד ומתנדנדות עם התנועה (לא אייקון קבוע על הגוף)
+function drawHangCoil(hx, hy, size, swing) {
+  ctx.save(); ctx.translate(hx, hy); ctx.rotate(swing); ctx.lineCap = 'round';
   for (let i = 0; i < 3; i++) {
-    const rx = 2.3 + i * 0.25, ry = 4.4 + i * 0.2;
-    ctx.strokeStyle = '#854d0e'; ctx.lineWidth = 0.95; ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = '#d97706'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); ctx.stroke();
+    const rx = (1.3 + i * 0.22) * size, ry = (2.3 + i * 0.15) * size, cx = (i - 1) * 0.35 * size, cy = ry - 0.2;
+    ctx.strokeStyle = '#854d0e'; ctx.lineWidth = 0.85; ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#d97706'; ctx.lineWidth = 0.45; ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.stroke();
   }
+  ctx.restore();
+}
+// אחרי הזריקה: שאר החבל יוצא מהיד, יורד מאחורי החבר ושוכב ברפיון על הקרקע
+function drawSlack(fx, h, n) {
+  const g = [fx + 4.5, GROUND - 0.4];
+  ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const line = () => { ctx.beginPath(); ctx.moveTo(h[0], h[1]); ctx.quadraticCurveTo(h[0] + 3.5, (h[1] + g[1]) / 2 + 2, g[0], g[1]); for (let k = 0; k < (n || 2); k++) { const cx = g[0] + 2 + k * 2.2; ctx.ellipse(cx, GROUND - 0.5 - k * 0.25, 2.4, 0.55, 0, Math.PI, Math.PI * 3); } };
+  ctx.strokeStyle = '#854d0e'; ctx.lineWidth = 1.0; line(); ctx.stroke();
+  ctx.strokeStyle = '#d97706'; ctx.lineWidth = 0.5; line(); ctx.stroke();
   ctx.restore();
 }
 
@@ -223,11 +237,15 @@ function drawMudBack(o) {
   const fx = friendX(o);
   if (fx > viewR() + 10) return;
   const M = mud && mud.o === o ? mud : null, p = M ? M.phase : 'done';
-  drawFigure({ fx, fy: GROUND, facing: -1, scale: 1, kind: 'ninja', accent: mudAccent(), pose: friendPose(o) });
-  if (['sink', 'help', 'come'].includes(p)) drawShoulderCoil(fx);               // מגיע עם החבל עליו
-  else if (p === 'throw' || p === 'reel') drawCoil(fx - 1.8, GROUND - 5.6, p === 'reel' ? 0.45 + 0.25 * Math.min(1, M.t / MUD.reelT) : 0.7, false);   // החבל המגולגל ביד
-  else if (M) drawCoil(fx - 2.2, GROUND - 6.2, 0.42, false);                     // מה שנשאר מהחבל ביד
-  else drawShoulderCoil(fx);
+  const FP = friendPose(o), hand = figHand(fx, GROUND, -1, 1, FP, 1);
+  o._fh = hand;
+  const coiled = ['sink', 'help', 'come', 'throw', 'reel'].includes(p) && !(p === 'throw' && M.t > MUD.throwT * 0.8);
+  if (!coiled) drawSlack(fx, hand, p === 'pull' || p === 'thanks' || p === 'done' ? 3 : 2);   // אחרי הזריקה – שאר החבל מאחוריו
+  drawFigure({ fx, fy: GROUND, facing: -1, scale: 1, kind: 'ninja', accent: mudAccent(), pose: FP });
+  if (coiled) {                                                                   // לפני הזריקה / באיסוף: החבל המגולגל תלוי מהיד ומתנדנד
+    const sw = p === 'come' ? Math.sin(t * 16) * 0.35 : Math.sin(t * 2.2) * 0.08;
+    drawHangCoil(hand[0], hand[1], p === 'reel' ? 0.55 + 0.45 * Math.min(1, M.t / MUD.reelT) : 1, sw);
+  }
 }
 
 // אחרי הנינג'ה: הבוץ שוב (מכסה את הרגליים), ברק, בועות, החבל והבועות של הדיבור
