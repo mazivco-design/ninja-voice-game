@@ -196,7 +196,7 @@ function friendSpot(o) {                                                        
   return { x: seat, y: deck, P, scale: sc, inBoat: true };
 }
 
-function drawSand(x0, x1, rise) {                                                 // חול: על החוף (rise=0) או אי שעולה מהמים
+function drawSand(x0, x1, rise, taper) {                                                 // חול: על החוף (rise=0) או אי שעולה מהמים
   const wy = waterY(), top = GROUND - 0.3;
   const g = ctx.createLinearGradient(0, top, 0, wy + 4);
   g.addColorStop(0, '#f3dfae'); g.addColorStop(1, '#d4b373');
@@ -206,11 +206,16 @@ function drawSand(x0, x1, rise) {                                               
     for (let x = x0 + 8; x <= x1 - 8; x += 2) ctx.lineTo(x, top - Math.sin((x - x0) * 0.25) * 0.2);
     ctx.quadraticCurveTo(x1 - 2, top - 0.2, x1 + 4, wy + 3.5); ctx.closePath(); ctx.fill();
     ctx.fillStyle = 'rgba(150,110,50,.35)'; ctx.beginPath(); ctx.ellipse((x0 + x1) / 2, wy + 2.6, (x1 - x0) / 2 + 2, 1, 0, 0, Math.PI * 2); ctx.fill();   // חול רטוב בקו המים
-  } else {
-    ctx.moveTo(x0, GROUND + 3); for (let x = x0; x <= x1; x += 2) ctx.lineTo(x, top + Math.sin(x * 0.6) * 0.15); ctx.lineTo(x1, GROUND + 3); ctx.closePath(); ctx.fill();
+  } else {                                                                        // חוף: שכבת חול שמתעבה בהדרגה מהדשא, עם קצה לא ישר (taper = באיזה צד הוא נגמר בדשא)
+    const th = x => { const r = x - x0, l = x1 - x, e = Math.min(1, (taper < 0 ? r : l) / 14); return Math.max(0, e * e * (3 - 2 * e)) * (0.82 + 0.18 * Math.sin(r * 1.1 + 0.7)); };
+    const st = 1;
+    ctx.moveTo(x0, GROUND + 0.8);
+    for (let x = x0; x <= x1 + 0.01; x += st) ctx.lineTo(x, GROUND + 0.8 - (1.15 + Math.sin((x - x0) * 0.6) * 0.15) * th(x));
+    for (let x = x1; x >= x0 - 0.01; x -= st) ctx.lineTo(x, GROUND + 0.8 + 2.4 * th(x));
+    ctx.closePath(); ctx.fill();
   }
-  ctx.fillStyle = 'rgba(160,120,60,.35)';
-  for (let x = x0 + 3; x < x1 - 3; x += 5.3) { ctx.beginPath(); ctx.ellipse(x, GROUND + 0.9 + (Math.round(x) % 2) * 0.6, 0.5, 0.25, 0, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = 'rgba(160,120,60,.35)';                                           // גרגרים – צמודים לחול (לא לפיקסלים של המסך), אז לא מרצדים
+  for (let r = 3, k = 0; r < x1 - x0 - 3; r += 5.3, k++) { if (!rise && (taper < 0 ? r : x1 - x0 - r) < 8) continue; ctx.beginPath(); ctx.ellipse(x0 + r, GROUND + 0.9 + (k % 2) * 0.6, 0.5, 0.25, 0, 0, Math.PI * 2); ctx.fill(); }
 }
 function drawPalm(x) {                                                            // עץ דקל קטן על האי
   const t = performance.now() / 1000, top = GROUND - 17;
@@ -228,8 +233,8 @@ function drawPalm(x) {                                                          
 // לפני הנינג'ה: חוף החול, הנהר, האיים, פנים הסירה, משוטים והחבר
 function drawBoatBack(o) {
   const t = performance.now() / 1000, P = boatPool(o), bottom = GROUND + 40, wy = waterY();
-  drawSand(o.x - 30, o.x + BOAT.shore + 2, false);                               // חוף חול ארוך
-  drawSand(o.x + o.end - 2, o.x + o.end + 40, false);                            // וגם בצד השני
+  drawSand(o.x - 30, o.x + BOAT.shore + 2, false, -1);                               // חוף חול ארוך
+  drawSand(o.x + o.end - 2, o.x + o.end + 40, false, 1);                            // וגם בצד השני
   drawBasinWall(P, bottom);                                                       // הנהר – בנוי כמו האגם
   const g = ctx.createLinearGradient(0, wy, 0, GROUND + 30);
   g.addColorStop(0, '#38bdf8'); g.addColorStop(1, '#0c4a6e');
