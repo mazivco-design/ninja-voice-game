@@ -150,9 +150,10 @@ function cartPose(P) {
 function drawCartHill(o) {
   const G = (typeof GROUND_STYLE !== 'undefined' && GROUND_STYLE[world]) || null, wd = WORLDS[world];
   const x0 = o.x, x1 = o.x + HILL.up + HILL.top + HILL.down;
-  ctx.beginPath(); ctx.moveTo(x0, GROUND + 1);
+  ctx.beginPath(); ctx.moveTo(x0, GROUND);
   for (let x = x0; x <= x1; x += 1) ctx.lineTo(x, hillYo(o, x));
-  ctx.lineTo(x1, GROUND + 1); ctx.closePath();
+  for (let x = x1; x >= x0; x -= 1) ctx.lineTo(x, GROUND + 3.6 * Math.min(1, hillLiftAt(o, x) / 1.5));   // מכסה גם את פס הדשא של הקרקע מתחת לגבעה
+  ctx.closePath();
   ctx.fillStyle = G ? G.dirt[0] : wd.ground; ctx.fill();
   ctx.lineCap = 'round';
   ctx.strokeStyle = G ? G.grass[1] : wd.top; ctx.lineWidth = 2.2; ctx.beginPath(); for (let x = x0; x <= x1; x += 1) ctx.lineTo(x, hillYo(o, x) + 0.9); ctx.stroke();
