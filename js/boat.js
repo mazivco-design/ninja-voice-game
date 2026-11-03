@@ -217,6 +217,19 @@ function drawSand(x0, x1, rise, taper) {                                        
   ctx.fillStyle = 'rgba(160,120,60,.35)';                                           // גרגרים – צמודים לחול (לא לפיקסלים של המסך), אז לא מרצדים
   for (let r = 3, k = 0; r < x1 - x0 - 3; r += 5.3, k++) { if (!rise && (taper < 0 ? r : x1 - x0 - r) < 8) continue; ctx.beginPath(); ctx.ellipse(x0 + r, GROUND + 0.9 + (k % 2) * 0.6, 0.5, 0.25, 0, 0, Math.PI * 2); ctx.fill(); }
 }
+function drawBeach(P, dir) {                                                      // החול ממשיך לאורך הגדה: התחתית שלו יורדת בשיפוע עדין עד קו המים ומתחתיו (dir=1 – גדה שמאלית, -1 – ימנית)
+  const wy = waterY(), ex = dir > 0 ? P.x : P.x + P.w, at = y => ex + dir * bankOff(P, y), deep = wy + 7, far = 22;
+  const g = ctx.createLinearGradient(0, GROUND - 0.4, 0, deep);
+  g.addColorStop(0, '#f3dfae'); g.addColorStop(0.5, '#dfc390'); g.addColorStop(1, '#c9a86c');
+  ctx.fillStyle = g; ctx.beginPath();
+  ctx.moveTo(ex - dir * far, GROUND - 0.35);
+  ctx.lineTo(at(GROUND) + dir * 0.3, GROUND - 0.35);
+  for (let y = GROUND; y <= deep; y += 0.5) ctx.lineTo(at(y) - dir * 0.2, y);       // צמוד לדופן הגדה
+  ctx.quadraticCurveTo(at(deep) - dir * 6, deep - 1, ex - dir * far, GROUND + 3.6); // תחתית החול – עולה בשיפוע עדין בחזרה לשכבת החוף
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 0.35;              // קצף קטן בקו המים
+  ctx.beginPath(); ctx.ellipse(at(wy) + dir * 1.8, wy + 0.5, 1.8, 0.35, 0, 0, Math.PI * 2); ctx.stroke();
+}
 function drawPalm(x) {                                                            // עץ דקל קטן על האי
   const t = performance.now() / 1000, top = GROUND - 17;
   ctx.strokeStyle = '#8b5a2b'; ctx.lineWidth = 1.1; ctx.lineCap = 'round';
@@ -241,6 +254,7 @@ function drawBoatBack(o) {
   ctx.fillStyle = g; waterPath(P, bottom); ctx.fill();
   ctx.save(); waterPath(P, bottom); ctx.clip(); drawRiverLife(o, P, t); ctx.restore();   // קצת דגים וצמחים מתחת למים
   drawShore(P);
+  drawBeach(P, 1); drawBeach(P, -1);                                            // החול יורד בשיפוע עדין עד המים בשתי הגדות
   ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 0.35;              // זרם – פסים קטנים שזזים
   for (let i = 0; i < P.w / 9; i++) { const xx = P.x + 8 + ((i * 9 + t * 6) % (P.w - 16)); if (xx < viewL() - 5 || xx > viewR() + 5) continue; ctx.beginPath(); ctx.moveTo(xx, wy + 2 + (i % 3) * 1.6); ctx.lineTo(xx + 2.6, wy + 2 + (i % 3) * 1.6); ctx.stroke(); }
   drawCrows(P.x + 10, P.x + P.w - 10, 3, GROUND - 17);              // עורבים מעל הנהר – אי אפשר פשוט לקפוץ
