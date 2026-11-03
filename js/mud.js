@@ -8,7 +8,7 @@
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
 const MUD = { w: 100, stuck: 24, deep: 5.2, pit: 9, sinkT: 1.6, helpT: 1.9, run: 58, stand: 7, readyT: 0.8, throwT: 1.0, release: 0.72, flyT: 0.7, drown: 2.2,
-              catchWin: 4.5, dropT: 0.6, reelT: 1.1, caughtT: 0.7, holdWin: 4.5, slipT: 0.9, pullT: 4.6, pullCyc: 1.2, thanksT: 3.2, coins: 4 };
+              catchWin: 4.5, dropT: 0.6, reelT: 1.1, caughtT: 0.7, holdWin: 4.5, slipT: 0.9, pullT: 4.6, pullCyc: 1.2, thanksT: 4.3, walkA: 1.2, walkB: 2.5, hugA: 2.5, hugB: 3.9, hugGap: 5.4, coins: 4 };
 let mud = null;   // { o, phase: 'sink' | 'help' | 'come' | 'throw' | 'fly' | 'dangle' | 'drop' | 'reel' | 'caught' | 'tug' | 'slip' | 'pull' | 'thanks', t, throws, slips }
 
 function mudWin(base) { return base * (cfg && cfg.forgive ? 1.3 : 1); }           // ברמה הקלה – יותר זמן לענות
@@ -123,11 +123,19 @@ function mudUpdate(dt, pb) {
         if (mode === 'journey' && state === 'play') { picked += MUD.coins; coinsFlying++; flyCoinToHud({ x: PLAYER.x + 1 }, GROUND - 18); floatText(PLAYER.x + 4, GROUND - 26, '+' + MUD.coins + ' 🟡', '#ca8a04'); }
       }
       break;
-    case 'thanks': {                                                              // קידה ותודה, החבר מתקרב – והיי פייב
+    case 'thanks': {                                                              // קידה ותודה, ואז שניהם הולכים לאט אחד לשני – ומתחבקים
       if (M.t >= 1.1 && !M.said) { M.said = 1; speak('great job!'); }
-      const target = PLAYER.x + 4 + 10.5 - o.x;                                      // החבר מתקרב עד מרחק יד
-      if (M.t >= 1.2 && M.t < 2.0) o.fr = lerp(o.frFrom, target, cartEase(Math.min(1, (M.t - 1.2) / 0.8)));
-      if (M.t >= 2.25 && !M.five) { M.five = 1; sfx('pop'); const hx = PLAYER.x + 4 + 5.2; burst(hx, GROUND - 15, '#fde047', 14, 24); burst(hx, GROUND - 15, '#ffffff', 6, 16); }
+      if (M.t >= MUD.walkA && M.walkD === undefined) { M.walkD = Math.max(0, o.x + o.fr - (PLAYER.x + 4) - MUD.hugGap); M.walked = 0; }
+      if (M.walkD !== undefined) {                                                 // כל אחד עושה חצי מהדרך: העולם זז (הנינג'ה הולך) והחבר הולך לקראתו
+        const e = cartEase(Math.min(1, Math.max(0, (M.t - MUD.walkA) / (MUD.walkB - MUD.walkA))));
+        const want = M.walkD / 2 * e, sh = want - M.walked;
+        if (sh > 0) { ropeShiftBy(sh); M.walked = want; }
+        o.fr = o.frFrom - M.walkD / 2 * e;
+      }
+      if (M.t >= MUD.hugA + 0.15 && !M.hug) { M.hug = 1; sfx('pop'); }
+      if (M.hug && M.t < MUD.hugB && Math.random() < dt * 3) {                    // לבבות קטנים עולים מהחיבוק
+        particles.push({ x: PLAYER.x + 4 + MUD.hugGap / 2 + (Math.random() - 0.5) * 4, y: GROUND - 17, vx: (Math.random() - 0.5) * 4, vy: -9, g: 0, life: 0.9, color: '#f472b6', size: 1.1 });
+      }
       if (M.t >= MUD.thanksT) { cleared(o); o.waving = true; mud = null; }
       break;
     }
@@ -161,6 +169,17 @@ function mudAuto() {                                                            
 }
 
 /* ---------- תנוחות ---------- */
+function poseWalk(t) {                                                           // הליכה איטית – הריצה בצעדים קטנים, בלי הטיה קדימה
+  const P = poseRun(t);
+  P.legs = P.legs.map(l => [l[0] * 0.5, l[1] * 0.45]); P.arms = P.arms.map(a => [a[0] * 0.45, a[1] * 0.6]);
+  P.lean = 0.04; P.bob = (P.bob || 0) * 0.4; P.spine = 0.04; P.hipY = -4.5;
+  return P;
+}
+function poseHug(P, t, side) {                                                    // חיבוק: הידיים עוטפות את החבר, נדנוד קטן יחד
+  const sway = Math.sin(t * 4.2) * 0.06;
+  P.arms = [[1.25, 2.55], [1.4, 2.75]]; P.lean = 0.16 + sway * side; P.headTilt = 0.25; P.eyes = 'squint';
+  return P;
+}
 function mudPose(P) {
   if (!mud) return P;
   const p = mud.phase, now = performance.now() / 1000;
@@ -170,10 +189,11 @@ function mudPose(P) {
     P.lean = p === 'tug' ? -0.12 + Math.sin(now * 9) * 0.03 : p === 'pull' ? 0.12 : 0;
     return P;
   }
-  if (p === 'thanks') {                                                          // קידה, ואז היי פייב עם החבר
+  if (p === 'thanks') {                                                          // קידה, הולך לאט אל החבר – ומתחבקים
     const t = mud.t; P = poseIdle(now);
     if (t < 1.2) { const b = Math.sin(Math.PI * Math.min(1, t / 1.1)); P.lean = 0.75 * b; P.headTilt = 0.3 * b; P.arms = [[0.1, 0.15], [0.1, 0.15]]; }
-    else if (t > 1.8 && t < 2.75) { const k = Math.min(1, (t - 1.8) / 0.4); P.arms[1] = [lerp(0.3, 2.45, k), lerp(0.4, 2.6, k)]; P.lean = 0.08; }
+    else if (t < MUD.walkB) P = poseWalk((t - MUD.walkA) * 7.5);
+    else if (t < MUD.hugB) poseHug(P, t, 1);
     return P;
   }
   P = poseIdle(now);                                                              // תקוע – נאבק כדי לצאת
@@ -209,10 +229,10 @@ function friendPose(o) {
   else if (p === 'reel') P = posePull(now * 1.8);
   else if (p === 'slip') { const k = Math.min(1, M.t / MUD.slipT); P = poseIdle(now); P.lean = -0.7 * Math.sin(Math.PI * k); P.arms = [[-1.2, -0.8], [1.9, 2.4]]; }
   else if (p === 'caught') { P = poseIdle(now); P.arms = [[0.9, 1.1], [1.0, 1.25]]; P.lean = 0.1; }
-  else if (p === 'thanks') {                                                     // משיב קידה קטנה, מתקרב – והיי פייב
+  else if (p === 'thanks') {                                                     // משיב קידה קטנה, הולך לאט לקראת הנינג'ה – ומתחבקים
     const t = M.t;
-    if (t >= 1.2 && t < 2.0) P = poseRun(now * 9);
-    else { P = poseIdle(now); if (t < 1.1) { const b = Math.sin(Math.PI * Math.min(1, Math.max(0, t - 0.3) / 0.8)); P.lean = 0.35 * b; P.headTilt = 0.2 * b; } if (t > 1.8 && t < 2.75) { const k = Math.min(1, (t - 1.8) / 0.4); P.arms[1] = [lerp(0.3, 2.45, k), lerp(0.4, 2.6, k)]; } }
+    if (t >= MUD.walkA && t < MUD.walkB) P = poseWalk((t - MUD.walkA) * 7.5 + 1.6);
+    else { P = poseIdle(now); if (t < 1.1) { const b = Math.sin(Math.PI * Math.min(1, Math.max(0, t - 0.3) / 0.8)); P.lean = 0.35 * b; P.headTilt = 0.2 * b; } else if (t >= MUD.hugA && t < MUD.hugB) poseHug(P, t, -1); }
   }
   else if (o.waving) { P = poseIdle(now); P.arms[1] = [2.7, 3.2 + Math.sin(now * 10) * 0.35]; }
   else { P = poseIdle(now); if (p !== 'sink' && p !== 'help') P.arms[1] = [0.6, 1.2]; }
@@ -361,7 +381,7 @@ function drawMudTalk(o) {                                                       
   if (p === 'thanks') {
     if (M.t < 1.6) drawBubble('Thank you!', nx - 3, GROUND - 21, { age: M.t, tail: 1, color: '#be185d', size: 3.6 });
     if (M.t > 1.1 && M.t < 2.0) drawBubble('Great job!', fx + 3, GROUND - 21, { age: M.t - 1.1, tail: -1, color: '#15803d' });
-    if (M.t > 2.0) drawBubble('High five! ✋', fx + 2, GROUND - 22, { age: M.t - 2.0, tail: -1, color: '#b45309', size: 3.6 });
+    if (M.t > MUD.hugA + 0.2 && M.t < MUD.thanksT) drawBubble('Friends! 🤗', fx + 3, GROUND - 22, { age: M.t - MUD.hugA - 0.2, tail: -1, color: '#be185d', size: 3.6 });
   }
 }
 
