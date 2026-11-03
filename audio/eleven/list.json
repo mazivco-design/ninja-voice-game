@@ -1,16 +1,98 @@
 {
-  "budget_chars": 2000,
-  "max_sfx": 10,
-  "model": "eleven_multilingual_v2",
-  "items": [
-    {"file": "help-liam",     "type": "tts", "text": "Help! Help!",           "voice": "Liam"},
-    {"file": "help-will",     "type": "tts", "text": "Help! Help!",           "voice": "Will"},
-    {"file": "kidpush-jessica","type": "tts", "text": "Can you help me push?", "voice": "Jessica"},
-    {"file": "kidpush-laura", "type": "tts", "text": "Can you help me push?", "voice": "Laura"},
-    {"file": "jumpin-chris",  "type": "tts", "text": "Jump in!",              "voice": "Chris"},
-    {"file": "jumpin-charlie","type": "tts", "text": "Jump in!",              "voice": "Charlie"},
-    {"file": "sfx-mud",       "type": "sfx", "text": "soft cartoon mud splash, gentle squelch, kids game", "seconds": 1.0},
-    {"file": "sfx-push",      "type": "sfx", "text": "wooden boat sliding on wet sand, soft push, kids game", "seconds": 1.0},
-    {"file": "sfx-jump",      "type": "sfx", "text": "light cartoon jump whoosh, playful, kids game", "seconds": 0.6}
-  ]
+ "budget_chars": 2000,
+ "max_sfx": 10,
+ "model": "eleven_multilingual_v2",
+ "items": [
+  {
+   "file": "help-liam",
+   "type": "tts",
+   "text": "Help! Help!",
+   "voice": "Liam"
+  },
+  {
+   "file": "help-will",
+   "type": "tts",
+   "text": "Help! Help!",
+   "voice": "Will"
+  },
+  {
+   "file": "kidpush-jessica",
+   "type": "tts",
+   "text": "Can you help me push?",
+   "voice": "Jessica"
+  },
+  {
+   "file": "kidpush-laura",
+   "type": "tts",
+   "text": "Can you help me push?",
+   "voice": "Laura"
+  },
+  {
+   "file": "jumpin-chris",
+   "type": "tts",
+   "text": "Jump in!",
+   "voice": "Chris"
+  },
+  {
+   "file": "jumpin-charlie",
+   "type": "tts",
+   "text": "Jump in!",
+   "voice": "Charlie"
+  },
+  {
+   "file": "sfx-mud",
+   "type": "sfx",
+   "text": "soft cartoon mud splash, gentle squelch, kids game",
+   "seconds": 1.0
+  },
+  {
+   "file": "sfx-push",
+   "type": "sfx",
+   "text": "wooden boat sliding on wet sand, soft push, kids game",
+   "seconds": 1.0
+  },
+  {
+   "file": "sfx-jump",
+   "type": "sfx",
+   "text": "light cartoon jump whoosh, playful, kids game",
+   "seconds": 0.6
+  },
+  {
+   "file": "help3-liam",
+   "type": "tts",
+   "model": "eleven_v3",
+   "text": "[panicked] Help! [gasps] Help! Somebody help me!",
+   "voice": "Liam",
+   "settings": {
+    "stability": 0.0
+   }
+  },
+  {
+   "file": "help3-harry",
+   "type": "tts",
+   "model": "eleven_v3",
+   "text": "[panicked] Help! [gasps] Help! Somebody help me!",
+   "voice": "Harry",
+   "settings": {
+    "stability": 0.0
+   }
+  },
+  {
+   "file": "help3-liam-shout",
+   "type": "tts",
+   "model": "eleven_v3",
+   "text": "[shouting] HELP! [sobbing] I'm sinking! [shouting] HELP!",
+   "voice": "Liam",
+   "settings": {
+    "stability": 0.0
+   }
+  },
+  {
+   "file": "design-ninjakid",
+   "type": "design",
+   "count": 3,
+   "description": "A ten year old boy, a cartoon ninja kid in an animated children's game. American accent. He is stuck in mud and panicking, shouting for help, breathless and scared but still cute and energetic.",
+   "text": "Help! Help! I'm stuck in the mud and I can't get out! Somebody please help me! I'm sinking! Help! Help!"
+  }
+ ]
 }

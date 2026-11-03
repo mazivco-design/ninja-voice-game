@@ -24,7 +24,7 @@ def call(method, path, body=None):
         sys.exit(f'{method} {path} -> HTTP {e.code}: {e.read()[:400]!r}')
 
 todo = [it for it in items if not os.path.exists(f"{DIR}/{it['file']}.mp3")]
-chars = sum(len(it['text']) for it in todo if it['type'] == 'tts')
+chars = sum(len(it['text']) for it in todo if it['type'] in ('tts', 'design'))
 sfx = sum(1 for it in todo if it['type'] == 'sfx')
 print(f'to make: {len(todo)} files, {chars} tts chars, {sfx} sound effects')
 if chars > BUDGET_CHARS or sfx > MAX_SFX: sys.exit(f'over budget (chars {chars}/{BUDGET_CHARS}, sfx {sfx}/{MAX_SFX}) – nothing made')
@@ -42,6 +42,17 @@ for it in todo:
         body = {'text': it['text'], 'model_id': it.get('model', MODEL)}
         if 'settings' in it: body['voice_settings'] = it['settings']
         audio = call('POST', f'/text-to-speech/{vid}?output_format=mp3_44100_128', body)
+    elif it['type'] == 'design':                                               # קול חדש לפי תיאור – שומרים כל דוגמה כקובץ
+        body = {'voice_description': it['description'], 'text': it['text'], 'model_id': it.get('model', 'eleven_ttv_v3')}
+        res = json.loads(call('POST', '/text-to-voice/design', body))
+        import base64
+        meta = []
+        for i, pv in enumerate(res.get('previews', [])[:it.get('count', 3)]):
+            open(f"{DIR}/{it['file']}-{i + 1}.mp3", 'wb').write(base64.b64decode(pv['audio_base_64']))
+            meta.append({'file': f"{it['file']}-{i + 1}", 'generated_voice_id': pv.get('generated_voice_id')})
+            print('made', f"{it['file']}-{i + 1}")
+        json.dump(meta, open(f"{DIR}/{it['file']}.json", 'w'), indent=1)
+        audio = base64.b64decode(res['previews'][0]['audio_base_64'])
     else:
         body = {'text': it['text'], 'prompt_influence': it.get('influence', 0.5)}
         if 'seconds' in it: body['duration_seconds'] = it['seconds']
