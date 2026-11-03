@@ -28,12 +28,13 @@ const SFX = {
   jump: () => tone(320, 760, 0.14, 'square', 0.06),
   clear: () => tone(700, 1050, 0.08, 'triangle', 0.09),
   coin: () => { tone(988, 0, 0.07, 'square', 0.07); tone(1319, 0, 0.22, 'square', 0.07, 0.07); },
-  hit: () => { noiseBurst(0.22, 0.35); tone(220, 70, 0.25, 'sawtooth', 0.08); },
+  hit: () => { noiseBurst(0.16, 0.12); tone(220, 80, 0.22, 'triangle', 0.08); },   // פגיעה: ברור אבל רך (בלי "פיצוץ")
   checkpoint: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0, 0.16, 'triangle', 0.1, i * 0.08)),
   record: () => [784, 988, 1175, 1568, 1175, 1568].forEach((f, i) => tone(f, 0, 0.18, 'square', 0.07, i * 0.09)),
   win: () => [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0, 0.25, 'triangle', 0.1, i * 0.1)),
   clash: () => { tone(2400, 1500, 0.09, 'square', 0.045); tone(3100, 0, 0.32, 'triangle', 0.05, 0.01); tone(1650, 0, 0.26, 'triangle', 0.04, 0.01); },
-  pop: () => { noiseBurst(0.12, 0.25); tone(900, 1800, 0.12, 'sine', 0.08); },
+  pop: () => { tone(500, 1100, 0.1, 'sine', 0.06); },
+  splash: () => { tone(700, 220, 0.18, 'sine', 0.05); tone(420, 160, 0.22, 'triangle', 0.03, 0.04); },   // התזת מים / בוץ רכה
   woof: () => { tone(520, 300, 0.09, 'square', 0.06); tone(560, 320, 0.11, 'square', 0.06, 0.14); },
   squawk: () => { tone(1400, 900, 0.09, 'square', 0.05); tone(1500, 1000, 0.1, 'square', 0.05, 0.11); },
   wind: () => noiseBurst(1.2, 0.22),

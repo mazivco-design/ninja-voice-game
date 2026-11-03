@@ -129,17 +129,18 @@ function ropeStroke(pts, w, fill, line) {
 function setBubble(m, text) { if (m.bubble !== text) { m.bubble = text; m.bT = 0; } }
 // בועת קומיקס: לבנה עם קו מתאר עבה, פינות עגולות, זנב משולש אל הדובר, ו"קפיצה" קטנה כשהיא מופיעה. tail: 1 = הזנב ימינה-למטה, -1 = שמאלה-למטה
 function drawBubble(text, x, y, opt) {
-  const o = opt || {}, size = o.size || 4.2, pop = o.age === undefined ? 1 : Math.min(1, o.age / 0.18), sc = 0.6 + 0.4 * pop + Math.sin(Math.min(1, pop) * Math.PI) * 0.08;
+  const o = opt || {}, size = (o.size || 4.2) * 0.88, pop = o.age === undefined ? 1 : Math.min(1, o.age / 0.18), sc = 0.6 + 0.4 * pop + Math.sin(Math.min(1, pop) * Math.PI) * 0.08;
   ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc);
-  ctx.font = '900 ' + size + 'px -apple-system, system-ui, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = '800 ' + size + 'px -apple-system, system-ui, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const w = ctx.measureText(text).width + size * 1.6, h = size * 2, tail = o.tail || 1, tx = tail * Math.min(w / 2 - 2.5, 4);
-  ctx.lineJoin = 'round'; ctx.lineWidth = 0.6; ctx.strokeStyle = '#111827'; ctx.fillStyle = o.fill || '#ffffff';
+  ctx.lineJoin = 'round'; ctx.lineWidth = 0.32; ctx.strokeStyle = 'rgba(51,65,85,.75)'; ctx.fillStyle = o.fill || 'rgba(255,255,255,.96)';
+  ctx.shadowColor = 'rgba(15,23,42,.18)'; ctx.shadowBlur = 1.2; ctx.shadowOffsetY = 0.4;   // צל רך במקום קו עבה
   ctx.beginPath();                                                // גוף הבועה + הזנב בצורה אחת – בלי קו באמצע
   const r = h / 2.2, L = -w / 2, R = w / 2, T = -h - 2.4, B = -2.4;
   ctx.moveTo(L + r, T); ctx.lineTo(R - r, T); ctx.quadraticCurveTo(R, T, R, T + r); ctx.lineTo(R, B - r); ctx.quadraticCurveTo(R, B, R - r, B);
   ctx.lineTo(tx + 1.6 * tail, B); ctx.lineTo(tx + 2.8 * tail, 0.6); ctx.lineTo(tx - 0.4 * tail, B);   // הזנב
   ctx.lineTo(L + r, B); ctx.quadraticCurveTo(L, B, L, B - r); ctx.lineTo(L, T + r); ctx.quadraticCurveTo(L, T, L + r, T); ctx.closePath();
-  ctx.fill(); ctx.stroke();
+  ctx.fill(); ctx.shadowColor = 'transparent'; ctx.stroke();
   ctx.fillStyle = o.color || '#111827'; ctx.fillText(text, 0, (T + B) / 2 + 0.2);
   ctx.restore();
 }

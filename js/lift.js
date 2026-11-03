@@ -87,7 +87,7 @@ function liftUpdate(dt, pb) {
     if (over >= -0.3) { if (over > 0) ropeShiftBy(-over); L.phase = 'atTarget'; L.t = 0; L.idle = 0; L.hinted = 0; }   // הגיע – נעצר בדיוק לפני המקום
   }
   else if (L.phase === 'placing' && L.t >= LIFT.putT && o.kind === 'plank') {   // הקרש נחת לרוחב הבור – עוברים עליו
-    o.rock = 'placed'; sfx('hit'); const sp = plankSpan(o); burst(sp.l + 1, GROUND - 0.5, WORLDS[world].dust, 6, 14); burst(sp.r - 1, GROUND - 0.5, WORLDS[world].dust, 6, 14);
+    o.rock = 'placed'; sfx('thud'); const sp = plankSpan(o); burst(sp.l + 1, GROUND - 0.5, WORLDS[world].dust, 6, 14); burst(sp.r - 1, GROUND - 0.5, WORLDS[world].dust, 6, 14);
     L.phase = 'pupCross'; L.t = 0;                                               // קודם הגור עובר אל אמא שלו
   }
   else if (L.phase === 'pupCross' && L.t >= FAM.cross) {
@@ -97,7 +97,7 @@ function liftUpdate(dt, pb) {
     if (PLAYER.x > plankGap(o).r + 1) { cleared(o); lift = null; }               // עבר את הבור
   }
   else if (L.phase === 'placing' && L.t >= LIFT.putT) {
-    o.rock = 'placed'; sfx('hit'); burst(liftPlaceX(o) + LIFT.rockW / 2, GROUND - 1, WORLDS[world].dust, 10, 18);
+    o.rock = 'placed'; sfx('thud'); burst(liftPlaceX(o) + LIFT.rockW / 2, GROUND - 1, WORLDS[world].dust, 10, 18);
     L.phase = 'climb'; L.t = 0; L.shift = (liftPlaceX(o) + LIFT.rockW / 2) - (PLAYER.x + 4); L.shifted = 0;
   }
   else if (L.phase === 'climb') {                                              // עולה על הסלע: העולם זז קצת כדי שהסלע יהיה מתחת לרגליים

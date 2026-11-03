@@ -84,7 +84,7 @@ function boatUpdate(dt, pb) {
       if (Math.random() < 0.5) particles.push({ x: PLAYER.x + 2 + Math.random() * 3, y: GROUND, vx: -8 - Math.random() * 8, vy: -4 - Math.random() * 5, g: 40, life: 0.45, color: '#e7cf9a', size: 0.8 });   // חול שעף מהרגליים
       if (B.t >= BOAT.pushT) {
         B.n++; sfx('thud');
-        if (B.n >= BOAT.pushes) { go('friendIn'); burst(boatStern(o) + BOAT.len * 0.8, waterY(), '#e0f2fe', 12, 24); sfx('pop'); }   // הסירה במים – התזה
+        if (B.n >= BOAT.pushes) { go('friendIn'); burst(boatStern(o) + BOAT.len * 0.8, waterY(), '#e0f2fe', 12, 24); sfx('splash'); }   // הסירה במים – התזה
         else go('wait');
       }
       break;
@@ -360,7 +360,7 @@ function drawBoatHull(o, inner) {                                               
   ctx.restore();
 }
 function drawBoatTalk(o) {
-  const B = boat && boat.o === o ? boat : null, F = friendSpot(o), by = F.y - 15.5;
+  const B = boat && boat.o === o ? boat : null, F = friendSpot(o), by = F.y - 20;
   if (!B) {
     if (o.waving) { if (F.x < viewR() + 4 && F.x > viewL() - 6) drawBubble('Bye! 👋', F.x, by, { tail: -1, size: 3.4 }); }
     else if (F.alone && F.x < W - 6) drawBubble('Ugh! Too heavy!', F.x, by, { tail: -1, size: 3.4 });

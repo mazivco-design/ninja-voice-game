@@ -200,8 +200,8 @@ document.addEventListener('pointerdown', () => setTimeout(voicePreload, 50), { c
 function playVoiceBuf(buf) {
   const out = voiceChain(); if (!out) return false;
   try { if (sfxCtx.state !== 'running') sfxCtx.resume(); } catch (e) {}
-  if (voiceSrc) { try { voiceSrc.stop(); } catch (e) {} }
-  const src = sfxCtx.createBufferSource(); src.buffer = buf; src.connect(out); src.start();
+  if (voiceSrc) { try { const g0 = voiceSrc.g, t0 = sfxCtx.currentTime; g0.gain.setValueAtTime(g0.gain.value, t0); g0.gain.linearRampToValueAtTime(0, t0 + 0.04); voiceSrc.stop(t0 + 0.05); } catch (e) {} }   // הקול הקודם דועך במקום להיחתך (אחרת נשמע "תק")
+  const src = sfxCtx.createBufferSource(), g = sfxCtx.createGain(); src.buffer = buf; src.connect(g); g.connect(out); src.g = g; src.start();
   voiceSrc = src;
   ignoreVoiceUntil = performance.now() + buf.duration * 1000 + 450;          // לא לשמוע את הקול של המשחק עצמו
   src.onended = () => { if (voiceSrc === src) voiceSrc = null; };

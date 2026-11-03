@@ -10,7 +10,7 @@
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
 const HILL = { up: 46, top: 26, down: 46, h: 19 };
-const CART = { watch: 26, tryT: 1.9, watchT: 3.8, walkT: 1.1, len: 18, cp0: 4, pushes: 4, step: 11, pushT: 0.75, askT: 1.8, stepT: 0.5, stepDX: 7, beat: 0.9, win: 2.4, backT: 1.0,
+const CART = { watch: 26, tryT: 1.9, watchT: 3.8, walkT: 1.1, len: 18, cp0: 4, pushes: 3, step: 15, pushT: 0.75, askT: 1.8, stepT: 0.5, stepDX: 7, beat: 0.9, win: 2.4, backT: 1.0,
                boardT: 0.6, boardDX: 9, outT: 0.7, outDX: 16, coins: 5 };
 let cart = null;   // { o, phase: 'ask' | 'step' | 'count' | 'push' | 'early' | 'late' | 'kidIn' | 'jumpWait' | 'board' | 'ride' | 'out', t, idle, n, late, beats }
 
@@ -267,12 +267,12 @@ function drawCartFront(o) {
     else { P = C.phase === 'push' ? posePush() : C.phase === 'count' && C.beats === 3 ? posePush() : poseIdle(now); if (C.phase === 'count' && C.beats < 3) { P.arms = [[1.2, 1.5], [1.3, 1.6]]; P.lean = 0.2; } drawKid(x, hillYo(o, x) + 1.3, 1, 0.8, P, C.phase === 'early' || C.phase === 'late' ? 'sad' : 'smile'); }
   }
   // בועות
-  const kx = C && ['ask', 'step', 'count', 'push', 'early', 'late'].includes(C.phase) ? rear - 1.8 : rear + CART.len / 2 + 4.5, ky = hillYo(o, Math.min(kx, rear + CART.len)) - 16;
+  const kx = C && ['ask', 'step', 'count', 'push', 'early', 'late'].includes(C.phase) ? rear - 1.8 : rear + CART.len / 2 + 4.5, ky = hillYo(o, Math.min(kx, rear + CART.len)) - 22;
   const say = (txt, opt) => drawBubble(txt, kx, ky, Object.assign({ tail: -1, color: '#1d4ed8' }, opt));
   if (!C || C.phase === 'watch') {
-    if (C) { drawBubble(attempt(C.t).back ? 'Oh no!' : 'Ugh! Too heavy!', rear - 3.6, hillYo(o, rear) - 15, { tail: -1, size: 3.4 }); return; }
-    if (o.waving) { const fx = rear + CART.len / 2; if (fx < viewR() + 4 && fx > viewL() - 6) drawBubble('Thank you! 👋', fx + 4, hillYo(o, fx) - 20, { tail: -1, size: 3.4, color: '#be185d' }); }
-    else if (rear < viewR() - 4) drawBubble('Ugh! Too heavy!', rear - 3.6, hillYo(o, rear) - 15, { tail: -1, size: 3.4 });
+    if (C) { drawBubble(attempt(C.t).back ? 'Oh no!' : 'Ugh! Too heavy!', rear - 3.6, hillYo(o, rear) - 21, { tail: -1, size: 3.4 }); return; }
+    if (o.waving) { const fx = rear + CART.len / 2; if (fx < viewR() + 4 && fx > viewL() - 6) drawBubble('Thank you! 👋', fx + 4, hillYo(o, fx) - 24, { tail: -1, size: 3.4, color: '#be185d' }); }
+    else if (rear < viewR() - 4) drawBubble('Ugh! Too heavy!', rear - 3.6, hillYo(o, rear) - 21, { tail: -1, size: 3.4 });
     return;
   }
   const p = C.phase;
