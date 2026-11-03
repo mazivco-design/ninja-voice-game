@@ -171,7 +171,7 @@ function drawCartBody(o, x, opt) {
   const p = opt || {}, L = CART.len, cx = x + L / 2, a = hillAo(o, cx), y = hillYo(o, cx), t = performance.now() / 1000;
   ctx.save(); ctx.translate(cx, y); ctx.rotate(a);
   const bounce = p.bounce ? Math.abs(Math.sin(t * 14)) * 1.2 : 0;
-  const load = p.riders ? [[-6.2, -10.6, 1.1, 'a'], [6.4, -11.2, 2.0, 'p']] : [[-5, -10, 2.5, 'p'], [0.3, -10.6, 2.7, 'p'], [5.2, -10, 2.4, 'p'], [-2.5, -12.9, 1.15, 'a'], [2.8, -13.3, 1.15, 'a'], [-6.9, -11.9, 1.05, 'a'], [7, -12.2, 1.05, 'o']];
+  const load = [[-5, -10, 2.5, 'p'], [0.3, -10.6, 2.7, 'p'], [5.2, -10, 2.4, 'p'], [-2.5, -12.9, 1.15, 'a'], [2.8, -13.3, 1.15, 'a'], [-6.9, -11.9, 1.05, 'a'], [7, -12.2, 1.05, 'o']];
   for (const [dx, dy, r, k] of load) {
     const yy = dy - bounce * (k === 'p' ? 0.6 : 1.4);
     if (k === 'p') drawPumpkin(dx, yy, r);
@@ -241,8 +241,8 @@ function drawCartBack(o) {
   }
   const kidP = p === 'ride' ? Object.assign(kidSit(poseIdle(now)), { arms: [[-2.6, -3.0], [2.6, 3.0]] }) : (p === 'bye' || p === 'out') ? wave(kidSit(poseIdle(now))) : p === 'kidIn' && C.t < 0.45 ? poseAir(C.t < 0.22) : (p === 'jumpWait' ? wave(kidSit(poseIdle(now))) : kidSit(poseIdle(now)));
   drawCartBody(o, rear, { bounce: p === 'ride', riders: () => {
-    if (p === 'ride') { const Pn = kidSit(poseIdle(now)); Pn.arms = [[-2.5, -2.9], [2.5, 2.9]]; Pn.lean = -0.2; drawFigure({ fx: -3.5, fy: -7, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: Pn, suit: playerSuit() }); }
-    drawKid(4.5, -7 - (p === 'kidIn' && C.t < 0.45 ? Math.sin(Math.PI * C.t / 0.45) * 6 : 0), 1, 0.8, kidP, p === 'ride' ? 'wow' : 'smile');
+    if (p === 'ride') { const Pn = kidSit(poseIdle(now)); Pn.arms = [[-2.5, -2.9], [2.5, 2.9]]; Pn.lean = -0.2; drawFigure({ fx: -3.5, fy: -9.6, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: Pn, suit: playerSuit() }); }
+    drawKid(4.5, -9.6 - (p === 'kidIn' && C.t < 0.45 ? Math.sin(Math.PI * C.t / 0.45) * 6 : 0), 1, 0.8, kidP, p === 'ride' ? 'wow' : 'smile');
   } });
   if (p === 'ride') {                                                            // קווי מהירות
     const cx = rear + CART.len / 2, y = hillYo(o, cx);
