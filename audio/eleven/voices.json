@@ -296,11 +296,11 @@
   "id": "6IwYbsNENZgAB1dtBZDp",
   "category": "professional",
   "labels": {
-   "gender": "male",
-   "descriptive": "hyped",
    "use_case": "characters_animation",
-   "accent": "american",
+   "gender": "male",
    "language": "en",
+   "descriptive": "hyped",
+   "accent": "american",
    "age": "young"
   },
   "description": "A young hero with a bit of an edge to him. He could fight demons or host your podcast!"
@@ -324,12 +324,12 @@
   "id": "wSqOdjeNqDrHcoK0zorF",
   "category": "professional",
   "labels": {
-   "age": "young",
-   "language": "en",
-   "descriptive": "excited",
    "use_case": "characters_animation",
+   "descriptive": "excited",
+   "gender": "male",
+   "age": "young",
    "accent": "american",
-   "gender": "male"
+   "language": "en"
   },
   "description": "Young man with a lot of passion and excitement in tone, happy, hopeful and confident. Good for characters and catchy Socil Media narration. "
  },
@@ -381,11 +381,11 @@
   "category": "professional",
   "labels": {
    "gender": "male",
-   "language": "en",
-   "accent": "american",
    "descriptive": "confident",
    "use_case": "characters_animation",
-   "age": "young"
+   "age": "young",
+   "accent": "american",
+   "language": "en"
   },
   "description": "A high-pitched, energetic cartoon-style voice with a playful, mischievous edge.\nThe delivery has a light Southern drawl, giving the voice a quirky regional flavor and a hint of friendly rural warmth.\nExpressive emphasis, comedic timing, and exaggerated intonation patterns make the voice perfect for humorous characters, sidekicks, or whimsical narrators.\nBright, fast, and slightly raspy at the top end, elongated vowels, and lively emotional swings."
  },
@@ -423,13 +423,12 @@
   "id": "QZ1okeFI43NQd6lXAzQ5",
   "category": "professional",
   "labels": {
-   "accent": "american",
-   "gender": "male",
-   "descriptive": "upbeat",
-   "language": "en",
    "use_case": "characters_animation",
+   "gender": "male",
+   "language": "en",
    "age": "young",
-   "locale": "en-US"
+   "accent": "american",
+   "descriptive": "upbeat"
   },
   "description": "Cool, charismatic, all-American 20-something voice with natural confidence, subtle emotional depth, and a grounded, relatable tone. Ideal for audiobooks, video games, animation, and character-driven content — especially young male leads, teen protagonists, athletes, high school or college students, and coming-of-age stories. Perfect for storytelling, dialogue, and voiceover projects that need a modern, cinematic feel with just the right edge."
  }
