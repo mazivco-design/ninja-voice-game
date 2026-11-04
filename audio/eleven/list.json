@@ -729,6 +729,314 @@
     "speed": 0.85
    },
    "text": "Jump! ... Kick! ... Catch! ... Hold! ... Push!"
+  },
+  {
+   "file": "sarah-jump",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Jump!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-down",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Down!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-kick",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Kick!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-throw",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Throw!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-catch",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Catch!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-fly",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Fly!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-stop",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Stop!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-run",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Run!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-swim",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Swim!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-climb",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Climb!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-push",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Push!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-pull",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Pull!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-hide",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Hide!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-block",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Block!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-leap",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Leap!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-dive",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Dive!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-crawl",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Crawl!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-fire",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Fire!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-want",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Want!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-let-go",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Let go!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-ride",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Ride!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-fight",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Fight!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-hold",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Hold!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-pick-up",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Pick up!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-put-down",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Put down!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-up",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Up!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-shield",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Shield!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-jet",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Jet!",
+   "voice": "Sarah"
   }
  ]
 }
