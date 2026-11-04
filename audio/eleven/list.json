@@ -280,6 +280,45 @@
     "sort": "usage_character_count_1y"
    },
    "text": ""
+  },
+  {
+   "file": "friend4-jett",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[urgent] I'm coming! ... Catch! ... [happy] You did it!",
+   "voice": "lib-jett",
+   "voice_id": "6IwYbsNENZgAB1dtBZDp",
+   "owner": "a72a436938f959ab051e6a27b035db67a4b75945b4d6e8c86ed40e6e946a2e11"
+  },
+  {
+   "file": "friend4-noku",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[urgent] I'm coming! ... Catch! ... [happy] You did it!",
+   "voice": "lib-noku",
+   "voice_id": "Sth0oyItcRdvk3sFrPiq",
+   "owner": "9aaed1dd1f054f1c03f507bf3f0dd5c12e8735c34a4ad02474cb75fb5f10f667"
+  },
+  {
+   "file": "friend4-lukas",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[urgent] I'm coming! ... Catch! ... [happy] You did it!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "owner": "59b69ab0c20dacf272109a7a9f65228f6767244c99a93f287eec05754f550f7a"
   }
  ]
 }
