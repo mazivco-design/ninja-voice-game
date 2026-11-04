@@ -1266,6 +1266,61 @@
     "style": 0.2
    },
    "text": "Help! Help! ... Thank you!"
+  },
+  {
+   "file": "merchant1-bill",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[friendly] What would you like? ... [cheerful] Here you go! ... [thoughtful] Hmm, that won't open the door.",
+   "voice": "Bill"
+  },
+  {
+   "file": "merchant1-roger",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[friendly] What would you like? ... [cheerful] Here you go! ... [thoughtful] Hmm, that won't open the door.",
+   "voice": "Roger"
+  },
+  {
+   "file": "merchant1-chris",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[friendly] What would you like? ... [cheerful] Here you go! ... [thoughtful] Hmm, that won't open the door.",
+   "voice": "Chris"
+  },
+  {
+   "file": "merchant1-george",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[friendly] What would you like? ... [cheerful] Here you go! ... [thoughtful] Hmm, that won't open the door.",
+   "voice": "George"
+  },
+  {
+   "file": "merchant1-brian",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[friendly] What would you like? ... [cheerful] Here you go! ... [thoughtful] Hmm, that won't open the door.",
+   "voice": "Brian"
   }
  ]
 }
