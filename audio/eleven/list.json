@@ -674,6 +674,61 @@
    "type": "tts",
    "text": "Jump! ... Kick! ... Catch! ... Hold! ... Push!",
    "voice": "Matilda"
+  },
+  {
+   "file": "demo2-sarah-a-warm",
+   "type": "tts",
+   "voice": "Sarah",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Jump! ... Kick! ... Catch! ... Hold! ... Push!"
+  },
+  {
+   "file": "demo2-sarah-b-cheerful",
+   "type": "tts",
+   "voice": "Sarah",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[cheerful] Jump! ... Kick! ... Catch! ... Hold! ... Push!"
+  },
+  {
+   "file": "demo2-sarah-c-encouraging",
+   "type": "tts",
+   "voice": "Sarah",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[encouraging] Jump! ... Kick! ... Catch! ... Hold! ... Push!"
+  },
+  {
+   "file": "demo2-sarah-d-lively",
+   "type": "tts",
+   "voice": "Sarah",
+   "settings": {
+    "stability": 0.3,
+    "similarity_boost": 0.75,
+    "style": 0.5
+   },
+   "text": "Jump! ... Kick! ... Catch! ... Hold! ... Push!"
+  },
+  {
+   "file": "demo2-sarah-e-calm-slow",
+   "type": "tts",
+   "voice": "Sarah",
+   "settings": {
+    "stability": 0.7,
+    "similarity_boost": 0.75,
+    "speed": 0.85
+   },
+   "text": "Jump! ... Kick! ... Catch! ... Hold! ... Push!"
   }
  ]
 }
