@@ -484,6 +484,28 @@
    "text": "Let's push!",
    "voice": "lib-lukas",
    "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "thanks-liam",
+   "type": "tts",
+   "model": "eleven_v3",
+   "text": "[relieved] [happy] Thank you!",
+   "voice": "Liam",
+   "settings": {
+    "stability": 0.5
+   }
+  },
+  {
+   "file": "friend5-lukas-anytime",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[happy] Anytime, buddy!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
   }
  ]
 }
