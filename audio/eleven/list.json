@@ -1037,6 +1037,65 @@
    },
    "text": "[warm] Jet!",
    "voice": "Sarah"
+  },
+  {
+   "file": "ninja1-jett",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[panicked] [shouting] Help! Help! ... [relieved] [happy] Thank you!",
+   "voice": "lib-jett",
+   "voice_id": "6IwYbsNENZgAB1dtBZDp"
+  },
+  {
+   "file": "ninja1-dylo",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[panicked] [shouting] Help! Help! ... [relieved] [happy] Thank you!",
+   "voice": "lib-dylo",
+   "voice_id": "JjsQrIrIBD6TZ656NQfi"
+  },
+  {
+   "file": "ninja1-valf",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[panicked] [shouting] Help! Help! ... [relieved] [happy] Thank you!",
+   "voice": "lib-valf",
+   "voice_id": "loY1uopAz31XyhAEhNSa"
+  },
+  {
+   "file": "ninja1-tate",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[panicked] [shouting] Help! Help! ... [relieved] [happy] Thank you!",
+   "voice": "lib-tate",
+   "voice_id": "QZ1okeFI43NQd6lXAzQ5"
+  },
+  {
+   "file": "ninja1-harry",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[panicked] [shouting] Help! Help! ... [relieved] [happy] Thank you!",
+   "voice": "Harry"
   }
  ]
 }
