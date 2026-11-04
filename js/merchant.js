@@ -1,5 +1,5 @@
 /* ninja-voice-game – merchant.js
-   I WANT: לפני דלת נעולה עומד סוחר עם עגלה. הוא שואל פעם אחת "What do you want?" (בבועת קומיקס), והחפצים מוצגים עם השמות שלהם.
+   I WANT: לפני דלת נעולה עומד סוחר עם עגלה. הוא שואל פעם אחת "What would you like?" (בבועת קומיקס), והחפצים מוצגים עם השמות שלהם.
    כשהוא מסיים לשאול – בועה מעל הנינג'ה עם מיקרופון מהבהב: תורך. אומרים I WANT A KEY (במשפט אחד), או I WANT ואז KEY.
    אחרי שתיקה – המשחק אומר את המשפט בקול ומדגיש את החפץ הנכון.
    מה שעומד אחרי הדוכן קובע מה לבקש (לסירוגין): דלת נעולה → KEY · צוק גבוה → ROPE (זורק חבל עם וו ומטפס) · מערה חשוכה → TORCH (לפיד שמאיר את הדרך).
@@ -13,7 +13,7 @@ function needOf(o) { return (o && o.need) || 'key'; }
 const MERCHANT_WALK = 0.4;    // מהירות ההליכה אל הדלת (חלק מהמהירות הרגילה)
 const KEY_HAND = { dx: 6, dy: 9 };   // איפה המפתח ביד הנינג'ה
 const MERCHANT_OFFER = ['key', 'rope', 'torch'];
-const SAY_ASK = [[0.3, -1, 'What do you want?']];
+const SAY_ASK = [[0.3, -1, 'What would you like?']];
 const GATE_CLIMB = 1.6;
 const MERCH = { turn: 1.7, hint: 5.5, hintEvery: 7, choiceHint: 4 };   // turn: מתי מופיעה בועת "תורך" (אחרי שהשאלה נגמרה)
 
@@ -34,7 +34,7 @@ function merchantUpdate(dt, pb) {
     }
     if (m.t > MERCH.turn && m.hinted === 0) m.hi = Math.floor((m.t - MERCH.turn) / 0.9) % MERCHANT_OFFER.length;
     if (m.t >= MERCH.hint + m.hinted * MERCH.hintEvery && state === 'play') {   // שתיקה – המשחק אומר את המשפט ומדגיש את המפתח
-      const nd = needOf(m.o); m.hinted++; m.hi = MERCHANT_OFFER.indexOf(nd); speak('I want a ' + nd); flash = { text: '🙋 I WANT A ' + nd.toUpperCase() + '!', t: 2 };
+      const nd = needOf(m.o); m.hinted++; m.hi = MERCHANT_OFFER.indexOf(nd); speak('I want a ' + nd + ', please'); flash = { text: '🙋 I WANT A ' + nd.toUpperCase() + ', PLEASE!', t: 2 };
     }
   } else if (m.phase === 'choose') {
     const nd = needOf(m.o);
@@ -196,7 +196,7 @@ function drawMerchant(o) {
   const myTurn = m && ((m.phase === 'ask' && m.t > MERCH.turn) || (m.phase === 'choose' && m.t > 1.1));   // תור הילד – הבועה של הסוחר נעלמת
   if (m && m.bubble && !myTurn) drawBubble(m.bubble, mx - 4, GROUND - 25, { age: m.bT, tail: 1 });   // הסוחר מדבר
   if (myTurn) {   // תורך! בועה מעל הנינג'ה עם מיקרופון מהבהב
-    const blink = Math.floor(now * 3) % 2, txt = (blink ? '🎤 ' : '🎙️ ') + (m.phase === 'ask' ? 'I want a …?' : 'KEY? ROPE? TORCH?');
+    const blink = Math.floor(now * 3) % 2, txt = (blink ? '🎤 ' : '🎙️ ') + (m.phase === 'ask' ? 'I want a …, please' : 'KEY? ROPE? TORCH?');
     drawBubble(txt, PLAYER.x + 9, GROUND - 22, { age: m.phase === 'ask' ? m.t - MERCH.turn : m.t - 1.1, tail: -1, fill: '#fef9c3', color: '#1d4ed8', size: 3.8 });
   }
   if (!m && !o.unlocked && labelsVisible()) label('I WANT', x + 8, GROUND - 28, 4, '#fde047', '#1e293b');

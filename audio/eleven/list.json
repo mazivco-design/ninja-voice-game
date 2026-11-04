@@ -650,6 +650,30 @@
    "text": "[happy] Thank you!",
    "voice": "lib-teddy",
    "voice_id": "XjGYkUkzth8BPs29fmcV"
+  },
+  {
+   "file": "demo1-brian",
+   "type": "tts",
+   "text": "Jump! ... Kick! ... Catch! ... Hold! ... Push!",
+   "voice": "Brian"
+  },
+  {
+   "file": "demo1-eric",
+   "type": "tts",
+   "text": "Jump! ... Kick! ... Catch! ... Hold! ... Push!",
+   "voice": "Eric"
+  },
+  {
+   "file": "demo1-sarah",
+   "type": "tts",
+   "text": "Jump! ... Kick! ... Catch! ... Hold! ... Push!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "demo1-matilda",
+   "type": "tts",
+   "text": "Jump! ... Kick! ... Catch! ... Hold! ... Push!",
+   "voice": "Matilda"
   }
  ]
 }
