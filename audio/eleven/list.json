@@ -1211,6 +1211,61 @@
     "style": 0.5
    },
    "text": "Help! Help! ... Thank you!"
+  },
+  {
+   "file": "ninja3-harry-a-worried",
+   "type": "tts",
+   "voice": "Harry",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[worried] Help! Help! ... [relieved] Thank you!"
+  },
+  {
+   "file": "ninja3-harry-b-urgent",
+   "type": "tts",
+   "voice": "Harry",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[urgent] Help! Help! ... [warmly] Thank you!"
+  },
+  {
+   "file": "ninja3-harry-c-notags",
+   "type": "tts",
+   "voice": "Harry",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "Help! Help! ... Thank you!"
+  },
+  {
+   "file": "ninja3-harry-d-calling",
+   "type": "tts",
+   "voice": "Harry",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[calling out] Help! Help! ... [happy] Thank you!"
+  },
+  {
+   "file": "ninja3-harry-e-v2-mild",
+   "type": "tts",
+   "voice": "Harry",
+   "settings": {
+    "stability": 0.5,
+    "similarity_boost": 0.75,
+    "style": 0.2
+   },
+   "text": "Help! Help! ... Thank you!"
   }
  ]
 }
