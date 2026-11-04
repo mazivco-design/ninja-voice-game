@@ -290,5 +290,50 @@
    "age": "old"
   },
   "description": "Friendly and comforting voice ready to narrate your stories."
+ },
+ {
+  "name": "Jett - Gritty, Spunky Young Hero",
+  "id": "6IwYbsNENZgAB1dtBZDp",
+  "category": "professional",
+  "labels": {
+   "descriptive": "hyped",
+   "gender": "male",
+   "age": "young",
+   "accent": "american",
+   "language": "en",
+   "use_case": "characters_animation",
+   "locale": "en-US"
+  },
+  "description": "A young hero with a bit of an edge to him. He could fight demons or host your podcast!"
+ },
+ {
+  "name": "Noku ",
+  "id": "Sth0oyItcRdvk3sFrPiq",
+  "category": "professional",
+  "labels": {
+   "use_case": "characters_animation",
+   "age": "middle_aged",
+   "gender": "male",
+   "language": "en",
+   "descriptive": "confident",
+   "accent": "american",
+   "locale": "en-US"
+  },
+  "description": "Inspired by a heroic male anime character. The main protagonist in an action-packed anime story or animated action cartoon."
+ },
+ {
+  "name": "Lukas - Excited youthful young man",
+  "id": "wSqOdjeNqDrHcoK0zorF",
+  "category": "professional",
+  "labels": {
+   "use_case": "characters_animation",
+   "descriptive": "excited",
+   "gender": "male",
+   "language": "en",
+   "accent": "american",
+   "age": "young",
+   "locale": "en-US"
+  },
+  "description": "Young man with a lot of passion and excitement in tone, happy, hopeful and confident. Good for characters and catchy Socil Media narration. "
  }
 ]
