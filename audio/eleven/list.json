@@ -1376,6 +1376,50 @@
     "style": 0.3
    },
    "text": "What would you like? ... Here you go! ... Hmm, that won't open the door."
+  },
+  {
+   "file": "merchant3-roger-what-would-you-like",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "What would you like?",
+   "voice": "Roger"
+  },
+  {
+   "file": "merchant3-roger-here-you-go",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "Here you go!",
+   "voice": "Roger"
+  },
+  {
+   "file": "merchant3-roger-wont-open",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "Hmm, that won't open the door.",
+   "voice": "Roger"
+  },
+  {
+   "file": "merchant3-roger-wont-help",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "Hmm, that won't help here.",
+   "voice": "Roger"
   }
  ]
 }
