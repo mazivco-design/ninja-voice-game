@@ -506,6 +506,54 @@
    "text": "[happy] Anytime, buddy!",
    "voice": "lib-lukas",
    "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "kid1-teddy",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "Can you help me push? ... One... two... [shouting] three! ... [happy] Thank you!",
+   "voice": "lib-teddy",
+   "voice_id": "XjGYkUkzth8BPs29fmcV"
+  },
+  {
+   "file": "kid1-littledude",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "Can you help me push? ... One... two... [shouting] three! ... [happy] Thank you!",
+   "voice": "lib-littledude",
+   "voice_id": "fBD19tfE58bkETeiwUoC"
+  },
+  {
+   "file": "kid1-max",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "Can you help me push? ... One... two... [shouting] three! ... [happy] Thank you!",
+   "voice": "lib-max",
+   "voice_id": "467tX2b9Bky3cD6jXpNa"
+  },
+  {
+   "file": "kid1-austin",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "Can you help me push? ... One... two... [shouting] three! ... [happy] Thank you!",
+   "voice": "lib-austin",
+   "voice_id": "Xb3zeLrTi6F4ziIcXdwk"
   }
  ]
 }
