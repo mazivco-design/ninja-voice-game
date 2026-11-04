@@ -554,6 +554,102 @@
    "text": "Can you help me push? ... One... two... [shouting] three! ... [happy] Thank you!",
    "voice": "lib-austin",
    "voice_id": "Xb3zeLrTi6F4ziIcXdwk"
+  },
+  {
+   "file": "kid2-teddy-push-ask",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "Can you help me push?",
+   "voice": "lib-teddy",
+   "voice_id": "XjGYkUkzth8BPs29fmcV"
+  },
+  {
+   "file": "kid2-teddy-one",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "One...",
+   "voice": "lib-teddy",
+   "voice_id": "XjGYkUkzth8BPs29fmcV"
+  },
+  {
+   "file": "kid2-teddy-two",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "Two...",
+   "voice": "lib-teddy",
+   "voice_id": "XjGYkUkzth8BPs29fmcV"
+  },
+  {
+   "file": "kid2-teddy-three",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[shouting] Three!",
+   "voice": "lib-teddy",
+   "voice_id": "XjGYkUkzth8BPs29fmcV"
+  },
+  {
+   "file": "kid2-teddy-wait",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "Wait for three!",
+   "voice": "lib-teddy",
+   "voice_id": "XjGYkUkzth8BPs29fmcV"
+  },
+  {
+   "file": "kid2-teddy-again",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[sighs] Again!",
+   "voice": "lib-teddy",
+   "voice_id": "XjGYkUkzth8BPs29fmcV"
+  },
+  {
+   "file": "kid2-teddy-jumpin",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[excited] Jump in!",
+   "voice": "lib-teddy",
+   "voice_id": "XjGYkUkzth8BPs29fmcV"
+  },
+  {
+   "file": "kid2-teddy-thankyou",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[happy] Thank you!",
+   "voice": "lib-teddy",
+   "voice_id": "XjGYkUkzth8BPs29fmcV"
   }
  ]
 }
