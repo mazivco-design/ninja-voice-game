@@ -25,8 +25,8 @@ async function play(m, idx) {
   if (words.includes('let go') && !words.includes('catch')) listenWords.push('catch');
   if (words.includes('pick up') || words.includes('put down')) for (const w of ['pick up', 'put down', 'jump', 'throw', 'pull']) if (!listenWords.includes(w)) listenWords.push(w);   // PICK UP → PUT DOWN → JUMP
   if (words.includes('help')) { for (const w of ['catch', 'hold']) if (!listenWords.includes(w)) listenWords.push(w); listenWords = listenWords.filter(w => w !== 'help'); }   // HELP: בינתיים המשחק אומר HELP, הילד אומר CATCH ו-HOLD
-  if (words.includes('push together')) { for (const w of ['push', 'jump']) if (!listenWords.includes(w)) listenWords.push(w); }   // סירה: PUSH ואז JUMP
-  listenWords = listenWords.filter(w => w !== 'push together');
+  if (words.includes('push together') || words.includes('push on three')) { for (const w of ['push', 'jump']) if (!listenWords.includes(w)) listenWords.push(w); }   // סירה / עגלה: PUSH ואז JUMP
+  listenWords = listenWords.filter(w => w !== 'push together' && w !== 'push on three');
   if (m !== 'demo') for (const w of powerWordsOwned()) if (!listenWords.includes(w)) listenWords.push(w);   // SHIELD / JET – אם יש מנות
   if (words.includes('ride')) for (const w of ['up', 'down', 'fire']) if (!listenWords.includes(w)) listenWords.push(w);   // RIDE: בשמיים צריך UP / DOWN / FIRE   // LET GO צריך גם CATCH                              // I WANT + שמות החפצים
   stopAudio();                      // מתחילים מחדש עם רשימת המילים של המשחק הזה
@@ -196,7 +196,6 @@ function riverWidth() {
 function spawn() {
   if (mode === 'free') world = Math.floor(spawned / 12) % RUN_WORLDS;   // ב-Free Play העולם מתחלף כל 12 מכשולים
   let type = nextType;
-  if (type === 'boat') type = ptIdx++ % 2 === 0 ? 'cart' : 'boat';   // PUSH TOGETHER: עגלה וסירה לסירוגין
   const o = { type, x: viewR() + 2, passed: false, hit: false };
   if (type === 'river') o.w = riverWidth();
   if (type === 'chasm') o.w = CHASM.w;
