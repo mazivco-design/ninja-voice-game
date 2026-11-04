@@ -60,6 +60,7 @@ for it in todo:
                 print(f"!! voice {it['voice']} not found – skipped {it['file']}"); failed += 1; continue
             body = {'text': it['text'], 'model_id': it.get('model', MODEL)}
             if 'settings' in it: body['voice_settings'] = it['settings']
+            if 'seed' in it: body['seed'] = it['seed']
             audio = call('POST', f'/text-to-speech/{vid}?output_format=mp3_44100_128', body)
             open(f"{DIR}/{it['file']}.mp3", 'wb').write(audio)
             print('made', it['file'], len(audio), 'bytes')

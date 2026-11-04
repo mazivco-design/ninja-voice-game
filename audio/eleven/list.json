@@ -220,6 +220,31 @@
    "settings": {
     "stability": 0.5
    }
+  },
+  {
+   "file": "friend3-will-v3steady",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[urgent] I'm coming! ... Catch! ... [happy] You did it!",
+   "voice": "Will"
+  },
+  {
+   "file": "friend3-will-v2",
+   "type": "tts",
+   "model": "eleven_multilingual_v2",
+   "seed": 42,
+   "settings": {
+    "stability": 0.4,
+    "similarity_boost": 0.85,
+    "style": 0.55,
+    "use_speaker_boost": true
+   },
+   "text": "I'm coming!! ... Catch! ... You did it!",
+   "voice": "Will"
   }
  ]
 }
