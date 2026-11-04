@@ -196,7 +196,7 @@ canvas { display: block; width: 100%; height: 100%; }
 .trainLbl { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .hintTgl { border: 0; border-radius: 999px; padding: 3px 10px; font-weight: 800; font-size: clamp(11px, 1.6vh, 13px); background: #fef3c7; color: #92400e; text-transform: none; letter-spacing: 0; }
 .hintTgl.off { background: #e2e8f0; color: #64748b; }
-.stages.lessons { grid-template-columns: repeat(9, 1fr); }
+.stages.lessons { grid-template-columns: repeat(10, 1fr); }   /* 10 בשורה – שלוש שורות גם כשיש 28 שלבים */
 .stages.lessons .stage { background: #4f46e5; }
 .stages.lessons .stage.locked { background: #cbd5e1; }
 .stages.lessons .stage.pend { background: #f59e0b; animation: pulse 1.2s infinite; }
@@ -280,7 +280,7 @@ canvas { display: block; width: 100%; height: 100%; }
 }
 .jTrack { --c: clamp(26px, 4.2vh, 34px); }
 @media (max-aspect-ratio: 1/1) {
-  .stages.lessons { grid-template-columns: repeat(9, 1fr); }
+  .stages.lessons { grid-template-columns: repeat(10, 1fr); }   /* 10 בשורה – שלוש שורות גם כשיש 28 שלבים */
   .jTrack { row-gap: calc(var(--n) * 0.75); }
   .sideBoard { max-height: 21vh; }
   #menu .panel { max-height: calc(100% - 21vh - 14px); }
@@ -385,3 +385,6 @@ canvas { display: block; width: 100%; height: 100%; }
 #powerHud .pw b { font-weight: 900; letter-spacing: .04em; }
 #powerHud .pw.on { background: #0ea5e9; box-shadow: 0 0 0 3px rgba(255,255,255,.6); }
 .shopCount { font-size: clamp(11px, 1.6vh, 14px); font-weight: 800; color: #0f766e; }
+
+/* שורת הכפתורים (Free mix / Shop / Words) נשארת תמיד גלויה בתחתית התפריט, גם כשצריך לגלול */
+#menu .menuRow { position: sticky; bottom: 0; background: #fff; padding-top: 8px; padding-bottom: 2px; z-index: 2; }
