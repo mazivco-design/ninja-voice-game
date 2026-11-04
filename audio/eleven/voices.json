@@ -296,12 +296,12 @@
   "id": "6IwYbsNENZgAB1dtBZDp",
   "category": "professional",
   "labels": {
-   "use_case": "characters_animation",
-   "age": "young",
-   "accent": "american",
    "descriptive": "hyped",
+   "age": "young",
+   "language": "en",
    "gender": "male",
-   "language": "en"
+   "use_case": "characters_animation",
+   "accent": "american"
   },
   "description": "A young hero with a bit of an edge to him. He could fight demons or host your podcast!"
  },
@@ -310,125 +310,125 @@
   "id": "fBD19tfE58bkETeiwUoC",
   "category": "professional",
   "labels": {
+   "descriptive": "confident",
    "age": "young",
    "use_case": "characters_animation",
-   "accent": "american",
-   "descriptive": "confident",
+   "gender": "male",
    "language": "en",
-   "gender": "male"
+   "accent": "american"
   },
   "description": "A high-pitched, energetic cartoon-style voice with a playful, mischievous edge.\nThe delivery has a light Southern drawl, giving the voice a quirky regional flavor and a hint of friendly rural warmth.\nExpressive emphasis, comedic timing, and exaggerated intonation patterns make the voice perfect for humorous characters, sidekicks, or whimsical narrators.\nBright, fast, and slightly raspy at the top end, elongated vowels, and lively emotional swings."
- },
- {
-  "name": "Michael Dalton - Modern Male Lead",
-  "id": "QZ1okeFI43NQd6lXAzQ5",
-  "category": "professional",
-  "labels": {
-   "age": "young",
-   "use_case": "characters_animation",
-   "accent": "american",
-   "descriptive": "upbeat",
-   "language": "en",
-   "gender": "male"
-  },
-  "description": "Cool, charismatic, all-American 20-something voice with natural confidence, subtle emotional depth, and a grounded, relatable tone. Ideal for audiobooks, video games, animation, and character-driven content — especially young male leads, teen protagonists, athletes, high school or college students, and coming-of-age stories. Perfect for storytelling, dialogue, and voiceover projects that need a modern, cinematic feel with just the right edge."
- },
- {
-  "name": "DYLO - Dark Anime Hero",
-  "id": "JjsQrIrIBD6TZ656NQfi",
-  "category": "professional",
-  "labels": {
-   "age": "young",
-   "use_case": "characters_animation",
-   "accent": "american",
-   "descriptive": "intense",
-   "language": "en",
-   "gender": "male"
-  },
-  "description": "Young adult male, fierce voice."
- },
- {
-  "name": "Noku ",
-  "id": "Sth0oyItcRdvk3sFrPiq",
-  "category": "professional",
-  "labels": {
-   "age": "middle_aged",
-   "use_case": "characters_animation",
-   "accent": "american",
-   "descriptive": "confident",
-   "gender": "male",
-   "language": "en"
-  },
-  "description": "Inspired by a heroic male anime character. The main protagonist in an action-packed anime story or animated action cartoon."
  },
  {
   "name": "Teddy Twinkle - Cute Cartoon Boy",
   "id": "XjGYkUkzth8BPs29fmcV",
   "category": "professional",
   "labels": {
-   "age": "young",
-   "use_case": "characters_animation",
-   "accent": "american",
    "descriptive": "cute",
+   "age": "young",
+   "language": "en",
    "gender": "male",
-   "language": "en"
+   "use_case": "characters_animation",
+   "accent": "american"
   },
   "description": "A sweet, playful, and adorable little cartoon boy inspired by popular kids' characters. He is kind, cheerful, and lovable. Ideal for children's animations, kids' audiobooks, storybook apps, educational content, and social media."
- },
- {
-  "name": "VALF - Child, Young, Playful & Sarcastic",
-  "id": "loY1uopAz31XyhAEhNSa",
-  "category": "professional",
-  "labels": {
-   "age": "young",
-   "use_case": "characters_animation",
-   "accent": "american",
-   "descriptive": "cute",
-   "language": "en",
-   "gender": "male"
-  },
-  "description": "A very Young voice with an energetic, playful. Perfect for cartoons, animation, anime dubbing, video games, children's content,  videos, narration, and character acting. Ideal for kid characters, young heroes, mischievous boys, and expressive character performances."
- },
- {
-  "name": "Max - USA Energetic Animated Cartoon",
-  "id": "467tX2b9Bky3cD6jXpNa",
-  "category": "professional",
-  "labels": {
-   "use_case": "social_media",
-   "age": "young",
-   "accent": "american",
-   "descriptive": "excited",
-   "gender": "male",
-   "language": "en"
-  },
-  "description": "Max is a high-energy, versatile American character voice engineered specifically for animation, social media, gaming, and dynamic commercial content. Delivering punchy articulation, vibrant dynamic range, and cinematic presence, Max is built to bring animated leads, zany cartoon heroes, and fast-paced social media promos to life. Recorded in a broadcast-spec booth with a pristine signal chain for zero-lag, studio-grade renders every time."
- },
- {
-  "name": "Lukas - Excited youthful young man",
-  "id": "wSqOdjeNqDrHcoK0zorF",
-  "category": "professional",
-  "labels": {
-   "use_case": "characters_animation",
-   "age": "young",
-   "accent": "american",
-   "descriptive": "excited",
-   "language": "en",
-   "gender": "male"
-  },
-  "description": "Young man with a lot of passion and excitement in tone, happy, hopeful and confident. Good for characters and catchy Socil Media narration. "
  },
  {
   "name": "Austin Boy",
   "id": "Xb3zeLrTi6F4ziIcXdwk",
   "category": "professional",
   "labels": {
-   "use_case": "characters_animation",
-   "age": "young",
-   "accent": "american",
    "descriptive": "soft",
+   "age": "young",
+   "use_case": "characters_animation",
+   "gender": "male",
    "language": "en",
-   "gender": "male"
+   "accent": "american"
   },
   "description": "A young American timid orphan boy. Tone is soft. Voice works well for characters & Animation."
+ },
+ {
+  "name": "Noku ",
+  "id": "Sth0oyItcRdvk3sFrPiq",
+  "category": "professional",
+  "labels": {
+   "descriptive": "confident",
+   "age": "middle_aged",
+   "language": "en",
+   "gender": "male",
+   "use_case": "characters_animation",
+   "accent": "american"
+  },
+  "description": "Inspired by a heroic male anime character. The main protagonist in an action-packed anime story or animated action cartoon."
+ },
+ {
+  "name": "Max - USA Energetic Animated Cartoon",
+  "id": "467tX2b9Bky3cD6jXpNa",
+  "category": "professional",
+  "labels": {
+   "descriptive": "excited",
+   "age": "young",
+   "language": "en",
+   "gender": "male",
+   "use_case": "social_media",
+   "accent": "american"
+  },
+  "description": "Max is a high-energy, versatile American character voice engineered specifically for animation, social media, gaming, and dynamic commercial content. Delivering punchy articulation, vibrant dynamic range, and cinematic presence, Max is built to bring animated leads, zany cartoon heroes, and fast-paced social media promos to life. Recorded in a broadcast-spec booth with a pristine signal chain for zero-lag, studio-grade renders every time."
+ },
+ {
+  "name": "VALF - Child, Young, Playful & Sarcastic",
+  "id": "loY1uopAz31XyhAEhNSa",
+  "category": "professional",
+  "labels": {
+   "descriptive": "cute",
+   "age": "young",
+   "use_case": "characters_animation",
+   "gender": "male",
+   "language": "en",
+   "accent": "american"
+  },
+  "description": "A very Young voice with an energetic, playful. Perfect for cartoons, animation, anime dubbing, video games, children's content,  videos, narration, and character acting. Ideal for kid characters, young heroes, mischievous boys, and expressive character performances."
+ },
+ {
+  "name": "DYLO - Dark Anime Hero",
+  "id": "JjsQrIrIBD6TZ656NQfi",
+  "category": "professional",
+  "labels": {
+   "descriptive": "intense",
+   "age": "young",
+   "language": "en",
+   "gender": "male",
+   "use_case": "characters_animation",
+   "accent": "american"
+  },
+  "description": "Young adult male, fierce voice."
+ },
+ {
+  "name": "Michael Dalton - Modern Male Lead",
+  "id": "QZ1okeFI43NQd6lXAzQ5",
+  "category": "professional",
+  "labels": {
+   "descriptive": "upbeat",
+   "age": "young",
+   "language": "en",
+   "gender": "male",
+   "use_case": "characters_animation",
+   "accent": "american"
+  },
+  "description": "Cool, charismatic, all-American 20-something voice with natural confidence, subtle emotional depth, and a grounded, relatable tone. Ideal for audiobooks, video games, animation, and character-driven content — especially young male leads, teen protagonists, athletes, high school or college students, and coming-of-age stories. Perfect for storytelling, dialogue, and voiceover projects that need a modern, cinematic feel with just the right edge."
+ },
+ {
+  "name": "Lukas - Excited youthful young man",
+  "id": "wSqOdjeNqDrHcoK0zorF",
+  "category": "professional",
+  "labels": {
+   "descriptive": "excited",
+   "age": "young",
+   "language": "en",
+   "gender": "male",
+   "use_case": "characters_animation",
+   "accent": "american"
+  },
+  "description": "Young man with a lot of passion and excitement in tone, happy, hopeful and confident. Good for characters and catchy Socil Media narration. "
  }
 ]
