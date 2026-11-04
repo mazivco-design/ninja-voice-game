@@ -185,70 +185,73 @@ function drawMaki(x, y, g, k, sc) {
   ctx.fillStyle = k.dot; ctx.beginPath(); ctx.ellipse(x - w * 0.05, top - ry * 0.12, w * 0.06, ry * 0.14, 0, 0, Math.PI * 2); ctx.fill();
 }
 
-// המקלות + יד אמיתית שמחזיקה אותם כמו שצריך. (tx,ty) = נקודת האמצע בין קצות המקלות; gap = המרווח בין הקצוות
-// אחיזה נכונה: המקל התחתון קבוע – נח בגומה שבין האגודל לאצבע ונתמך על הקמיצה.
-// המקל העליון זז – מוחזק כמו עיפרון בין קצה האגודל, האצבע המורה (מלמעלה) והאמה (מלמטה).
+// המקלות + יד בסגנון שטוח (לפי הדוגמה): הזרוע נכנסת מימין, גב היד אלינו, האגודל מונח מעל המקלות,
+// האצבע המורה לאורך המקל העליון, ושאר האצבעות מקופלות מתחת. (tx,ty) = האמצע בין הקצוות; gap = המרווח בין הקצוות
 function drawSticks(tx, ty, gap, g) {
-  const u = g.u;
-  const dl = Math.hypot(18, 36), d = [-18 / dl, 36 / dl], n = [36 / dl, 18 / dl];   // d: מהיד אל הקצוות · n: לצד של המקל התחתון
-  const hu = 1.7 * u, GRIP = 34 * u;                                             // hu – יחידה של היד (יד גדולה וברורה)                                               // היד אוחזת במקלות 34 יחידות מהקצה
+  const u = g.u, hu = 1.5 * u, GRIP = 34 * u;
+  const e1 = [0.55, -0.835], e2 = [0.835, 0.55];                                   // e1: לאורך המקלות אחורה · e2: לכיוון הזרוע
   const half = (g.rw - 0.4 * u) / 2;                                               // המקל התחתון קבוע – רק העליון נפתח ונסגר
-  const LT = [tx + n[0] * half, ty + n[1] * half];                                 // קצה המקל התחתון
-  const H = [LT[0] - d[0] * GRIP, LT[1] - d[1] * GRIP];                            // הגומה שבין האגודל לאצבע
-  const L = (a, b) => [H[0] + d[0] * a * hu + n[0] * b * hu, H[1] + d[1] * a * hu + n[1] * b * hu];
-  const A = GRIP / hu;                                                             // ה-a של הקצוות
-  const upTip = -gap / hu;
-  const lowB = a => 0;                                                            // המקל התחתון הוא הציר של היד                            // המקל התחתון: עובר בגומה (b≈0)
-  const upB = a => -2.5 + (upTip + 2.5) * ((a + 4) / (A + 4));                    // העליון מסתובב סביב בסיס האצבע                 // המקל העליון: עובר מעל, נפתח ונסגר
-  const skin = '#f2c29b', skinD = '#c98f68', nail = '#fbe3cf';
+  const LT = [tx + e2[0] * half, ty + e2[1] * half];                               // קצה המקל התחתון
+  const O = [LT[0] + e1[0] * GRIP, LT[1] + e1[1] * GRIP];                          // הגומה שבין האגודל לאצבע
+  const L = (p, q) => [O[0] + e1[0] * p * hu + e2[0] * q * hu, O[1] + e1[1] * p * hu + e2[1] * q * hu];
+  const A = GRIP / hu, upTip = -gap / hu;
+  const upB = p => -1.9 + (upTip + 1.9) * ((p - 2) / (-A - 2));                   // המקל העליון מסתובב סביב פרק האצבע
+  const skin = '#f2c29b', line = '#c98f68';
 
-  const stick = (bf, back) => {                                                   // מקל מחודד: עבה מאחור, דק בקצה
-    const p0 = L(back, bf(back)), p1 = L(A, bf(A));
-    const dx = p1[0] - p0[0], dy = p1[1] - p0[1], len = Math.hypot(dx, dy), nx = -dy / len, ny = dx / len;
-    const w0 = 1.0 * u, w1 = 0.42 * u;
-    ctx.fillStyle = '#d4a86a';
-    ctx.beginPath(); ctx.moveTo(p0[0] + nx * w0, p0[1] + ny * w0); ctx.lineTo(p1[0] + nx * w1, p1[1] + ny * w1); ctx.lineTo(p1[0] - nx * w1, p1[1] - ny * w1); ctx.lineTo(p0[0] - nx * w0, p0[1] - ny * w0); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = 'rgba(120,72,30,0.32)';
-    ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.lineTo(p1[0] - nx * w1, p1[1] - ny * w1); ctx.lineTo(p0[0] - nx * w0, p0[1] - ny * w0); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = '#b91c1c'; ctx.lineWidth = 2 * w0 * 0.92; ctx.lineCap = 'butt';            // פס אדום בקצה האחורי
-    const q = (k) => [p0[0] + dx * k, p0[1] + dy * k];
-    const r0 = q(0.02), r1 = q(0.09); ctx.beginPath(); ctx.moveTo(r0[0], r0[1]); ctx.lineTo(r1[0], r1[1]); ctx.stroke();
-  };
-  const finger = (pts, w) => {                                                     // אצבע: קו עבה עם קצוות עגולים וקו מתאר
-    const P = pts.map(p => L(p[0], p[1]));
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    for (const [col, ww] of [[skinD, w + 0.32], [skin, w]]) {
-      ctx.strokeStyle = col; ctx.lineWidth = ww * hu;
-      ctx.beginPath(); ctx.moveTo(P[0][0], P[0][1]); for (const p of P.slice(1)) ctx.lineTo(p[0], p[1]); ctx.stroke();
+  const smooth = (pts, close) => {                                                 // קו מעוגל דרך הנקודות
+    const P = pts.map(p => L(p[0], p[1])), m = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    ctx.beginPath();
+    if (close) {
+      const s = m(P[P.length - 1], P[0]); ctx.moveTo(s[0], s[1]);
+      for (let i = 0; i < P.length; i++) { const c = P[i], e = m(P[i], P[(i + 1) % P.length]); ctx.quadraticCurveTo(c[0], c[1], e[0], e[1]); }
+      ctx.closePath();
+    } else {
+      ctx.moveTo(P[0][0], P[0][1]);
+      for (let i = 1; i < P.length - 1; i++) { const e = m(P[i], P[i + 1]); ctx.quadraticCurveTo(P[i][0], P[i][1], e[0], e[1]); }
+      ctx.lineTo(P[P.length - 1][0], P[P.length - 1][1]);
     }
-    const e = P[P.length - 1], f = P[P.length - 2], ang = Math.atan2(e[1] - f[1], e[0] - f[0]);   // ציפורן קטנה
-    ctx.fillStyle = nail; ctx.beginPath(); ctx.ellipse(e[0] - Math.cos(ang) * w * 0.12 * hu, e[1] - Math.sin(ang) * w * 0.12 * hu, w * 0.28 * hu, w * 0.2 * hu, ang, 0, Math.PI * 2); ctx.fill();
+  };
+  const stick = (qf, back) => {
+    const p0 = L(back, qf(back)), p1 = L(-A, qf(-A));
+    const dx = p1[0] - p0[0], dy = p1[1] - p0[1], len = Math.hypot(dx, dy), nx = -dy / len, ny = dx / len;
+    const w0 = 0.9 * u, w1 = 0.4 * u;
+    ctx.fillStyle = '#e8d3b0';
+    ctx.beginPath(); ctx.moveTo(p0[0] + nx * w0, p0[1] + ny * w0); ctx.lineTo(p1[0] + nx * w1, p1[1] + ny * w1); ctx.lineTo(p1[0] - nx * w1, p1[1] - ny * w1); ctx.lineTo(p0[0] - nx * w0, p0[1] - ny * w0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(150,110,60,0.22)';
+    ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.lineTo(p1[0] - nx * w1, p1[1] - ny * w1); ctx.lineTo(p0[0] - nx * w0, p0[1] - ny * w0); ctx.closePath(); ctx.fill();
+    const q = k => [p0[0] + dx * k, p0[1] + dy * k];                                // פס אדום ליד הקצה האחורי
+    ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 2 * w0 * 0.93; ctx.lineCap = 'butt';
+    const r0 = q(0.06), r1 = q(0.14); ctx.beginPath(); ctx.moveTo(r0[0], r0[1]); ctx.lineTo(r1[0], r1[1]); ctx.stroke();
   };
 
-  // שרוול כהה של הנינג'ה – נכנס מחוץ למסך
-  const s0 = L(-8.0, -2.2), s1 = L(-50, -2.2);
-  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 7.6 * hu; ctx.lineCap = 'butt';
-  ctx.beginPath(); ctx.moveTo(s0[0], s0[1]); ctx.lineTo(s1[0], s1[1]); ctx.stroke();
-  // קמיצה – מקופלת, הקצה תומך במקל התחתון מלמטה
-  finger([[-3.6, 0.2], [0.8, lowB(0.8) + 1.95], [3.8, lowB(3.8) + 1.0]], 1.6);
-  // כף היד (גב היד) עם פרקי האצבעות
-  const pc = L(-4.6, -1.6), ang = Math.atan2(d[1], d[0]);
-  ctx.fillStyle = skinD; ctx.beginPath(); ctx.ellipse(pc[0], pc[1], 4.8 * hu + 0.25 * hu, 3.9 * hu + 0.25 * hu, ang, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = skin; ctx.beginPath(); ctx.ellipse(pc[0], pc[1], 4.8 * hu, 3.9 * hu, ang, 0, Math.PI * 2); ctx.fill();
-  // המקל התחתון – עובר בגומה שבין האגודל לאצבע ויוצא מאחורי היד
-  stick(lowB, -13);
-  // אמה – מתחת למקל העליון, בין שני המקלות
-  finger([[-3.2, -1.9], [2.4, upB(2.4) + 1.25], [5.4, upB(5.4) + 0.95]], 1.6);
-  // המקל העליון
-  stick(upB, -12);
-  // אצבע מורה – מונחת לאורך המקל העליון, הכרית לוחצת עליו מלמעלה
-  finger([[-3.0, -3.9], [2.2, upB(2.2) - 1.3], [7.8, upB(7.8) - 0.9]], 1.7);
-  // אגודל – יוצא מבסיס כף היד, עובר מעל המקל התחתון ולוחץ את המקל העליון
-  finger([[-6.2, 1.0], [-1.8, 1.5], [2.2, upB(2.2) + 0.55]], 1.95);
-  // קפל עור בגומה + ברק קטן על גב היד
-  const k0 = L(-2.6, -0.6), k1 = L(-1.4, 0.3);
-  ctx.strokeStyle = skinD; ctx.lineWidth = 0.22 * hu; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(k0[0], k0[1]); ctx.lineTo(k1[0], k1[1]); ctx.stroke();
-  const hl = L(-5.6, -3.2); ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.ellipse(hl[0], hl[1], 1.8 * hu, 0.8 * hu, ang, 0, Math.PI * 2); ctx.fill();
+  // זרוע + שרוול של נינג'ה (נכנסים מצד ימין)
+  ctx.fillStyle = '#1e293b'; smooth([[4.6, 70], [4.6, 10.2], [4.3, 9.6], [-4.0, 9.6], [-4.3, 10.2], [-4.6, 70]], true); ctx.fill();
+  ctx.fillStyle = '#0f172a'; smooth([[4.6, 12.2], [4.6, 10.2], [4.3, 9.6], [-4.0, 9.6], [-4.3, 10.2], [-4.6, 12.2]], true); ctx.fill();   // שפת השרוול
+
+  // אצבעות מקופלות מתחת למקלות (שלוש "כריות" עם קו מפריד)
+  const knuckles = [[-4.6, 1.7, 1.35], [-4.0, 3.6, 1.35], [-3.0, 5.4, 1.3]];
+  for (const [p, q, r] of knuckles) { const c = L(p, q); ctx.fillStyle = skin; ctx.beginPath(); ctx.arc(c[0], c[1], r * hu, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = line; ctx.lineWidth = 0.16 * hu; ctx.stroke(); }
+
+  // גב היד + האצבע המורה לאורך המקל העליון
+  const hand = [[3.8, 9.5], [4.3, 4.5], [3.7, 0.6], [1.8, upB(1.8) - 1.0], [-3.0, upB(-3.0) - 0.95], [-7.4, upB(-7.4) - 0.7],
+                [-8.7, upB(-8.7) + 0.25], [-7.4, upB(-7.4) + 1.15], [-3.6, 0.4], [-3.4, 3.0], [-2.6, 6.2], [-3.2, 9.5]];
+  ctx.fillStyle = skin; smooth(hand, true); ctx.fill();
+  ctx.strokeStyle = line; ctx.lineWidth = 0.16 * hu; ctx.stroke();
+  // קו האצבע המורה (מפריד בינה לבין כף היד)
+  ctx.lineWidth = 0.16 * hu; smooth([[-6.6, upB(-6.6) + 1.15], [-3.0, upB(-3.0) + 1.2], [0.6, -0.3]], false); ctx.stroke();
+  // כיסוי מעל הכריות כדי שייראו מאחורי כף היד
+  ctx.fillStyle = skin; smooth([[-3.4, 0.6], [-1.0, 0.4], [-0.8, 6.0], [-2.7, 6.0], [-3.2, 3.0]], true); ctx.fill();
+
+  // המקלות: התחתון עובר בגומה, העליון לאורך האצבע המורה. שניהם יוצאים מאחורי היד
+  stick(() => 0, 9.5);
+  stick(upB, 9);
+
+  // האגודל – מונח מעל שני המקלות, הקצה לוחץ את המקל העליון
+  const thumb = [[3.4, 5.0], [1.6, 1.8], [-1.2, upB(-1.2) * 0.45 - 0.3], [-3.9, upB(-3.9) + 0.35], [-4.3, upB(-4.3) + 1.6],
+                 [-2.0, 1.4], [0.6, 4.6], [2.0, 6.6]];
+  ctx.fillStyle = skin; smooth(thumb, true); ctx.fill();
+  ctx.strokeStyle = line; ctx.lineWidth = 0.16 * hu; ctx.stroke();
+  const nl = L(-3.4, upB(-3.4) + 0.9); ctx.fillStyle = '#f9dcc4'; ctx.beginPath(); ctx.ellipse(nl[0], nl[1], 0.55 * hu, 0.35 * hu, Math.atan2(-e1[1], -e1[0]), 0, Math.PI * 2); ctx.fill();   // ציפורן
 }
 
 function drawSushiBelt(g) {
