@@ -1096,6 +1096,66 @@
    },
    "text": "[panicked] [shouting] Help! Help! ... [relieved] [happy] Thank you!",
    "voice": "Harry"
+  },
+  {
+   "file": "ninja2-valf-a-steady",
+   "type": "tts",
+   "voice": "lib-valf",
+   "voice_id": "loY1uopAz31XyhAEhNSa",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[panicked] [shouting] Help! Help! ... [relieved] [happy] Thank you!"
+  },
+  {
+   "file": "ninja2-valf-b-seed7",
+   "type": "tts",
+   "voice": "lib-valf",
+   "voice_id": "loY1uopAz31XyhAEhNSa",
+   "model": "eleven_v3",
+   "seed": 7,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[panicked] [shouting] Help! Help! ... [relieved] [happy] Thank you!"
+  },
+  {
+   "file": "ninja2-valf-c-scared",
+   "type": "tts",
+   "voice": "lib-valf",
+   "voice_id": "loY1uopAz31XyhAEhNSa",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[scared] Help! Help! ... [grateful] Thank you!"
+  },
+  {
+   "file": "ninja2-valf-d-shout",
+   "type": "tts",
+   "voice": "lib-valf",
+   "voice_id": "loY1uopAz31XyhAEhNSa",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[shouting] Help! Help! ... [excited] Thank you!"
+  },
+  {
+   "file": "ninja2-valf-e-v2",
+   "type": "tts",
+   "voice": "lib-valf",
+   "voice_id": "loY1uopAz31XyhAEhNSa",
+   "settings": {
+    "stability": 0.3,
+    "similarity_boost": 0.75,
+    "style": 0.5
+   },
+   "text": "Help! Help! ... Thank you!"
   }
  ]
 }
