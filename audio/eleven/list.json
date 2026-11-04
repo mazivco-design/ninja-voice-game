@@ -190,6 +190,36 @@
    "count": 3,
    "description": "A warm, friendly and confident cartoon ninja hero voice for an animated kids' game. American accent. Encouraging, energetic and kind, like a helpful best friend.",
    "text": "I'm coming! Hang on, I'm coming! Ready? Catch! Hold on! Hold on tight! Almost... almost... You did it! Buddy! See you!"
+  },
+  {
+   "file": "friend2-will-a",
+   "type": "tts",
+   "model": "eleven_v3",
+   "text": "[urgent] I'm coming! ... [urgent] Catch! ... [relieved] You did it!",
+   "voice": "Will",
+   "settings": {
+    "stability": 0.5
+   }
+  },
+  {
+   "file": "friend2-will-b",
+   "type": "tts",
+   "model": "eleven_v3",
+   "text": "[urgent] I'm coming! ... [urgent] Catch! ... [relieved] You did it!",
+   "voice": "Will",
+   "settings": {
+    "stability": 0.0
+   }
+  },
+  {
+   "file": "friend2-will-c",
+   "type": "tts",
+   "model": "eleven_v3",
+   "text": "[shouting] [urgent] I'm coming! ... [urgent] Catch! ... [excited] You did it!",
+   "voice": "Will",
+   "settings": {
+    "stability": 0.5
+   }
   }
  ]
 }
