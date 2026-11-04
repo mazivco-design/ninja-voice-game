@@ -1321,6 +1321,61 @@
    },
    "text": "[friendly] What would you like? ... [cheerful] Here you go! ... [thoughtful] Hmm, that won't open the door.",
    "voice": "Brian"
+  },
+  {
+   "file": "merchant2-roger-a-steady",
+   "type": "tts",
+   "voice": "Roger",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[friendly] What would you like? ... [cheerful] Here you go! ... [thoughtful] Hmm, that won't open the door."
+  },
+  {
+   "file": "merchant2-roger-b-seed7",
+   "type": "tts",
+   "voice": "Roger",
+   "model": "eleven_v3",
+   "seed": 7,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[friendly] What would you like? ... [cheerful] Here you go! ... [thoughtful] Hmm, that won't open the door."
+  },
+  {
+   "file": "merchant2-roger-c-warm",
+   "type": "tts",
+   "voice": "Roger",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[warmly] What would you like? ... [warmly] Here you go! ... [gently] Hmm, that won't open the door."
+  },
+  {
+   "file": "merchant2-roger-d-notags",
+   "type": "tts",
+   "voice": "Roger",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "What would you like? ... Here you go! ... Hmm, that won't open the door."
+  },
+  {
+   "file": "merchant2-roger-e-v2",
+   "type": "tts",
+   "voice": "Roger",
+   "settings": {
+    "stability": 0.5,
+    "similarity_boost": 0.75,
+    "style": 0.3
+   },
+   "text": "What would you like? ... Here you go! ... Hmm, that won't open the door."
   }
  ]
 }
