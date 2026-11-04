@@ -316,6 +316,174 @@
    "text": "[urgent] I'm coming! ... Catch! ... [happy] You did it!",
    "voice": "lib-lukas",
    "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend5-lukas-coming",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[urgent] I'm coming!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend5-lukas-ready",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "Ready?",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend5-lukas-catch",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[shouting] Catch!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend5-lukas-oops",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "Oops! Again!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend5-lukas-holdon",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[urgent] Hold on!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend5-lukas-holdtight",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[urgent] Hold on tight!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend5-lukas-almost",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "Almost...",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend5-lukas-youdidit",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[happy] You did it!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend5-lukas-buddy",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[happy] Buddy!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend5-lukas-seeyou",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[happy] See you!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend5-lukas-push-ask",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "Can you help me push?",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend5-lukas-jumpin",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[excited] Jump in!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend5-lukas-stuck",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[sighs] Stuck again!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend5-lukas-letspush",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "Let's push!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
   }
  ]
 }
