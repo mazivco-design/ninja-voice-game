@@ -245,6 +245,41 @@
    },
    "text": "I'm coming!! ... Catch! ... You did it!",
    "voice": "Will"
+  },
+  {
+   "file": "lib-cartoon",
+   "type": "search",
+   "params": {
+    "search": "cartoon hero",
+    "gender": "male",
+    "page_size": 30,
+    "sort": "usage_character_count_1y"
+   },
+   "text": ""
+  },
+  {
+   "file": "lib-animation",
+   "type": "search",
+   "params": {
+    "search": "animated character young",
+    "gender": "male",
+    "page_size": 30,
+    "sort": "usage_character_count_1y"
+   },
+   "text": ""
+  },
+  {
+   "file": "lib-game",
+   "type": "search",
+   "params": {
+    "use_cases": "characters_animation",
+    "gender": "male",
+    "age": "young",
+    "language": "en",
+    "page_size": 30,
+    "sort": "usage_character_count_1y"
+   },
+   "text": ""
   }
  ]
 }

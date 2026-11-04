@@ -34,6 +34,7 @@ def call(method, path, body=None):
 
 
 def done(it):
+    if it['type'] == 'search': return os.path.exists(f"{DIR}/{it['file']}.json")
     if it['type'] == 'design': return os.path.exists(f"{DIR}/{it['file']}-1.mp3")
     return os.path.exists(f"{DIR}/{it['file']}.mp3")
 
@@ -54,8 +55,20 @@ by_name.update({v['name'].lower(): v['voice_id'] for v in voices})
 failed = 0
 for it in todo:
     try:
+        if it['type'] == 'search':                                       # חיפוש בספרייה הגדולה – שומרים את התוצאות
+            from urllib.parse import urlencode
+            res = json.loads(call('GET', '/shared-voices?' + urlencode(it['params'])))
+            out = [{'name': v.get('name'), 'voice_id': v.get('voice_id'), 'public_owner_id': v.get('public_owner_id'), 'accent': v.get('accent'),
+                    'age': v.get('age'), 'gender': v.get('gender'), 'use_case': v.get('use_case'), 'descriptive': v.get('descriptive'),
+                    'description': (v.get('description') or '')[:200], 'cloned_by_count': v.get('cloned_by_count'), 'usage': v.get('usage_character_count_1y')}
+                   for v in res.get('voices', [])]
+            json.dump(out, open(f"{DIR}/{it['file']}.json", 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+            print('made', it['file'], len(out), 'voices'); continue
         if it['type'] == 'tts':
             vid = it.get('voice_id') or by_name.get(it['voice'].lower())
+            if it.get('owner') and vid not in {v['voice_id'] for v in voices}:   # קול מהספרייה – מוסיפים אותו לחשבון לפני השימוש
+                call('POST', f"/voices/add/{it['owner']}/{vid}", {'new_name': it.get('voice', vid)})
+                voices.append({'voice_id': vid}); print('added library voice', it.get('voice'))
             if not vid:
                 print(f"!! voice {it['voice']} not found – skipped {it['file']}"); failed += 1; continue
             body = {'text': it['text'], 'model_id': it.get('model', MODEL)}
