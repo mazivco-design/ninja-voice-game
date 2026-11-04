@@ -292,30 +292,16 @@
   "description": "Friendly and comforting voice ready to narrate your stories."
  },
  {
-  "name": "Lukas - Excited youthful young man",
-  "id": "wSqOdjeNqDrHcoK0zorF",
-  "category": "professional",
-  "labels": {
-   "age": "young",
-   "accent": "american",
-   "descriptive": "excited",
-   "language": "en",
-   "gender": "male",
-   "use_case": "characters_animation"
-  },
-  "description": "Young man with a lot of passion and excitement in tone, happy, hopeful and confident. Good for characters and catchy Socil Media narration. "
- },
- {
   "name": "Jett - Gritty, Spunky Young Hero",
   "id": "6IwYbsNENZgAB1dtBZDp",
   "category": "professional",
   "labels": {
-   "accent": "american",
-   "age": "young",
+   "use_case": "characters_animation",
    "descriptive": "hyped",
    "language": "en",
    "gender": "male",
-   "use_case": "characters_animation"
+   "age": "young",
+   "accent": "american"
   },
   "description": "A young hero with a bit of an edge to him. He could fight demons or host your podcast!"
  },
@@ -324,12 +310,12 @@
   "id": "Xb3zeLrTi6F4ziIcXdwk",
   "category": "professional",
   "labels": {
+   "use_case": "characters_animation",
    "accent": "american",
-   "age": "young",
-   "language": "en",
    "descriptive": "soft",
    "gender": "male",
-   "use_case": "characters_animation"
+   "age": "young",
+   "language": "en"
   },
   "description": "A young American timid orphan boy. Tone is soft. Voice works well for characters & Animation."
  },
@@ -338,54 +324,68 @@
   "id": "XjGYkUkzth8BPs29fmcV",
   "category": "professional",
   "labels": {
-   "age": "young",
-   "use_case": "characters_animation",
    "descriptive": "cute",
+   "use_case": "characters_animation",
    "language": "en",
    "gender": "male",
+   "age": "young",
    "accent": "american"
   },
   "description": "A sweet, playful, and adorable little cartoon boy inspired by popular kids' characters. He is kind, cheerful, and lovable. Ideal for children's animations, kids' audiobooks, storybook apps, educational content, and social media."
- },
- {
-  "name": "Max - USA Energetic Animated Cartoon",
-  "id": "467tX2b9Bky3cD6jXpNa",
-  "category": "professional",
-  "labels": {
-   "accent": "american",
-   "age": "young",
-   "descriptive": "excited",
-   "language": "en",
-   "gender": "male",
-   "use_case": "social_media"
-  },
-  "description": "Max is a high-energy, versatile American character voice engineered specifically for animation, social media, gaming, and dynamic commercial content. Delivering punchy articulation, vibrant dynamic range, and cinematic presence, Max is built to bring animated leads, zany cartoon heroes, and fast-paced social media promos to life. Recorded in a broadcast-spec booth with a pristine signal chain for zero-lag, studio-grade renders every time."
  },
  {
   "name": "Noku ",
   "id": "Sth0oyItcRdvk3sFrPiq",
   "category": "professional",
   "labels": {
+   "descriptive": "confident",
    "use_case": "characters_animation",
    "accent": "american",
-   "descriptive": "confident",
-   "language": "en",
    "gender": "male",
-   "age": "middle_aged"
+   "age": "middle_aged",
+   "language": "en"
   },
   "description": "Inspired by a heroic male anime character. The main protagonist in an action-packed anime story or animated action cartoon."
+ },
+ {
+  "name": "Max - USA Energetic Animated Cartoon",
+  "id": "467tX2b9Bky3cD6jXpNa",
+  "category": "professional",
+  "labels": {
+   "descriptive": "excited",
+   "use_case": "social_media",
+   "language": "en",
+   "gender": "male",
+   "age": "young",
+   "accent": "american"
+  },
+  "description": "Max is a high-energy, versatile American character voice engineered specifically for animation, social media, gaming, and dynamic commercial content. Delivering punchy articulation, vibrant dynamic range, and cinematic presence, Max is built to bring animated leads, zany cartoon heroes, and fast-paced social media promos to life. Recorded in a broadcast-spec booth with a pristine signal chain for zero-lag, studio-grade renders every time."
+ },
+ {
+  "name": "Lukas - Excited youthful young man",
+  "id": "wSqOdjeNqDrHcoK0zorF",
+  "category": "professional",
+  "labels": {
+   "use_case": "characters_animation",
+   "descriptive": "excited",
+   "accent": "american",
+   "gender": "male",
+   "age": "young",
+   "language": "en"
+  },
+  "description": "Young man with a lot of passion and excitement in tone, happy, hopeful and confident. Good for characters and catchy Socil Media narration. "
  },
  {
   "name": "Little Dude II - Cartoon Character",
   "id": "fBD19tfE58bkETeiwUoC",
   "category": "professional",
   "labels": {
+   "descriptive": "confident",
    "accent": "american",
    "use_case": "characters_animation",
-   "language": "en",
-   "descriptive": "confident",
    "gender": "male",
-   "age": "young"
+   "age": "young",
+   "language": "en"
   },
   "description": "A high-pitched, energetic cartoon-style voice with a playful, mischievous edge.\nThe delivery has a light Southern drawl, giving the voice a quirky regional flavor and a hint of friendly rural warmth.\nExpressive emphasis, comedic timing, and exaggerated intonation patterns make the voice perfect for humorous characters, sidekicks, or whimsical narrators.\nBright, fast, and slightly raspy at the top end, elongated vowels, and lively emotional swings."
  }
