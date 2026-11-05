@@ -1420,6 +1420,42 @@
    },
    "text": "Hmm, that won't help here.",
    "voice": "Roger"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend6-lukas-hi-stuck",
+   "text": "[friendly] Hi! My boat is stuck in the sand."
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend6-lukas-canyouhelp",
+   "text": "Can you help me?"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend6-lukas-great-push",
+   "text": "[happy] Great! Let's push together!"
   }
  ]
 }
