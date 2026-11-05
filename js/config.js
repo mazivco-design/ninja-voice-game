@@ -96,7 +96,7 @@ const STAGES = [
   { name: 'PICK UP + PUT DOWN', words: ['put down'],  count: 4,  hint: 'PICK UP the rock · PUT DOWN · JUMP', world: 3 },
   { name: 'PICK UP + THROW', words: ['pick up', 'throw'], count: 8, hint: 'PICK UP the rope · THROW · PULL', world: 3 },
   { name: 'HELP',         words: ['help'],           count: 4,  hint: 'Stuck in the mud! Your friend throws a rope · CATCH · HOLD', world: 0 },
-  { name: 'PUSH TOGETHER', words: ['push together'], count: 3, hint: 'PUSH the boat with your friend · JUMP in', world: 0 },
+  { name: 'PUSH TOGETHER', words: ['push together'], count: 1, hint: 'PUSH the boat with your friend · JUMP in', world: 0 },
   { name: 'PUSH ON THREE', words: ['push on three'], count: 3, hint: 'Count with the kid · PUSH on THREE · JUMP in', world: 0 },
   { name: 'FISHING', words: ['fishing'], count: 2, hint: 'JUMP in · THROW the line · PULL when the fish bites', world: 0 }   // הילד אומר PUSH ו-JUMP (boat.js)   // הילד עוד לא אומר HELP – רק CATCH ו-HOLD (mud.js)
 ];
