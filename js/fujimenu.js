@@ -107,8 +107,9 @@ function renderFujiScene(info) {
         (cur ? '<rect x="' + f1(x - W2 / 2 - 6 * ts) + '" y="' + f1(y - H2 / 2 - 6 * ts) + '" width="' + f1(W2 + 12 * ts) + '" height="' + f1(H2 + 12 * ts + dep) + '" rx="' + f1(rr + 5 * ts) + '" fill="' + FUJI_GOLD + '"/>' : '') +
         '<rect x="' + f1(x - W2 / 2) + '" y="' + f1(y - H2 / 2 + dep) + '" width="' + f1(W2) + '" height="' + f1(H2) + '" rx="' + f1(rr) + '" fill="' + edge + '"/>' +
         '<rect x="' + f1(x - W2 / 2) + '" y="' + f1(y - H2 / 2) + '" width="' + f1(W2) + '" height="' + f1(H2) + '" rx="' + f1(rr) + '" fill="' + face + '"/>';
-      if (reached && learned && !cur) tiles += '<path transform="translate(' + f1(x - 10 * ts) + ' ' + f1(y - 10 * ts) + ') scale(' + f1(20 * ts / 24) + ')" d="M12 2l3 6.5 7 .8-5.2 4.8 1.4 7L12 17.6 5.8 21l1.4-7L2 9.3l7-.8z" fill="' + FUJI_GOLD + '" stroke="#7f1d1d" stroke-width="1.2"/>';
-      else tiles += '<text x="' + f1(x) + '" y="' + f1(y + 5.5 * ts * big) + '" text-anchor="middle" font-family="Shippori Mincho B1, serif" font-weight="800" font-size="' + f1(15 * ts * big) + '" fill="' + (cur ? FUJI_RED : !reached ? FUJI_INK : '#4a2f0b') + '">' + i + '</text>';
+      const done = reached && learned && !cur;                         // נלמדה: מספר בזהב על אדום, וכוכב קטן בפינה
+      tiles += '<text x="' + f1(x) + '" y="' + f1(y + 5.5 * ts * big) + '" text-anchor="middle" font-family="Shippori Mincho B1, serif" font-weight="800" font-size="' + f1(15 * ts * big) + '" fill="' + (cur ? FUJI_RED : !reached ? FUJI_INK : done ? FUJI_GOLD : '#4a2f0b') + '">' + i + '</text>';
+      if (done) tiles += '<path transform="translate(' + f1(x + W2 / 2 - 8 * ts) + ' ' + f1(y - H2 / 2 - 7 * ts) + ') scale(' + f1(14 * ts / 24) + ')" d="M12 2l3 6.5 7 .8-5.2 4.8 1.4 7L12 17.6 5.8 21l1.4-7L2 9.3l7-.8z" fill="' + FUJI_GOLD + '" stroke="#7f1d1d" stroke-width="1.6"/>';
       tiles += '</g>';
     }
     if (cur) {                                                         // הנינג'ה עומד בתחנה הנוכחית, בצבעים שלו
