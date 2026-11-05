@@ -1420,6 +1420,16 @@
    },
    "text": "Hmm, that won't help here.",
    "voice": "Roger"
+  },
+  {
+   "file": "intervals-he-voice-search",
+   "type": "search",
+   "text": "",
+   "params": {
+    "language": "he",
+    "page_size": 40,
+    "sort": "usage_character_count_1y"
+   }
   }
  ]
 }
