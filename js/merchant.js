@@ -15,7 +15,7 @@ const KEY_HAND = { dx: 6, dy: 9 };   // איפה המפתח ביד הנינג'ה
 const MERCHANT_OFFER = ['key', 'rope', 'torch'];
 const SAY_ASK = [[0.3, -1, 'What would you like?']];
 const GATE_CLIMB = 1.6;
-const MERCH = { turn: 1.7, hint: 5.5, hintEvery: 7, choiceHint: 4 };   // turn: מתי מופיעה בועת "תורך" (אחרי שהשאלה נגמרה)
+const MERCH = { giveT: 2.0, thankT: 0.95, turn: 1.7, hint: 5.5, hintEvery: 7, choiceHint: 4 };   // turn: מתי מופיעה בועת "תורך" (אחרי שהשאלה נגמרה)
 
 function cartX(o) { return o.x - 46; }                        // העגלה עומדת לפני הדלת, והסוחר בינה לבין הדלת
 const ITEM_GAP = 7;
@@ -39,8 +39,9 @@ function merchantUpdate(dt, pb) {
   } else if (m.phase === 'choose') {
     const nd = needOf(m.o);
     if (m.t >= MERCH.choiceHint + m.hinted * MERCH.hintEvery && state === 'play') { m.hinted++; m.hi = MERCHANT_OFFER.indexOf(nd); speak(nd); flash = { text: ITEMS[nd].icon + ' ' + nd.toUpperCase() + '!', t: 1.6 }; }
-  } else if (m.phase === 'give') {                              // החפץ עף מהעגלה לנינג'ה
-    if (m.t > 0.7) { m.phase = 'walk'; m.t = 0; }
+  } else if (m.phase === 'give') {                              // החפץ עף מהעגלה לנינג'ה, והנינג'ה מודה לסוחר בקידה קטנה
+    if (m.t > MERCH.thankT && !m.thanked) { m.thanked = 1; speak('ninja: thank you!'); }
+    if (m.t > MERCH.giveT) { m.phase = 'walk'; m.t = 0; }
   } else if (m.phase === 'walk') {                              // הנינג'ה הולך עם החפץ עד הדלת / הצוק / המערה
     if (m.o.x - pb.r <= 1.5 || m.t > 6) {
       const over = pb.r - (m.o.x - 1.5); if (over > 0) ropeShiftBy(-over);
@@ -182,7 +183,7 @@ function drawMerchant(o) {
     ctx.font = '900 2px -apple-system, system-ui, Arial, sans-serif'; ctx.fillStyle = lit ? '#fde047' : '#fff';
     ctx.fillText(w.toUpperCase(), ix, GROUND - 6.2);
   });
-  if (m && m.item && m.phase === 'give') {                      // החפץ עף לנינג'ה – אל כף היד
+  if (m && m.item && m.phase === 'give' && m.t < 0.7) {         // החפץ עף לנינג'ה – אל כף היד
     const k = Math.min(1, m.t / 0.7), sx = x + 3.5 + MERCHANT_OFFER.indexOf(m.item) * ITEM_GAP, sy = GROUND - 13.4, ex = playerHand[0], ey = playerHand[1];
     ctx.font = '4.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     drawItem(m.item, sx + (ex - sx) * k, sy + (ey - sy) * k - Math.sin(Math.PI * k) * 10);
@@ -293,9 +294,9 @@ function heldTorch(hx, hy, t) {
 function drawMerchHeld() {
   const m = merchant; if (!m || !m.item) return;
   const [hx, hy] = playerHand, t = performance.now() / 1000;
-  const holding = m.phase === 'walk' || (m.phase === 'open' && m.t < 0.02) || (m.phase === 'hook' && m.item === 'rope' && m.t < 0.05);
+  const holding = m.phase === 'walk' || (m.phase === 'give' && m.t >= 0.7) || (m.phase === 'open' && m.t < 0.02) || (m.phase === 'hook' && m.item === 'rope' && m.t < 0.05);
   if (!holding) return;
-  if (m.item === 'torch') { if (m.phase === 'walk') heldTorch(hx, hy, t); return; }   // במערה – הלפיד מצויר מעל החושך
+  if (m.item === 'torch') { if (m.phase !== 'cave') heldTorch(hx, hy, t); return; }   // במערה – הלפיד מצויר מעל החושך
   if (m.item === 'rope') {                                                          // סליל החבל תלוי מהיד
     ctx.save(); ctx.translate(hx, hy + 2.2); ctx.scale(0.8, 0.8); drawRope(0, 0); ctx.restore();
     fist(hx, hy); return;
@@ -311,6 +312,10 @@ function merchPose(P) {
   if (m.phase === 'climb') { P = poseClimb(performance.now() / 1000); P.lean = 0.1; }
   if (m.phase === 'hook') { P.arms = [P.arms[0], [2.6 - Math.min(1, m.t / 0.3) * 0.8, 2.9]]; }   // זורק את הוו למעלה
   if (m.phase === 'cave') { P.arms = [P.arms[0], [1.9, 2.5]]; }   // מחזיק את הלפיד גבוה
+  if (m.phase === 'give' && m.t >= 0.7 && m.item) {                                   // מחזיק את החפץ ומודה – קידה קטנה לסוחר
+    const b = Math.sin(Math.PI * Math.max(0, Math.min(1, (m.t - MERCH.thankT) / 0.8)));
+    P.arms = [P.arms[0], m.item === 'torch' ? [1.9, 2.5] : [1.15, 1.55]]; P.lean = (P.lean || 0) + 0.32 * b; P.headTilt = 0.3 * b;
+  }
   if (m.phase === 'walk' && m.item) P.arms = [P.arms[0], m.item === 'torch' ? [1.9, 2.5] : [1.15, 1.55]];   // נושא את החפץ קדימה ביד
   return P;
 }
