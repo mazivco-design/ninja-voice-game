@@ -35,7 +35,7 @@ function renderFujiScene(info) {
   const W = box.clientWidth || innerWidth, H = box.clientHeight || innerHeight;
   const lay = menuLayout(), f1 = n => n.toFixed(1);
   const x0 = 0, x1 = lay === 'bottom' ? W : W - fujiSideW() - 32;
-  const yt = 92, yb = lay === 'bottom' ? H - fujiBotH() - 40 : H - 46;
+  const yt = 92, yb = lay === 'bottom' ? H - fujiBotH() - 40 : H - 26;
   const AW = x1 - x0, AH = Math.max(160, yb - yt);
   const MH = Math.min(AH, AW * 0.92), s = MH / 680, CX = x0 + AW / 2, TOP = yb - MH, BASE = yb;
   const fy = f => TOP + f * MH;
@@ -67,7 +67,7 @@ function renderFujiScene(info) {
   for (let i = 1; i < ctrl.length; i++) { const L = Math.hypot(ctrl[i][0] - ctrl[i - 1][0], ctrl[i][1] - ctrl[i - 1][1]); segs.push(L); total += L; }
   const at = d => { let i = 0; while (i < segs.length - 1 && d > segs[i]) { d -= segs[i]; i++; } const k = Math.min(1, d / segs[i]); return [ctrl[i][0] + (ctrl[i + 1][0] - ctrl[i][0]) * k, ctrl[i][1] + (ctrl[i + 1][1] - ctrl[i][1]) * k]; };
 
-  // עננים (אף ענן לא מאחורי הפסגה), שמש, גבעות רחוקות עם עצים, עצי אורן וגלים
+  // עננים (אף ענן לא מאחורי הפסגה), שמש, גבעות רחוקות עם עצים ועצי אורן
   const cloud = (x, y, w, h, flip) => {
     const parts = [0.2, 0.3, 0.26, 0.24], hs = [0.55, 1, 0.8, 0.5]; let cx = x, d = 'M' + f1(x) + ' ' + f1(y);
     for (let i = 0; i < parts.length; i++) { const bw = parts[i] * w; d += ' A' + f1(bw / 2) + ' ' + f1(h * hs[i]) + ' 0 0 1 ' + f1(cx + bw) + ' ' + f1(y); cx += bw; }
@@ -87,8 +87,6 @@ function renderFujiScene(info) {
   };
   const pine = (x, y, k) => '<rect x="' + f1(x - 4 * k) + '" y="' + f1(y - 70 * k) + '" width="' + f1(8 * k) + '" height="' + f1(70 * k) + '" fill="#5b3a1e"/>' +
     '<path d="M' + f1(x) + ' ' + f1(y - 140 * k) + ' l' + f1(40 * k) + ' ' + f1(50 * k) + ' l' + f1(-28 * k) + ' ' + f1(-4 * k) + ' l' + f1(36 * k) + ' ' + f1(44 * k) + ' l' + f1(-96 * k) + ' 0 l' + f1(36 * k) + ' ' + f1(-44 * k) + ' l' + f1(-28 * k) + ' ' + f1(4 * k) + ' z" fill="#2f5a3d"/>';
-  let waves = '<rect x="0" y="' + f1(H - 46) + '" width="' + f1(W) + '" height="46" fill="' + FUJI_INK + '"/>';
-  for (let x = 6; x < W; x += 40) waves += '<path d="M' + x + ' ' + f1(H - 34) + ' a14 14 0 0 1 28 0 a8 8 0 0 0 -12 0" stroke="#fbf5e6" stroke-width="3" fill="none" stroke-linecap="round"/>';
 
   // התחנות: אדום עם כוכב = נלמדה, זהב = נפתחה ומחכה לשיעור, נייר עם מספר = עוד לא הגענו
   const N = WORDS.length, ts = Math.max(0.75, Math.min(1.3, s)), tw = 34 * ts, th = 32 * ts, rr = 9 * ts, dep = 5 * ts;
@@ -130,7 +128,7 @@ function renderFujiScene(info) {
     pine(CX - 340 * s, BASE - 40 * s, s) + pine(CX + 366 * s, BASE - 50 * s, s) +
     '<path d="' + roadD + '" stroke="#8a6a3a" stroke-width="' + f1(18 * ts) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".45"/>' +
     '<path d="' + roadD + '" stroke="#ead2a2" stroke-width="' + f1(12 * ts) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>' +
-    (lay === 'bottom' ? '' : waves) + tiles + '</svg>';
+    tiles + '</svg>';
 }
 
 /* ---------- לוח הניקוד: גוררים מהכותרת, מקפלים מהחץ ---------- */
