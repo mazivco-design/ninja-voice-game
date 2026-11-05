@@ -1474,6 +1474,138 @@
     "stability": 0.5
    },
    "text": "סֶקוּנְדָה קְטַנָּה. ... סֶקוּנְדָה גְּדוֹלָה. ... טֶרְצָה קְטַנָּה. ... טֶרְצָה גְּדוֹלָה. ... קְוַרְטָה זַכָּה. ... טְרִיטוֹן. ... קְוִינְטָה זַכָּה. ... סֶקְסְטָה קְטַנָּה. ... סֶקְסְטָה גְּדוֹלָה. ... סֶפְּטִימָה קְטַנָּה. ... סֶפְּטִימָה גְּדוֹלָה. ... אוֹקְטָבָה."
+  },
+  {
+   "file": "intervals-he-note-do",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "דּוֹ"
+  },
+  {
+   "file": "intervals-he-note-do-sharp",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "דּוֹ דִּיאֵז"
+  },
+  {
+   "file": "intervals-he-note-re",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "רֶה"
+  },
+  {
+   "file": "intervals-he-note-re-sharp",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "רֶה דִּיאֵז"
+  },
+  {
+   "file": "intervals-he-note-mi",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "מִי"
+  },
+  {
+   "file": "intervals-he-note-fa",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "פָה"
+  },
+  {
+   "file": "intervals-he-note-fa-sharp",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "פָה דִּיאֵז"
+  },
+  {
+   "file": "intervals-he-note-sol",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "סוֹל"
+  },
+  {
+   "file": "intervals-he-note-sol-sharp",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "סוֹל דִּיאֵז"
+  },
+  {
+   "file": "intervals-he-note-la",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "לָה"
+  },
+  {
+   "file": "intervals-he-note-la-sharp",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "לָה דִּיאֵז"
+  },
+  {
+   "file": "intervals-he-note-si",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "סִי"
   }
  ]
 }
