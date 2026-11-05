@@ -128,7 +128,9 @@ function ropeStroke(pts, w, fill, line) {
 }
 function setBubble(m, text) { if (m.bubble !== text) { m.bubble = text; m.bT = 0; } }
 // בועת קומיקס: לבנה עם קו מתאר עבה, פינות עגולות, זנב משולש אל הדובר, ו"קפיצה" קטנה כשהיא מופיעה. tail: 1 = הזנב ימינה-למטה, -1 = שמאלה-למטה
+const BUBBLES = false;   // בועות הדיבור כבויות בכל המשחק (הקולות נשארים)
 function drawBubble(text, x, y, opt) {
+  if (!BUBBLES) return;
   const o = opt || {}, size = (o.size || 4.2) * 0.88, pop = o.age === undefined ? 1 : Math.min(1, o.age / 0.18), sc = 0.6 + 0.4 * pop + Math.sin(Math.min(1, pop) * Math.PI) * 0.08;
   ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc);
   ctx.font = '800 ' + size + 'px -apple-system, system-ui, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -180,14 +182,13 @@ function drawMerchant(o) {
     ctx.font = '900 2px -apple-system, system-ui, Arial, sans-serif'; ctx.fillStyle = lit ? '#fde047' : '#fff';
     ctx.fillText(w.toUpperCase(), ix, GROUND - 6.2);
   });
-  if (m && m.item && m.phase === 'give') {                      // החפץ עף לנינג'ה
-    const k = Math.min(1, m.t / 0.7), sx = x + 3.5 + MERCHANT_OFFER.indexOf(m.item) * ITEM_GAP, sy = GROUND - 13.4, ex = PLAYER.x + KEY_HAND.dx, ey = GROUND - KEY_HAND.dy;
+  if (m && m.item && m.phase === 'give') {                      // החפץ עף לנינג'ה – אל כף היד
+    const k = Math.min(1, m.t / 0.7), sx = x + 3.5 + MERCHANT_OFFER.indexOf(m.item) * ITEM_GAP, sy = GROUND - 13.4, ex = playerHand[0], ey = playerHand[1];
     ctx.font = '4.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     drawItem(m.item, sx + (ex - sx) * k, sy + (ey - sy) * k - Math.sin(Math.PI * k) * 10);
   }
-  if (m && m.item && m.phase === 'walk') drawItem(m.item, PLAYER.x + KEY_HAND.dx, GROUND - KEY_HAND.dy - Math.abs(Math.sin(now * 9)) * 0.5);   // המפתח ביד בזמן ההליכה
   if (m && m.item && m.phase === 'open') {                      // המפתח טס אל המנעול
-    const k = Math.min(1, m.t / 0.35), sx = PLAYER.x + KEY_HAND.dx, sy = GROUND - KEY_HAND.dy, ex = o.x + 2, ey = GROUND - 14;
+    const k = Math.min(1, m.t / 0.35), sx = playerHand[0], sy = playerHand[1], ex = o.x + 2, ey = GROUND - 14;
     if (k < 1) { ctx.font = '4.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; drawItem(m.item, sx + (ex - sx) * k, sy + (ey - sy) * k); }
   }
   // הסוחר מצויר אחרי העגלה – כדי שהיד המצביעה תיראה מעל הדוכן
@@ -276,11 +277,41 @@ function merchSpeed() {                                          // null = לא 
   if (m.phase === 'done') return null;
   return 0;
 }
+let playerHand = [PLAYER.x + 6, GROUND - 9];                     // כף היד הקדמית של הנינג'ה (מתעדכן בכל פריים בציור הנינג'ה)
+// לפיד אחוז ביד: היד סוגרת על המקל, הלהבה למעלה
+function heldTorch(hx, hy, t) {
+  const fl = Math.sin(t * 14) * 0.4;
+  ctx.save(); ctx.translate(hx, hy); ctx.rotate(0.12);
+  ctx.fillStyle = '#7c2d12'; ctx.fillRect(-0.4, -3.2, 0.8, 5.2);                 // המקל – עובר דרך כף היד
+  ctx.fillStyle = '#a16207'; ctx.fillRect(-0.7, -3.6, 1.4, 0.8);
+  ctx.fillStyle = '#fb923c'; ctx.beginPath(); ctx.ellipse(0, -4.8 + fl * 0.3, 1.2, 1.9 + fl, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.ellipse(0, -4.4, 0.6, 1.05, 0, 0, Math.PI * 2); ctx.fill();
+  fist(0, 0);                                                                     // האגרוף סגור על המקל
+  ctx.restore();
+}
+// החפץ ביד הנינג'ה – מצויר אחרי הנינג'ה, צמוד לכף היד
+function drawMerchHeld() {
+  const m = merchant; if (!m || !m.item) return;
+  const [hx, hy] = playerHand, t = performance.now() / 1000;
+  const holding = m.phase === 'walk' || (m.phase === 'open' && m.t < 0.02) || (m.phase === 'hook' && m.item === 'rope' && m.t < 0.05);
+  if (!holding) return;
+  if (m.item === 'torch') { if (m.phase === 'walk') heldTorch(hx, hy, t); return; }   // במערה – הלפיד מצויר מעל החושך
+  if (m.item === 'rope') {                                                          // סליל החבל תלוי מהיד
+    ctx.save(); ctx.translate(hx, hy + 2.2); ctx.scale(0.8, 0.8); drawRope(0, 0); ctx.restore();
+    fist(hx, hy); return;
+  }
+  ctx.save(); ctx.translate(hx + 1.1, hy - 0.4); ctx.rotate(-0.5);                  // המפתח – הראש בתוך האגרוף, הלשון קדימה
+  ctx.font = '4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#000'; ctx.fillText(ITEMS.key.icon, 0, 0); ctx.restore();
+  fist(hx, hy);
+}
+function fist(x, y) { ctx.fillStyle = playerColor(); ctx.beginPath(); ctx.arc(x, y, RIG.shape.handR || 0.95, 0, Math.PI * 2); ctx.fill(); }   // הכפפה מעל החפץ – נראה שהיד סוגרת עליו
 function merchPose(P) {
   const m = merchant; if (!m) return P;
   if (m.phase === 'climb') { P = poseClimb(performance.now() / 1000); P.lean = 0.1; }
   if (m.phase === 'hook') { P.arms = [P.arms[0], [2.6 - Math.min(1, m.t / 0.3) * 0.8, 2.9]]; }   // זורק את הוו למעלה
   if (m.phase === 'cave') { P.arms = [P.arms[0], [1.9, 2.5]]; }   // מחזיק את הלפיד גבוה
+  if (m.phase === 'walk' && m.item) P.arms = [P.arms[0], m.item === 'torch' ? [1.9, 2.5] : [1.15, 1.55]];   // נושא את החפץ קדימה ביד
   return P;
 }
 function drawGate(o) {                                          // מה שעומד אחרי הדוכן
@@ -389,7 +420,7 @@ function drawCaveDark(o) {
   const DL = P.L, DW = P.R - P.L, f = Math.min(0.45, CAVE.fade / DW), dk = 'rgba(8,6,4,', e0 = 0.3;   // בפתח כבר צל, ובפנים חושך
   const dg = ctx.createLinearGradient(DL, 0, DL + DW, 0);
   dg.addColorStop(0, dk + (e0 * CAVE.dark) + ')'); dg.addColorStop(f, dk + CAVE.dark + ')'); dg.addColorStop(1 - f, dk + CAVE.dark + ')'); dg.addColorStop(1, dk + (e0 * CAVE.dark) + ')');
-  const lx = PLAYER.x + 7, ly = GROUND - 12, R = 16 + Math.sin(t * 11) * 0.5;
+  const lx = playerHand[0], ly = playerHand[1] - 3, R = 16 + Math.sin(t * 11) * 0.5;   // האור יוצא מהלהבה שביד
   const darkAt = xx => { const r = (xx - DL) / DW; return CAVE.dark * (e0 + (1 - e0) * Math.max(0, Math.min(1, Math.min(r, 1 - r) / f))); };
   const og = ctx.createLinearGradient(DL, 0, DL + DW, 0);         // מסביב לחלל: מתחיל מאפס בקצוות – בלי קו חד על הקרקע ועל ההר
   og.addColorStop(0, dk + '0)'); og.addColorStop(f * 1.4, dk + CAVE.dark + ')'); og.addColorStop(1 - f * 1.4, dk + CAVE.dark + ')'); og.addColorStop(1, dk + '0)');
@@ -414,12 +445,7 @@ function drawCaveDark(o) {
     ctx.fillStyle = warm; ctx.beginPath(); ctx.arc(lx, ly, R * 0.85, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
-  if (inCave) {                                                   // הלפיד ביד
-    const fx = PLAYER.x + 7, fy = GROUND - 13, fl = Math.sin(t * 14) * 0.4;
-    ctx.fillStyle = '#7c2d12'; ctx.fillRect(fx - 0.35, fy, 0.7, 4);
-    ctx.fillStyle = '#fb923c'; ctx.beginPath(); ctx.ellipse(fx, fy - 1 + fl * 0.3, 1.2, 2 + fl, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.ellipse(fx, fy - 0.6, 0.6, 1.1, 0, 0, Math.PI * 2); ctx.fill();
-  }
+  if (inCave) heldTorch(playerHand[0], playerHand[1], t);         // הלפיד ביד – מעל החושך
   if (!o.unlocked && labelsVisible() && !merchant) label('TORCH', x + 12, P.roof[0][1] - 6, 4, '#fde047', '#1e293b');
 }
 function drawTorchItem(x, y) {                                  // לפיד: מקל עם להבה (אמריקאית – torch זה לפיד, לא פנס)

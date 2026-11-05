@@ -466,7 +466,7 @@ function playerPose() {
   else if (py > 0 && !(py >= CLIFF.h - 0.5 && vy === 0 && cliffTop())) P = poseAir(vy > 0, Math.max(0, Math.min(1, 0.5 - vy / (2 * cfg.jumpV))));
   else if (act.push > 0) P = posePush();
   else if (act.pull > 0) P = posePull(now);
-  else if (state === 'play' && curSpeed() > 0) P = approachSlow() < 0.6 ? poseWalk(bgX * 0.42 * RIG.run.cadence * 1.6) : poseRun(bgX * 0.42 * RIG.run.cadence);   // ליד החבר / הילד – הולך
+  else if (state === 'play' && curSpeed() > 0) P = approachSlow() < 0.6 || (merchant && merchant.phase === 'walk') ? poseWalk(bgX * 0.42 * RIG.run.cadence * 1.6) : poseRun(bgX * 0.42 * RIG.run.cadence);   // ליד החבר / הילד – הולך
   else if (act.run > 0) P = poseRun(now * 24);       // בהדגמה – רץ במקום
   else P = poseIdle(now);
   if (act.run > 0 && py <= 0 && duckT <= 0) P.lean = 0.38;
@@ -1458,6 +1458,8 @@ function drawNinjaBody() {
   drawPowerBack(fx, fy, P);                                       // תרמיל הסילון על הגב
   if (hasGear('katana') && P.swordA === undefined && jetT <= 0) drawKatana(fx, fy, P);   // קטאנה על הגב – מאחורי הגוף (בקרב היא ביד)
   drawFigure({ fx, fy, facing: playerFacing(), scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
+  playerHand = figHand(fx, fy, playerFacing(), 1, P, 1);           // איפה כף היד הקדמית – לחפצים שמחזיקים
+  drawMerchHeld();                                                // מפתח / חבל ביד (הלפיד – מעל החושך של המערה)
   drawPlayerSword(fx, fy, P);
   drawPowerFront(fx, fy);                                         // בועת מגן / טיימר הסילון
   drawLiftCarry(fx, fy);                                          // הסלע בידיים
