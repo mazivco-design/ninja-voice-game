@@ -86,8 +86,8 @@ function drawFuji(box, W, H, x0, x1, yt, yb, info) {
     return '<path d="' + d + ' Z" fill="#fbf5e6" stroke="' + FUJI_INK + '" stroke-width="1.6" stroke-opacity=".55" stroke-linejoin="round"/>' +
            '<path d="' + curl + '" stroke="' + FUJI_INK + '" stroke-width="1.6" stroke-opacity=".55" fill="none" stroke-linecap="round"/>';
   };
-  const cloudOf = (x, y, w, h, flip) => {                                // סגנון העננים (FUJI_CLOUD): 1 בליטות, 2 פסים, 3 סלסולים, 4 רך, 5 ערפל זהב, 6 משחק
-    const st = typeof FUJI_CLOUD === 'number' ? FUJI_CLOUD : 6;            // נבחר: 6 – עננים לבנים של משחק
+  const cloudOf = (x, y, w, h, flip) => {                                // סגנון העננים (FUJI_CLOUD): 1 בליטות, 2 פסים, 3 סלסולים, 4 רך, 5 ערפל זהב, 6 משחק, 7 בסיס שטוח
+    const st = typeof FUJI_CLOUD === 'number' ? FUJI_CLOUD : 7;            // נבחר: 7 – עננים לבנים עם בסיס שטוח ובליטות בגדלים שונים
     if (st === 1) return cloud(x, y, w, h, flip);
     const k = w / 240, tf = 'translate(' + f1(x) + ' ' + f1(y) + ') scale(' + k.toFixed(3) + ')' + (flip ? ' translate(240 0) scale(-1 1)' : '');
     const ns = ' vector-effect="non-scaling-stroke"';
@@ -100,6 +100,14 @@ function drawFuji(box, W, H, x0, x1, yt, yb, info) {
       5: '<path d="M0 -44 H200 A12 12 0 0 1 200 -20 H150 A10 10 0 0 0 150 0 H10 A10 10 0 0 1 10 -20 H40 A12 12 0 0 0 40 -44 Z" fill="#ead7a8" opacity=".92" stroke="#b9873f" stroke-width="1.6"' + ns + '/>',
       6: '<g fill="#fff"><circle cx="34" cy="-24" r="24"/><circle cx="90" cy="-40" r="44"/><circle cx="150" cy="-30" r="36"/><circle cx="200" cy="-18" r="24"/><rect x="8" y="-30" width="218" height="30" rx="15"/></g>'
     };
+    if (st === 7) {                                                         // בסיס שטוח עם קצוות מעוגלים, בליטה גדולה ובליטות קטנות בצדדים; שלוש צורות מתחלפות
+      const V = [
+        [[26, -24, 12], [62, -34, 30], [100, -30, 14], [142, -40, 40], [190, -30, 20], [214, -22, 10]],
+        [[30, -26, 16], [78, -46, 44], [118, -28, 14], [160, -36, 32], [204, -24, 14]],
+        [[22, -22, 10], [50, -30, 20], [96, -42, 38], [136, -30, 18], [176, -34, 28], [216, -22, 10]]
+      ][Math.abs(Math.round(x * 7 + y * 13)) % 3];
+      ART[7] = '<g fill="#fff">' + V.map(c => '<circle cx="' + c[0] + '" cy="' + c[1] + '" r="' + c[2] + '"/>').join('') + '<rect x="0" y="-26" width="240" height="26" rx="13"/></g>';
+    }
     return '<g transform="' + tf + '">' + ART[st] + '</g>';
   };
   const cl = (dx, dy, w, h, flip) => { const x = Math.max(4, Math.min(W - w * s - 24, CX + dx * s)); return cloudOf(x, TOP + dy * s, w * s, h * s, flip); };
