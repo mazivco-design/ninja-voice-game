@@ -1456,6 +1456,17 @@
    "voice_id": "wSqOdjeNqDrHcoK0zorF",
    "file": "friend6-lukas-great-push",
    "text": "[happy] Great! Let's push together!"
+  },
+  {
+   "file": "sarah-yes",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Yes!",
+   "voice": "Sarah"
   }
  ]
 }
