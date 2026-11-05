@@ -8,7 +8,7 @@
 const MODEL_URL = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz';
 
 // כל המילים שהמשחק מכיר
-const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive', 'crawl', 'fire', 'want', 'let go', 'ride', 'fight', 'hold', 'pick up', 'put down', 'help', 'push together', 'push on three'];
+const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive', 'crawl', 'fire', 'let go', 'ride', 'fight', 'hold', 'pick up', 'put down', 'help', 'push together', 'push on three', 'want'];   // WANT עבר לסוף
 // סדר התחנות במסע – אפשר לשנות בעורך (tester → 🧭). נשמר ב-ninjaVoice_wordOrder (ומסתנכרן בין מכשירים)
 const WORDS_DEFAULT = WORDS.slice();
 (function applyWordOrder() {
@@ -19,6 +19,29 @@ const WORDS_DEFAULT = WORDS.slice();
     const rest = WORDS_DEFAULT.filter(w => !known.includes(w));                  // מילים חדשות שנוספו מאז – בסוף
     if (known[0] !== 'jump') return;                                            // JUMP תמיד ראשונה (התחנה של כולם)
     WORDS.splice(0, WORDS.length, ...known, ...rest);
+  } catch (e) {}
+})();
+// WANT עבר לסוף המסע (פעם אחת בכל מכשיר): מי שכבר עבר אותו – התחנה שלו יורדת באחת,
+// כך שפתוחות לו בדיוק אותן מילים כמו קודם (חוץ מ-WANT, שנשאר אצלו "נלמד"). שום מילה חדשה לא נפתחת בלי שיעור.
+(function moveWantToEnd() {
+  try {
+    if (localStorage.getItem('ninjaVoice_mig_wantEnd')) return;
+    const saved = JSON.parse(localStorage.getItem('ninjaVoice_wordOrder') || 'null');
+    const OLD_DEFAULT = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive', 'crawl', 'fire', 'want', 'let go', 'ride', 'fight', 'hold', 'pick up', 'put down', 'help', 'push together', 'push on three'];
+    const old = Array.isArray(saved) && saved.includes('want') ? saved : OLD_DEFAULT;
+    const wi = old.indexOf('want');
+    const players = JSON.parse(localStorage.getItem('ninjaVoice_players') || '[]');
+    for (const p of players) {
+      if (!p || p.id === 'tester' || String(p.name || '').trim().toLowerCase() === 'tester') continue;
+      const k = 'ninjaVoice_p' + p.id + '_station', v = JSON.parse(localStorage.getItem(k) || 'null');
+      if (typeof v === 'number' && wi >= 0 && v >= wi) localStorage.setItem(k, JSON.stringify(Math.max(0, v - 1)));
+    }
+    if (Array.isArray(saved) && saved.includes('want')) {                      // סדר ששמרו בעורך – גם בו WANT עובר לסוף
+      const ord = saved.filter(w => w !== 'want').concat('want');
+      localStorage.setItem('ninjaVoice_wordOrder', JSON.stringify(ord));
+      const i = WORDS.indexOf('want'); if (i >= 0) { WORDS.splice(i, 1); WORDS.push('want'); }
+    }
+    localStorage.setItem('ninjaVoice_mig_wantEnd', '1');
   } catch (e) {}
 })();
 const WORD_ICON = { jump: '⬆️', down: '⬇️', kick: '🦶', throw: '✴️', catch: '🟡', fly: '🪁',
