@@ -138,7 +138,7 @@ function drawFuji(box, W, H, x0, x1, yt, yb, info) {
       const big = cur ? 1.3 : 1, W2 = tw * big, H2 = th * big;
       const face = cur ? '#ffffff' : !reached ? FUJI_PAPER : learned ? FUJI_RED : FUJI_GOLD;
       const edge = cur ? '#b9a97f' : !reached ? '#b9a97f' : learned ? '#7f1d1d' : '#a07a22';
-      tiles += '<g' + (cur ? '' : '') + '>' +
+      tiles += '<g class="stTile" data-i="' + i + '">' +
         (cur ? '<rect x="' + f1(x - W2 / 2 - 6 * ts) + '" y="' + f1(y - H2 / 2 - 6 * ts) + '" width="' + f1(W2 + 12 * ts) + '" height="' + f1(H2 + 12 * ts + dep) + '" rx="' + f1(rr + 5 * ts) + '" fill="' + FUJI_GOLD + '"/>' : '') +
         '<rect x="' + f1(x - W2 / 2) + '" y="' + f1(y - H2 / 2 + dep) + '" width="' + f1(W2) + '" height="' + f1(H2) + '" rx="' + f1(rr) + '" fill="' + edge + '"/>' +
         '<rect x="' + f1(x - W2 / 2) + '" y="' + f1(y - H2 / 2) + '" width="' + f1(W2) + '" height="' + f1(H2) + '" rx="' + f1(rr) + '" fill="' + face + '"/>';
@@ -203,6 +203,12 @@ $('sbMin').addEventListener('pointerdown', e => e.stopPropagation());
   head.addEventListener('pointerup', end); head.addEventListener('pointercancel', end);
 })();
 
+// בודק: נגיעה בתחנה על ההר מתחילה את המסע מהתחנה הזו
+$('fujiScene').addEventListener('click', e => {
+  const g = e.target.closest && e.target.closest('.stTile');
+  if (!g || !isTester() || !model) return;
+  play('journey', +g.dataset.i);
+});
 addEventListener('resize', () => {
   if ($('menu').classList.contains('show')) { applyMenuLayout(); renderFujiScene(); placeSideBoard(); }
   if ($('players').classList.contains('show') || $('editP').classList.contains('show')) renderWelcomeScene();

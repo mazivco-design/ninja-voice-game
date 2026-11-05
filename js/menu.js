@@ -46,7 +46,8 @@ function renderMenu() {
     const b = document.createElement('button');
     b.className = 'stage' + (unlocked ? '' : ' locked') + (w === pend ? ' pend' : '');
     b.disabled = !model || !unlocked;
-    b.innerHTML = '<div class="num">' + (unlocked ? WORD_ICON[w] : '🔒') + '</div>' +
+    b.innerHTML = '<span class="stNo">' + WORDS.indexOf(w) + '</span>' +                // מספר התחנה במסלול על ההר
+                  '<div class="num">' + (unlocked ? WORD_ICON[w] : '🔒') + '</div>' +
                   '<div class="info"><div class="name">' + w.toUpperCase() + '</div>' +
                   '<div class="stars">' + (unlocked ? '★'.repeat(got) + '☆'.repeat(3 - got) : '&nbsp;') + '</div></div>';
     b.onclick = () => play('stage', i);

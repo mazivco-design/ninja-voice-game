@@ -45,7 +45,15 @@ window.addEventListener('focus', resizeSoon);
 setInterval(() => { if (vpKey() !== lastVp) resize(); }, 500);
 if (window.visualViewport) { window.visualViewport.addEventListener('resize', resize); window.visualViewport.addEventListener('scroll', resize); }
 // אין גלילה של הדף: גרירה עובדת רק בתוך רשימות שבאמת צריך לגלול (רשימת שחקנים)
-document.addEventListener('touchmove', e => { if (!e.target.closest('.playerGrid, #orderList')) e.preventDefault(); }, { passive: false });
+// גלילה במגע: חוסמים גרירה של הדף, אבל מאפשרים לכל רשימה שיש בה מה לגלול (אימון, לוח ניקוד, חנות, מילים…)
+function canScroll(el) {
+  for (; el && el !== document.body; el = el.parentElement) {
+    const st = getComputedStyle(el);
+    if ((/(auto|scroll)/.test(st.overflowY) && el.scrollHeight > el.clientHeight + 1) || (/(auto|scroll)/.test(st.overflowX) && el.scrollWidth > el.clientWidth + 1)) return true;
+  }
+  return false;
+}
+document.addEventListener('touchmove', e => { if (!canScroll(e.target)) e.preventDefault(); }, { passive: false });
 window.addEventListener('scroll', () => { if (window.scrollY || window.scrollX) window.scrollTo(0, 0); });
 resize();
 

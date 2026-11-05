@@ -153,3 +153,11 @@
 #players.fujiW .pcard.add { min-height: 0; align-self: stretch; }
 #players.fujiW .pcard .nj { width: 50px; height: 52px; }
 #players.fujiW { align-items: flex-start; padding-top: min(var(--wTop, 40vh), calc(100% - 230px)); }
+
+/* מספר התחנה על כרטיס האימון – כמו האריחים על ההר */
+#menu.fuji .stage { position: relative; }
+#menu.fuji .stage .stNo { position: absolute; top: 3px; left: 4px; min-width: 16px; height: 16px; padding: 0 3px; border-radius: 5px; box-sizing: border-box;
+  background: #2c4a7c; color: #fbf5e6; font: 800 10.5px/16px 'Shippori Mincho B1', serif; text-align: center; }
+#menu.fuji .stage.locked .stNo { background: #b9a97f; }
+/* בודק: אפשר ללחוץ על תחנה בהר */
+#menu.fuji.tester .fujiScene .stTile { cursor: pointer; }
