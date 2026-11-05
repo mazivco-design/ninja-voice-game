@@ -1606,6 +1606,897 @@
     "stability": 0.5
    },
    "text": "סִי"
+  },
+  {
+   "file": "intervals-he-v-ivl-1-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "סֶקוּנְדָה קְטַנָּה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-ivl-1-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "סֶקוּנְדָה קְטַנָּה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-sung-1-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ סֶקוּנְדָה קְטַנָּה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-sung-1-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ סֶקוּנְדָה קְטַנָּה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-ivl-2-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "סֶקוּנְדָה גְּדוֹלָה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-ivl-2-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "סֶקוּנְדָה גְּדוֹלָה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-sung-2-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ סֶקוּנְדָה גְּדוֹלָה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-sung-2-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ סֶקוּנְדָה גְּדוֹלָה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-ivl-3-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "טֶרְצָה קְטַנָּה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-ivl-3-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "טֶרְצָה קְטַנָּה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-sung-3-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ טֶרְצָה קְטַנָּה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-sung-3-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ טֶרְצָה קְטַנָּה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-ivl-4-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "טֶרְצָה גְּדוֹלָה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-ivl-4-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "טֶרְצָה גְּדוֹלָה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-sung-4-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ טֶרְצָה גְּדוֹלָה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-sung-4-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ טֶרְצָה גְּדוֹלָה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-ivl-5-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "קְוַרְטָה זַכָּה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-ivl-5-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "קְוַרְטָה זַכָּה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-sung-5-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ קְוַרְטָה זַכָּה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-sung-5-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ קְוַרְטָה זַכָּה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-ivl-6-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "טְרִיטוֹן לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-ivl-6-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "טְרִיטוֹן לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-sung-6-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ טְרִיטוֹן לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-sung-6-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ טְרִיטוֹן לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-ivl-7-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "קְוִינְטָה זַכָּה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-ivl-7-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "קְוִינְטָה זַכָּה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-sung-7-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ קְוִינְטָה זַכָּה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-sung-7-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ קְוִינְטָה זַכָּה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-ivl-8-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "סֶקְסְטָה קְטַנָּה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-ivl-8-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "סֶקְסְטָה קְטַנָּה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-sung-8-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ סֶקְסְטָה קְטַנָּה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-sung-8-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ סֶקְסְטָה קְטַנָּה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-ivl-9-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "סֶקְסְטָה גְּדוֹלָה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-ivl-9-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "סֶקְסְטָה גְּדוֹלָה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-sung-9-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ סֶקְסְטָה גְּדוֹלָה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-sung-9-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ סֶקְסְטָה גְּדוֹלָה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-ivl-10-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "סֶפְּטִימָה קְטַנָּה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-ivl-10-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "סֶפְּטִימָה קְטַנָּה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-sung-10-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ סֶפְּטִימָה קְטַנָּה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-sung-10-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ סֶפְּטִימָה קְטַנָּה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-ivl-11-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "סֶפְּטִימָה גְּדוֹלָה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-ivl-11-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "סֶפְּטִימָה גְּדוֹלָה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-sung-11-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ סֶפְּטִימָה גְּדוֹלָה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-sung-11-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ סֶפְּטִימָה גְּדוֹלָה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-ivl-12-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "אוֹקְטָבָה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-ivl-12-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "אוֹקְטָבָה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-sung-12-up",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ אוֹקְטָבָה לְמַעְלָה."
+  },
+  {
+   "file": "intervals-he-v-sung-12-down",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ אוֹקְטָבָה לְמַטָּה."
+  },
+  {
+   "file": "intervals-he-v-sung-0",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שַׁרְתָּ אֶת אוֹתוֹ הַצְּלִיל."
+  },
+  {
+   "file": "intervals-he-v-exact",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "מְדֻיָּק!"
+  },
+  {
+   "file": "intervals-he-v-nice",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "יָפֶה!"
+  },
+  {
+   "file": "intervals-he-v-high",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "קְצָת גָּבוֹהַּ."
+  },
+  {
+   "file": "intervals-he-v-low",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "קְצָת נָמוּךְ."
+  },
+  {
+   "file": "intervals-he-v-nohear",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "לֹא שָׁמַעְתִּי."
+  },
+  {
+   "file": "intervals-he-v-again",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שׁוּב."
+  },
+  {
+   "file": "intervals-he-v-stopped",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "עָצַרְתִּי. הַקֵּשׁ כְּדֵי לְהַמְשִׁיךְ."
+  },
+  {
+   "file": "intervals-he-v-done",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "סִיַּמְתָּ."
+  },
+  {
+   "file": "intervals-he-v-num-0",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "אֶפֶס"
+  },
+  {
+   "file": "intervals-he-v-num-1",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "אַחַת"
+  },
+  {
+   "file": "intervals-he-v-num-2",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שְׁתַּיִם"
+  },
+  {
+   "file": "intervals-he-v-num-3",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שָׁלוֹשׁ"
+  },
+  {
+   "file": "intervals-he-v-num-4",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "אַרְבַּע"
+  },
+  {
+   "file": "intervals-he-v-num-5",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "חָמֵשׁ"
+  },
+  {
+   "file": "intervals-he-v-num-6",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שֵׁשׁ"
+  },
+  {
+   "file": "intervals-he-v-num-7",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שֶׁבַע"
+  },
+  {
+   "file": "intervals-he-v-num-8",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שְׁמוֹנֶה"
+  },
+  {
+   "file": "intervals-he-v-num-9",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "תֵּשַׁע"
+  },
+  {
+   "file": "intervals-he-v-num-10",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "עֶשֶׂר"
+  },
+  {
+   "file": "intervals-he-v-num-11",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "אַחַת עֶשְׂרֵה"
+  },
+  {
+   "file": "intervals-he-v-num-12",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שְׁתֵּים עֶשְׂרֵה"
+  },
+  {
+   "file": "intervals-he-v-num-13",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שְׁלוֹשׁ עֶשְׂרֵה"
+  },
+  {
+   "file": "intervals-he-v-num-14",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "אַרְבַּע עֶשְׂרֵה"
+  },
+  {
+   "file": "intervals-he-v-num-15",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "חֲמֵשׁ עֶשְׂרֵה"
+  },
+  {
+   "file": "intervals-he-v-num-16",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שֵׁשׁ עֶשְׂרֵה"
+  },
+  {
+   "file": "intervals-he-v-num-17",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שְׁבַע עֶשְׂרֵה"
+  },
+  {
+   "file": "intervals-he-v-num-18",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "שְׁמוֹנֶה עֶשְׂרֵה"
+  },
+  {
+   "file": "intervals-he-v-num-19",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "תְּשַׁע עֶשְׂרֵה"
+  },
+  {
+   "file": "intervals-he-v-num-20",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "עֶשְׂרִים"
+  },
+  {
+   "file": "intervals-he-v-of-5",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "מִתּוֹךְ חָמֵשׁ."
+  },
+  {
+   "file": "intervals-he-v-of-10",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "מִתּוֹךְ עֶשֶׂר."
+  },
+  {
+   "file": "intervals-he-v-of-20",
+   "type": "tts",
+   "voice": "Danit",
+   "voice_id": "s0T0DT6EAPeX57MQpn3I",
+   "model": "eleven_v3",
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "מִתּוֹךְ עֶשְׂרִים."
   }
  ]
 }
