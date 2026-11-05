@@ -466,7 +466,7 @@ function playerPose() {
   else if (py > 0 && !(py >= CLIFF.h - 0.5 && vy === 0 && cliffTop())) P = poseAir(vy > 0, Math.max(0, Math.min(1, 0.5 - vy / (2 * cfg.jumpV))));
   else if (act.push > 0) P = posePush();
   else if (act.pull > 0) P = posePull(now);
-  else if (state === 'play' && curSpeed() > 0) P = poseRun(bgX * 0.42 * RIG.run.cadence);
+  else if (state === 'play' && curSpeed() > 0) P = approachSlow() < 0.6 ? poseWalk(bgX * 0.42 * RIG.run.cadence * 1.6) : poseRun(bgX * 0.42 * RIG.run.cadence);   // ליד החבר / הילד – הולך
   else if (act.run > 0) P = poseRun(now * 24);       // בהדגמה – רץ במקום
   else P = poseIdle(now);
   if (act.run > 0 && py <= 0 && duckT <= 0) P.lean = 0.38;

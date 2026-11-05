@@ -404,8 +404,10 @@ function drawCrows(o, x0, x1, seed, y0) {
   const t = performance.now() / 1000, span = x1 - x0, n = Math.max(2, Math.min(4, Math.round(span / 35)));
   o.crowBurn = o.crowBurn || {};
   for (let i = 0; i < n; i++) {
-    const ph = t * (0.32 + i * 0.05) + i * 2.1 + seed, u = (Math.sin(ph) + 1) / 2, dir = Math.cos(ph) >= 0 ? 1 : -1;
-    let x = x0 + span * (0.1 + 0.8 * ((u + i / n) % 1)), y = y0 - i % 2 * 4 + Math.sin(t * 2.3 + i) * 1.2;
+    // כל עורב עף הלוך ושוב בקטע משלו, בתנועה רציפה ובמהירות מוגבלת (לא קופץ מצד לצד ולא טס)
+    const amp = Math.min(span / n * 0.42, 16), w = Math.min(0.9, 7 / Math.max(1, amp)) * (0.85 + i * 0.07);
+    const ph = t * w + i * 2.1 + seed, dir = Math.cos(ph) >= 0 ? 1 : -1;
+    let x = x0 + span * (i + 0.5) / n + amp * Math.sin(ph), y = y0 - i % 2 * 4 + Math.sin(t * 2.3 + i) * 1.2;
     const B = o.crowBurn[i];
     if (B && B.hit) {                                                             // נשרף: נופל מפויח, מעשן, ונעלם
       const a = t - B.hit; if (a > 1.3) continue;

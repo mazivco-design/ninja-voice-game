@@ -38,7 +38,25 @@ function curSpeed() {
   const ms = merchSpeed(); if (ms !== null) return ms;                    // I WANT: הולכים עם החפץ / מטפסים על הצוק / עוברים במערה
   if (act.climb > 0) return CLIFF.ladder / CLIFF.time;         // על הסולם – מתקדמים לאט באלכסון
   if (act.stop > 0 || act.pulling > 0 || act.hiding > 0 || (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') || (rope && rope.phase !== 'done') || rideHolds() || duelHolds() || gustHolds() || learnT > 0) return 0;   // learnT: עצירה קצרה אחרי פגיעה   // …או עומדים ליד הסוחר   // עוצרים / מושכים בחבל / מתחבאים בשיח
-  return speed * (act.run > 0 ? RUN_BOOST.mult : 1) * (crawling() ? BRAMBLE.slow : 1) * gustSlow();   // gustSlow: הרוח מאטה לפני הטורנדו
+  return speed * (act.run > 0 ? RUN_BOOST.mult : 1) * (crawling() ? BRAMBLE.slow : 1) * gustSlow() * approachSlow();   // approachSlow: מאט ומתקרב בהליכה לחבר בסירה / לילד בעגלה   // gustSlow: הרוח מאטה לפני הטורנדו
+}
+// מתקרבים לחבר בסירה / לילד עם העגלה: מאטים בהדרגה ומגיעים בהליכה, לא בריצה שנעצרת בבת אחת
+const APPROACH = { from: 42, to: 8, walk: 9 };   // מתחילים להאט 42 יחידות לפני, ומ-8 לפני הולכים במהירות 9
+function approachDist() {
+  if (boat || cart || typeof obstacles === 'undefined') return Infinity;
+  const r = PLAYER.x + PLAYER.w; let d = Infinity;
+  for (const o of obstacles) {
+    if (o.passed || o.waving) continue;
+    if (o.type === 'boat') d = Math.min(d, boatStern(o) - BOAT.stepDX - r);
+    else if (o.type === 'cart') d = Math.min(d, o.x + o.cp - CART.stepDX - CART.watch - r);
+  }
+  return d < -2 ? Infinity : d;
+}
+function approachSlow() {
+  const d = approachDist(); if (d >= APPROACH.from || !(speed > 0)) return 1;
+  const k = Math.max(0, Math.min(1, (d - APPROACH.to) / (APPROACH.from - APPROACH.to)));
+  const walk = Math.min(1, APPROACH.walk / speed);
+  return walk + (1 - walk) * k * k * (3 - 2 * k);
 }
 let bgX = 0, lastT = 0;
 let world = 0, shakeT = 0;
