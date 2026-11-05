@@ -30,7 +30,7 @@ function resize() {
 window.addEventListener('resize', resize);
 // מה שרואים בפועל ביחידות העולם. במסך רחב (יחס רחב מ-160:100) רואים גם משמאל ל-0 ומימין ל-W –
 // המכשולים מצוירים, נכנסים ויוצאים לפי הקצוות האמיתיים, כדי שלא ייחתכו באמצע המסך
-function playerFacing() { return typeof cart !== 'undefined' && cart && KID_OUT.includes(cart.phase) ? -1 : 1; }   // נפרד מהילד מהעגלה – פונה אחורה אליו
+function playerFacing() { if (typeof boat !== 'undefined' && boat && boat.phase === 'farewell' && boat.t > 0.3) return -1; return typeof cart !== 'undefined' && cart && KID_OUT.includes(cart.phase) ? -1 : 1; }   // נפרד מהילד מהעגלה / מהחבר בסירה – פונה אחורה   // נפרד מהילד מהעגלה – פונה אחורה אליו
 function viewL() { return scale ? Math.min(0, -ox / scale) : 0; }
 function viewR() { return scale ? Math.max(W, (cw - ox) / scale) : W; }
 window.addEventListener('orientationchange', () => setTimeout(resize, 300));
