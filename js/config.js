@@ -87,7 +87,7 @@ const STAGES = [
   { name: 'CRAWL',        words: ['crawl'],          count: 4,  hint: 'Say CRAWL to go under the big rock' },
   { name: 'FIRE',         words: ['fire'],           count: 4,  hint: 'Say FIRE to smash the ice wall' },
   { name: 'CRAWL + FIRE', words: ['crawl', 'fire'],  count: 10, hint: 'Read the word!' },
-  { name: 'I WANT',       words: ['want'],           count: 4,  hint: 'Say I WANT, then the thing you need' },
+  { name: 'I WANT',       words: ['want'],           count: 3,  hint: 'Say I WANT, then the thing you need' },
   { name: 'LET GO',       words: ['let go'],         count: 4,  hint: 'Say CATCH to grab the rope, then LET GO', world: 5 },
   { name: 'RIDE',         words: ['ride'],           count: 8,  hint: 'RIDE the dragon · UP / DOWN past rocks · FIRE at bats · grab the coins', world: 2 },
   { name: 'FIGHT',        words: ['fight'],          count: 4,  hint: 'Say FIGHT, FIGHT, FIGHT to win the duel', world: 4 },

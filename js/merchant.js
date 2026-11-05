@@ -13,9 +13,10 @@ function needOf(o) { return (o && o.need) || 'key'; }
 const MERCHANT_WALK = 0.4;    // מהירות ההליכה אל הדלת (חלק מהמהירות הרגילה)
 const KEY_HAND = { dx: 6, dy: 9 };   // איפה המפתח ביד הנינג'ה
 const MERCHANT_OFFER = ['key', 'rope', 'torch'];
-const SAY_ASK = [[0.3, -1, 'What would you like?']];
+// קודם אומרים שלום זה לזה (הסוחר מנופף, הנינג'ה מנופף בחזרה), ורק אז הסוחר שואל
+const SAY_ASK = [[0.3, -1, 'merchant: hi there!'], [1.3, -1, 'ninja: hi!'], [2.4, -1, 'What would you like?']];
 const GATE_CLIMB = 1.6;
-const MERCH = { giveT: 2.0, thankT: 0.95, turn: 1.7, hint: 5.5, hintEvery: 7, choiceHint: 4 };   // turn: מתי מופיעה בועת "תורך" (אחרי שהשאלה נגמרה)
+const MERCH = { askAt: 2.4, giveT: 2.0, thankT: 0.95, turn: 4.1, hint: 7.6, hintEvery: 7, choiceHint: 4 };   // turn: מתי מופיעה בועת "תורך" (אחרי שהשאלה נגמרה)
 
 function cartX(o) { return o.x - 46; }                        // העגלה עומדת לפני הדלת, והסוחר בינה לבין הדלת
 const ITEM_GAP = 7;
@@ -61,7 +62,7 @@ function merchantUpdate(dt, pb) {
 }
 
 function merchantWant() {
-  const m = merchant; if (!m || m.phase !== 'ask') return;
+  const m = merchant; if (!m || m.phase !== 'ask' || m.t < MERCH.askAt) return;   // עוד אומרים שלום
   m.phase = 'choose'; m.t = 0; m.hi = -1; m.hinted = 0; setBubble(m, 'Which one?');   // בלי קול – כדי שהמילה הבאה של הילד ("key") לא תיבלע
 }
 function merchantItem(w) {
@@ -152,7 +153,8 @@ function drawMerchant(o) {
   const x = cartX(o), now = performance.now() / 1000, m = merchant && merchant.o === o ? merchant : null;
   // הסוחר עומד ליד העגלה, פונה אל הנינג'ה ומצביע על החפץ שהוא מדבר עליו
   const mx = x + 25.5, P = poseIdle(now);
-  if (m && m.hi >= 0 && m.phase !== 'done') P.arms[1] = [1.75 + (2 - m.hi) * 0.05, 1.85 + (2 - m.hi) * 0.05];   // יד מושטת לעבר החפץ
+  if (m && m.phase === 'ask' && m.t >= 0.25 && m.t < 1.3) P.arms[1] = waveArm(now);   // "Hi there!" – מנופף לנינג'ה
+  else if (m && m.hi >= 0 && m.phase !== 'done') P.arms[1] = [1.75 + (2 - m.hi) * 0.05, 1.85 + (2 - m.hi) * 0.05];   // יד מושטת לעבר החפץ
   ctx.fillStyle = '#7f1d1d'; ctx.fillRect(x + 0.5, GROUND - 22, 0.8, 22); ctx.fillRect(x + 19.7, GROUND - 22, 0.8, 22);   // עמודי הסוכך
   for (let k = 0; k < 7; k++) {                                // סוכך מפוספס
     ctx.fillStyle = k % 2 ? '#fef3c7' : '#dc2626';
@@ -312,6 +314,7 @@ function merchPose(P) {
   if (m.phase === 'climb') { P = poseClimb(performance.now() / 1000); P.lean = 0.1; }
   if (m.phase === 'hook') { P.arms = [P.arms[0], [2.6 - Math.min(1, m.t / 0.3) * 0.8, 2.9]]; }   // זורק את הוו למעלה
   if (m.phase === 'cave') { P.arms = [P.arms[0], [1.9, 2.5]]; }   // מחזיק את הלפיד גבוה
+  if (m.phase === 'ask' && m.t >= 1.25 && m.t < 2.3) P.arms = [P.arms[0], waveArm(performance.now() / 1000)];   // "Hi!" – מנופף בחזרה
   if (m.phase === 'give' && m.t >= 0.7 && m.item) {                                   // מחזיק את החפץ ומודה – קידה קטנה לסוחר
     const b = Math.sin(Math.PI * Math.max(0, Math.min(1, (m.t - MERCH.thankT) / 0.8)));
     P.arms = [P.arms[0], m.item === 'torch' ? [1.9, 2.5] : [1.15, 1.55]]; P.lean = (P.lean || 0) + 0.32 * b; P.headTilt = 0.3 * b;
