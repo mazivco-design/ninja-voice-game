@@ -194,9 +194,6 @@ function drawForestFront(o, top, bottom) {
     const s = 0.4 + boarRnd(i + 400) * 0.8, y = top + ((t * (4 + s * 5) + boarRnd(i + 300) * 80) % (GROUND - top)), x = wrapX(L + boarRnd(i + 200) * (R - L) + Math.sin(t * 1.3 + i) * 3 - bgX * (0.2 + s * 0.3), L, R);
     ctx.save(); ctx.translate(x, y); ctx.rotate(t * 2 + i); ctx.beginPath(); ctx.ellipse(0, 0, 0.9 * s, 0.45 * s, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
-  ctx.filter = 'blur(2px)';                                                             // קדמת התמונה – קרוב מאוד למצלמה
-  for (let i = 0; i < 2; i++) { const x = wrapX(o.x + 60 + i * 95 - bgX * 0.35, L - 40, R + 40); fTrunk(x, 11, top, bottom + 2, '#1c140e'); }
-  ctx.filter = 'none';
   ctx.restore();
 }
 function boarChargeX() {                                                               // איפה החזיר בהסתערות / בחזרה
