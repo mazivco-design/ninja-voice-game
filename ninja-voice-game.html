@@ -6,15 +6,16 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Ninja Voice Game</title>
 <script src="https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js"></script>
-<script src="ninja-figure.js?v=20261105c"></script>
+<script src="ninja-figure.js?v=20261105d"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap">
-<link rel="stylesheet" href="css/game.css?v=20261105c">
-<link rel="stylesheet" href="css/fuji.css?v=20261105c">
+<link rel="stylesheet" href="css/game.css?v=20261105d">
+<link rel="stylesheet" href="css/fuji.css?v=20261105d">
 </head>
 <body>
 <div id="app">
   <canvas id="c"></canvas>
+  <div class="fujiScene welcomeBg" id="welcomeScene"></div>   <!-- רקע מסך קבלת הפנים – נבנה ב-fujimenu.js -->
 
   <div id="powerHud" class="hide"></div>
   <div id="catchHud" class="hide"><span class="coinIco"></span><span id="caught">0</span></div>
@@ -139,18 +140,18 @@
   </div>
 
   <!-- בחירת שחקן -->
-  <div class="overlay show" id="players">
+  <div class="overlay show fujiW" id="players">
     <div class="panel">
-      <h1>🥷 Ninja Voice</h1>
+      <div class="wTop"><span class="seal">忍</span><h1>Ninja Voice</h1></div>
       <p>Who is playing?</p>
       <div class="playerGrid" id="playerGrid"></div>
-      <button class="free" id="manageBtn">✏️ Manage players</button>
+      <button class="free manage" id="manageBtn">Manage players</button>
     </div>
     <button class="testerBtn" aria-label="Tester">🧪</button>
   </div>
 
   <!-- הוספה / עריכה של שחקן -->
-  <div class="overlay" id="editP">
+  <div class="overlay fujiW" id="editP">
     <div class="panel">
       <h2 id="editTitle">New player</h2>
       <input id="pName" maxlength="12" dir="auto" placeholder="Name" autocomplete="off" autocorrect="off" spellcheck="false">
@@ -231,36 +232,36 @@
   <div id="debug"></div>
 </div>
 
-<script src="js/config.js?v=20261105c"></script>
-<script src="js/sound.js?v=20261105c"></script>
-<script src="js/state.js?v=20261105c"></script>
-<script src="js/players.js?v=20261105c"></script>
-<script src="js/journey.js?v=20261105c"></script>
-<script src="js/shop.js?v=20261105c"></script>
-<script src="js/merchant.js?v=20261105c"></script>
-<script src="js/rope.js?v=20261105c"></script>
-<script src="js/dragon.js?v=20261105c"></script>
-<script src="js/fight.js?v=20261105c"></script>
-<script src="js/skeleton.js?v=20261105c"></script>
-<script src="js/hold.js?v=20261105c"></script>
-<script src="js/lift.js?v=20261105c"></script>
-<script src="js/tunnel.js?v=20261105c"></script>
-<script src="js/mud.js?v=20261105c"></script>
-<script src="js/boat.js?v=20261105c"></script>
-<script src="js/cart.js?v=20261105c"></script>
-<script src="js/power.js?v=20261105c"></script>
-<script src="js/art.js?v=20261105c"></script>
-<script src="js/menu.js?v=20261105c"></script>
-<script src="js/fujimenu.js?v=20261105c"></script>
-<script src="js/speech.js?v=20261105c"></script>
-<script src="js/game.js?v=20261105c"></script>
-<script src="js/draw.js?v=20261105c"></script>
-<script src="js/tester.js?v=20261105c"></script>
-<script src="js/screens.js?v=20261105c"></script>
-<script src="js/lab.js?v=20261105c"></script>
-<script src="js/studio.js?v=20261105c"></script>
-<script src="js/sushi.js?v=20261105c"></script>
-<script src="js/main.js?v=20261105c"></script>
+<script src="js/config.js?v=20261105d"></script>
+<script src="js/sound.js?v=20261105d"></script>
+<script src="js/state.js?v=20261105d"></script>
+<script src="js/players.js?v=20261105d"></script>
+<script src="js/journey.js?v=20261105d"></script>
+<script src="js/shop.js?v=20261105d"></script>
+<script src="js/merchant.js?v=20261105d"></script>
+<script src="js/rope.js?v=20261105d"></script>
+<script src="js/dragon.js?v=20261105d"></script>
+<script src="js/fight.js?v=20261105d"></script>
+<script src="js/skeleton.js?v=20261105d"></script>
+<script src="js/hold.js?v=20261105d"></script>
+<script src="js/lift.js?v=20261105d"></script>
+<script src="js/tunnel.js?v=20261105d"></script>
+<script src="js/mud.js?v=20261105d"></script>
+<script src="js/boat.js?v=20261105d"></script>
+<script src="js/cart.js?v=20261105d"></script>
+<script src="js/power.js?v=20261105d"></script>
+<script src="js/art.js?v=20261105d"></script>
+<script src="js/menu.js?v=20261105d"></script>
+<script src="js/fujimenu.js?v=20261105d"></script>
+<script src="js/speech.js?v=20261105d"></script>
+<script src="js/game.js?v=20261105d"></script>
+<script src="js/draw.js?v=20261105d"></script>
+<script src="js/tester.js?v=20261105d"></script>
+<script src="js/screens.js?v=20261105d"></script>
+<script src="js/lab.js?v=20261105d"></script>
+<script src="js/studio.js?v=20261105d"></script>
+<script src="js/sushi.js?v=20261105d"></script>
+<script src="js/main.js?v=20261105d"></script>
 <!-- סנכרון בין מכשירים (משותף לכל הפרויקטים) -->
 <script src="/Ziviz-Projects-/firebase-config.js"></script>
 <script src="/Ziviz-Projects-/ls-sync.js" data-app="ninja" data-prefix="ninjaVoice" data-exclude="ninjaVoice_mute,ninjaVoice_vlog,ninjaVoice_current" data-button="#menu .mtop" data-busy="#menu:not(.show)"></script>

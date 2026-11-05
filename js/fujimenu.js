@@ -32,10 +32,18 @@ function renderFujiScene(info) {
   info = fujiLast;
   const box = $('fujiScene');
   if (!box || !info) return;
+  const W = box.clientWidth || innerWidth, H = box.clientHeight || innerHeight, lay = menuLayout();
+  drawFuji(box, W, H, 0, lay === 'bottom' ? W : W - fujiSideW() - 32, 92, lay === 'bottom' ? H - fujiBotH() - 40 : H - 26, info);
+}
+// מסך קבלת הפנים: אותו נוף בלי התחנות, ונינג'ה קטן למרגלות ההר
+function renderWelcomeScene() {
+  const box = $('welcomeScene');
+  if (!box) return;
   const W = box.clientWidth || innerWidth, H = box.clientHeight || innerHeight;
-  const lay = menuLayout(), f1 = n => n.toFixed(1);
-  const x0 = 0, x1 = lay === 'bottom' ? W : W - fujiSideW() - 32;
-  const yt = 92, yb = lay === 'bottom' ? H - fujiBotH() - 40 : H - 26;
+  drawFuji(box, W, H, 0, W, Math.round(H * 0.16), H - 26, null);
+}
+function drawFuji(box, W, H, x0, x1, yt, yb, info) {
+  const f1 = n => n.toFixed(1);
   const AW = x1 - x0, AH = Math.max(160, yb - yt);
   const MH = Math.min(AH, AW * 0.92), s = MH / 680, CX = x0 + AW / 2, TOP = yb - MH, BASE = yb;
   const fy = f => TOP + f * MH;
@@ -89,8 +97,14 @@ function renderFujiScene(info) {
     '<path d="M' + f1(x) + ' ' + f1(y - 140 * k) + ' l' + f1(40 * k) + ' ' + f1(50 * k) + ' l' + f1(-28 * k) + ' ' + f1(-4 * k) + ' l' + f1(36 * k) + ' ' + f1(44 * k) + ' l' + f1(-96 * k) + ' 0 l' + f1(36 * k) + ' ' + f1(-44 * k) + ' l' + f1(-28 * k) + ' ' + f1(4 * k) + ' z" fill="#2f5a3d"/>';
 
   // התחנות: אדום עם כוכב = נלמדה, זהב = נפתחה ומחכה לשיעור, נייר עם מספר = עוד לא הגענו
-  const N = WORDS.length, ts = Math.max(0.75, Math.min(1.3, s)), tw = 34 * ts, th = 32 * ts, rr = 9 * ts, dep = 5 * ts;
+  const N = info ? WORDS.length : 0, ts = Math.max(0.75, Math.min(1.3, s)), tw = 34 * ts, th = 32 * ts, rr = 9 * ts, dep = 5 * ts;
   let tiles = '';
+  if (!info) {                                                         // קבלת פנים: נינג'ה בצבעי ברירת המחדל עומד למרגלות ההר, ודגל על הפסגה
+    const nw = 44 * ts * 1.6, nh = 46 * ts * 1.6, nx = CX - 230 * s, ny = BASE - 30 * s - nh;
+    tiles += ninjaIcon('#dc2626').replace('<svg ', '<svg x="' + f1(nx - nw / 2) + '" y="' + f1(ny) + '" width="' + f1(nw) + '" height="' + f1(nh) + '" ');
+    tiles += '<rect x="' + f1(CX - 2 * ts) + '" y="' + f1(TOP - 48 * ts) + '" width="' + f1(4 * ts) + '" height="' + f1(46 * ts) + '" fill="#1f2a44"/>' +
+             '<path d="M' + f1(CX + 2 * ts) + ' ' + f1(TOP - 48 * ts) + ' l' + f1(30 * ts) + ' ' + f1(10 * ts) + ' l' + f1(-30 * ts) + ' ' + f1(10 * ts) + ' z" fill="' + FUJI_RED + '"/>';
+  }
   for (let i = 0; i < N; i++) {
     const [x, y] = at(total * i / (N - 1)), w = WORDS[i], last = i === N - 1, cur = i === info.st;
     const learned = info.learned.includes(w), reached = i <= info.st;
@@ -126,8 +140,8 @@ function renderFujiScene(info) {
     hills(fy(0.72), 10 * s, '#c3d3dc', '#aec3cf', 23, 20 * s) + hills(fy(0.81), 8 * s, '#a9c2b9', '#93b0a5', 31, 26 * s) +
     '<path d="' + mountD + '" fill="url(#fujiBody)"/><path d="' + shadeD + '" fill="#4f74a6" opacity=".5"/><path d="' + snowD + '" fill="#fbf5e6"/>' +
     pine(CX - 340 * s, BASE - 40 * s, s) + pine(CX + 366 * s, BASE - 50 * s, s) +
-    '<path d="' + roadD + '" stroke="#8a6a3a" stroke-width="' + f1(18 * ts) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".45"/>' +
-    '<path d="' + roadD + '" stroke="#ead2a2" stroke-width="' + f1(12 * ts) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>' +
+    (!info ? '' : '<path d="' + roadD + '" stroke="#8a6a3a" stroke-width="' + f1(18 * ts) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".45"/>' +
+    '<path d="' + roadD + '" stroke="#ead2a2" stroke-width="' + f1(12 * ts) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>') +
     tiles + '</svg>';
 }
 
@@ -165,4 +179,7 @@ $('sbMin').addEventListener('pointerdown', e => e.stopPropagation());
   head.addEventListener('pointerup', end); head.addEventListener('pointercancel', end);
 })();
 
-addEventListener('resize', () => { if ($('menu').classList.contains('show')) { applyMenuLayout(); renderFujiScene(); placeSideBoard(); } });
+addEventListener('resize', () => {
+  if ($('menu').classList.contains('show')) { applyMenuLayout(); renderFujiScene(); placeSideBoard(); }
+  if ($('players').classList.contains('show') || $('editP').classList.contains('show')) renderWelcomeScene();
+});

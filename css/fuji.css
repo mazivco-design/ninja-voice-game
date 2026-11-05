@@ -110,3 +110,32 @@
 #menu.fuji .sbR.me { background: #f6e3b8; outline: 2px solid #e9b949; }
 #menu.fuji .sbR .st { color: #c8372d; }
 #menu.fuji .sbSub { color: #2c4a7c; opacity: .7; }
+
+/* ---------- מסך קבלת הפנים: מי משחק? + הוספה / עריכה של שחקן ---------- */
+#welcomeScene { display: none; }
+#app:has(#players.show) #welcomeScene, #app:has(#editP.show) #welcomeScene { display: block; }
+#app:has(#players.show) #hudFree, #app:has(#editP.show) #hudFree { visibility: hidden; }
+.overlay.fujiW { background: transparent; }
+.fujiW .panel { width: min(640px, 94%); background: #faf3e3; color: #1f2a44; border: 3px solid #2c4a7c; border-radius: 22px; box-shadow: 0 8px 0 #1f3a68;
+  font-family: 'Zen Kaku Gothic New', -apple-system, system-ui, sans-serif; }
+.fujiW .wTop { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.fujiW .seal { width: 46px; height: 46px; flex: none; border-radius: 9px; background: #c8372d; color: #fbf5e6; transform: rotate(-4deg);
+  font-family: 'Shippori Mincho B1', serif; font-size: 28px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.fujiW h1, .fujiW h2 { font-family: 'Shippori Mincho B1', serif; font-weight: 800; color: #1f2a44; margin: 0; }
+.fujiW h1 { font-size: clamp(28px, 4.6vh, 40px); }
+.fujiW p { color: #4b5574; font-weight: 700; margin: 6px 0 2px; }
+.fujiW .pcard { background: #f3ecdc; border: 2px solid #d6cbb0; border-radius: 14px; color: #1f2a44; padding: 10px 8px 12px; }
+.fujiW .pcard:nth-child(4n+1):not(.add) { background: #dde5f2; border-color: #2c4a7c; }
+.fujiW .pcard:nth-child(4n+2):not(.add) { background: #f6dcd6; border-color: #c8372d; }
+.fujiW .pcard:nth-child(4n+3):not(.add) { background: #dbe7dd; border-color: #2f5a3d; }
+.fujiW .pcard:nth-child(4n+4):not(.add) { background: #f3e2c4; border-color: #c9944a; }
+.fujiW .pcard .nj { width: 60px; height: 62px; margin: 0 auto 4px; }
+.fujiW .pcard .nj svg { display: block; width: 100%; height: 100%; }
+.fujiW .pcard .pstats { color: #4b5574; font-weight: 700; }
+.fujiW .pcard.add { background: transparent; border: 2px dashed #2c4a7c; color: #2c4a7c; }
+.fujiW .managing .pcard { outline: 2px dashed #c8372d; }
+.fujiW .free.manage { margin-top: 8px; background: transparent; border: 2px solid #2c4a7c; color: #2c4a7c; box-shadow: none; font-family: inherit; font-weight: 900; }
+.fujiW #pName { border-color: #2c4a7c; background: #fff; font-family: inherit; }
+.fujiW .btn { background: #c8372d; color: #fbf5e6; box-shadow: 0 5px 0 #7f1d1d; font-family: 'Shippori Mincho B1', serif; font-weight: 800; }
+.fujiW .btn.sec { background: transparent; color: #2c4a7c; border: 2px solid #2c4a7c; box-shadow: none; font-family: 'Zen Kaku Gothic New', sans-serif; }
+.fujiW .sw { border-color: #faf3e3; }

@@ -28,7 +28,7 @@ function renderPlayers() {
   players.forEach(p => {
     const b = document.createElement('button');
     b.className = 'pcard';
-    b.innerHTML = '<div class="face"><div class="band" style="background:' + p.color + '"></div></div>' +
+    b.innerHTML = '<div class="nj">' + ninjaIcon(p.color) + '</div>' +              // נינג'ה קטן בצבע של השחקן
                   '<div class="pname" dir="auto"></div>' +
                   '<div class="pstats">★ ' + totalStars(p) + ' · <span class="coinIco" style="font-size:12px;vertical-align:-2px"></span> ' + load('p' + p.id + '_coins', 0) + '</div>' +
                   '<span class="edit">✏️</span>';
@@ -41,7 +41,8 @@ function renderPlayers() {
   add.innerHTML = '<span>+</span>New player';
   add.onclick = () => openEdit(null);
   g.appendChild(add);
-  $('manageBtn').textContent = managing ? '✓ Done' : '✏️ Manage players';
+  $('manageBtn').textContent = managing ? '✓ Done' : 'Manage players';
+  renderWelcomeScene(); requestAnimationFrame(renderWelcomeScene);            // הנוף של הר פוג'י מאחור
 }
 
 function selectPlayer(p) {
@@ -68,6 +69,7 @@ function openEdit(p) {
   renderSwatches();
   hideAllOverlays();
   $('editP').classList.add('show');
+  renderWelcomeScene(); requestAnimationFrame(renderWelcomeScene);
   setTimeout(() => { try { $('pName').focus(); } catch (e) {} }, 50);
 }
 
