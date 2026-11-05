@@ -87,7 +87,7 @@ function drawFuji(box, W, H, x0, x1, yt, yb, info) {
            '<path d="' + curl + '" stroke="' + FUJI_INK + '" stroke-width="1.6" stroke-opacity=".55" fill="none" stroke-linecap="round"/>';
   };
   const cloudOf = (x, y, w, h, flip) => {                                // סגנון העננים (FUJI_CLOUD): 1 בליטות, 2 פסים, 3 סלסולים, 4 רך, 5 ערפל זהב, 6 משחק
-    const st = typeof FUJI_CLOUD === 'number' ? FUJI_CLOUD : 1;
+    const st = typeof FUJI_CLOUD === 'number' ? FUJI_CLOUD : 6;            // נבחר: 6 – עננים לבנים של משחק
     if (st === 1) return cloud(x, y, w, h, flip);
     const k = w / 240, tf = 'translate(' + f1(x) + ' ' + f1(y) + ') scale(' + k.toFixed(3) + ')' + (flip ? ' translate(240 0) scale(-1 1)' : '');
     const ns = ' vector-effect="non-scaling-stroke"';
@@ -98,7 +98,7 @@ function drawFuji(box, W, H, x0, x1, yt, yb, info) {
          '<g stroke="#2c4a7c" stroke-width="1.8" stroke-opacity=".65" fill="none" stroke-linecap="round"><path d="M48 -22 a5 5 0 1 1 5 5 a9 9 0 1 1 -9 -9 a13 13 0 0 1 13 13"' + ns + '/><path d="M106 -30 a6 6 0 1 1 6 6 a11 11 0 1 1 -11 -11 a16 16 0 0 1 16 16"' + ns + '/><path d="M166 -22 a5 5 0 1 1 5 5 a9 9 0 1 1 -9 -9 a13 13 0 0 1 13 13"' + ns + '/></g>',
       4: '<ellipse cx="130" cy="-4" rx="112" ry="11" fill="#f1c79a" opacity=".7"/><g fill="#fff" opacity=".9"><ellipse cx="80" cy="-20" rx="54" ry="22"/><ellipse cx="130" cy="-32" rx="48" ry="30"/><ellipse cx="182" cy="-20" rx="56" ry="22"/><ellipse cx="130" cy="-12" rx="110" ry="14"/></g>',
       5: '<path d="M0 -44 H200 A12 12 0 0 1 200 -20 H150 A10 10 0 0 0 150 0 H10 A10 10 0 0 1 10 -20 H40 A12 12 0 0 0 40 -44 Z" fill="#ead7a8" opacity=".92" stroke="#b9873f" stroke-width="1.6"' + ns + '/>',
-      6: '<g fill="#fff"><circle cx="34" cy="-24" r="24"/><circle cx="90" cy="-40" r="44"/><circle cx="150" cy="-30" r="36"/><circle cx="200" cy="-18" r="24"/><rect x="8" y="-30" width="218" height="30" rx="15"/></g><rect x="16" y="-14" width="202" height="14" rx="7" fill="#dbe7f3"/>'
+      6: '<g fill="#fff"><circle cx="34" cy="-24" r="24"/><circle cx="90" cy="-40" r="44"/><circle cx="150" cy="-30" r="36"/><circle cx="200" cy="-18" r="24"/><rect x="8" y="-30" width="218" height="30" rx="15"/></g>'
     };
     return '<g transform="' + tf + '">' + ART[st] + '</g>';
   };
