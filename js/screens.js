@@ -254,7 +254,7 @@ function speakSynth(w) {
 
 // חפץ קטן ליד הנינג'ה (אם צריך), ורשימת פעולות לפי זמן
 function showWord(w) {
-  if (w !== 'help' && w !== 'push together' && w !== 'push on three') speak(w);
+  if (w !== 'help' && w !== 'push together' && w !== 'push on three' && w !== 'fishing') speak(w);
   document.querySelectorAll('.word').forEach(b => b.classList.toggle('active', b.dataset.w === w));
   resetDemo();
   setupDemo(w);
@@ -322,6 +322,7 @@ function setupDemo(w) {
   if (w === 'pick up' || w === 'put down') { const o = { type: 'lift', x: near + 1 }; liftKindNext = w === 'pick up' ? 'grab' : 'wall'; liftSetup(o); obstacles.push(o); }
   if (w === 'help') { const o = { type: 'mud', x: PLAYER.x + 4 - MUD.stuck, w: MUD.w + MUD.stand + 8 }; obstacles.push(o); }   // נתקע מיד – והחבר בא (mud.js מפעיל CATCH / HOLD בהדגמה)
   if (w === 'push together') { const o = { type: 'boat' }; boatSetup(o); o.x = PLAYER.x + PLAYER.w + BOAT.stepDX - BOAT.bx0; obstacles.push(o); }   // מתחיל צמוד לסירה (boat.js מפעיל PUSH / JUMP בהדגמה)
+  if (w === 'fishing') { const o = { type: 'boat', mode: 'fish' }; boatSetup(o); o.x = PLAYER.x + PLAYER.w + BOAT.stepDX - o.bx; obstacles.push(o); }   // הסירה במים והחבר בתוכה
   if (w === 'push on three') { const o = { type: 'cart' }; cartSetup(o); o.x = PLAYER.x + PLAYER.w + CART.stepDX + CART.watch - CART.cp0; obstacles.push(o); }   // מתחיל מול הילד (cart.js מפעיל PUSH / JUMP בהדגמה)
   if (w === 'hold') obstacles.push({ type: 'gust', x: near + 1 - GUST.stalks[2], w: GUST.stalks[2] + 4 });
   obstacles.forEach(o => { o.passed = false; o.hit = false; o.demo = true; });   // בהדגמה – בלי פגיעות
@@ -330,7 +331,7 @@ function setupDemo(w) {
             : w === 'let go' ? [{ at: 0.9, w: 'catch' }, { at: 2.7, w: 'let go' }]
             : w === 'ride' ? [{ at: 0.9, w: 'ride' }, { at: 2.9, w: 'up' }, { at: 3.8, w: 'down' }, { at: 4.6, w: 'fire' }]
             : w === 'hold' ? [{ at: 1.2, w }]
-            : w === 'help' || w === 'push together' || w === 'push on three' ? []
+            : w === 'help' || w === 'push together' || w === 'push on three' || w === 'fishing' ? []
             : w === 'pick up' ? [{ at: 0.8, w }]
             : w === 'put down' ? [{ at: 0.8, w: 'pick up', say: true }, { at: 3.0, w }, { at: 4.4, w: 'jump', say: true }]
             : w === 'fight' ? [{ at: 1.3, w }, { at: 2.1, w }, { at: 2.9, w }]
@@ -358,9 +359,9 @@ function introNext() {
   }
   const w = introWords.shift();
   setupDemo(w);
-  if (w !== 'help' && w !== 'push together' && w !== 'push on three') speak(w);                                                  // HELP: הנינג'ה עצמו צועק בסצנה
-  banner = { text: w === 'help' ? 'CATCH the rope, then HOLD!' : w === 'push together' ? 'PUSH with your friend, then JUMP in!' : w === 'push on three' ? 'PUSH on THREE, then JUMP in!' : 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
-  introT = w === 'fly' ? 4.6 : w === 'want' || w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'put down' ? 6.8 : w === 'pick up' ? 2.8 : w === 'crawl' ? 5.2 : w === 'help' ? 12.7 : w === 'push together' ? 14 : w === 'push on three' ? 31 : 2.8;
+  if (w !== 'help' && w !== 'push together' && w !== 'push on three' && w !== 'fishing') speak(w);                                                  // HELP: הנינג'ה עצמו צועק בסצנה
+  banner = { text: w === 'help' ? 'CATCH the rope, then HOLD!' : w === 'push together' ? 'PUSH with your friend, then JUMP in!' : w === 'push on three' ? 'PUSH on THREE, then JUMP in!' : w === 'fishing' ? 'THROW the line, then PULL!' : 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
+  introT = w === 'fly' ? 4.6 : w === 'want' || w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'put down' ? 6.8 : w === 'pick up' ? 2.8 : w === 'crawl' ? 5.2 : w === 'help' ? 12.7 : w === 'push together' ? 14 : w === 'push on three' ? 31 : w === 'fishing' ? 12.5 : 2.8;
 }
 
 function finishIntro() {

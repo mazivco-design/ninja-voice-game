@@ -260,6 +260,7 @@ function command(word, source) {
     kickT = KICK.time;                     // בעיטה – שוברת קיר שקרוב מספיק
     duckT = 0;
   } else if (word === 'throw') {
+    if (boatThrow()) return;               // FISHING: זורק את החכה
     if (liftThrow()) return;               // PICK UP: זורק את החבל לבור (להצלת הגור)
     if (throwCd <= 0) {                    // זורק שוריקן קדימה
       const pb = playerBox();
@@ -284,6 +285,7 @@ function command(word, source) {
   else if (word === 'climb') { act.climbWant = 0.8; }                     // מטפס כשהנינג'ה מגיע לסולם (אם זה קורה בשנייה הקרובה)
   else if (word === 'push' && (boatPush() || cartPush())) {}                            // דוחפים את הסירה עם החבר
   else if (word === 'push')  { act.push = 0.6; duckT = 0; }
+  else if (word === 'pull' && boatPull()) {}                             // FISHING: מושך את הדג
   else if (word === 'pull' && liftPull()) {}                             // מושך את הגור מהבור
   else if (word === 'pull')  { act.pull = 0.6; act.pullWant = GATE.want; duckT = 0; }   // מושך כשמגיעים לחבל
   else if (word === 'hide')  { act.hide = HIDE_TIME; duckT = 0; }
