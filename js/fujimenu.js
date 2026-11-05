@@ -40,7 +40,8 @@ function renderWelcomeScene() {
   const box = $('welcomeScene');
   if (!box) return;
   const W = box.clientWidth || innerWidth, H = box.clientHeight || innerHeight;
-  drawFuji(box, W, H, 0, W, Math.round(H * 0.16), H - 26, null);
+  const g = drawFuji(box, W, H, 0, W, Math.round(H * 0.16), H - 26, null);
+  $('players').style.setProperty('--wTop', Math.round(g.snowBottom + 18) + 'px');   // חלון השחקנים יושב קצת מתחת לשלג
 }
 function drawFuji(box, W, H, x0, x1, yt, yb, info) {
   const f1 = n => n.toFixed(1);
@@ -143,6 +144,7 @@ function drawFuji(box, W, H, x0, x1, yt, yb, info) {
     (!info ? '' : '<path d="' + roadD + '" stroke="#8a6a3a" stroke-width="' + f1(18 * ts) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".45"/>' +
     '<path d="' + roadD + '" stroke="#ead2a2" stroke-width="' + f1(12 * ts) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>') +
     tiles + '</svg>';
+  return { snowBottom: SNOW + 30 * s, TOP, BASE };
 }
 
 /* ---------- לוח הניקוד: גוררים מהכותרת, מקפלים מהחץ ---------- */
