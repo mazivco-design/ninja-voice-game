@@ -44,7 +44,7 @@ function renderWelcomeScene() {
   $('players').style.setProperty('--wTop', Math.round(g.snowBottom + 18) + 'px');   // חלון השחקנים יושב קצת מתחת לשלג
 }
 function drawFuji(box, W, H, x0, x1, yt, yb, info) {
-  const f1 = n => n.toFixed(1);
+  const f1 = n => n.toFixed(1), gid = box.id;                       // מזהים נפרדים לכל נוף – אחרת השמיים וההר מאבדים את הצבעים
   const AW = x1 - x0, AH = Math.max(160, yb - yt);
   const MH = Math.min(AH, AW * 0.92), s = MH / 680, CX = x0 + AW / 2, TOP = yb - MH, BASE = yb;
   const fy = f => TOP + f * MH;
@@ -86,7 +86,23 @@ function drawFuji(box, W, H, x0, x1, yt, yb, info) {
     return '<path d="' + d + ' Z" fill="#fbf5e6" stroke="' + FUJI_INK + '" stroke-width="1.6" stroke-opacity=".55" stroke-linejoin="round"/>' +
            '<path d="' + curl + '" stroke="' + FUJI_INK + '" stroke-width="1.6" stroke-opacity=".55" fill="none" stroke-linecap="round"/>';
   };
-  const cl = (dx, dy, w, h, flip) => { const x = Math.max(4, Math.min(W - w * s - 24, CX + dx * s)); return cloud(x, TOP + dy * s, w * s, h * s, flip); };
+  const cloudOf = (x, y, w, h, flip) => {                                // סגנון העננים (FUJI_CLOUD): 1 בליטות, 2 פסים, 3 סלסולים, 4 רך, 5 ערפל זהב, 6 משחק
+    const st = typeof FUJI_CLOUD === 'number' ? FUJI_CLOUD : 1;
+    if (st === 1) return cloud(x, y, w, h, flip);
+    const k = w / 240, tf = 'translate(' + f1(x) + ' ' + f1(y) + ') scale(' + k.toFixed(3) + ')' + (flip ? ' translate(240 0) scale(-1 1)' : '');
+    const ns = ' vector-effect="non-scaling-stroke"';
+    const ART = {
+      2: '<g fill="#fbf5e6" stroke="#c9944a" stroke-width="2"' + ns + '><rect x="20" y="-54" width="170" height="18" rx="9"' + ns + '/><rect x="56" y="-36" width="184" height="18" rx="9"' + ns + '/><rect x="0" y="-18" width="160" height="18" rx="9"' + ns + '/></g>' +
+         '<g stroke="#c9944a" stroke-width="1.2" opacity=".7"><path d="M34 -45 H160 M72 -27 H214 M16 -9 H140"' + ns + '/></g>',
+      3: '<path d="M10 -14 C0 -34 26 -50 44 -40 C50 -64 86 -70 100 -50 C112 -72 152 -70 158 -44 C174 -56 202 -46 198 -26 C216 -24 220 -4 202 0 L22 0 C6 0 2 -10 10 -14 Z" fill="#fbf5e6" stroke="#2c4a7c" stroke-width="1.8" stroke-opacity=".65"' + ns + '/>' +
+         '<g stroke="#2c4a7c" stroke-width="1.8" stroke-opacity=".65" fill="none" stroke-linecap="round"><path d="M48 -22 a5 5 0 1 1 5 5 a9 9 0 1 1 -9 -9 a13 13 0 0 1 13 13"' + ns + '/><path d="M106 -30 a6 6 0 1 1 6 6 a11 11 0 1 1 -11 -11 a16 16 0 0 1 16 16"' + ns + '/><path d="M166 -22 a5 5 0 1 1 5 5 a9 9 0 1 1 -9 -9 a13 13 0 0 1 13 13"' + ns + '/></g>',
+      4: '<ellipse cx="130" cy="-4" rx="112" ry="11" fill="#f1c79a" opacity=".7"/><g fill="#fff" opacity=".9"><ellipse cx="80" cy="-20" rx="54" ry="22"/><ellipse cx="130" cy="-32" rx="48" ry="30"/><ellipse cx="182" cy="-20" rx="56" ry="22"/><ellipse cx="130" cy="-12" rx="110" ry="14"/></g>',
+      5: '<path d="M0 -44 H200 A12 12 0 0 1 200 -20 H150 A10 10 0 0 0 150 0 H10 A10 10 0 0 1 10 -20 H40 A12 12 0 0 0 40 -44 Z" fill="#ead7a8" opacity=".92" stroke="#b9873f" stroke-width="1.6"' + ns + '/>',
+      6: '<g fill="#fff"><circle cx="34" cy="-24" r="24"/><circle cx="90" cy="-40" r="44"/><circle cx="150" cy="-30" r="36"/><circle cx="200" cy="-18" r="24"/><rect x="8" y="-30" width="218" height="30" rx="15"/></g><rect x="16" y="-14" width="202" height="14" rx="7" fill="#dbe7f3"/>'
+    };
+    return '<g transform="' + tf + '">' + ART[st] + '</g>';
+  };
+  const cl = (dx, dy, w, h, flip) => { const x = Math.max(4, Math.min(W - w * s - 24, CX + dx * s)); return cloudOf(x, TOP + dy * s, w * s, h * s, flip); };
   const hills = (y, amp, col, treeCol, step, th) => {
     let d = 'M-20 ' + f1(y), trees = '';
     for (let x = 0; x <= W + 40; x += 40) d += ' L' + f1(x) + ' ' + f1(y + Math.sin(x * 0.012 + y) * amp);
@@ -132,14 +148,14 @@ function drawFuji(box, W, H, x0, x1, yt, yb, info) {
   }
 
   box.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
-    '<defs><linearGradient id="fujiSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f4a7a"/><stop offset=".3" stop-color="#4f7fae"/>' +
+    '<defs><linearGradient id="' + gid + 'Sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f4a7a"/><stop offset=".3" stop-color="#4f7fae"/>' +
     '<stop offset=".55" stop-color="#a7c1d6"/><stop offset=".75" stop-color="#f1c79a"/><stop offset="1" stop-color="#ec9a5c"/></linearGradient>' +
-    '<linearGradient id="fujiBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5d82b3"/><stop offset="1" stop-color="#7d9cc4"/></linearGradient></defs>' +
-    '<rect width="' + W + '" height="' + H + '" fill="url(#fujiSky)"/>' +
+    '<linearGradient id="' + gid + 'Body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5d82b3"/><stop offset="1" stop-color="#7d9cc4"/></linearGradient></defs>' +
+    '<rect width="' + W + '" height="' + H + '" fill="url(#' + gid + 'Sky)"/>' +
     '<circle cx="' + f1(CX + 260 * s) + '" cy="' + f1(TOP + 40 * s) + '" r="' + f1(54 * s) + '" fill="#d9453a"/>' +
     cl(100, 80, 200, 32) + cl(150, 180, 230, 36, true) + cl(470, 0, 190, 30) + cl(-362, 330, 160, 28, true) + cl(550, 230, 180, 30) +
     hills(fy(0.72), 10 * s, '#c3d3dc', '#aec3cf', 23, 20 * s) + hills(fy(0.81), 8 * s, '#a9c2b9', '#93b0a5', 31, 26 * s) +
-    '<path d="' + mountD + '" fill="url(#fujiBody)"/><path d="' + shadeD + '" fill="#4f74a6" opacity=".5"/><path d="' + snowD + '" fill="#fbf5e6"/>' +
+    '<path d="' + mountD + '" fill="url(#' + gid + 'Body)"/><path d="' + shadeD + '" fill="#4f74a6" opacity=".5"/><path d="' + snowD + '" fill="#fbf5e6"/>' +
     pine(CX - 340 * s, BASE - 40 * s, s) + pine(CX + 366 * s, BASE - 50 * s, s) +
     (!info ? '' : '<path d="' + roadD + '" stroke="#8a6a3a" stroke-width="' + f1(18 * ts) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".45"/>' +
     '<path d="' + roadD + '" stroke="#ead2a2" stroke-width="' + f1(12 * ts) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>') +
