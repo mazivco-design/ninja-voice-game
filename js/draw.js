@@ -480,7 +480,8 @@ function playerPose() {
   P = liftPose(P);
   P = mudPose(P);
   P = boatPose(P);
-  P = cartPose(P);                                 // עגלה: דוחף / מחכה לשלוש                                 // סירה: דוחף / יושב וחותר                                  // HELP: תקוע בבוץ / אוחז בחבל
+  P = cartPose(P);
+  P = boarPose(P);                                 // ביער: הולך / נצמד לגזע / נהדף                                 // עגלה: דוחף / מחכה לשלוש                                 // סירה: דוחף / יושב וחותר                                  // HELP: תקוע בבוץ / אוחז בחבל
   P = merchPose(P);                                // PICK UP: הסלע מעל הראש
   P = jetPose(P);                                 // תרמיל סילון – עף קדימה                     // קרב: עמידה עם חרב והנפות
   return P;
@@ -515,6 +516,7 @@ function draw() {
   ctx.beginPath(); ctx.rect(viewL() - 1, top, viewR() - viewL() + 2, bottom - top); ctx.clip();
 
   const WIDE = { river: drawRiver, lake: drawLake, bridge: drawBridge, pond: drawPond, chasm: drawChasm };
+  for (const o of obstacles) if (o.type === 'boar') drawForestBack(o, top);   // היער ברקע – לפני כל השאר
   for (const o of obstacles) if (WIDE[o.type]) WIDE[o.type](o, bottom);
   for (const o of obstacles) if (!WIDE[o.type]) drawObstacle(o, top);
   const tc = performance.now() / 1000;
@@ -540,6 +542,7 @@ function draw() {
   for (const o of obstacles) if (o.type === 'guard' && o.rx !== undefined) drawHideRock(o);   // הסלעים: לפני השומרים, מאחורי הנינג'ה
   drawTornado();
   drawNinja();
+  for (const o of obstacles) if (o.type === 'boar') drawForestFront(o, top, bottom);   // הגזעים מעל הנינג'ה – מתחבא מאחוריהם
   drawDuelFx();
   drawWind();
   for (const o of obstacles) if (o.type === 'chasm') drawRopeSwing(o);        // החבל (והנינג'ה התלוי עליו) – לפני הכול
@@ -598,6 +601,7 @@ function draw() {
 
 function drawObstacle(o, top) {
   const x = o.x;
+  if (o.type === 'boar') { drawBoar(o); return; }
   if (o.type === 'dragon') { drawDragon(o.x + DRAGON.saddle, GROUND - DRAGON.lie, ride && ride.o === o && ride.phase === 'mount' ? 'stand' : 'lie'); return; }
   if (SKY_TYPES.includes(o.type)) { drawSky(o); return; }
   if (o.type === 'duel') { drawDuelEnemy(o); return; }

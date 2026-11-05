@@ -128,6 +128,7 @@ function expectedWords0() {
   const me = mudExpected(); if (me) return me;
   const be = boatExpected(); if (be) return be;
   const ce = cartExpected(); if (ce) return ce;
+  const bre = boarExpected(); if (bre) return bre;
   if (gustActive()) return ['hold'];
   const le = liftExpected(); if (le) return le;
   if (tunnelWait) return ['crawl'];
@@ -289,6 +290,7 @@ function command(word, source) {
   else if (word === 'pull' && boatPull()) {}                             // FISHING: מושך את הדג
   else if (word === 'pull' && liftPull()) {}                             // מושך את הגור מהבור
   else if (word === 'pull')  { act.pull = 0.6; act.pullWant = GATE.want; duckT = 0; }   // מושך כשמגיעים לחבל
+  else if (word === 'hide' && boarHide()) {}                             // ביער – מאחורי העץ
   else if (word === 'hide')  { act.hide = HIDE_TIME; duckT = 0; }
   else if (word === 'block') { act.block = BLOCK_TIME; }
   else if (word === 'leap') {                                             // זינוק: אם יש חלון קרוב – מזנק כשמגיעים אליו
