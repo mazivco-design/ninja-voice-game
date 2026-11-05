@@ -1467,6 +1467,29 @@
    },
    "text": "[warm] Yes!",
    "voice": "Sarah"
+  },
+  {
+   "file": "friend6-lukas-thanks-seeyou",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[happy] Thanks for your help! See you!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "ninja4-harry-bye",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[happy] Bye!",
+   "voice": "Harry"
   }
  ]
 }
