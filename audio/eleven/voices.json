@@ -6,10 +6,10 @@
   "labels": {
    "language": "en",
    "use_case": "conversational",
+   "age": "middle_aged",
    "descriptive": "classy",
    "accent": "american",
-   "gender": "male",
-   "age": "middle_aged"
+   "gender": "male"
   },
   "description": "Easy going and perfect for casual conversations."
  },
@@ -20,10 +20,10 @@
   "labels": {
    "language": "en",
    "use_case": "entertainment_tv",
+   "age": "young",
    "descriptive": "professional",
    "accent": "american",
-   "gender": "female",
-   "age": "young"
+   "gender": "female"
   },
   "description": "Young adult woman with a confident and warm, mature quality and a reassuring, professional tone."
  },
@@ -34,10 +34,10 @@
   "labels": {
    "language": "en",
    "use_case": "social_media",
+   "age": "young",
    "descriptive": "sassy",
    "accent": "american",
-   "gender": "female",
-   "age": "young"
+   "gender": "female"
   },
   "description": "This young adult female voice delivers sunny enthusiasm with a quirky attitude."
  },
@@ -46,12 +46,12 @@
   "id": "IKne3meq5aSn9XLyUdCD",
   "category": "premade",
   "labels": {
-   "age": "young",
-   "gender": "male",
-   "descriptive": "hyped",
-   "use_case": "conversational",
    "language": "en",
-   "accent": "australian"
+   "use_case": "conversational",
+   "age": "young",
+   "descriptive": "hyped",
+   "accent": "australian",
+   "gender": "male"
   },
   "description": "A young Australian male with a confident and energetic voice."
  },
@@ -60,12 +60,12 @@
   "id": "JBFqnCBsd6RMkjVDRZzb",
   "category": "premade",
   "labels": {
-   "age": "middle_aged",
-   "gender": "male",
-   "descriptive": "mature",
-   "use_case": "narrative_story",
    "language": "en",
-   "accent": "british"
+   "use_case": "narrative_story",
+   "age": "middle_aged",
+   "descriptive": "mature",
+   "accent": "british",
+   "gender": "male"
   },
   "description": "Warm resonance that instantly captivates listeners."
  },
@@ -74,11 +74,11 @@
   "id": "N2lVS1w4EtoT3dr4eOWO",
   "category": "premade",
   "labels": {
-   "age": "middle_aged",
-   "gender": "male",
-   "use_case": "characters_animation",
    "language": "en",
-   "accent": "american"
+   "use_case": "characters_animation",
+   "age": "middle_aged",
+   "accent": "american",
+   "gender": "male"
   },
   "description": "Deceptively gravelly, yet unsettling edge."
  },
@@ -87,12 +87,12 @@
   "id": "SAz9YHcvj6GT2YYXdXww",
   "category": "premade",
   "labels": {
-   "age": "middle_aged",
-   "gender": "neutral",
-   "descriptive": "calm",
-   "use_case": "conversational",
    "language": "en",
-   "accent": "american"
+   "use_case": "conversational",
+   "age": "middle_aged",
+   "descriptive": "calm",
+   "accent": "american",
+   "gender": "neutral"
   },
   "description": "A relaxed, neutral voice ready for narrations or conversational projects."
  },
@@ -101,12 +101,12 @@
   "id": "SOYHLrjzK2X1ezoPC6cr",
   "category": "premade",
   "labels": {
-   "age": "young",
-   "gender": "male",
-   "descriptive": "rough",
-   "use_case": "characters_animation",
    "language": "en",
-   "accent": "american"
+   "use_case": "characters_animation",
+   "age": "young",
+   "descriptive": "rough",
+   "accent": "american",
+   "gender": "male"
   },
   "description": "An animated warrior ready to charge forward."
  },
@@ -117,10 +117,10 @@
   "labels": {
    "language": "en",
    "use_case": "social_media",
+   "age": "young",
    "descriptive": "confident",
    "accent": "american",
-   "gender": "male",
-   "age": "young"
+   "gender": "male"
   },
   "description": "A young adult with energy and warmth - suitable for reels and shorts."
  },
@@ -131,10 +131,10 @@
   "labels": {
    "language": "en",
    "use_case": "informative_educational",
+   "age": "middle_aged",
    "descriptive": "professional",
    "accent": "british",
-   "gender": "female",
-   "age": "middle_aged"
+   "gender": "female"
   },
   "description": "Clear and engaging, friendly woman with a British accent suitable for e-learning."
  },
@@ -143,12 +143,12 @@
   "id": "XrExE9yKIg1WjnnlVkGX",
   "category": "premade",
   "labels": {
-   "age": "middle_aged",
-   "gender": "female",
-   "descriptive": "upbeat",
-   "use_case": "informative_educational",
    "language": "en",
-   "accent": "american"
+   "use_case": "informative_educational",
+   "age": "middle_aged",
+   "descriptive": "upbeat",
+   "accent": "american",
+   "gender": "female"
   },
   "description": "A professional woman with a pleasing alto pitch. Suitable for many use cases."
  },
@@ -157,12 +157,12 @@
   "id": "bIHbv24MWmeRgasZH58o",
   "category": "premade",
   "labels": {
-   "age": "young",
-   "gender": "male",
-   "descriptive": "chill",
-   "use_case": "conversational",
    "language": "en",
-   "accent": "american"
+   "use_case": "conversational",
+   "age": "young",
+   "descriptive": "chill",
+   "accent": "american",
+   "gender": "male"
   },
   "description": "Conversational and laid back."
  },
@@ -172,11 +172,11 @@
   "category": "premade",
   "labels": {
    "language": "en",
-   "descriptive": "cute",
-   "gender": "female",
    "use_case": "conversational",
    "age": "young",
-   "accent": "american"
+   "descriptive": "cute",
+   "accent": "american",
+   "gender": "female"
   },
   "description": "Young and popular, this playful American female voice is perfect for trendy content."
  },
@@ -187,10 +187,10 @@
   "labels": {
    "language": "en",
    "use_case": "conversational",
+   "age": "middle_aged",
    "descriptive": "classy",
    "accent": "american",
-   "gender": "male",
-   "age": "middle_aged"
+   "gender": "male"
   },
   "description": "A smooth tenor pitch from a man in his 40s - perfect for agentic use cases."
  },
@@ -201,10 +201,10 @@
   "labels": {
    "language": "en",
    "use_case": "informative_educational",
+   "age": "middle_aged",
    "descriptive": "professional",
    "accent": "american",
-   "gender": "female",
-   "age": "middle_aged"
+   "gender": "female"
   },
   "description": "This voice is warm, bright, and professional, characterized by a Standard American accent and a polished, narrative quality. It features a medium-high pitch with crisp diction and a deliberate, rhythmic pace that makes it highly intelligible and engaging for long-form listening."
  },
@@ -213,12 +213,12 @@
   "id": "iP95p4xoKVk53GoZ742B",
   "category": "premade",
   "labels": {
-   "age": "middle_aged",
-   "gender": "male",
-   "descriptive": "casual",
-   "use_case": "conversational",
    "language": "en",
-   "accent": "american"
+   "use_case": "conversational",
+   "age": "middle_aged",
+   "descriptive": "casual",
+   "accent": "american",
+   "gender": "male"
   },
   "description": "Natural and real, this down-to-earth voice is great across many use-cases."
  },
@@ -229,10 +229,10 @@
   "labels": {
    "language": "en",
    "use_case": "social_media",
+   "age": "middle_aged",
    "descriptive": "classy",
    "accent": "american",
-   "gender": "male",
-   "age": "middle_aged"
+   "gender": "male"
   },
   "description": "Middle-aged man with a resonant and comforting tone. Great for narrations and advertisements."
  },
@@ -241,12 +241,12 @@
   "id": "onwK4e9ZLuTAKqWW03F9",
   "category": "premade",
   "labels": {
-   "age": "middle_aged",
-   "gender": "male",
-   "descriptive": "formal",
-   "use_case": "informative_educational",
    "language": "en",
-   "accent": "british"
+   "use_case": "informative_educational",
+   "age": "middle_aged",
+   "descriptive": "formal",
+   "accent": "british",
+   "gender": "male"
   },
   "description": "A strong voice perfect for delivering a professional broadcast or news story."
  },
@@ -255,12 +255,12 @@
   "id": "pFZP5JQG7iQjIQuC4Bku",
   "category": "premade",
   "labels": {
-   "gender": "female",
-   "age": "middle_aged",
-   "accent": "british",
+   "language": "en",
    "use_case": "informative_educational",
+   "age": "middle_aged",
    "descriptive": "confident",
-   "language": "en"
+   "accent": "british",
+   "gender": "female"
   },
   "description": "Velvety British female voice delivers news and narrations with warmth and clarity."
  },
@@ -271,9 +271,9 @@
   "labels": {
    "language": "en",
    "use_case": "social_media",
+   "age": "middle_aged",
    "accent": "american",
-   "gender": "male",
-   "age": "middle_aged"
+   "gender": "male"
   },
   "description": "A bright tenor pitch that immediately cuts through. The delivery is brash and openly confident, speaking with unwavering certainty and a slightly aggressive self-assurance."
  },
@@ -284,12 +284,138 @@
   "labels": {
    "language": "en",
    "use_case": "advertisement",
+   "age": "old",
    "descriptive": "crisp",
    "accent": "american",
-   "gender": "male",
-   "age": "old"
+   "gender": "male"
   },
   "description": "Friendly and comforting voice ready to narrate your stories."
+ },
+ {
+  "name": "Jett - Gritty, Spunky Young Hero",
+  "id": "6IwYbsNENZgAB1dtBZDp",
+  "category": "professional",
+  "labels": {
+   "gender": "male",
+   "age": "young",
+   "accent": "american",
+   "descriptive": "hyped",
+   "language": "en",
+   "use_case": "characters_animation"
+  },
+  "description": "A young hero with a bit of an edge to him. He could fight demons or host your podcast!"
+ },
+ {
+  "name": "Max - USA Energetic Animated Cartoon",
+  "id": "467tX2b9Bky3cD6jXpNa",
+  "category": "professional",
+  "labels": {
+   "gender": "male",
+   "age": "young",
+   "accent": "american",
+   "descriptive": "excited",
+   "language": "en",
+   "use_case": "social_media"
+  },
+  "description": "Max is a high-energy, versatile American character voice engineered specifically for animation, social media, gaming, and dynamic commercial content. Delivering punchy articulation, vibrant dynamic range, and cinematic presence, Max is built to bring animated leads, zany cartoon heroes, and fast-paced social media promos to life. Recorded in a broadcast-spec booth with a pristine signal chain for zero-lag, studio-grade renders every time."
+ },
+ {
+  "name": "Little Dude II - Cartoon Character",
+  "id": "fBD19tfE58bkETeiwUoC",
+  "category": "professional",
+  "labels": {
+   "gender": "male",
+   "age": "young",
+   "accent": "american",
+   "descriptive": "confident",
+   "language": "en",
+   "use_case": "characters_animation"
+  },
+  "description": "A high-pitched, energetic cartoon-style voice with a playful, mischievous edge.\nThe delivery has a light Southern drawl, giving the voice a quirky regional flavor and a hint of friendly rural warmth.\nExpressive emphasis, comedic timing, and exaggerated intonation patterns make the voice perfect for humorous characters, sidekicks, or whimsical narrators.\nBright, fast, and slightly raspy at the top end, elongated vowels, and lively emotional swings."
+ },
+ {
+  "name": "DYLO - Dark Anime Hero",
+  "id": "JjsQrIrIBD6TZ656NQfi",
+  "category": "professional",
+  "labels": {
+   "gender": "male",
+   "age": "young",
+   "accent": "american",
+   "descriptive": "intense",
+   "language": "en",
+   "use_case": "characters_animation"
+  },
+  "description": "Young adult male, fierce voice."
+ },
+ {
+  "name": "Lukas - Excited youthful young man",
+  "id": "wSqOdjeNqDrHcoK0zorF",
+  "category": "professional",
+  "labels": {
+   "gender": "male",
+   "age": "young",
+   "accent": "american",
+   "descriptive": "excited",
+   "language": "en",
+   "use_case": "characters_animation"
+  },
+  "description": "Young man with a lot of passion and excitement in tone, happy, hopeful and confident. Good for characters and catchy Socil Media narration. "
+ },
+ {
+  "name": "VALF - Child, Young, Playful & Sarcastic",
+  "id": "loY1uopAz31XyhAEhNSa",
+  "category": "professional",
+  "labels": {
+   "gender": "male",
+   "age": "young",
+   "accent": "american",
+   "descriptive": "cute",
+   "language": "en",
+   "use_case": "characters_animation"
+  },
+  "description": "A very Young voice with an energetic, playful. Perfect for cartoons, animation, anime dubbing, video games, children's content,  videos, narration, and character acting. Ideal for kid characters, young heroes, mischievous boys, and expressive character performances."
+ },
+ {
+  "name": "Austin Boy",
+  "id": "Xb3zeLrTi6F4ziIcXdwk",
+  "category": "professional",
+  "labels": {
+   "gender": "male",
+   "age": "young",
+   "accent": "american",
+   "descriptive": "soft",
+   "language": "en",
+   "use_case": "characters_animation"
+  },
+  "description": "A young American timid orphan boy. Tone is soft. Voice works well for characters & Animation."
+ },
+ {
+  "name": "Noku ",
+  "id": "Sth0oyItcRdvk3sFrPiq",
+  "category": "professional",
+  "labels": {
+   "gender": "male",
+   "age": "middle_aged",
+   "accent": "american",
+   "descriptive": "confident",
+   "language": "en",
+   "use_case": "characters_animation"
+  },
+  "description": "Inspired by a heroic male anime character. The main protagonist in an action-packed anime story or animated action cartoon."
+ },
+ {
+  "name": "Teddy Twinkle - Cute Cartoon Boy",
+  "id": "XjGYkUkzth8BPs29fmcV",
+  "category": "professional",
+  "labels": {
+   "gender": "male",
+   "age": "young",
+   "accent": "american",
+   "descriptive": "cute",
+   "language": "en",
+   "use_case": "characters_animation"
+  },
+  "description": "A sweet, playful, and adorable little cartoon boy inspired by popular kids' characters. He is kind, cheerful, and lovable. Ideal for children's animations, kids' audiobooks, storybook apps, educational content, and social media."
  },
  {
   "name": "Michael Dalton - Modern Male Lead",
@@ -297,138 +423,12 @@
   "category": "professional",
   "labels": {
    "gender": "male",
-   "accent": "american",
-   "use_case": "characters_animation",
-   "descriptive": "upbeat",
    "age": "young",
-   "language": "en"
+   "accent": "american",
+   "descriptive": "upbeat",
+   "language": "en",
+   "use_case": "characters_animation"
   },
   "description": "Cool, charismatic, all-American 20-something voice with natural confidence, subtle emotional depth, and a grounded, relatable tone. Ideal for audiobooks, video games, animation, and character-driven content — especially young male leads, teen protagonists, athletes, high school or college students, and coming-of-age stories. Perfect for storytelling, dialogue, and voiceover projects that need a modern, cinematic feel with just the right edge."
- },
- {
-  "name": "Teddy Twinkle - Cute Cartoon Boy",
-  "id": "XjGYkUkzth8BPs29fmcV",
-  "category": "professional",
-  "labels": {
-   "accent": "american",
-   "gender": "male",
-   "descriptive": "cute",
-   "use_case": "characters_animation",
-   "age": "young",
-   "language": "en"
-  },
-  "description": "A sweet, playful, and adorable little cartoon boy inspired by popular kids' characters. He is kind, cheerful, and lovable. Ideal for children's animations, kids' audiobooks, storybook apps, educational content, and social media."
- },
- {
-  "name": "Lukas - Excited youthful young man",
-  "id": "wSqOdjeNqDrHcoK0zorF",
-  "category": "professional",
-  "labels": {
-   "accent": "american",
-   "gender": "male",
-   "use_case": "characters_animation",
-   "descriptive": "excited",
-   "age": "young",
-   "language": "en"
-  },
-  "description": "Young man with a lot of passion and excitement in tone, happy, hopeful and confident. Good for characters and catchy Socil Media narration. "
- },
- {
-  "name": "Max - USA Energetic Animated Cartoon",
-  "id": "467tX2b9Bky3cD6jXpNa",
-  "category": "professional",
-  "labels": {
-   "language": "en",
-   "descriptive": "excited",
-   "use_case": "social_media",
-   "gender": "male",
-   "accent": "american",
-   "age": "young"
-  },
-  "description": "Max is a high-energy, versatile American character voice engineered specifically for animation, social media, gaming, and dynamic commercial content. Delivering punchy articulation, vibrant dynamic range, and cinematic presence, Max is built to bring animated leads, zany cartoon heroes, and fast-paced social media promos to life. Recorded in a broadcast-spec booth with a pristine signal chain for zero-lag, studio-grade renders every time."
- },
- {
-  "name": "VALF - Child, Young, Playful & Sarcastic",
-  "id": "loY1uopAz31XyhAEhNSa",
-  "category": "professional",
-  "labels": {
-   "accent": "american",
-   "gender": "male",
-   "descriptive": "cute",
-   "use_case": "characters_animation",
-   "age": "young",
-   "language": "en"
-  },
-  "description": "A very Young voice with an energetic, playful. Perfect for cartoons, animation, anime dubbing, video games, children's content,  videos, narration, and character acting. Ideal for kid characters, young heroes, mischievous boys, and expressive character performances."
- },
- {
-  "name": "Noku ",
-  "id": "Sth0oyItcRdvk3sFrPiq",
-  "category": "professional",
-  "labels": {
-   "language": "en",
-   "descriptive": "confident",
-   "use_case": "characters_animation",
-   "age": "middle_aged",
-   "accent": "american",
-   "gender": "male"
-  },
-  "description": "Inspired by a heroic male anime character. The main protagonist in an action-packed anime story or animated action cartoon."
- },
- {
-  "name": "DYLO - Dark Anime Hero",
-  "id": "JjsQrIrIBD6TZ656NQfi",
-  "category": "professional",
-  "labels": {
-   "language": "en",
-   "descriptive": "intense",
-   "use_case": "characters_animation",
-   "age": "young",
-   "accent": "american",
-   "gender": "male"
-  },
-  "description": "Young adult male, fierce voice."
- },
- {
-  "name": "Jett - Gritty, Spunky Young Hero",
-  "id": "6IwYbsNENZgAB1dtBZDp",
-  "category": "professional",
-  "labels": {
-   "language": "en",
-   "descriptive": "hyped",
-   "use_case": "characters_animation",
-   "age": "young",
-   "accent": "american",
-   "gender": "male"
-  },
-  "description": "A young hero with a bit of an edge to him. He could fight demons or host your podcast!"
- },
- {
-  "name": "Austin Boy",
-  "id": "Xb3zeLrTi6F4ziIcXdwk",
-  "category": "professional",
-  "labels": {
-   "accent": "american",
-   "gender": "male",
-   "use_case": "characters_animation",
-   "descriptive": "soft",
-   "age": "young",
-   "language": "en"
-  },
-  "description": "A young American timid orphan boy. Tone is soft. Voice works well for characters & Animation."
- },
- {
-  "name": "Little Dude II - Cartoon Character",
-  "id": "fBD19tfE58bkETeiwUoC",
-  "category": "professional",
-  "labels": {
-   "accent": "american",
-   "gender": "male",
-   "descriptive": "confident",
-   "use_case": "characters_animation",
-   "age": "young",
-   "language": "en"
-  },
-  "description": "A high-pitched, energetic cartoon-style voice with a playful, mischievous edge.\nThe delivery has a light Southern drawl, giving the voice a quirky regional flavor and a hint of friendly rural warmth.\nExpressive emphasis, comedic timing, and exaggerated intonation patterns make the voice perfect for humorous characters, sidekicks, or whimsical narrators.\nBright, fast, and slightly raspy at the top end, elongated vowels, and lively emotional swings."
  }
 ]
