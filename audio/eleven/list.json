@@ -1436,7 +1436,6 @@
    "type": "tts",
    "voice": "Danit",
    "voice_id": "s0T0DT6EAPeX57MQpn3I",
-   "owner": "62f207c3396a7f17b27a143cac8bdad5072b1dc6bc7b3dbc2d567da53a52621e",
    "model": "eleven_v3",
    "settings": {
     "stability": 0.5
@@ -1448,7 +1447,6 @@
    "type": "tts",
    "voice": "Nimrod",
    "voice_id": "ZiofZHcEBTn5sRySe5h8",
-   "owner": "8679a6e25d30e519d4c3918c0164d5c2d5841588f5ab5d185da31bf33bd1d04d",
    "model": "eleven_v3",
    "settings": {
     "stability": 0.5
@@ -1460,7 +1458,6 @@
    "type": "tts",
    "voice": "Itamar",
    "voice_id": "l7Q9rbdCC6j3J5dNlOOg",
-   "owner": "6aefa3b3749bd39dc0c76e9d149e2651e9badc0eeea7ec873910315bf2f06e98",
    "model": "eleven_v3",
    "settings": {
     "stability": 0.5
