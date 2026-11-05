@@ -139,3 +139,16 @@
 .fujiW .btn { background: #c8372d; color: #fbf5e6; box-shadow: 0 5px 0 #7f1d1d; font-family: 'Shippori Mincho B1', serif; font-weight: 800; }
 .fujiW .btn.sec { background: transparent; color: #2c4a7c; border: 2px solid #2c4a7c; box-shadow: none; font-family: 'Zen Kaku Gothic New', sans-serif; }
 .fujiW .sw { border-color: #faf3e3; }
+
+/* חלון השחקנים: רחב ונמוך, בתחתית המסך – כדי שההר יישאר גלוי */
+#players.fujiW { align-items: flex-end; padding: 16px 16px max(26px, env(safe-area-inset-bottom)); }
+#players.fujiW .panel { width: min(1060px, 100%); display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; text-align: start;
+  grid-template-areas: "top grid" "sub grid" "manage grid"; gap: 4px 22px; padding: 16px 20px; }
+#players.fujiW .wTop { grid-area: top; justify-content: flex-start; }
+#players.fujiW .panel > p { grid-area: sub; margin: 0; }
+#players.fujiW .free.manage { grid-area: manage; justify-self: start; margin-top: 6px; }
+#players.fujiW .playerGrid { grid-area: grid; display: flex; flex-wrap: nowrap; gap: 10px; margin: 0; max-height: none; overflow-x: auto; overflow-y: hidden;
+  -webkit-overflow-scrolling: touch; padding: 2px 2px 6px; }
+#players.fujiW .pcard { flex: 0 0 124px; padding: 8px 6px 10px; }
+#players.fujiW .pcard.add { min-height: 0; align-self: stretch; }
+#players.fujiW .pcard .nj { width: 50px; height: 52px; }
