@@ -35,7 +35,7 @@ function renderFujiScene(info) {
   const W = box.clientWidth || innerWidth, H = box.clientHeight || innerHeight, lay = menuLayout();
   drawFuji(box, W, H, 0, lay === 'bottom' ? W : W - fujiSideW() - 32, 92, lay === 'bottom' ? H - fujiBotH() - 40 : H - 26, info);
 }
-// מסך קבלת הפנים: אותו נוף בלי התחנות, ונינג'ה קטן למרגלות ההר
+// מסך קבלת הפנים: אותו נוף בלי התחנות
 function renderWelcomeScene() {
   const box = $('welcomeScene');
   if (!box) return;
@@ -58,7 +58,7 @@ function drawFuji(box, W, H, x0, x1, yt, yb, info) {
   const pts = a => a.map(p => f1(p[0]) + ' ' + f1(p[1])).join(' L');
   const crown = 'Q' + f1(CX) + ' ' + f1(TOP - 5 * s) + ' ' + f1(CX + hw(TOP)) + ' ' + f1(TOP);
   const mountD = 'M' + pts(footL.slice().reverse()) + ' L' + pts(left.slice().reverse()) + ' ' + crown + ' L' + pts(right) + (footR.length ? ' L' + pts(footR) : '') + ' Z';
-  const shadeD = 'M' + f1(CX + 4 * s) + ' ' + f1(TOP - 8 * s) + ' Q' + f1(CX + 40 * s) + ' ' + f1(fy(0.45)) + ' ' + f1(CX + 130 * s) + ' ' + f1(BASE) + ' L' + pts(right.slice().reverse()) + ' Z';
+  const shadeD = 'M' + f1(CX + 4 * s) + ' ' + f1(TOP - 8 * s) + ' Q' + f1(CX + 40 * s) + ' ' + f1(fy(0.45)) + ' ' + f1(CX + 130 * s) + ' ' + f1(BASE) + ' L' + f1(CX + 130 * s + (H - BASE) * 0.19) + ' ' + f1(H + 6) + (footR.length ? ' L' + pts(footR.slice().reverse()) : '') + ' L' + pts(right.slice().reverse()) + ' Z';   // הצל ממשיך עד תחתית המסך
   const SNOW = fy(0.22), sl = CX - hw(SNOW), sr = CX + hw(SNOW), jag = [];
   for (let i = 0; i <= 12; i++) jag.push([sl + (sr - sl) * i / 12, SNOW + ((i % 2 ? 22 : 0) + (i % 4 === 1 ? 8 : 0)) * s]);
   const snowL = left.filter(p => p[1] <= SNOW), snowR = right.filter(p => p[1] <= SNOW);
@@ -116,9 +116,7 @@ function drawFuji(box, W, H, x0, x1, yt, yb, info) {
   // התחנות: אדום עם כוכב = נלמדה, זהב = נפתחה ומחכה לשיעור, נייר עם מספר = עוד לא הגענו
   const N = info ? WORDS.length : 0, ts = Math.max(0.75, Math.min(1.3, s)), tw = 34 * ts, th = 32 * ts, rr = 9 * ts, dep = 5 * ts;
   let tiles = '';
-  if (!info) {                                                         // קבלת פנים: נינג'ה בצבעי ברירת המחדל עומד למרגלות ההר, ודגל על הפסגה
-    const nw = 44 * ts * 1.6, nh = 46 * ts * 1.6, nx = CX - 230 * s, ny = BASE - 30 * s - nh;
-    tiles += ninjaIcon('#dc2626').replace('<svg ', '<svg x="' + f1(nx - nw / 2) + '" y="' + f1(ny) + '" width="' + f1(nw) + '" height="' + f1(nh) + '" ');
+  if (!info) {                                                         // קבלת פנים: רק דגל על הפסגה
     tiles += '<rect x="' + f1(CX - 2 * ts) + '" y="' + f1(TOP - 48 * ts) + '" width="' + f1(4 * ts) + '" height="' + f1(46 * ts) + '" fill="#1f2a44"/>' +
              '<path d="M' + f1(CX + 2 * ts) + ' ' + f1(TOP - 48 * ts) + ' l' + f1(30 * ts) + ' ' + f1(10 * ts) + ' l' + f1(-30 * ts) + ' ' + f1(10 * ts) + ' z" fill="' + FUJI_RED + '"/>';
   }
