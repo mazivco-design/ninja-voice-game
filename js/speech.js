@@ -77,7 +77,7 @@ async function ensureAudio() {
 // מילה אחרת מחכה לתוצאה הסופית, שמגיעה עם ציון ביטחון: ציון גבוה – מופעלת (וזו טעות, כמו היום). ציון נמוך – כנראה בלבול עם מילה דומה, מתעלמים.
 // אם Vosk "מתקן" את המילה האחרונה (שמע down ואז הבין שזה jump) – מטפלים במילה המתוקנת.
 function handleText(text, isFinal, detail) {
-  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'put down' || POWER_WORDS.includes(w);
+  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'yes' || w === 'put down' || POWER_WORDS.includes(w);
   const { words, confs } = tokenize(text, detail);
   for (let i = 0; i < words.length; i++) {
     const exp = expectedWords();                                   // מחושב לכל מילה – "I WANT KEY": אחרי WANT מצפים כבר לשם החפץ
@@ -108,7 +108,7 @@ function handleText(text, isFinal, detail) {
 
 // מפרק את הטקסט למילים של המשחק. "let go" (שתי מילים אצל Vosk) הופך למילה אחת 'let go', עם הציון הנמוך מבין השתיים
 function tokenize(text, detail) {
-  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'put down' || POWER_WORDS.includes(w);
+  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'yes' || w === 'put down' || POWER_WORDS.includes(w);
   const toks = (text || '').toLowerCase().split(/\s+/).filter(Boolean);
   const dconf = detail && detail.length ? detail.map(d => d.conf) : null;
   const words = [], confs = [];
@@ -283,6 +283,7 @@ function command(word, source) {
   else if (word === 'run')   { act.run = RUN_BOOST.time; act.stop = 0; }   // דוהר מהר
   else if (word === 'swim')  { act.swim = SWIM_TIME; duckT = 0; }
   else if (word === 'climb') { act.climbWant = 0.8; }                     // מטפס כשהנינג'ה מגיע לסולם (אם זה קורה בשנייה הקרובה)
+  else if (word === 'yes' && boatYes()) {}                                         // YES – עונים לחבר בסירה
   else if (word === 'push' && (boatPush() || cartPush())) {}                            // דוחפים את הסירה עם החבר
   else if (word === 'push')  { act.push = 0.6; duckT = 0; }
   else if (word === 'pull' && boatPull()) {}                             // FISHING: מושך את הדג

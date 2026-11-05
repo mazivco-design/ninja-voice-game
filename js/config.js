@@ -45,7 +45,7 @@ const WORDS_DEFAULT = WORDS.slice();
   } catch (e) {}
 })();
 const WORD_ICON = { jump: '⬆️', down: '⬇️', kick: '🦶', throw: '✴️', catch: '🟡', fly: '🪁',
-                    stop: '✋', run: '💨', swim: '🌊', climb: '🧗', push: '🪨', pull: '⛓️', hide: '🌿', block: '🛡️', leap: '🤸', dive: '🤿', crawl: '🐛', fire: '🔥', want: '🙋', 'let go': '🪢', ride: '🐉', fight: '⚔️', hold: '🎋', 'pick up': '🏋️', 'put down': '🫳', help: '🆘', 'push together': '🚣', 'push on three': '🎃', fishing: '🎣' };
+                    stop: '✋', run: '💨', swim: '🌊', climb: '🧗', push: '🪨', pull: '⛓️', hide: '🌿', block: '🛡️', leap: '🤸', dive: '🤿', crawl: '🐛', fire: '🔥', want: '🙋', 'let go': '🪢', ride: '🐉', fight: '⚔️', hold: '🎋', 'pick up': '🏋️', 'put down': '🫳', help: '🆘', 'push together': '🚣', 'push on three': '🎃', fishing: '🎣', yes: '👍' };
 
 // רמות קושי – קובעות מהירות, לבבות וקפיצה.
 // gapT = הזמן (בשניות) בין מכשול למכשול. מוגדר בזמן ולא במרחק,
