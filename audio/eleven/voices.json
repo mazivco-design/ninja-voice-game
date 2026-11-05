@@ -310,12 +310,12 @@
   "id": "wSqOdjeNqDrHcoK0zorF",
   "category": "professional",
   "labels": {
-   "gender": "male",
+   "descriptive": "excited",
+   "use_case": "characters_animation",
+   "age": "young",
    "language": "en",
    "accent": "american",
-   "use_case": "characters_animation",
-   "descriptive": "excited",
-   "age": "young"
+   "gender": "male"
   },
   "description": "Young man with a lot of passion and excitement in tone, happy, hopeful and confident. Good for characters and catchy Socil Media narration. "
  },
@@ -324,12 +324,12 @@
   "id": "6IwYbsNENZgAB1dtBZDp",
   "category": "professional",
   "labels": {
-   "gender": "male",
+   "descriptive": "hyped",
+   "use_case": "characters_animation",
+   "age": "young",
    "accent": "american",
    "language": "en",
-   "use_case": "characters_animation",
-   "descriptive": "hyped",
-   "age": "young"
+   "gender": "male"
   },
   "description": "A young hero with a bit of an edge to him. He could fight demons or host your podcast!"
  },
@@ -338,12 +338,12 @@
   "id": "s0T0DT6EAPeX57MQpn3I",
   "category": "professional",
   "labels": {
-   "gender": "female",
-   "accent": "standard",
-   "language": "he",
    "descriptive": "casual",
+   "accent": "standard",
+   "age": "young",
+   "language": "he",
    "use_case": "informative_educational",
-   "age": "young"
+   "gender": "female"
   },
   "description": "A native Israeli female voice speaking Hebrew in a natural, conversational style. Well suited to personal storytelling, podcasts, educational videos, and everyday dialogue. An approachable voice with an authentic Israeli accent and a personal, relatable delivery."
  },
@@ -380,12 +380,12 @@
   "id": "fBD19tfE58bkETeiwUoC",
   "category": "professional",
   "labels": {
-   "gender": "male",
-   "language": "en",
-   "accent": "american",
    "descriptive": "confident",
+   "accent": "american",
+   "age": "young",
+   "language": "en",
    "use_case": "characters_animation",
-   "age": "young"
+   "gender": "male"
   },
   "description": "A high-pitched, energetic cartoon-style voice with a playful, mischievous edge.\nThe delivery has a light Southern drawl, giving the voice a quirky regional flavor and a hint of friendly rural warmth.\nExpressive emphasis, comedic timing, and exaggerated intonation patterns make the voice perfect for humorous characters, sidekicks, or whimsical narrators.\nBright, fast, and slightly raspy at the top end, elongated vowels, and lively emotional swings."
  },
@@ -408,12 +408,12 @@
   "id": "XjGYkUkzth8BPs29fmcV",
   "category": "professional",
   "labels": {
-   "gender": "male",
-   "accent": "american",
-   "language": "en",
    "descriptive": "cute",
+   "accent": "american",
+   "age": "young",
    "use_case": "characters_animation",
-   "age": "young"
+   "language": "en",
+   "gender": "male"
   },
   "description": "A sweet, playful, and adorable little cartoon boy inspired by popular kids' characters. He is kind, cheerful, and lovable. Ideal for children's animations, kids' audiobooks, storybook apps, educational content, and social media."
  },
@@ -436,12 +436,12 @@
   "id": "ZiofZHcEBTn5sRySe5h8",
   "category": "professional",
   "labels": {
-   "gender": "male",
-   "language": "he",
-   "accent": "standard",
-   "use_case": "narrative_story",
    "descriptive": "neutral",
-   "age": "middle_aged"
+   "use_case": "narrative_story",
+   "language": "he",
+   "age": "middle_aged",
+   "accent": "standard",
+   "gender": "male"
   },
   "description": "A natural, warm and confident Israeli male voice with clear native Hebrew pronunciation and an engaging, conversational tone.  Versatile and expressive, with a smooth, friendly delivery that works beautifully for storytelling, narration, commercials, educational content, podcasts and social media videos.  Authentic, approachable and professional, with a distinctly Israeli character."
  },
@@ -450,12 +450,12 @@
   "id": "loY1uopAz31XyhAEhNSa",
   "category": "professional",
   "labels": {
-   "gender": "male",
+   "descriptive": "cute",
    "accent": "american",
    "language": "en",
-   "descriptive": "cute",
+   "age": "young",
    "use_case": "characters_animation",
-   "age": "young"
+   "gender": "male"
   },
   "description": "A very Young voice with an energetic, playful. Perfect for cartoons, animation, anime dubbing, video games, children's content,  videos, narration, and character acting. Ideal for kid characters, young heroes, mischievous boys, and expressive character performances."
  },
