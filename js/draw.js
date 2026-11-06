@@ -518,6 +518,7 @@ function draw() {
   ctx.beginPath(); ctx.rect(viewL() - 1, top, viewR() - viewL() + 2, bottom - top); ctx.clip();
 
   const WIDE = { river: drawRiver, lake: drawLake, bridge: drawBridge, pond: drawPond, chasm: drawChasm, jetgap: drawJetGap };
+  drawCliffScenes(top);                                                        // נוף צוקים בשלב הג'ט (jetstage.js)
   drawForestScenes(top);                                                       // היער ברקע – לפני כל השאר (boar.js)
   for (const o of obstacles) if (WIDE[o.type]) WIDE[o.type](o, bottom);
   for (const o of obstacles) if (o.type === 'jetgap') drawJetStage(o);         // התרמיל, מטבעות, אבני חן וציפורים מעל התהום

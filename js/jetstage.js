@@ -164,25 +164,102 @@ function jsPose(P) {
 
 /* ---------- ציור ---------- */
 // התהום: קירות סלע, עומק בערפל ונהר למטה (נקרא מ-draw.js עם המכשולים הרחבים)
-function drawJetGap(o, bottom) {
+function drawJetGap(o, bottom) {                                               // קניון: קירות סלע בשכבות, עומק בערפל ונהר למטה
   const x = jsEdge(o), w = JS.gap, t = performance.now() / 1000, WY = GROUND + 34;
-  const g = ctx.createLinearGradient(0, GROUND - 2, 0, WY);
-  g.addColorStop(0, '#c9e6d3'); g.addColorStop(0.6, '#a8cbbb'); g.addColorStop(1, '#8fb4a8');
+  const g = ctx.createLinearGradient(0, GROUND - 2, 0, WY);                        // הקיר הרחוק של הקניון – כתום-אדמדם שנעלם בערפל כחלחל
+  g.addColorStop(0, '#9c6142'); g.addColorStop(0.35, '#8a6458'); g.addColorStop(1, '#6f8ea0');
   ctx.fillStyle = g; ctx.fillRect(x, GROUND - 2, w, WY - GROUND + 2);
-  ctx.strokeStyle = 'rgba(70,100,90,.18)'; ctx.lineWidth = 0.8;
-  for (let yy = GROUND + 4; yy < WY - 1; yy += 5) { ctx.beginPath(); for (let xx = x; xx <= x + w; xx += 3) ctx.lineTo(xx, yy + Math.sin(xx * 0.18 + yy) * 0.8); ctx.stroke(); }
-  const wg = ctx.createLinearGradient(0, WY, 0, bottom); wg.addColorStop(0, '#38bdf8'); wg.addColorStop(1, '#075985');
+  const sh = ctx.createLinearGradient(0, GROUND - 2, 0, GROUND + 9);                 // צל עמוק מתחת לשפה
+  sh.addColorStop(0, 'rgba(40,18,8,.55)'); sh.addColorStop(1, 'rgba(40,18,8,0)'); ctx.fillStyle = sh; ctx.fillRect(x, GROUND - 2, w, 11);
+  for (let k = 0; k < 6; k++) {                                                   // שכבות סלע אופקיות
+    const yy = GROUND + 2 + k * 5.2;
+    ctx.fillStyle = k % 2 ? 'rgba(60,30,20,.16)' : 'rgba(255,220,180,.08)';
+    ctx.beginPath(); ctx.moveTo(x, yy);
+    for (let xx = x; xx <= x + w; xx += 3) ctx.lineTo(xx, yy + Math.sin(xx * 0.09 + k * 1.7) * 1.1);
+    for (let xx = x + w; xx >= x; xx -= 3) ctx.lineTo(xx, yy + 2.4 + Math.sin(xx * 0.11 + k) * 0.9);
+    ctx.closePath(); ctx.fill();
+  }
+  const wg = ctx.createLinearGradient(0, WY, 0, bottom); wg.addColorStop(0, '#5fb8d6'); wg.addColorStop(1, '#1e5f80');
   ctx.fillStyle = wg; ctx.beginPath(); ctx.moveTo(x, bottom);
   for (let xx = x; xx <= x + w; xx += 2) ctx.lineTo(xx, WY + Math.sin(xx * 0.35 + t * 2.5) * 0.6);
   ctx.lineTo(x + w, bottom); ctx.closePath(); ctx.fill();
-  for (const [ex, dir] of [[x, 1], [x + w, -1]]) {                              // קירות הצוק
-    ctx.fillStyle = '#8b6b4a'; ctx.beginPath(); ctx.moveTo(ex, GROUND);
-    for (let yy = GROUND; yy <= bottom; yy += 3) ctx.lineTo(ex + dir * (1.5 + Math.sin(yy * 0.7 + ex) * 1.2 + (yy - GROUND) * 0.06), yy);
-    ctx.lineTo(ex, bottom); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = 'rgba(60,40,25,.35)'; ctx.lineWidth = 0.5;
-    for (let yy = GROUND + 3; yy < bottom; yy += 4) { ctx.beginPath(); ctx.moveTo(ex, yy); ctx.lineTo(ex + dir * 2.2, yy + 1); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 0.4; ctx.beginPath();
+  for (let xx = x; xx <= x + w; xx += 2) ctx.lineTo(xx, WY + Math.sin(xx * 0.35 + t * 2.5) * 0.6); ctx.stroke();
+  for (const [ex, dir] of [[x, 1], [x + w, -1]]) {                              // קירות הצוק הקרובים
+    ctx.fillStyle = '#7d4528'; ctx.beginPath(); ctx.moveTo(ex - dir * 2, GROUND - 1);
+    for (let yy = GROUND - 1; yy <= bottom; yy += 2.5) ctx.lineTo(ex + dir * (2 + Math.sin(yy * 0.6 + ex) * 1.3 + Math.max(0, yy - GROUND) * 0.07), yy);
+    ctx.lineTo(ex - dir * 6, bottom); ctx.lineTo(ex - dir * 6, GROUND - 1); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(90,45,25,.4)'; ctx.lineWidth = 0.5;
+    for (let yy = GROUND + 2; yy < bottom; yy += 3.5) { ctx.beginPath(); ctx.moveTo(ex - dir * 5, yy); ctx.lineTo(ex + dir * 2.4, yy + 0.8); ctx.stroke(); }
   }
 }
+
+/* ---------- נוף של צוקים (במקום הבמבוק) ---------- */
+function cliffFull() { return mode === 'stage' && playWords.includes('jetpack'); }   // באימון – כל השלב בקניון
+const CLIFFS = { ramp: 90 };
+function cliffOn(o) { return cliffFull() || (o.x - CLIFFS.ramp - 10 < viewR() && o.x + o.w + CLIFFS.ramp + 10 > viewL()); }
+let cliffCv = null;
+function drawCliffScenes(top) {                                                   // נקרא מ-draw.js לפני המכשולים
+  const os = obstacles.filter(o => o.type === 'jetgap');
+  if (cliffFull()) { drawCliffBack(os[0] || null, top); return; }
+  for (const o of os) drawCliffBack(o, top);
+}
+function drawCliffBack(o, top) {
+  if (o && !cliffOn(o)) return;
+  if (!cliffCv) cliffCv = document.createElement('canvas');
+  if (cliffCv.width !== canvas.width || cliffCv.height !== canvas.height) { cliffCv.width = canvas.width; cliffCv.height = canvas.height; }
+  const c = cliffCv.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cliffCv.width, cliffCv.height); c.setTransform(ctx.getTransform());
+  cliffLayers(c, top);
+  if (o && !cliffFull()) {                                                         // במסע: נכנסים לקניון ויוצאים ממנו בהדרגה
+    const L = viewL() - 2, R = viewR() + 2, W = o.w + CLIFFS.ramp * 2, g = c.createLinearGradient(o.x - CLIFFS.ramp, 0, o.x + o.w + CLIFFS.ramp, 0);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(Math.min(0.49, CLIFFS.ramp / W), 'rgba(0,0,0,1)'); g.addColorStop(Math.max(0.51, 1 - CLIFFS.ramp / W), 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.globalCompositeOperation = 'destination-in'; c.fillStyle = g; c.fillRect(L, top - 5, R - L, GROUND + 80 - top); c.globalCompositeOperation = 'source-over';
+  }
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(cliffCv, 0, 0); ctx.restore();
+}
+function cliffRnd(i) { const x = Math.sin(i * 91.7 + 17.3) * 43758.5453; return x - Math.floor(x); }
+function cliffLayers(c, top) {
+  const L = viewL() - 2, R = viewR() + 2, G = GROUND - 1, now = performance.now() / 1000;
+  const wr = (x, a, b) => { const w = b - a; return ((x - a) % w + w) % w + a; };
+  const sky = c.createLinearGradient(0, top, 0, G);                                // שמיים חמים של קניון
+  sky.addColorStop(0, '#8ecae6'); sky.addColorStop(0.55, '#cfe3e8'); sky.addColorStop(0.85, '#f5d6b0'); sky.addColorStop(1, '#efc394');
+  c.fillStyle = sky; c.fillRect(L, top, R - L, G - top + 1);
+  c.fillStyle = 'rgba(255,240,200,.55)'; c.beginPath(); c.arc(L + (R - L) * 0.78, top + 16, 9, 0, Math.PI * 2); c.fill();
+  c.fillStyle = 'rgba(255,248,225,.95)'; c.beginPath(); c.arc(L + (R - L) * 0.78, top + 16, 5, 0, Math.PI * 2); c.fill();
+  // שכבה רחוקה: מסות שטוחות בגוון סגלגל של אובך
+  const mesa = (x, w, h, col, cap) => {
+    c.fillStyle = col; c.beginPath(); c.moveTo(x - w / 2 - h * 0.25, G); c.lineTo(x - w / 2, G - h); c.lineTo(x + w / 2, G - h); c.lineTo(x + w / 2 + h * 0.25, G); c.closePath(); c.fill();
+    if (cap) { c.fillStyle = cap; c.fillRect(x - w / 2, G - h, w, Math.max(0.8, h * 0.06)); }
+  };
+  for (let i = 0; i < 6; i++) mesa(wr(L + i * 38 + cliffRnd(i) * 14 - bgX * 0.06, L - 30, R + 30), 18 + cliffRnd(i + 3) * 20, 18 + cliffRnd(i + 7) * 14, 'rgba(186,150,170,.55)');
+  const hz = c.createLinearGradient(0, G - 26, 0, G); hz.addColorStop(0, 'rgba(250,225,200,0)'); hz.addColorStop(1, 'rgba(250,225,200,.6)');
+  c.fillStyle = hz; c.fillRect(L, G - 26, R - L, 26);
+  // שכבה אמצעית: צוקים כתומים עם פסי שכבות
+  for (let i = 0; i < 5; i++) {
+    const x = wr(L + i * 46 + cliffRnd(i + 20) * 18 - bgX * 0.22, L - 40, R + 40), w = 16 + cliffRnd(i + 22) * 16, h = 28 + cliffRnd(i + 24) * 22;
+    mesa(x, w, h, '#d79a68', '#ebb98a');
+    c.strokeStyle = 'rgba(160,90,50,.35)'; c.lineWidth = 0.6;
+    for (let k = 1; k < 5; k++) { const yy = G - h + k * h / 5; c.beginPath(); c.moveTo(x - w / 2 - (G - yy) * 0 - (h - (G - yy)) * 0.25 * 0 , yy); c.lineTo(x + w / 2, yy + 0.5); c.stroke(); }
+    c.fillStyle = 'rgba(120,60,30,.18)'; c.fillRect(x + w * 0.15, G - h, w * 0.35, h);   // צד מוצל
+  }
+  // שכבה קרובה: עמודי סלע גבוהים ואדמדמים, דלילים
+  for (let i = 0; i < 3; i++) {
+    const x = wr(L + i * 80 + cliffRnd(i + 40) * 30 - bgX * 0.45, L - 30, R + 30), w = 9 + cliffRnd(i + 42) * 7, h = 40 + cliffRnd(i + 44) * 20;
+    c.fillStyle = '#b5683e'; c.beginPath(); c.moveTo(x - w / 2 - 3, G + 1); c.lineTo(x - w / 2 + 0.8, G - h + 2); c.quadraticCurveTo(x, G - h - 1.5, x + w / 2 - 0.6, G - h + 2); c.lineTo(x + w / 2 + 3, G + 1); c.closePath(); c.fill();
+    c.fillStyle = 'rgba(90,40,20,.22)'; c.fillRect(x + w * 0.1, G - h + 2, w * 0.4, h);
+    c.strokeStyle = 'rgba(255,215,170,.35)'; c.lineWidth = 0.5;
+    for (let k = 1; k < 7; k++) { const yy = G - h + k * h / 7; c.beginPath(); c.moveTo(x - w / 2, yy); c.lineTo(x + w / 2, yy + 0.4); c.stroke(); }
+  }
+  // הקרקע: סלע ואבנים במקום דשא
+  const pg = c.createLinearGradient(0, GROUND, 0, GROUND + 30); pg.addColorStop(0, '#c58a5a'); pg.addColorStop(1, '#8f5a38');
+  c.fillStyle = pg; c.fillRect(L, GROUND - 1.3, R - L, 60);
+  c.fillStyle = '#d9a274'; c.fillRect(L, GROUND - 1.3, R - L, 1.1);
+  c.strokeStyle = 'rgba(110,60,35,.3)'; c.lineWidth = 0.5;
+  for (let k = 0; k < 4; k++) { const yy = GROUND + 4 + k * 6; c.beginPath(); for (let x = L; x <= R; x += 4) c.lineTo(x, yy + Math.sin((x + bgX) * 0.12 + k) * 0.8); c.stroke(); }
+  c.fillStyle = 'rgba(90,50,30,.35)';
+  for (let i = 0; i < 18; i++) { const x = wr(L + cliffRnd(i + 60) * 200 - bgX, L - 3, R + 3); c.beginPath(); c.ellipse(x, GROUND + 2 + cliffRnd(i + 70) * 14, 0.9 + cliffRnd(i), 0.45, 0, 0, Math.PI * 2); c.fill(); }
+}
+
 function jsPack(x, y, rot, flame) {                                            // תרמיל סילון: שני מכלים, רצועות, נחירים
   ctx.save(); ctx.translate(x, y); ctx.rotate(rot || 0); ctx.lineCap = 'round';
   for (const dx of [-1.1, 1.1]) {
