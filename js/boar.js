@@ -19,7 +19,7 @@ const BOAR_TREES = [
   { dx: 374, w: 10.5, col: '#826347', lean: -0.01, br: [[0.36, -1, 10], [0.58, 1, 9], [0.74, 1, 6]] }
 ];
 const BOAR_STARTS = [150, 342];   // שני חזירים: הראשון באמצע היער, השני בהמשך (יחסית לתחילת היער)
-const BOAR = { returnV: 9, size: 1.2, lead: 200, ramp: 70, edge: 110, tree0: 24, trees: BOAR_TREES.length,  adv: 12, stepT: 1.6, walkV: 14, duckT: 0.35,
+const BOAR = { pawT: 1.0, returnV: 9, size: 1.2, lead: 200, ramp: 70, edge: 110, tree0: 24, trees: BOAR_TREES.length,  adv: 12, stepT: 1.6, walkV: 14, duckT: 0.35,
                waitMin: 1.6, waitMax: 3.0, lookT: 1.8, chargeT: 0.7, fallT: 1.1, returnT: 1.3, knock: 7, passBy: 18, coins: 4, fade: 55 };
 const BOAR_EARS = { easy: 2.0, medium: 1.5, hard: 1.15 };                         // כמה זמן יש להגיד HIDE מרגע שהאוזניים זזות
 let boarS = null;   // { o, np: ninja phase, nt, bp: boar phase, bt, bo: מקום החזיר (יחסית ל-o.x), i: העץ שאליו הולכים, warnAt, miss, hinted }
@@ -55,7 +55,7 @@ function boarSpeed() {
   return 0;
 }
 
-const BOAR_CHARGE = { easy: 13, medium: 17, hard: 21 };                             // מהירות ההסתערות – יש זמן להתחבא
+const BOAR_CHARGE = { easy: 7, medium: 9, hard: 11.5 };                             // מהירות ההסתערות – יש זמן להתחבא
 function boarChargeV() { return BOAR_CHARGE[diffKey] || 16; }
 function boarSnout() { return boarChargeX() - 14.5 * BOAR.size; }                    // קצה האף בזמן הסתערות (פונה שמאלה)
 function boarOnScreen(o) { return boarX(o) < viewR() - 14; }                         // חזיר שעוד לא רואים במסך – לא מסתכל ולא מסתער
@@ -121,8 +121,9 @@ function boarUpdate(dt, pb) {
       S.bos[S.b] -= BOAR.adv * dt / BOAR.stepT;
       if (S.bt >= BOAR.stepT) { goB('graze'); S.warnAt = boarWait(); }
       break;
-    case 'charge': {                                                                 // רץ אל הנינג'ה – בקצב שמשאיר זמן להגיד HIDE
-      S.cx -= boarChargeV() * dt;
+    case 'charge': {                                                                 // קודם גורף ברגל ונוחר, ואז רץ אל הנינג'ה – בקצב שמשאיר זמן להגיד HIDE
+      if (S.bt < BOAR.pawT) break;
+      S.cx -= boarChargeV() * Math.min(1, (S.bt - BOAR.pawT) / 0.6) * dt;
       if (Math.random() < 0.5) particles.push({ x: boarChargeX() + 10, y: GROUND - 0.5, vx: 8, vy: -3, g: 8, life: 0.35, color: WORLDS[world].dust, size: 0.9 });
       const snout = boarSnout();
       if (S.np === 'hidden' || S.np === 'duck') {
@@ -364,7 +365,6 @@ function forestLayers(o, top) {
     const x = wrapX(L + i * 45 + boarRnd(i + 5) * 12 - bgX * 0.42, L - 12, R + 12), cy = top + 4 + boarRnd(i + 25) * 12;
     fTree(x, 2.2 + boarRnd(i + 2) * 1.2, cy, G - 3, '#6e8262', i % 2 ? '#3f6e3c' : '#46733f', 10 + boarRnd(i + 35) * 4, 40 + i * 9, (boarRnd(i + 66) - 0.5) * 0.05, 'rgba(0,0,0,.15)');
   }
-  for (let i = 0; i < 13; i++) { const x = wrapX(L + i * 14 + boarRnd(i + 9) * 7 - bgX * 0.42, L - 10, R + 10); fBlobs(x, G - 5, 4.5 + boarRnd(i) * 2.5, i % 2 ? '#4f7a48' : '#45703f', 5, i * 11); }
   fBlobs(wrapX(50 - bgX * 0.42, L - 40, R + 40), top - 2, 26, '#3f6b3d', 10, 33);
   fBlobs(wrapX(135 - bgX * 0.42, L - 40, R + 40), top - 3, 28, '#3a643a', 10, 51);
   const pg = ctx.createLinearGradient(0, GROUND, 0, GROUND + 30); pg.addColorStop(0, '#a88a62'); pg.addColorStop(1, '#836747');   // שביל עפר ביער
@@ -405,7 +405,7 @@ function drawBoarFig(x, y, s, o, force) {
   const bp = force || (S ? S.bp : 'graze'), running = bp === 'charge', walking = bp === 'return' || bp === 'step';
   let head = 0;
   if (bp === 'look') head = Math.min(1, S.bt / 0.25) * (S.bt > BOAR.lookT - 0.3 ? (BOAR.lookT - S.bt) / 0.3 : 1);
-  if (bp === 'charge') head = 0.6;
+  if (bp === 'charge') head = S && S.bt < BOAR.pawT ? 0.1 : 0.6;   // גורף ברגל עם ראש מורכן, ואז רץ
   if (bp === 'return') head = 0.3;
   if (bp === 'step') head = 0.2;
   if (bp === 'turn') head = 0.25;
@@ -419,11 +419,12 @@ function drawBoarFig(x, y, s, o, force) {
   }
   ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
   ctx.scale(-dir, 1);                                                                    // מסתובב / הולך חזרה
-  const legA = running ? Math.sin(t * 26) * 0.6 : walking ? Math.sin(t * 8) * 0.4 : bp === 'turn' ? Math.sin(t * 12) * 0.3 : 0;
+  const pawing = S && bp === 'charge' && S.bt < BOAR.pawT;
+  const legA = pawing ? 0 : running ? Math.sin(t * 16) * 0.55 : walking ? Math.sin(t * 8) * 0.4 : bp === 'turn' ? Math.sin(t * 12) * 0.3 : 0;
   ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(0, 0.3, 9, 1.4, 0, 0, Math.PI * 2); ctx.fill();
   const body = '#4a3426', dark = '#2e1f16';
   ctx.strokeStyle = dark; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
-  [[-5, 1], [-3, -1], [4, 1], [6, -1]].forEach(([lx, d]) => { ctx.beginPath(); ctx.moveTo(lx, -5); ctx.lineTo(lx + Math.sin(legA * d) * 3, -0.4); ctx.stroke(); });
+  [[-5, 1], [-3, -1], [4, 1], [6, -1]].forEach(([lx, d], li) => { const pw = pawing && li === 0 ? Math.sin(t * 11) : 0; ctx.beginPath(); ctx.moveTo(lx, -5); ctx.lineTo(lx + Math.sin(legA * d) * 3 + pw * 1.6, -0.4 - Math.max(0, pw) * 0.8); ctx.stroke(); });   // גורף ברגל הקדמית לפני ההסתערות
   ctx.fillStyle = body; ctx.beginPath(); ctx.ellipse(1, -7.5, 9, 5, -0.08, 0, Math.PI * 2); ctx.fill();
   const NM = 16, back = u => -11.6 - Math.sin(Math.PI * Math.min(1, (u + 0.1) / 1.1)) * 0.9 + u * 0.9;   // קו הגב
   ctx.fillStyle = '#16100b'; ctx.beginPath(); ctx.moveTo(-7.5, back(0) + 2.2);            // רעמת זיפים שחורה: ארוכה בצוואר, הולכת ומתקצרת לכיוון הזנב
