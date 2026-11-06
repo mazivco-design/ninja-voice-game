@@ -127,14 +127,22 @@ $('pchip').onclick = () => { managing = false; showPlayers(); };
 function renderMute() { $('muteBtn').textContent = muted ? '🔇' : '🔊'; }
 $('muteBtn').onclick = () => { muted = !muted; try { localStorage.setItem('ninjaVoice_mute', JSON.stringify(muted)); } catch (e) {} renderMute(); };
 renderMute();
-document.querySelectorAll('.testerBtn').forEach(b => {
-  let timer = null;
-  const cancel = () => { clearTimeout(timer); timer = null; b.classList.remove('holding'); };
-  b.addEventListener('pointerdown', e => {
-    e.preventDefault(); b.classList.add('holding');
-    timer = setTimeout(() => { cancel(); managing = false; selectPlayer(TESTER); }, 1000);
-  });
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, cancel));
+// כניסה לבודק: גוררים את הידית עד סוף המסילה. עוזבים באמצע – הידית חוזרת להתחלה
+document.querySelectorAll('.testerSlide').forEach(b => {
+  const knob = b.querySelector('.tsKnob');
+  let startX = null, dx = 0;
+  const maxX = () => b.clientWidth - knob.offsetWidth - 8;
+  const setX = x => { dx = Math.max(0, Math.min(maxX(), x)); knob.style.transform = 'translateX(' + dx + 'px)'; b.setAttribute('aria-valuenow', Math.round(dx / maxX() * 100)); };
+  const reset = () => { startX = null; b.classList.remove('dragging', 'done'); setX(0); };
+  knob.addEventListener('pointerdown', e => { e.preventDefault(); startX = e.clientX - dx; b.classList.add('dragging'); knob.setPointerCapture(e.pointerId); });
+  knob.addEventListener('pointermove', e => { if (startX !== null) setX(e.clientX - startX); });
+  const release = () => {
+    if (startX === null) return;
+    b.classList.remove('dragging'); startX = null;
+    if (dx >= maxX() - 4) { b.classList.add('done'); setTimeout(() => { reset(); managing = false; selectPlayer(TESTER); }, 180); }
+    else setX(0);
+  };
+  ['pointerup', 'pointercancel'].forEach(ev => knob.addEventListener(ev, release));
   b.addEventListener('contextmenu', e => e.preventDefault());
 });
 
