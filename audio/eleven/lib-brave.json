@@ -1,0 +1,67 @@
+[
+ {
+  "name": "Richy Bravo - Confident and Neutral",
+  "voice_id": "D1y1GPAenCvoAXvltaUT",
+  "public_owner_id": "826fc408e9e3339b5d4dc0a5bf88163016dbefb0875c058d4282671db8a311a1",
+  "accent": "latin american",
+  "age": "young",
+  "gender": "male",
+  "use_case": "social_media",
+  "descriptive": "hyped",
+  "description": "Fresh and dynamic voice featuring a crystal-clear Neutral Latam accent. Perfect for Social Media video essays, podcasts, and digital storytelling. Its youthful 'young adult' vibe provides high listene",
+  "cloned_by_count": 781,
+  "usage": 5505370
+ },
+ {
+  "name": "Tanmay J - Suspense & Horror Narrator",
+  "voice_id": "xbyehr71iWJTb7UvGkRT",
+  "public_owner_id": "7398804d9eaf2f463899a907587c33a390591775784f87857b6d0e1e4e3e66f6",
+  "accent": "standard",
+  "age": "young",
+  "gender": "male",
+  "use_case": "narrative_story",
+  "descriptive": "intense",
+  "description": "Grave, controlled, and quietly unsettling — Tanmay J lets tension build through restraint, never relying on volume to create dread. His measured delivery holds an audience in silence as much as in sou",
+  "cloned_by_count": 512,
+  "usage": 709006
+ },
+ {
+  "name": "Jaider - Clear, Balanced, Calm",
+  "voice_id": "rpqlUOplj0Q0PIilat8h",
+  "public_owner_id": "cfda3933089eb10b6b26df18e3364af17a6a2fe0e8c41caf7bd2dd84828d0cb1",
+  "accent": "latin american",
+  "age": "young",
+  "gender": "male",
+  "use_case": "narrative_story",
+  "descriptive": "casual",
+  "description": "La voz de Jaider combina la frescura juvenil con una entonación natural y envolvente, ideal para narraciones en español que buscan conectar emocionalmente con el oyente. Su timbre claro, ligeramente g",
+  "cloned_by_count": 95304,
+  "usage": 141659549
+ },
+ {
+  "name": "Super VM - Friendly Hopeful Hero",
+  "voice_id": "gQRS0Lnh5XQOAqujMqUX",
+  "public_owner_id": "18b6f038186ba974fe33d7f281cb40fd9146c95a452425bd6a582689ad9c585e",
+  "accent": "standard",
+  "age": "young",
+  "gender": "male",
+  "use_case": "characters_animation",
+  "descriptive": "hyped",
+  "description": "He sounds like a brave  Super VoiceMaster with a heart full of dreams and a voice that cuts through silence.\nHis tone is bright, hopeful, and filled with emotional sincerity—like a man, who’s been qui",
+  "cloned_by_count": 8118,
+  "usage": 6571033
+ },
+ {
+  "name": "Michael - Curious Alchemist",
+  "voice_id": "C5GgjTyGQ2aQx8uMiLh9",
+  "public_owner_id": "3cdc66e1d2f9e45d58467742b1d6d1a4875ee5914d194df126d5910e003ad2e0",
+  "accent": "american",
+  "age": "young",
+  "gender": "male",
+  "use_case": "characters_animation",
+  "descriptive": "calm",
+  "description": "A teenage alchemist whose journey is as much inward as it is out in the mysterious lands he explores. His personality is a blend of curiosity, resilience, and compassion, shaped by his transformative ",
+  "cloned_by_count": 1792,
+  "usage": 1160126
+ }
+]

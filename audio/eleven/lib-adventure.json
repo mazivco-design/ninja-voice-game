@@ -1,0 +1,41 @@
+[
+ {
+  "name": "RJ - Casual, Clear",
+  "voice_id": "iJBEaXoSKqjBox6o14th",
+  "public_owner_id": "d6276e983503d903ee5a929a6ee10ada72c6bb2c0a8e2c6ee9ee486c68342155",
+  "accent": "kanto",
+  "age": "young",
+  "gender": "male",
+  "use_case": "conversational",
+  "descriptive": "casual",
+  "description": "A friendly, natural, and conversational voice with an adventurous personality.",
+  "cloned_by_count": 137,
+  "usage": 44276
+ },
+ {
+  "name": "Valf - Anime Protagonist Charismatic",
+  "voice_id": "unWb9iRIK7Xxf4A5Hfis",
+  "public_owner_id": "168677da2a09956cd08c31fbf8bc8107631256381eb7b65951558cd30de3ee3c",
+  "accent": "american",
+  "age": "young",
+  "gender": "male",
+  "use_case": "characters_animation",
+  "descriptive": "neutral",
+  "description": "Youthful, expressive anime protagonist voice with natural charm, curiosity, determination, and emotion. Versatile from casual, playful dialogue to intense battles, dramatic speeches, heartfelt scenes,",
+  "cloned_by_count": 5550,
+  "usage": 7293829
+ },
+ {
+  "name": "Shawn - Emotive, Steady and Narrative",
+  "voice_id": "v68aGL95dgFse9LQm2n8",
+  "public_owner_id": "f70155630cad46352a1fabc691b43c9072de48ebce72762769ba7898456b62bc",
+  "accent": "american",
+  "age": "young",
+  "gender": "male",
+  "use_case": "narrative_story",
+  "descriptive": "calm",
+  "description": "This voice comes across as creative, direct, and adventurous. It seems to have a knack for storytelling and a bold, no-nonsense approach, especially when it comes to topics you’re passionate about, li",
+  "cloned_by_count": 814,
+  "usage": 988984
+ }
+]
