@@ -206,10 +206,11 @@ function jsTop(x) {                                                            /
   return GROUND - 1.3 - Math.max(0, Math.sin(u) * 0.8 + Math.sin(u * 2.7 + 1) * 0.35 + Math.sin(u * 0.37 + 2) * 0.7);   // כמעט ישר – רק גלים קטנים
 }
 function jsPTop(k, x, cx, ty) { const d = x - cx; return ty - 0.35 * Math.sin(d * 0.5 + k * 2) - 0.2 * Math.sin(d * 1.3 + k); }   // ראש הצוק – כמעט ישר
-function jsChestY(o, k) {                                                         // התיבה יושבת על הנקודה הגבוהה שמתחתיה
+function jsChestY(o, k) {                                                         // התיבה יושבת על הסלע – בלי רווח מתחתיה
   const P = JS_PILLARS[k], cx = jsEdge(o) + P.dx, ty = GROUND - P.top, bx = cx + 3; let y = Infinity;
-  for (let x = bx - 2.2; x <= bx + 2.2; x += 0.5) y = Math.min(y, jsPTop(k, x, cx, ty));
-  return y;
+  let lo = -Infinity;
+  for (let x = bx - 2.2; x <= bx + 2.2; x += 0.25) lo = Math.max(lo, jsPTop(k, x, cx, ty));
+  return lo + 0.3;                                                                // התחתית בנקודה הנמוכה – שקועה קצת בסלע, אף פעם לא באוויר
 }
 function drawJetGap(o, bottom) {
   const x = jsEdge(o), w = JS.gap, t = performance.now() / 1000, WY = GROUND + 46;
