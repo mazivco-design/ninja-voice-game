@@ -78,8 +78,9 @@ function jsUpdate(dt, pb) {
       break;
     case 'fly': case 'hover': {
       S.fuel = Math.max(0, S.fuel - dt / JS.fuelT);                              // הדלק נגמר לאט בזמן הטיסה
+      if (S.fuel > 0.3) S.warned = 0;                                            // אחרי מילוי – אפשר להזהיר שוב
       if (S.fuel < 0.25 && S.fuel > 0 && (S.beepT = (S.beepT || 0) - dt) <= 0) { S.beepT = 0.4 + S.fuel * 3; try { if (sfxCtx) tone(880, 660, 0.08, 'square', 0.04); } catch (e) {} }   // צפצוף אזהרה
-      if (S.fuel < 0.25 && !S.warned && state === 'play') { S.warned = 1; flash = { text: '⛽ Fuel low – land on a rock!', t: 1.6 }; }
+      if (S.fuel < 0.25 && !S.warned && state === 'play') { S.warned = 1; flash = { text: S.drain ? '⛽ Fuel low!' : '⛽ Fuel low – land on a rock!', t: 1.6 }; }
       if (S.fuel <= 0 && S.lane > 0) S.lane = 0;                                 // בלי דלק – יורדים לגובה הנמוך (ועדיין מגיעים לצד השני)
       S.alt += (JS.lanes[S.lane] - S.alt) * Math.min(1, dt * 6);
       const far = jsFar(o), nx = PLAYER.x + PLAYER.w / 2;
@@ -98,6 +99,11 @@ function jsUpdate(dt, pb) {
             if (mode === 'journey' && state === 'play') { picked++; coinsFlying++; flyCoinToHud({ x: ix }, GROUND - iy - 3); }
           }
         }
+      }
+      const toIsle = jsIsleX(o, JS_ISLE.face) - 46 - nx;                          // לקראת הצוק הדלק אוזל בהדרגה ונגמר בדיוק מול המערה
+      if (!S.isleDone && S.pill[0] && S.p === 'fly' && toIsle < 90 && toIsle > 0) {
+        if (!S.drain) S.drain = { f: S.fuel, d: toIsle };
+        S.fuel = Math.min(S.fuel, S.drain.f * toIsle / S.drain.d);
       }
       if (S.p === 'fly' && !S.isleDone && nx > jsIsleX(o, JS_ISLE.face) - 46) {      // הדלק נגמר! גולשים למטה אל השן שבצוק
         S.fuel = 0; S.lane = 0; go('dying'); sfx('thud');
