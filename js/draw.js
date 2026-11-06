@@ -517,7 +517,7 @@ function draw() {
   ctx.beginPath(); ctx.rect(viewL() - 1, top, viewR() - viewL() + 2, bottom - top); ctx.clip();
 
   const WIDE = { river: drawRiver, lake: drawLake, bridge: drawBridge, pond: drawPond, chasm: drawChasm };
-  for (const o of obstacles) if (o.type === 'boar') drawForestBack(o, top);   // היער ברקע – לפני כל השאר
+  drawForestScenes(top);                                                       // היער ברקע – לפני כל השאר (boar.js)
   for (const o of obstacles) if (WIDE[o.type]) WIDE[o.type](o, bottom);
   for (const o of obstacles) if (!WIDE[o.type]) drawObstacle(o, top);
   const tc = performance.now() / 1000;
