@@ -6,7 +6,7 @@
    מעל הצד השני: DOWN – נוחתים, מורידים את התרמיל (הוא נשאר שם) וממשיכים.
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const JS = { crawlD: 27, crawlT: 3.6, fuelT: 30, refuel: 0.45, stop: 4, pack: 9, edge: 26, gap: 360, after: 40, lanes: [9, 19, 29], start: 1, flyV: 10, birdV: 6,
+const JS = { crawlD: 49, crawlT: 5.6, fuelT: 30, refuel: 0.45, stop: 4, pack: 9, edge: 26, gap: 360, after: 40, lanes: [9, 19, 29], start: 1, flyV: 10, birdV: 6,
              pickT: 0.8, putT: 1.1, takeT: 1.0, landT: 1.0, dropT: 0.9, hitR: 4.2, getR: 4.2, coins: 3 };
 // מה יש בדרך מעל התהום: מרחק מתחילת התהום, נתיב (0 נמוך, 1 אמצע, 2 גבוה), סוג
 const JS_ITEMS = [                                                                   // רק מטבעות באוויר (היהלומים – בתיבות על הצוקים)
@@ -18,7 +18,7 @@ const JS_ITEMS = [                                                              
 const JS_PILLARS = [{ dx: 78, w: 15, top: 1 }, { dx: 302, w: 14, top: 17 }];   // רחוקים זה מזה: אחד נמוך, אחד גבוה
 // אי סלע באמצע התהום: כאן הדלק נגמר. מולו קיר גבוה עם מעבר נמוך בתחתית: CRAWL פנימה – PICK UP מיכל דלק – זוחל החוצה – FLY מעל הקיר
 // צוק ענק בתהום: מגיע כמעט לראש המסך. נמוך על הפן שלו בולטת "שן" (מדף) – שם עוצרים. משם מעבר צר לתוך הצוק שנפתח לחלל פנימי עם מיכל הדלק
-const JS_ISLE = { face: 160, cliffW: 72, cliffTop: 53, ledgeW: 18, ledge: -20, tunL: 13, tunH: 6.2, chamW: 24, chamH: 15.5, can: 28 };
+const JS_ISLE = { face: 176, cliffW: 74, cliffTop: 53, ledge: -3, can: 46 };   // לפי הסקיצה: בסיס רחב שבולט שמאלה (המדף), מגדל שמתרחק למעלה, מערה: פתח – מעבר צר – חלל גדול
 let jetS = null;   // { o, p: שלב, t, lane, alt, base, items, got, pill: [נפתח?], pi: על איזה צוק }
 
 function jsSetup(o) { o.w = JS.edge + JS.gap + JS.after; }
@@ -41,7 +41,7 @@ function jsSpeed() {
   const p = jetS.p;
   if (p === 'take') return JS.flyV * Math.min(1, jetS.t / JS.takeT);
   if (p === 'perchDown' || p === 'perch') return 0;
-  if (p === 'dying') return PLAYER.x + PLAYER.w / 2 < jsIsleX(jetS.o, JS_ISLE.face) - 8 ? JS.flyV * 0.75 : 0;   // עוצר מעל השן
+  if (p === 'dying') return PLAYER.x + PLAYER.w / 2 < jsIsleX(jetS.o, JS_ISLE.face) - 10 ? JS.flyV * 0.75 : 0;   // עוצר מעל השן
   if (p === 'over') return JS.flyV;
   if (p === 'crawlIn') return JS.crawlD / JS.crawlT;
   if (p === 'crawlOut') return -JS.crawlD / JS.crawlT;
@@ -99,7 +99,7 @@ function jsUpdate(dt, pb) {
           }
         }
       }
-      if (S.p === 'fly' && !S.isleDone && nx > jsIsleX(o, JS_ISLE.face) - 40) {      // הדלק נגמר! גולשים למטה אל השן שבצוק
+      if (S.p === 'fly' && !S.isleDone && nx > jsIsleX(o, JS_ISLE.face) - 46) {      // הדלק נגמר! גולשים למטה אל השן שבצוק
         S.fuel = 0; S.lane = 0; go('dying'); sfx('thud');
         flash = { text: '⛽ Out of fuel! Find more on the rock', t: 2.2 };
       }
@@ -123,7 +123,7 @@ function jsUpdate(dt, pb) {
     case 'dying': {                                                              // גולש למטה בלי דלק אל האי
       const nx = PLAYER.x + PLAYER.w / 2;
       S.alt = Math.max(JS_ISLE.ledge, S.alt - dt * 14);
-      if (nx >= jsIsleX(o, JS_ISLE.face) - 8.1 && S.alt <= JS_ISLE.ledge + 0.01) { go('isle'); sfx('thud'); burst(PLAYER.x + 4, GROUND - S.alt - 1, '#e7c39a', 8, 12); }
+      if (nx >= jsIsleX(o, JS_ISLE.face) - 10.1 && S.alt <= JS_ISLE.ledge + 0.01) { go('isle'); sfx('thud'); burst(PLAYER.x + 4, GROUND - S.alt - 1, '#e7c39a', 8, 12); }
       break;
     }
     case 'isle': if (S.t > 0.8) go('atCave'); break;                             // נחת על השן – מול המעבר הצר
@@ -354,31 +354,31 @@ function cliffLayers(c, top) {
 }
 
 // אי הסלע: משטח כמעט ישר, תל קטן עם מנהרה (מערה) וסלע גבוה לטיפוס. front = רק תקרת המערה (מעל הנינג'ה)
-// הצוק הענק: עמוד סלע מהתחתית כמעט עד ראש המסך, שן בולטת נמוך על הפן השמאלי, מעבר צר וחלל פנימי
+// הצוק הענק (לפי הסקיצה): בסיס רחב שבולט שמאלה – עליו נוחתים, מעליו מגדל סלע שמתרחק ימינה ככל שעולים,
+// ובחיבור ביניהם מערה: פתח, מעבר שהולך ונהיה צר, ואז חלל פנימי גדול עם מיכל הדלק
+function jsCliffPts(fx, LY, top, bottom, W) {
+  return [[fx - 34, bottom], [fx - 35.5, LY + 8], [fx - 30, LY + 2.6], [fx - 17, LY + 0.3], [fx - 6, LY + 0.5], [fx + 1.5, LY],
+          [fx, LY - 9], [fx + 3.2, LY - 19], [fx - 0.4, LY - 30], [fx - 0.8, LY - 39], [fx + 3, LY - 49], [fx + 8.5, top + 4], [fx + 12, top],
+          [fx + W * 0.55, top - 1.2], [fx + W - 6, top + 0.6], [fx + W - 2, top + 5], [fx + W + 1, top + 18], [fx + W - 1, top + 34], [fx + W + 2, bottom]];
+}
+function jsCavePts(fx, LY) {
+  return [[fx, LY - 9], [fx + 7, LY - 7.3], [fx + 13, LY - 6.4], [fx + 19, LY - 6.2], [fx + 25, LY - 8.5], [fx + 32, LY - 13.5], [fx + 39, LY - 16],
+          [fx + 47, LY - 13.8], [fx + 55, LY - 7.5], [fx + 52, LY - 1.6], [fx + 44, LY - 0.3], [fx + 30, LY], [fx + 14, LY + 0.2], [fx + 1.5, LY]];
+}
 function drawJetIsle(o, bottom, front) {
   if (front) return;
-  const I = JS_ISLE, fx = jsIsleX(o, I.face), x1 = fx + I.cliffW, ct = GROUND - I.cliffTop, ly = GROUND - I.ledge, fill = jsGround(ctx, GROUND - 5, GROUND + 30);
-  if (x1 < viewL() - 10 || fx - I.ledgeW > viewR() + 10) return;
-  ctx.fillStyle = fill; ctx.beginPath();                                           // העמוד
-  ctx.moveTo(fx + 1, bottom);
-  for (let yy = bottom; yy >= ct + 1; yy -= 2.5) ctx.lineTo(fx + Math.sin(yy * 0.4) * 1.1 + Math.sin(yy * 0.13 + 1) * 1.6, yy);
-  for (let xx = fx + 1; xx <= x1 - 1; xx += 0.5) ctx.lineTo(xx, jsPTop(13, xx, (fx + x1) / 2, ct));
-  for (let yy = ct + 1; yy <= bottom; yy += 2.5) ctx.lineTo(x1 - Math.sin(yy * 0.37 + 2) * 1.1 - Math.sin(yy * 0.11) * 1.6, yy);
-  ctx.closePath(); ctx.fill();
-  ctx.fillStyle = 'rgba(90,50,30,.08)'; ctx.fillRect(fx + I.cliffW * 0.55, ct + 1.5, I.cliffW * 0.38, bottom - ct);   // צד מוצל קל
-  ctx.fillStyle = fill; ctx.beginPath();                                           // השן – מדף בולט נמוך, מתחדד למטה
-  ctx.moveTo(fx + 2, ly); ctx.lineTo(fx - I.ledgeW + 1, ly - 0.3); ctx.quadraticCurveTo(fx - I.ledgeW - 0.5, ly + 0.8, fx - I.ledgeW + 2, ly + 2.5);
-  ctx.quadraticCurveTo(fx - I.ledgeW * 0.4, ly + 4.5, fx - 1, ly + 9); ctx.lineTo(fx + 2, ly + 9); ctx.closePath(); ctx.fill();
-  const tx0 = fx, tx1 = fx + I.tunL, cx1 = tx1 + I.chamW;                          // המעבר הצר והחלל הפנימי – חשוכים, אור עמום מבפנים
-  const g = ctx.createLinearGradient(tx0, 0, cx1, 0); g.addColorStop(0, '#4a3020'); g.addColorStop(0.35, '#2a1a12'); g.addColorStop(1, '#22150e');
-  ctx.fillStyle = g; ctx.beginPath();
-  ctx.moveTo(tx0 - 0.5, ly); ctx.lineTo(tx0 - 0.5, ly - I.tunH + 1.6); ctx.quadraticCurveTo(tx0, ly - I.tunH, tx0 + 2, ly - I.tunH);
-  ctx.lineTo(tx1, ly - I.tunH); ctx.quadraticCurveTo(tx1 + 1, ly - I.chamH, tx1 + 7, ly - I.chamH); ctx.lineTo(cx1 - 6, ly - I.chamH);
-  ctx.quadraticCurveTo(cx1, ly - I.chamH + 0.5, cx1, ly - I.chamH + 6); ctx.lineTo(cx1, ly); ctx.closePath(); ctx.fill();
+  const I = JS_ISLE, fx = jsIsleX(o, I.face), LY = GROUND - I.ledge, top = GROUND - I.cliffTop;
+  if (fx + I.cliffW < viewL() - 10 || fx - 40 > viewR() + 10) return;
+  const poly = pts => { ctx.beginPath(); pts.forEach(([x, y], k) => k ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); };
+  ctx.fillStyle = jsGround(ctx, GROUND - 5, GROUND + 30); poly(jsCliffPts(fx, LY, top, bottom, I.cliffW)); ctx.fill();
+  ctx.fillStyle = 'rgba(90,50,30,.08)'; ctx.beginPath(); ctx.moveTo(fx + I.cliffW * 0.58, top); ctx.lineTo(fx + I.cliffW - 3, top + 1); ctx.lineTo(fx + I.cliffW, bottom); ctx.lineTo(fx + I.cliffW * 0.58, bottom); ctx.closePath(); ctx.fill();   // צד מוצל קל
+  const g = ctx.createLinearGradient(fx, 0, fx + 55, 0); g.addColorStop(0, '#3a2418'); g.addColorStop(0.4, '#1e130d'); g.addColorStop(1, '#170e09');
+  ctx.fillStyle = g; poly(jsCavePts(fx, LY)); ctx.fill();                           // המערה – חשוכה
   const S = jetS && jetS.o === o ? jetS : null;
-  if (!(S && S.canGot)) {                                                          // אור עמום סביב מיכל הדלק
-    const gx = fx + I.can, rg = ctx.createRadialGradient(gx, ly - 3, 0.5, gx, ly - 3, 9);
-    rg.addColorStop(0, 'rgba(253,224,71,.35)'); rg.addColorStop(1, 'rgba(253,224,71,0)'); ctx.fillStyle = rg; ctx.fillRect(gx - 10, ly - 13, 20, 13);
+  if (!(S && S.canGot)) {                                                          // אור עמום סביב מיכל הדלק בחלל
+    const gx = fx + I.can, rg = ctx.createRadialGradient(gx, LY - 3, 0.5, gx, LY - 4, 10);
+    rg.addColorStop(0, 'rgba(253,224,71,.38)'); rg.addColorStop(1, 'rgba(253,224,71,0)');
+    ctx.save(); poly(jsCavePts(fx, LY)); ctx.clip(); ctx.fillStyle = rg; ctx.fillRect(gx - 11, LY - 16, 22, 16); ctx.restore();
   }
 }
 function jsCan(x, y) {                                                           // מיכל דלק אדום
