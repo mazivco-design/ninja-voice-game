@@ -9,10 +9,10 @@
 const JS = { fuelT: 26, refuel: 0.45, stop: 4, pack: 9, edge: 26, gap: 250, after: 40, lanes: [9, 19, 29], start: 1, flyV: 10, birdV: 6,
              pickT: 0.8, putT: 1.1, takeT: 1.0, landT: 1.0, dropT: 0.9, hitR: 4.2, getR: 4.2, coins: 3 };
 // מה יש בדרך מעל התהום: מרחק מתחילת התהום, נתיב (0 נמוך, 1 אמצע, 2 גבוה), סוג
-const JS_ITEMS = [
-  { dx: 22,  lane: 1, k: 'coin' }, { dx: 40, lane: 2, k: 'gem' }, { dx: 54, lane: 1, k: 'coin' },
-  { dx: 108, lane: 1, k: 'coin' }, { dx: 124, lane: 2, k: 'gem' }, { dx: 138, lane: 2, k: 'coin' },
-  { dx: 210, lane: 1, k: 'gem' }, { dx: 228, lane: 0, k: 'coin' }
+const JS_ITEMS = [                                                                   // רק מטבעות באוויר (היהלומים – בתיבות על הצוקים)
+  { dx: 22,  lane: 1, k: 'coin' }, { dx: 40, lane: 2, k: 'coin' }, { dx: 54, lane: 1, k: 'coin' },
+  { dx: 108, lane: 1, k: 'coin' }, { dx: 124, lane: 2, k: 'coin' }, { dx: 138, lane: 2, k: 'coin' },
+  { dx: 210, lane: 1, k: 'coin' }, { dx: 228, lane: 0, k: 'coin' }
 ];
 // צוקים קטנים בתוך התהום: מרכז (מתחילת התהום), רוחב, גובה הראש מעל הקרקע (שלילי = נמוך יותר) – על כל אחד תיבת אוצר
 const JS_PILLARS = [{ dx: 78, w: 15, top: 1 }, { dx: 178, w: 14, top: 17 }];   // רחוקים זה מזה: אחד נמוך, אחד גבוה
