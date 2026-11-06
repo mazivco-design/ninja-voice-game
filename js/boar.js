@@ -15,14 +15,17 @@ const BOAR_TREES = [
   { dx: 80,  w: 11,  col: '#523826', lean: -0.02,  br: [[0.33, -1, 12], [0.55, 1, 9], [0.72, -1, 7]] },
   { dx: 137, w: 9,   col: '#5e4330', lean: 0.012,  br: [[0.46, -1, 9], [0.66, 1, 6]] }
 ];
-const BOAR = { ramp: 70, tree0: 24, trees: BOAR_TREES.length, start: 118, adv: 12, stepT: 1.6, walkV: 11, duckT: 0.35,
+const BOAR = { lead: 200, ramp: 70, edge: 110, tree0: 24, trees: BOAR_TREES.length, start: 118, adv: 12, stepT: 1.6, walkV: 11, duckT: 0.35,
                waitMin: 1.6, waitMax: 3.0, lookT: 1.8, chargeT: 0.7, fallT: 1.1, returnT: 1.3, knock: 7, passBy: 18, coins: 4, fade: 55 };
 const BOAR_EARS = { easy: 2.0, medium: 1.5, hard: 1.15 };                         // כמה זמן יש להגיד HIDE מרגע שהאוזניים זזות
 let boarS = null;   // { o, np: ninja phase, nt, bp: boar phase, bt, bo: מקום החזיר (יחסית ל-o.x), i: העץ שאליו הולכים, warnAt, miss, hinted }
 
-function boarSetup(o) { o.w = BOAR.tree0 + BOAR_TREES[BOAR.trees - 1].dx + 30; }
-function boarTreeX(o, i) { return o.x + BOAR.tree0 + BOAR_TREES[i].dx; }          // מרכז הגזע
-function boarX(o) { return o.x + (boarS && boarS.o === o ? boarS.bo : BOAR.start); }   // איפה החזיר עכשיו
+function boarSetup(o) { o.w = BOAR.lead + BOAR.tree0 + BOAR_TREES[BOAR.trees - 1].dx + 30; }
+// היער מתחיל אחרי אזור ביניים (lead): קודם הבמבוק מידלדל והשיחים מתרבים, ורק אז נכנסים ליער
+function fo(o) { return o.x + BOAR.lead; }                                        // תחילת היער
+function fw(o) { return o.w - BOAR.lead; }                                        // אורך היער
+function boarTreeX(o, i) { return fo(o) + BOAR.tree0 + BOAR_TREES[i].dx; }          // מרכז הגזע
+function boarX(o) { return fo(o) + (boarS && boarS.o === o ? boarS.bo : BOAR.start); }   // איפה החזיר עכשיו
 function boarStandGap(i) { return BOAR_TREES[i].w / 2 + 0.4; }
 function boarStandR(o, i) { return boarTreeX(o, i) - boarStandGap(i); }          // הקצה הימני של הנינג'ה כשהוא עומד ליד העץ
 function boarHideDX() { return boarStandGap(boarS ? boarS.i : 0) + PLAYER.w / 2; }   // כמה זזים כדי להיות בדיוק מאחורי הגזע
@@ -224,10 +227,35 @@ function bigTree(x, top, T, i) {
 }
 const wrapX = (x, L, R) => { const w = R - L; return ((x - L) % w + w) % w + L; };
 // היער מאחור: שמיים ירוקים, עצים רחוקים בערפל, קרני אור, ושורת עצים ושיחים באמצע. העומק – כל שכבה זזה במהירות אחרת
-function forestOn(o) { return o.x - BOAR.ramp - 10 < viewR() && o.x + o.w + BOAR.ramp + 10 > viewL(); }
+function forestOn(o) { return fo(o) - BOAR.ramp - 10 < viewR() && fo(o) + fw(o) + BOAR.ramp + 10 > viewL(); }
 function forestMask(o, x) {                                                            // 0 מחוץ ליער, 1 בתוכו – עם מעבר רך בכניסה וביציאה
-  const a = (x - (o.x - BOAR.ramp)) / (BOAR.ramp - 5), b = ((o.x + o.w + BOAR.ramp) - x) / (BOAR.ramp - 5);
+  const a = (x - (fo(o) - BOAR.ramp)) / (BOAR.ramp - 5), b = ((fo(o) + fw(o) + BOAR.ramp) - x) / (BOAR.ramp - 5);
   return Math.max(0, Math.min(1, a, b));
+}
+// אזור הביניים לפני היער (ואחריו): הבמבוק הולך ומידלדל ושיחים הולכים ומתרבים. 0 = רק במבוק, 1 = יער
+function forestEdge(x) {
+  let t = 0;
+  for (const o of obstacles) if (o.type === 'boar') {
+    const a = (x - (fo(o) - BOAR.ramp - BOAR.edge)) / BOAR.edge, b = ((fo(o) + fw(o) + BOAR.ramp + BOAR.edge) - x) / BOAR.edge;
+    t = Math.max(t, Math.min(1, a, b));
+  }
+  return Math.max(0, t);
+}
+function thinOut(x, h, draw) {                                                         // מצייר במבוק – או נותן לו לדהות כשמתקרבים ליער
+  const k = Math.max(0, Math.min(1, (1 - forestEdge(x) - h * 0.85) * 4));
+  if (k <= 0) return; if (k >= 1) { draw(); return; }
+  ctx.save(); ctx.globalAlpha *= k; draw(); ctx.restore();
+}
+function edgeBushes(left, right) {                                                     // שיחים שמתחילים לפני היער ומתעבים לקראתו
+  if (!obstacles.some(o => o.type === 'boar')) return;
+  repeat(left, right, 0.35, 8, (x, i) => {
+    const k = Math.max(0, Math.min(1, (forestEdge(x) - hash(i + 91) * 0.75) * 4)); if (k <= 0) return;
+    ctx.save(); ctx.globalAlpha *= k; fc = ctx;
+    const r = 3.2 + hash(i + 93) * 3, bx = x + hash(i + 95) * 5;
+    fBlobs(bx, GROUND - r * 0.45, r, i % 2 ? '#4f8a48' : '#458040', 5, i * 13);
+    fBlobs(bx + r * 0.3, GROUND - r * 0.6, r * 0.55, 'rgba(160,210,140,.55)', 2, i * 17);   // צד מואר
+    ctx.restore();
+  });
 }
 let forestCv = null;
 // כניסה הדרגתית: היער (שמיים, ערפל, עצים רחוקים ואמצעיים, שביל העפר) מצויר לקנבס נפרד, ואז נמוג בצד שלו – בהתחלה כמה עצים דלילים, ואז יער מלא
@@ -238,7 +266,7 @@ function drawForestBack(o, top) {
   const c = forestCv.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, forestCv.width, forestCv.height); c.setTransform(ctx.getTransform());
   fc = c;
   forestLayers(o, top);
-  const L = viewL() - 2, R = viewR() + 2, g = c.createLinearGradient(o.x - BOAR.ramp, 0, o.x + o.w + BOAR.ramp, 0), W = o.w + BOAR.ramp * 2;
+  const L = viewL() - 2, R = viewR() + 2, g = c.createLinearGradient(fo(o) - BOAR.ramp, 0, fo(o) + fw(o) + BOAR.ramp, 0), W = fw(o) + BOAR.ramp * 2;
   g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(Math.min(0.49, (BOAR.ramp - 5) / W), 'rgba(0,0,0,1)'); g.addColorStop(Math.max(0.51, 1 - (BOAR.ramp - 5) / W), 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
   c.globalCompositeOperation = 'destination-in'; c.fillStyle = g; c.fillRect(L, top - 5, R - L, GROUND + 80 - top); c.globalCompositeOperation = 'source-over';
   fc = ctx;

@@ -352,10 +352,11 @@ function drawWorld(left, right, top, bottom) {
     clouds(left, right, 0.75);
     hills(left, right, 0.04, 34, '#c6f0d4', 0);                                            // רחוק: הרים בהירים
     hills(left, right, 0.09, 22, '#9fe0b4', 2);
-    repeat(left, right, 0.16, 22, (x, i) => { if (hash(i + 40) > 0.4) bamboo(x + hash(i + 45) * 6, 20 + hash(i + 49) * 22, hash(i + 43), true); });   // במבוק רחוק ודהוי
+    repeat(left, right, 0.16, 22, (x, i) => { if (hash(i + 40) > 0.4) thinOut(x, hash(i + 77), () => bamboo(x + hash(i + 45) * 6, 20 + hash(i + 49) * 22, hash(i + 43), true)); });   // במבוק רחוק ודהוי (מידלדל ליד היער)
     hills(left, right, 0.22, 9, '#86efac', 5);                                              // גבעה קרובה – בהירה, כדי שהמכשולים יבלטו עליה
-    repeat(left, right, 0.35, 19, (x, i) => { if (hash(i) > 0.35) bamboo(x + hash(i + 5) * 6, 34 + hash(i + 9) * 40, hash(i + 3)); });
+    repeat(left, right, 0.35, 19, (x, i) => { if (hash(i) > 0.35) thinOut(x, hash(i + 78), () => bamboo(x + hash(i + 5) * 6, 34 + hash(i + 9) * 40, hash(i + 3))); });
     haze('rgba(236,254,255,A)', 40);                                                        // ערפל על כל הרקע, גם הבמבוק הקרוב – רק המכשולים והנינג'ה נשארים חדים
+    edgeBushes(left, right);                                                                // לפני היער: שיחים שהולכים ומתרבים (boar.js)
   } else if (world === 1) {
     for (let i = 0; i < 45; i++) {                              // כוכבים מנצנצים
       const sx = left + hash(i) * (right - left), sy = top + hash(i + 50) * (GROUND - 35 - top);
