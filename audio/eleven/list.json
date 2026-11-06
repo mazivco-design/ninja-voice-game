@@ -1624,6 +1624,46 @@
    "voice": "lib-kai",
    "voice_id": "S0ypc51SmsvcKXTWvjqJ",
    "text": "[worried] Help! Help! ... [relieved] Thank you!"
+  },
+  {
+   "file": "lib2-boy",
+   "type": "search",
+   "params": {
+    "search": "boy",
+    "page_size": 40
+   }
+  },
+  {
+   "file": "lib2-kid",
+   "type": "search",
+   "params": {
+    "search": "kid",
+    "page_size": 40
+   }
+  },
+  {
+   "file": "lib2-youngboy",
+   "type": "search",
+   "params": {
+    "search": "young boy",
+    "page_size": 40
+   }
+  },
+  {
+   "file": "lib2-child",
+   "type": "search",
+   "params": {
+    "search": "child",
+    "page_size": 40
+   }
+  },
+  {
+   "file": "lib2-boyhero",
+   "type": "search",
+   "params": {
+    "search": "boy hero",
+    "page_size": 40
+   }
   }
  ]
 }
