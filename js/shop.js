@@ -15,8 +15,8 @@ const SHOP = [
   { id: 'dragon', at: 9,   cat: 'pet',    name: 'Baby dragon',   price: 150, icon: '🐉', desc: 'Flies with you · saves you once each journey run' },
   { id: 'owl', at: 6,      cat: 'pet',    name: 'Owl',           price: 100, icon: '🦉', desc: 'Flies with you · pulls coins to you, CATCH reaches farther' },
   // פריטים חד-פעמיים: קונים מנות, כל שימוש מוריד אחת (power.js)
-  { id: 'shield', at: 2,   cat: 'power',  name: 'Bubble shield', price: 15, icon: '🫧', desc: 'Say SHIELD – a bubble stops the next hit', use: true },
-  { id: 'jet', at: 4,      cat: 'power',  name: 'Jet pack',      price: 25, icon: '🚀', desc: 'Say JET – fly over everything for 5 seconds', use: true }
+  { id: 'shield', at: 2,   cat: 'power',  name: 'Bubble shield', price: 15, icon: '🫧', desc: 'Say SHIELD – a bubble stops the next hit', use: true }
+  // תרמיל הסילון (JET) הוצא מהחנות – יחזור כאביזר שמוצאים ולובשים בשלב מיוחד (הקוד שלו נשאר ב-power.js)
 ];
 const SHOP_CATS = [['suit', '🥷 Suits'], ['weapon', '⚔️ Weapons'], ['pet', '🐉 Friends'], ['power', '⚡ Power-ups']];
 

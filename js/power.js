@@ -5,7 +5,7 @@
             ליד שלב מיוחד (חבל, דרקון, שלד, טורנדו, סוחר) הוא נוחת לבד, ואי אפשר להפעיל אותו שם.
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const POWER_WORDS = ['shield', 'jet'];
+const POWER_WORDS = ['shield'];   // JET הוצא מהחנות – יחזור כאביזר בתוך שלב (jetCmd / jetPhysics נשארים לשימוש אז)
 const JET = { time: 5, alt: 30, rise: 3.5, land: 0.45, guard: 75 };
 const SPECIAL_TYPES = ['chasm', 'dragon', 'duel', 'gust', 'door', 'lift', 'bramble', 'mud', 'boat', 'cart'];
 let shieldOn = false, shieldPop = 0, jetT = 0, jetGrace = 0, jetPh = 0;
@@ -45,6 +45,7 @@ function shieldSave() {
 
 // JET: ממריאים לחמש שניות
 function jetCmd() {
+  if (!POWER_WORDS.includes('jet')) return;                                    // כרגע לא בחנות
   if (jetT > 0) return;
   if (specialNear(JET.guard)) { flash = { text: '🚀 Not here!', t: 0.9 }; return; }
   if (!usePower('jet')) { flash = { text: '🚀 0 – Shop!', t: 1 }; return; }
