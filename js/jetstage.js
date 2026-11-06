@@ -284,8 +284,9 @@ function drawJetGap(o, bottom) {
     const cx = x + P.dx, ty = GROUND - P.top, hw = P.w / 2;
     ctx.fillStyle = jsGround(ctx, GROUND - 5, GROUND + 30); ctx.beginPath();
     for (let xx = cx - hw; xx <= cx + hw; xx += 0.5) ctx.lineTo(xx, jsPTop(k, xx, cx, ty));       // ראש כמעט ישר
-    for (let yy = ty + 1; yy <= bottom; yy += 3) ctx.lineTo(cx + hw - 0.4 - Math.sin(yy * 0.45 + k) * 0.9 - (yy - ty) * 0.05, yy);
-    for (let yy = bottom; yy >= ty + 1; yy -= 3) ctx.lineTo(cx - hw + 0.4 + Math.sin(yy * 0.5 + k * 3) * 0.9 + (yy - ty) * 0.06, yy);
+    const ys = []; for (let d = 1; ty + d < bottom; d += 3) ys.push(d); ys.push(bottom - ty);   // נקודות קבועות ביחס לראש הצוק – שהדפנות לא ירצדו
+    for (const d of ys) ctx.lineTo(cx + hw - 0.4 - Math.sin(d * 0.45 + k) * 0.9 - d * 0.05, ty + d);
+    for (const d of ys.slice().reverse()) ctx.lineTo(cx - hw + 0.4 + Math.sin(d * 0.5 + k * 3) * 0.9 + d * 0.06, ty + d);
     ctx.closePath(); ctx.fill();
   });
   drawJetIsle(o, bottom, false);
@@ -293,7 +294,7 @@ function drawJetGap(o, bottom) {
     ctx.fillStyle = jsGround(ctx, GROUND - 5, GROUND + 30);                          // בדיוק אותו מילוי כמו הקרקע – בלי קו מפריד
     const ty = jsTop(ex), mid = (ty + GROUND) / 2;
     ctx.beginPath(); ctx.moveTo(ex - dir * 0.6, ty);
-    for (let yy = mid; yy <= bottom; yy += 2.5) ctx.lineTo(ex + dir * (1.5 + Math.sin(yy * 0.6 + ex) * 1.1 - Math.max(0, yy - GROUND) * 0.05), yy);
+    for (let yy = mid; yy <= bottom; yy += 2.5) ctx.lineTo(ex + dir * (1.5 + Math.sin(yy * 0.6 + dir * 2.3) * 1.1 - Math.max(0, yy - GROUND) * 0.05), yy);   // צורה קבועה – לא משתנה בזמן הגלילה
     ctx.lineTo(ex - dir * 0.6, bottom); ctx.closePath(); ctx.fill();
   }
 }
