@@ -77,7 +77,7 @@ async function ensureAudio() {
 // מילה אחרת מחכה לתוצאה הסופית, שמגיעה עם ציון ביטחון: ציון גבוה – מופעלת (וזו טעות, כמו היום). ציון נמוך – כנראה בלבול עם מילה דומה, מתעלמים.
 // אם Vosk "מתקן" את המילה האחרונה (שמע down ואז הבין שזה jump) – מטפלים במילה המתוקנת.
 function handleText(text, isFinal, detail) {
-  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'yes' || w === 'go' || w === 'put down' || POWER_WORDS.includes(w);
+  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'yes' || w === 'sneak' || w === 'put down' || POWER_WORDS.includes(w);
   const { words, confs } = tokenize(text, detail);
   for (let i = 0; i < words.length; i++) {
     const exp = expectedWords();                                   // מחושב לכל מילה – "I WANT KEY": אחרי WANT מצפים כבר לשם החפץ
@@ -108,7 +108,7 @@ function handleText(text, isFinal, detail) {
 
 // מפרק את הטקסט למילים של המשחק. "let go" (שתי מילים אצל Vosk) הופך למילה אחת 'let go', עם הציון הנמוך מבין השתיים
 function tokenize(text, detail) {
-  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'yes' || w === 'go' || w === 'put down' || POWER_WORDS.includes(w);
+  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'yes' || w === 'sneak' || w === 'put down' || POWER_WORDS.includes(w);
   const toks = (text || '').toLowerCase().split(/\s+/).filter(Boolean);
   const dconf = detail && detail.length ? detail.map(d => d.conf) : null;
   const words = [], confs = [];
@@ -290,8 +290,7 @@ function command(word, source) {
   else if (word === 'pull' && boatPull()) {}                             // FISHING: מושך את הדג
   else if (word === 'pull' && liftPull()) {}                             // מושך את הגור מהבור
   else if (word === 'pull')  { act.pull = 0.6; act.pullWant = GATE.want; duckT = 0; }   // מושך כשמגיעים לחבל
-  else if (word === 'go' && boarGo()) {}                                 // ביער – מתגנבים לעץ הבא
-  else if (word === 'let go' && boarS && boarGo()) {}                    // "let's go" נשמע לפעמים כ-LET GO
+  else if (word === 'sneak' && boarSneak()) {}                           // ביער – מתגנבים לעץ הבא
   else if (word === 'hide' && boarHide()) {}                             // ביער – מאחורי העץ
   else if (word === 'hide')  { act.hide = HIDE_TIME; duckT = 0; }
   else if (word === 'block') { act.block = BLOCK_TIME; }

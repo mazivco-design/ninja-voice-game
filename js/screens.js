@@ -361,7 +361,7 @@ function introNext() {
   const w = introWords.shift();
   setupDemo(w);
   if (w !== 'help' && w !== 'push together' && w !== 'push on three' && w !== 'fishing' && w !== 'boar') speak(w);                                                  // HELP: הנינג'ה עצמו צועק בסצנה
-  banner = { text: w === 'help' ? 'CATCH the rope, then HOLD!' : w === 'push together' ? 'PUSH with your friend, then JUMP in!' : w === 'push on three' ? 'PUSH on THREE, then JUMP in!' : w === 'fishing' ? 'THROW the line, then PULL!' : w === 'boar' ? 'GO when he eats · HIDE when the ears move!' : 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
+  banner = { text: w === 'help' ? 'CATCH the rope, then HOLD!' : w === 'push together' ? 'PUSH with your friend, then JUMP in!' : w === 'push on three' ? 'PUSH on THREE, then JUMP in!' : w === 'fishing' ? 'THROW the line, then PULL!' : w === 'boar' ? 'SNEAK when he eats · HIDE when the ears move!' : 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
   introT = w === 'fly' ? 4.6 : w === 'want' ? 7.4 : w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'put down' ? 6.8 : w === 'pick up' ? 2.8 : w === 'crawl' ? 5.2 : w === 'help' ? 12.7 : w === 'push together' ? 14 : w === 'push on three' ? 31 : w === 'fishing' ? 12.5 : w === 'boar' ? 10 : 2.8;
 }
 

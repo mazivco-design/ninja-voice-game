@@ -27,7 +27,7 @@ function testerTap() {
   if (mud) { const w = mudExpected()[0]; if (w) command(w, 'tap'); return; }
   if (boat) { const w = boatExpected()[0]; if (w) command(w, 'tap'); return; }
   if (cart) { const w = cartExpected()[0]; if (w) command(w, 'tap'); return; }
-  if (boarS) { command(boarS.bp === 'ears' && boarS.np === 'stand' ? 'hide' : 'go', 'tap'); return; }
+  if (boarS) { command(boarS.bp === 'ears' && boarS.np === 'stand' ? 'hide' : 'sneak', 'tap'); return; }
   if (ride && ride.phase === 'wait') return command('ride', 'tap');
   if (rope && rope.phase === 'wait') return command('catch', 'tap');
   if (rope && rope.phase === 'hang') return command('let go', 'tap');
