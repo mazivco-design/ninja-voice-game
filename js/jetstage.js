@@ -6,16 +6,18 @@
    מעל הצד השני: DOWN – נוחתים, מורידים את התרמיל (הוא נשאר שם) וממשיכים.
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const JS = { fuelT: 26, refuel: 0.45, stop: 4, pack: 9, edge: 26, gap: 250, after: 40, lanes: [9, 19, 29], start: 1, flyV: 10, birdV: 6,
+const JS = { crawlD: 13, crawlT: 2.0, climbT: 2.2, fuelT: 30, refuel: 0.45, stop: 4, pack: 9, edge: 26, gap: 360, after: 40, lanes: [9, 19, 29], start: 1, flyV: 10, birdV: 6,
              pickT: 0.8, putT: 1.1, takeT: 1.0, landT: 1.0, dropT: 0.9, hitR: 4.2, getR: 4.2, coins: 3 };
 // מה יש בדרך מעל התהום: מרחק מתחילת התהום, נתיב (0 נמוך, 1 אמצע, 2 גבוה), סוג
 const JS_ITEMS = [                                                                   // רק מטבעות באוויר (היהלומים – בתיבות על הצוקים)
   { dx: 22,  lane: 1, k: 'coin' }, { dx: 40, lane: 2, k: 'coin' }, { dx: 54, lane: 1, k: 'coin' },
-  { dx: 108, lane: 1, k: 'coin' }, { dx: 124, lane: 2, k: 'coin' }, { dx: 138, lane: 2, k: 'coin' },
-  { dx: 210, lane: 1, k: 'coin' }, { dx: 228, lane: 0, k: 'coin' }
+  { dx: 104, lane: 1, k: 'coin' }, { dx: 118, lane: 2, k: 'coin' },
+  { dx: 262, lane: 1, k: 'coin' }, { dx: 276, lane: 2, k: 'coin' }, { dx: 330, lane: 1, k: 'coin' }, { dx: 346, lane: 0, k: 'coin' }
 ];
 // צוקים קטנים בתוך התהום: מרכז (מתחילת התהום), רוחב, גובה הראש מעל הקרקע (שלילי = נמוך יותר) – על כל אחד תיבת אוצר
-const JS_PILLARS = [{ dx: 78, w: 15, top: 1 }, { dx: 178, w: 14, top: 17 }];   // רחוקים זה מזה: אחד נמוך, אחד גבוה
+const JS_PILLARS = [{ dx: 78, w: 15, top: 1 }, { dx: 302, w: 14, top: 17 }];   // רחוקים זה מזה: אחד נמוך, אחד גבוה
+// אי סלע באמצע התהום: כאן הדלק נגמר. CRAWL למערה – PICK UP מיכל דלק – CLIMB לראש הסלע – FLY
+const JS_ISLE = { x0: 150, x1: 226, top: 2, cave: 168, caveL: 22, caveH: 7, rock: 210, rockW: 13, rockTop: 24, can: 182 };
 let jetS = null;   // { o, p: שלב, t, lane, alt, base, items, got, pill: [נפתח?], pi: על איזה צוק }
 
 function jsSetup(o) { o.w = JS.edge + JS.gap + JS.after; }
@@ -23,8 +25,10 @@ function jsEdge(o) { return o.x + JS.edge; }                                    
 function jsFar(o) { return o.x + JS.edge + JS.gap; }                               // הצד השני
 function jsHole(o) { return { x: jsEdge(o), w: JS.gap }; }                         // החור באדמה (draw.js)
 function jsBusy() { return !!jetS; }
-function jsWorn() { return !!jetS && ['wear', 'take', 'fly', 'hover', 'land', 'perchDown', 'perch'].includes(jetS.p); }
-function jsFlying() { return !!jetS && ['take', 'fly', 'hover', 'land', 'perchDown'].includes(jetS.p); }
+const JS_ISLE_P = ['dying', 'isle', 'toCave', 'atCave', 'crawlIn', 'inCave', 'grab', 'crawlOut', 'toRock', 'atRock', 'climb', 'top'];
+function jsWorn() { return !!jetS && (['wear', 'take', 'fly', 'hover', 'land', 'perchDown', 'perch'].includes(jetS.p) || JS_ISLE_P.includes(jetS.p)); }
+function jsFlying() { return !!jetS && ['take', 'fly', 'hover', 'land', 'perchDown', 'dying'].includes(jetS.p); }
+function jsIsleX(o, dx) { return jsEdge(o) + dx; }
 function jsPillarX(o, k) { return jsEdge(o) + JS_PILLARS[k].dx; }
 function jsPillarUnder(o) {                                                         // מעל איזה צוק הנינג'ה עכשיו (או -1)
   const nx = PLAYER.x + PLAYER.w / 2;
@@ -36,6 +40,12 @@ function jsSpeed() {
   const p = jetS.p;
   if (p === 'take') return JS.flyV * Math.min(1, jetS.t / JS.takeT);
   if (p === 'perchDown' || p === 'perch') return 0;
+  if (p === 'dying') return JS.flyV * 0.75;
+  if (p === 'toCave' || p === 'toRock') return 9;
+  if (p === 'crawlIn') return JS.crawlD / JS.crawlT;
+  if (p === 'crawlOut') return -JS.crawlD / JS.crawlT;
+  if (p === 'climb') return jetS.climbD / JS.climbT;
+  if (JS_ISLE_P.includes(p)) return 0;
   if (p === 'fly') return JS.flyV;
   if (p === 'drop') return 0;
   return 0;
@@ -57,7 +67,7 @@ function jsUpdate(dt, pb) {
     if (S.p === 'find' && S.t > 0.8) command('pick up', 'demo');
     else if (S.p === 'hold' && S.t > 0.6) command('put on', 'demo');
     else if (S.p === 'wear' && S.t > 0.6) command('fly', 'demo');
-    else if (S.p === 'fly' || S.p === 'hover') jsAuto('demo');
+    else if (S.p === 'fly' || S.p === 'hover' || JS_ISLE_P.includes(S.p) || S.p === 'perch') jsAuto('demo');
   }
   switch (S.p) {
     case 'pick': if (S.t >= JS.pickT) go('hold'); break;                         // מרים את התרמיל
@@ -89,6 +99,10 @@ function jsUpdate(dt, pb) {
           }
         }
       }
+      if (S.p === 'fly' && !S.isleDone && nx > jsIsleX(o, JS_ISLE.x0) - 26) {        // הדלק נגמר! יורדים אל אי הסלע
+        S.fuel = 0; S.lane = 0; go('dying'); sfx('thud');
+        flash = { text: '⛽ Out of fuel! Find more on the rock', t: 2.2 };
+      }
       if (S.p === 'fly' && nx > far + 6) go('hover');                            // מעל הצד השני – מחכים ל-DOWN
       if (S.p === 'hover' && state === 'play' && S.t > 2.5 && !S.hinted) { S.hinted = 1; sayWords(['down'], 1.6); }
       break;
@@ -99,11 +113,36 @@ function jsUpdate(dt, pb) {
       break;
     case 'perch':                                                                // עומד על הצוק – התיבה נפתחת
       if (S.t > 0.45 && !S.pill[S.pi]) {
-        S.pill[S.pi] = true; S.got += 3; S.fuel = Math.min(1, S.fuel + JS.refuel);   // בתיבה יש גם דלק sfx('coin'); burst(jsPillarX(o, S.pi) + 3, GROUND - S.alt - 3, '#fde047', 12, 14);
+        S.pill[S.pi] = true; S.got += 3; S.fuel = Math.min(1, S.fuel + JS.refuel); sfx('coin');   // בתיבה יש גם דלק
+        burst(jsPillarX(o, S.pi) + 3, GROUND - S.alt - 3, '#fde047', 12, 14);
         floatText(PLAYER.x + 4, GROUND - S.alt - 18, '+3 💎', '#0891b2');
         if (mode === 'journey' && state === 'play') { picked += 3; coinsFlying++; flyCoinToHud({ x: PLAYER.x + 4 }, GROUND - S.alt - 6); }
       }
       if (S.t > 1.2 && state === 'play' && !S.hp) { S.hp = 1; sayWords(['up'], 1.4); }
+      break;
+    case 'dying': {                                                              // גולש למטה בלי דלק אל האי
+      const nx = PLAYER.x + PLAYER.w / 2;
+      S.alt = Math.max(JS_ISLE.top, S.alt - dt * 13);
+      if (nx >= jsIsleX(o, JS_ISLE.x0) + 6 && S.alt <= JS_ISLE.top + 0.01) { go('isle'); sfx('thud'); burst(PLAYER.x + 4, GROUND - S.alt - 1, '#e7c39a', 8, 12); }
+      break;
+    }
+    case 'isle': if (S.t > 0.8) go('toCave'); break;                             // נחת על האי
+    case 'toCave':
+      if (PLAYER.x + PLAYER.w / 2 >= jsIsleX(o, JS_ISLE.cave) - 6) go('atCave');
+      break;
+    case 'crawlIn': if (S.t >= JS.crawlT) go('inCave'); break;                   // זוחל לתוך המערה
+    case 'grab':                                                                 // מרים את מיכל הדלק – המד מתמלא
+      S.canGot = true;
+      S.fuel = Math.min(1, S.t / 0.8);
+      if (S.t >= 1.0) { S.fuel = 1; go('crawlOut'); }
+      break;
+    case 'crawlOut': if (S.t >= JS.crawlT) go('toRock'); break;                  // זוחל החוצה
+    case 'toRock':
+      if (PLAYER.x + PLAYER.w / 2 >= jsIsleX(o, JS_ISLE.rock) - JS_ISLE.rockW / 2 - 4.5) { S.climbD = JS_ISLE.rockW / 2 + 4.5; go('atRock'); }
+      break;
+    case 'climb':                                                                // מטפס לראש הסלע
+      S.alt = lerp(JS_ISLE.top, JS_ISLE.rockTop, Math.min(1, S.t / JS.climbT));
+      if (S.t >= JS.climbT) go('top');
       break;
     case 'land':                                                                 // יורד לקרקע בצד השני
       S.alt = Math.max(0, S.alt - dt * Math.max(14, JS.lanes[2] / JS.landT));
@@ -120,6 +159,10 @@ function jsUpdate(dt, pb) {
   if (S.p === 'find' && state === 'play' && S.t > 4 && !S.h1) { S.h1 = 1; sayWords(['pick up'], 1.6); }
   if (S.p === 'hold' && state === 'play' && S.t > 4 && !S.h2) { S.h2 = 1; sayWords(['put on'], 1.6); }
   if (S.p === 'wear' && state === 'play' && S.t > 4 && !S.h3) { S.h3 = 1; sayWords(['fly'], 1.6); }
+  if (state === 'play' && S.t > 3.5 && !(S.hs = S.hs || {})[S.p]) {                  // רמזים באי
+    const w = { atCave: 'crawl', inCave: 'pick up', atRock: 'climb', top: 'fly' }[S.p];
+    if (w) { S.hs[S.p] = 1; sayWords([w], 1.6); }
+  }
 }
 function jsPhysics() {
   if (!jetS) return false;
@@ -133,7 +176,10 @@ function jsPhysics() {
 // מחזיר true כשהמילה שייכת לשלב הסילון (ואז שאר הפקודות לא מופעלות)
 function jsCmd(word) {
   const S = jetS; if (!S) return false;
-  if (word === 'pick up') { if (S.p === 'find') { S.p = 'pick'; S.t = 0; sfx('swish'); } return true; }
+  if (word === 'pick up') { if (S.p === 'find') { S.p = 'pick'; S.t = 0; sfx('swish'); } else if (S.p === 'inCave') { S.p = 'grab'; S.t = 0; sfx('coin'); } return true; }
+  if (word === 'crawl') { if (S.p === 'atCave') { S.p = 'crawlIn'; S.t = 0; sfx('swish'); } return true; }
+  if (word === 'climb') { if (S.p === 'atRock') { S.p = 'climb'; S.t = 0; sfx('swish'); } return true; }
+  if (word === 'fly' && S.p === 'top') { S.base = S.alt; S.lane = 2; S.isleDone = true; S.p = 'take'; S.t = 0; sfx('jump'); flash = { text: '🚀 Full tank!', t: 1.2 }; return true; }
   if (word === 'put on') { if (S.p === 'hold') { S.p = 'put'; S.t = 0; sfx('swish'); } return true; }
   if (word === 'fly' && S.p === 'wear') { S.base = 0; S.p = 'take'; S.t = 0; sfx('jump'); return true; }
   if (word === 'fly') return true;
@@ -152,7 +198,7 @@ function jsCmd(word) {
 }
 function jsExpected() {
   const S = jetS; if (!S) return null;
-  return { find: ['pick up'], hold: ['put on'], wear: ['fly'], fly: ['up', 'down'], hover: ['down'], perch: ['up'] }[S.p] || [];
+  return { find: ['pick up'], hold: ['put on'], wear: ['fly'], fly: ['up', 'down'], hover: ['down'], perch: ['up'], atCave: ['crawl'], inCave: ['pick up'], atRock: ['climb'], top: ['fly'] }[S.p] || [];
 }
 // טייס אוטומטי (בודק / הדגמה): מתחמק מציפורים ופונה אל המטבעות
 function jsAuto(src) {
@@ -162,6 +208,8 @@ function jsAuto(src) {
   if (S.p === 'hold' && S.t > 0.5) return command('put on', src);
   if (S.p === 'wear' && S.t > 0.5) return command('fly', src);
   if (S.p === 'hover' && S.t > 0.4) return command('down', src);
+  const isleW = { atCave: 'crawl', inCave: 'pick up', atRock: 'climb', top: 'fly' }[S.p];
+  if (isleW && S.t > 0.6) return command(isleW, src);
   if (S.p === 'perch' && S.t > 1.0) return command('up', src);
   if (S.p === 'fly' && jsPillarUnder(S.o) >= 0 && !S.pill[jsPillarUnder(S.o)]) return command('down', src);
   if (S.p !== 'fly') return;
@@ -185,7 +233,12 @@ function jsPose(P) {
   if (S.p === 'hold') { P = poseIdle(now); P.arms = [[0.9, 2.0], [1.0, 2.1]]; return P; }   // מחזיק מול החזה
   if (S.p === 'put') { const k = Math.min(1, S.t / JS.putT); P = poseIdle(now); P.arms = [[0.9 + 1.4 * k, 2.0 + 0.8 * k], [1.0 + 1.3 * k, 2.1 + 0.7 * k]]; P.lean = -0.08 * Math.sin(Math.PI * k); return P; }   // מעביר אל הגב
   if (S.p === 'wear') { P = poseIdle(now); P.arms = [[0.15, 0.6], [0.2, 0.7]]; P.eyes = 'wide'; return P; }   // אוחז ברצועות
-  if (S.p === 'drop' || S.p === 'perch') { P = poseIdle(now); P.lean = -0.06; return P; }
+  if (S.p === 'drop' || S.p === 'perch' || S.p === 'isle' || S.p === 'atCave' || S.p === 'atRock') { P = poseIdle(now); P.lean = -0.06; if (S.p === 'isle') P.eyes = 'wide'; return P; }
+  if (S.p === 'toCave' || S.p === 'toRock') return poseWalk(bgX * 0.42 * RIG.run.cadence * 1.6);
+  if (S.p === 'crawlIn' || S.p === 'crawlOut') return poseCrawl(S.t * (S.p === 'crawlOut' ? -6 : 6));
+  if (S.p === 'inCave' || S.p === 'grab') { P = poseCrawl(0); if (S.p === 'grab') P.eyes = 'wide'; return P; }
+  if (S.p === 'climb') return poseClimb(S.t * 5);
+  if (S.p === 'top') { P = poseIdle(now); P.arms = [[0.15, 0.6], [0.2, 0.7]]; return P; }
   if (jsFlying()) {                                                              // עף קדימה, רגליים מאחור
     const ld = S.p === 'land' || S.p === 'perchDown'; const A = poseAir(false); A.lean = ld ? 0.15 : 0.55; A.legs = ld ? [[0.2, 0.1], [0.35, 0.2]] : [[-0.55, -0.9], [-0.25, -0.6]];
     A.arms = [[-1.2, -0.9], [1.3, 1.9]]; A.eyes = 'squint';
@@ -229,6 +282,7 @@ function drawJetGap(o, bottom) {
     for (let yy = bottom; yy >= ty + 1; yy -= 3) ctx.lineTo(cx - hw + 0.4 + Math.sin(yy * 0.5 + k * 3) * 0.9 + (yy - ty) * 0.06, yy);
     ctx.closePath(); ctx.fill();
   });
+  drawJetIsle(o, bottom, false);
   for (const [ex, dir] of [[x, 1], [x + w, -1]]) {                              // דפנות התהום – באותו צבע כמו הקרקע
     ctx.fillStyle = jsGround(ctx, GROUND - 5, GROUND + 30);                          // בדיוק אותו מילוי כמו הקרקע – בלי קו מפריד
     const ty = jsTop(ex), mid = (ty + GROUND) / 2;
@@ -300,6 +354,44 @@ function cliffLayers(c, top) {
   c.restore();
 }
 
+// אי הסלע: משטח כמעט ישר, תל קטן עם מנהרה (מערה) וסלע גבוה לטיפוס. front = רק תקרת המערה (מעל הנינג'ה)
+function drawJetIsle(o, bottom, front) {
+  const I = JS_ISLE, ax = d => jsIsleX(o, d), ty = GROUND - I.top, fill = jsGround(ctx, GROUND - 5, GROUND + 30);
+  if (ax(I.x1) < viewL() - 10 || ax(I.x0) > viewR() + 10) return;
+  const cx0 = ax(I.cave), cx1 = cx0 + I.caveL, mTop = ty - I.caveH - 4.5;          // התל: מעט רחב מהמנהרה
+  const mound = () => { ctx.beginPath(); ctx.moveTo(cx0 - 3, ty); ctx.quadraticCurveTo(cx0 - 2, mTop, cx0 + 6, mTop); ctx.lineTo(cx1 - 2, mTop + 0.5); ctx.quadraticCurveTo(cx1 + 5, mTop + 1, cx1 + 6, ty); ctx.closePath(); };
+  ctx.fillStyle = fill;
+  if (front) {                                                                     // תקרת המערה – מכסה את הנינג'ה מלמעלה כשהוא בפנים
+    ctx.save(); mound(); ctx.clip();
+    ctx.fillRect(cx0 - 4, mTop - 1, I.caveL + 12, (ty - I.caveH) - mTop + 1);
+    ctx.fillRect(cx1, mTop, 8, ty - mTop);                                         // הקיר בסוף המנהרה
+    ctx.restore();
+    return;
+  }
+  ctx.beginPath();                                                                 // המשטח של האי
+  for (let xx = ax(I.x0); xx <= ax(I.x1); xx += 0.5) ctx.lineTo(xx, jsPTop(7, xx, ax(I.x0), ty));
+  for (let yy = ty + 1; yy <= bottom; yy += 3) ctx.lineTo(ax(I.x1) - 0.5 - Math.sin(yy * 0.45) * 1.1 - (yy - ty) * 0.08, yy);
+  for (let yy = bottom; yy >= ty + 1; yy -= 3) ctx.lineTo(ax(I.x0) + 0.5 + Math.sin(yy * 0.5 + 2) * 1.1 + (yy - ty) * 0.08, yy);
+  ctx.closePath(); ctx.fill();
+  const rx = ax(I.rock), rw = I.rockW, rt = GROUND - I.rockTop;                    // הסלע הגבוה לטיפוס
+  ctx.beginPath(); ctx.moveTo(rx - rw / 2 - 1.5, ty + 0.5);
+  for (let yy = ty; yy >= rt + 1; yy -= 2.5) ctx.lineTo(rx - rw / 2 + Math.sin(yy * 0.6) * 0.8 + (ty - yy) * 0.04, yy);
+  for (let xx = rx - rw / 2 + 0.8; xx <= rx + rw / 2 - 0.8; xx += 0.5) ctx.lineTo(xx, jsPTop(9, xx, rx, rt));
+  for (let yy = rt + 1; yy <= ty; yy += 2.5) ctx.lineTo(rx + rw / 2 - Math.sin(yy * 0.5 + 1) * 0.8 - (ty - yy) * 0.04, yy);
+  ctx.lineTo(rx + rw / 2 + 1.5, ty + 0.5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(90,50,30,.12)'; ctx.fillRect(rx + rw * 0.12, rt + 1.5, rw * 0.32, ty - rt - 1.5);   // צד מוצל קל
+  ctx.fillStyle = fill; mound(); ctx.fill();                                       // התל
+  const tg = ctx.createLinearGradient(cx0, 0, cx1, 0); tg.addColorStop(0, '#5a3a26'); tg.addColorStop(1, '#2a1a12');
+  ctx.fillStyle = tg; ctx.beginPath(); ctx.moveTo(cx0, ty);                        // המנהרה – חשוכה, האור נכנס מהפתח
+  ctx.lineTo(cx0, ty - I.caveH + 2.2); ctx.quadraticCurveTo(cx0, ty - I.caveH, cx0 + 2.4, ty - I.caveH);
+  ctx.lineTo(cx1, ty - I.caveH); ctx.lineTo(cx1, ty); ctx.closePath(); ctx.fill();
+}
+function jsCan(x, y) {                                                           // מיכל דלק אדום
+  ctx.fillStyle = '#dc2626'; roundRect(x - 1.6, y - 3.6, 3.2, 3.6, 0.5); ctx.fill();
+  ctx.fillStyle = '#fca5a5'; ctx.fillRect(x - 1.1, y - 3.1, 0.6, 2.6);
+  ctx.fillStyle = '#1f2937'; ctx.fillRect(x - 0.3, y - 4.4, 1.2, 0.8);
+  ctx.strokeStyle = '#7f1d1d'; ctx.lineWidth = 0.3; ctx.beginPath(); ctx.moveTo(x - 1.6, y - 3.6); ctx.lineTo(x + 1.6, y); ctx.stroke();
+}
 function jsPack(x, y, rot, flame) {                                            // תרמיל סילון: שני מכלים, רצועות, נחירים
   ctx.save(); ctx.translate(x, y); ctx.rotate(rot || 0); ctx.lineCap = 'round';
   for (const dx of [-1.1, 1.1]) {
@@ -350,6 +442,10 @@ function drawJetStage(o) {
       }
     }
   });
+  if (!(S && S.canGot)) {                                                          // מיכל הדלק בתוך המערה (זוהר קצת)
+    const cx = jsIsleX(o, JS_ISLE.can), cy = GROUND - JS_ISLE.top;
+    if (cx > viewL() - 6 && cx < viewR() + 6) { ctx.fillStyle = 'rgba(253,224,71,.18)'; circle(cx, cy - 2, 3.2 + Math.sin(t * 4) * 0.3); jsCan(cx, cy); }
+  }
   if (S) {
     for (const it of S.items) {
       if (it.done) continue;
@@ -368,6 +464,7 @@ function drawJetStage(o) {
 // התרמיל ביד / על הגב (נקרא אחרי ציור הנינג'ה)
 function drawJetHeld() {
   const S = jetS; if (!S) return;
+  if (['crawlIn', 'inCave', 'grab', 'crawlOut'].includes(S.p)) drawJetIsle(S.o, 0, true);   // הנינג'ה בתוך המערה – התקרה מעליו
   if (jsWorn() && S.p !== 'wear') {                                                // מד הדלק של הסילון – מעל הראש
     const now = performance.now() / 1000, k = S.fuel, w = 13, x = PLAYER.x + PLAYER.w / 2, y = GROUND - py - 21;
     const low = k < 0.25, hz = 3 + (0.25 - Math.min(0.25, k)) * 24, blink = low && Math.floor(now * hz) % 2 === 0;   // לקראת סוף הדלק – מהבהב, ויותר מהר ככל שנשאר פחות
