@@ -77,7 +77,15 @@ function dbg(key, val) {
 function renderDebug() {
   const esc = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   const rows = (typeof voiceLogRows !== 'undefined' ? voiceLogRows : []).slice(-25).reverse();
-  $('debug').innerHTML = '<div class="dbgText">' + esc(Object.entries(dbgLines).map(([k, v]) => k + ': ' + v).join('\n')) + '</div>' +
+  // גודל המסך כפי שהדפדפן מדווח – כדי להבין מתי הדף "נחתך" (למשל בכרום באייפד אחרי מעבר בין אפליקציות)
+  const vv = window.visualViewport, app = $('app'), r = n => Math.round(n);
+  const screenInfo = 'Screen: window ' + innerWidth + '×' + innerHeight +
+    ' · visible ' + (vv ? r(vv.width) + '×' + r(vv.height) + ' @' + r(vv.offsetLeft) + ',' + r(vv.offsetTop) + ' zoom ' + vv.scale.toFixed(2) : '–') +
+    ' · page ' + document.documentElement.clientWidth + '×' + document.documentElement.clientHeight +
+    ' · game ' + (app ? app.clientWidth + '×' + app.clientHeight : '–') +
+    ' · device ' + screen.width + '×' + screen.height + ' dpr ' + devicePixelRatio +
+    ' · ' + (/CriOS/.test(navigator.userAgent) ? 'Chrome' : /FxiOS/.test(navigator.userAgent) ? 'Firefox' : navigator.standalone ? 'Home screen' : 'Safari/other');
+  $('debug').innerHTML = '<div class="dbgText">' + esc(screenInfo) + '</div>' + '<div class="dbgText">' + esc(Object.entries(dbgLines).map(([k, v]) => k + ': ' + v).join('\n')) + '</div>' +
     '<div class="dbgHead">Heard log · ' + (typeof voiceLogRows !== 'undefined' ? voiceLogRows.length : 0) + ' <button id="vlogShare">Share</button><button id="vlogCopy">Copy</button><button id="vlogClear">Clear</button></div>' +
     '<div class="dbgText">' + (rows.length ? rows.map(r => esc(r.t + ' ' + r.st + ' @' + r.ob + '  ' + r.w + ' → ' + r.how + (r.c ? ' ' + r.c : '') + (r.res ? ' · ' + r.res : ''))).join('\n') : '(nothing yet)') + '</div>';
   $('vlogShare').onclick = () => voiceLogShare();
