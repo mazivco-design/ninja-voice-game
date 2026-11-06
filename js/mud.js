@@ -130,7 +130,7 @@ function mudUpdate(dt, pb) {
       }
       break;
     case 'thanks': {                                                              // קידה ותודה, ואז שניהם הולכים לאט אחד לשני – ומתחבקים
-      if (M.t >= MUD.tyT && !M.said) { M.said = 1; speak('ninja: thank you!'); }        // הנינג'ה אומר תודה (הקול של Help – Harry)
+      if (M.t >= MUD.tyT && !M.said) { M.said = 1; speak('ninja: thank you!'); }        // הנינג'ה אומר תודה (הקול של Help – Kai)
       if (M.t >= MUD.anyT && !M.said2) { M.said2 = 1; speak('friend: anytime, buddy!'); }   // והחבר עונה
       if (M.t >= MUD.walkA && M.walkD === undefined) { M.walkD = Math.max(0, o.x + o.fr - (PLAYER.x + 4) - MUD.hugGap); M.walked = 0; }
       if (M.walkD !== undefined) {                                                 // כל אחד עושה חצי מהדרך: העולם זז (הנינג'ה הולך) והחבר הולך לקראתו
