@@ -1528,6 +1528,66 @@
     "gender": "male",
     "page_size": 30
    }
+  },
+  {
+   "file": "ninja4-supervm",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[worried] Help! Help! ... [relieved] Thank you!",
+   "voice": "lib-supervm",
+   "voice_id": "gQRS0Lnh5XQOAqujMqUX"
+  },
+  {
+   "file": "ninja4-kai",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[worried] Help! Help! ... [relieved] Thank you!",
+   "voice": "lib-kai",
+   "voice_id": "S0ypc51SmsvcKXTWvjqJ"
+  },
+  {
+   "file": "ninja4-valfhero",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[worried] Help! Help! ... [relieved] Thank you!",
+   "voice": "lib-valfhero",
+   "voice_id": "unWb9iRIK7Xxf4A5Hfis"
+  },
+  {
+   "file": "ninja4-alchemist",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[worried] Help! Help! ... [relieved] Thank you!",
+   "voice": "lib-alchemist",
+   "voice_id": "C5GgjTyGQ2aQx8uMiLh9"
+  },
+  {
+   "file": "ninja4-aaron",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[worried] Help! Help! ... [relieved] Thank you!",
+   "voice": "lib-aaron",
+   "voice_id": "B6uUx2p7cRgxseOUyP6P"
   }
  ]
 }
