@@ -17,7 +17,7 @@ const JS_ITEMS = [                                                              
 // צוקים קטנים בתוך התהום: מרכז (מתחילת התהום), רוחב, גובה הראש מעל הקרקע (שלילי = נמוך יותר) – על כל אחד תיבת אוצר
 const JS_PILLARS = [{ dx: 78, w: 15, top: 1 }, { dx: 302, w: 14, top: 17 }];   // רחוקים זה מזה: אחד נמוך, אחד גבוה
 // אי סלע באמצע התהום: כאן הדלק נגמר. מולו קיר גבוה עם מעבר נמוך בתחתית: CRAWL פנימה – PICK UP מיכל דלק – זוחל החוצה – FLY מעל הקיר
-const JS_ISLE = { x0: 150, x1: 226, top: 2, cave: 168, wallW: 52, wallTop: 56, caveL: 40, caveH: 7, can: 203 };   // צוק ענק שמכסה כמעט את כל המסך; מעבר ארוך בתחתיתו   // cave = הפן השמאלי של הקיר הגבוה; המעבר בתחתיתו
+const JS_ISLE = { x0: 150, x1: 226, top: 2, cave: 168, wallW: 52, wallTop: 53, caveL: 40, caveH: 7, can: 203 };   // צוק ענק שמכסה כמעט את כל המסך; מעבר ארוך בתחתיתו   // cave = הפן השמאלי של הקיר הגבוה; המעבר בתחתיתו
 let jetS = null;   // { o, p: שלב, t, lane, alt, base, items, got, pill: [נפתח?], pi: על איזה צוק }
 
 function jsSetup(o) { o.w = JS.edge + JS.gap + JS.after; }
@@ -459,7 +459,8 @@ function drawJetHeld() {
   const S = jetS; if (!S) return;
   if (['crawlIn', 'inCave', 'grab', 'crawlOut'].includes(S.p)) drawJetIsle(S.o, 0, true);   // הנינג'ה בתוך המערה – התקרה מעליו
   if (jsWorn() && S.p !== 'wear') {                                                // מד הדלק של הסילון – מעל הראש
-    const now = performance.now() / 1000, k = S.fuel, w = 13, x = PLAYER.x + PLAYER.w / 2, y = GROUND - py - 21;
+    const now = performance.now() / 1000, k = S.fuel, w = 13, hi = GROUND - py - 21 < (0 - oy) / scale + 9;   // גבוה ליד ראש המסך – המד עובר לצד, שלא יתנגש בפס העליון
+    const x = PLAYER.x + PLAYER.w / 2 + (hi ? -15 : 0), y = hi ? GROUND - py - 11 : GROUND - py - 21;
     const low = k < 0.25, hz = 3 + (0.25 - Math.min(0.25, k)) * 24, blink = low && Math.floor(now * hz) % 2 === 0;   // לקראת סוף הדלק – מהבהב, ויותר מהר ככל שנשאר פחות
     if (low) { ctx.fillStyle = blink ? 'rgba(239,68,68,.55)' : 'rgba(239,68,68,.15)'; roundRect(x - w / 2 - 1.6, y - 1.6, w + 3.2, 4.6, 2); ctx.fill(); }
     ctx.fillStyle = 'rgba(15,23,42,.6)'; roundRect(x - w / 2 - 0.7, y - 0.7, w + 1.4, 2.8, 1.3); ctx.fill();
