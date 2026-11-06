@@ -376,12 +376,16 @@ canvas { display: block; width: 100%; height: 100%; }
 
 /* 🧭 סדר התחנות (tester) */
 #orderList { display: flex; flex-direction: column; gap: 4px; max-height: min(56vh, 520px); overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior: contain; margin: 8px 0; }
-#orderList .orow { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background: #eef2ff; font-weight: 800; color: #1e293b; }
+#orderList .orow, #coinAdmList .orow { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background: #eef2ff; font-weight: 800; color: #1e293b; }
 #orderList .orow.lock { background: #f1f5f9; color: #94a3b8; }
 #orderList .orow .n { width: 26px; text-align: right; color: #64748b; font-variant-numeric: tabular-nums; }
-#orderList .orow .w { flex: 1; }
-#orderList .orow button { border: 0; border-radius: 8px; background: #c7d2fe; color: #1e293b; font: 800 15px system-ui; width: 38px; height: 32px; }
+#orderList .orow .w, #coinAdmList .orow .w { flex: 1; }
+#orderList .orow button, #coinAdmList .orow button { border: 0; border-radius: 8px; background: #c7d2fe; color: #1e293b; font: 800 15px system-ui; width: 38px; height: 32px; }
 #orderList .orow button:disabled { opacity: .25; }
+#coinAdmList { display: flex; flex-direction: column; gap: 4px; max-height: min(56vh, 520px); overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; margin: 8px 0; }
+#coinAdmList .orow .c { min-width: 54px; text-align: right; font-variant-numeric: tabular-nums; }
+#coinAdmList .orow button { width: auto; padding: 0 10px; }
+#coinAdmList .orow .w { text-align: left; }
 .free.order { background: linear-gradient(135deg, #64748b, #334155); color: #fff; }
 
 /* פריטים חד-פעמיים (SHIELD / JET): מונה קטן בפינה השמאלית התחתונה */

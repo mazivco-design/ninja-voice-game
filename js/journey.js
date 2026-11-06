@@ -193,6 +193,26 @@ function applyOrder(ord) {                                       // משנים �
   closeOrder();
 }
 $('orderBtn').onclick = openOrder;
+
+// מצב בודק: הוספת מטבעות לקופה של כל שחקן
+function renderCoinAdm() {
+  const box = $('coinAdmList'); box.innerHTML = '';
+  players.forEach(p => {
+    const key = 'p' + p.id + '_coins', r = document.createElement('div');
+    r.className = 'orow';
+    r.innerHTML = '<span class="dot" style="background:' + p.color + ';width:12px;height:12px;border-radius:50%;display:inline-block"></span><span class="w"></span><span class="c">🟡 ' + load(key, 0) + '</span>';
+    r.querySelector('.w').textContent = p.name;
+    for (const n of [10, 50, 100]) {
+      const b = document.createElement('button'); b.textContent = '+' + n;
+      b.onclick = () => { store(key, load(key, 0) + n); sfx('coin'); renderCoinAdm(); };
+      r.appendChild(b);
+    }
+    box.appendChild(r);
+  });
+  if (!players.length) box.textContent = 'No players yet.';
+}
+$('coinAdmBtn').onclick = () => { renderCoinAdm(); hideAllOverlays(); $('coinAdm').classList.add('show'); };
+$('coinAdmBack').onclick = closeOrder;
 $('orderBack').onclick = closeOrder;
 $('orderSave').onclick = () => applyOrder(orderDraft);
 $('orderReset').onclick = () => {                                // חזרה לסדר המקורי – רק אם החלק הנעול זהה

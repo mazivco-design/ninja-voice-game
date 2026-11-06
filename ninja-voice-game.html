@@ -6,11 +6,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Ninja Voice Game</title>
 <script src="https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js"></script>
-<script src="ninja-figure.js?v=20261106zq"></script>
+<script src="ninja-figure.js?v=20261106zr"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap">
-<link rel="stylesheet" href="css/game.css?v=20261106zq">
-<link rel="stylesheet" href="css/fuji.css?v=20261106zq">
+<link rel="stylesheet" href="css/game.css?v=20261106zr">
+<link rel="stylesheet" href="css/fuji.css?v=20261106zr">
 </head>
 <body>
 <div id="app">
@@ -75,6 +75,7 @@
         <button class="free shop" id="shopBtn"><svg class="stall" viewBox="0 0 30 28" aria-hidden="true"><path d="M2 9 L15 2 L28 9 Z" fill="#c8372d"/><rect x="1" y="8" width="28" height="4" rx="1" fill="#7f1d1d"/><rect x="4" y="12" width="3" height="14" fill="#6b4212"/><rect x="23" y="12" width="3" height="14" fill="#6b4212"/><rect x="2" y="19" width="26" height="7" rx="1.5" fill="#8a5a24"/><rect x="7" y="13" width="5" height="5" rx="1" fill="#fbf5e6" stroke="#4a2f0b" stroke-width="1"/><rect x="18" y="13" width="5" height="5" rx="1" fill="#fbf5e6" stroke="#4a2f0b" stroke-width="1"/><circle cx="15" cy="16" r="2.6" fill="#e9b949" stroke="#4a2f0b" stroke-width="1"/></svg>Shop <span class="coinIco"></span> <span id="shopBtnCoins">0</span></button>
         <button class="free words" id="dictBtn">Words</button>
         <button class="free order hide" id="orderBtn">🧭 Order</button>
+        <button class="free order hide" id="coinAdmBtn">🟡 Coins</button>
       </div>
     </div>
     <div class="sideBoard" id="sideBoard">
@@ -110,6 +111,16 @@
         <button class="btn sec" id="orderReset">↺ Original order</button>
         <button class="btn sec" id="orderBack">Back</button>
       </div>
+    </div>
+  </div>
+
+  <!-- מצב בודק: הוספת מטבעות לשחקן -->
+  <div class="overlay" id="coinAdm">
+    <div class="panel">
+      <h2>🟡 Add coins</h2>
+      <p>Tap to add coins to a player's purse.</p>
+      <div id="coinAdmList"></div>
+      <div class="row"><button class="btn sec" id="coinAdmBack">Back</button></div>
     </div>
   </div>
 
@@ -232,38 +243,38 @@
   <div id="debug"></div>
 </div>
 
-<script src="js/config.js?v=20261106zq"></script>
-<script src="js/sound.js?v=20261106zq"></script>
-<script src="js/state.js?v=20261106zq"></script>
-<script src="js/players.js?v=20261106zq"></script>
-<script src="js/journey.js?v=20261106zq"></script>
-<script src="js/shop.js?v=20261106zq"></script>
-<script src="js/merchant.js?v=20261106zq"></script>
-<script src="js/rope.js?v=20261106zq"></script>
-<script src="js/dragon.js?v=20261106zq"></script>
-<script src="js/fight.js?v=20261106zq"></script>
-<script src="js/skeleton.js?v=20261106zq"></script>
-<script src="js/hold.js?v=20261106zq"></script>
-<script src="js/lift.js?v=20261106zq"></script>
-<script src="js/tunnel.js?v=20261106zq"></script>
-<script src="js/mud.js?v=20261106zq"></script>
-<script src="js/boat.js?v=20261106zq"></script>
-<script src="js/cart.js?v=20261106zq"></script>
-<script src="js/boar.js?v=20261106zq"></script>
-<script src="js/jetstage.js?v=20261106zq"></script>
-<script src="js/power.js?v=20261106zq"></script>
-<script src="js/art.js?v=20261106zq"></script>
-<script src="js/menu.js?v=20261106zq"></script>
-<script src="js/fujimenu.js?v=20261106zq"></script>
-<script src="js/speech.js?v=20261106zq"></script>
-<script src="js/game.js?v=20261106zq"></script>
-<script src="js/draw.js?v=20261106zq"></script>
-<script src="js/tester.js?v=20261106zq"></script>
-<script src="js/screens.js?v=20261106zq"></script>
-<script src="js/lab.js?v=20261106zq"></script>
-<script src="js/studio.js?v=20261106zq"></script>
-<script src="js/sushi.js?v=20261106zq"></script>
-<script src="js/main.js?v=20261106zq"></script>
+<script src="js/config.js?v=20261106zr"></script>
+<script src="js/sound.js?v=20261106zr"></script>
+<script src="js/state.js?v=20261106zr"></script>
+<script src="js/players.js?v=20261106zr"></script>
+<script src="js/journey.js?v=20261106zr"></script>
+<script src="js/shop.js?v=20261106zr"></script>
+<script src="js/merchant.js?v=20261106zr"></script>
+<script src="js/rope.js?v=20261106zr"></script>
+<script src="js/dragon.js?v=20261106zr"></script>
+<script src="js/fight.js?v=20261106zr"></script>
+<script src="js/skeleton.js?v=20261106zr"></script>
+<script src="js/hold.js?v=20261106zr"></script>
+<script src="js/lift.js?v=20261106zr"></script>
+<script src="js/tunnel.js?v=20261106zr"></script>
+<script src="js/mud.js?v=20261106zr"></script>
+<script src="js/boat.js?v=20261106zr"></script>
+<script src="js/cart.js?v=20261106zr"></script>
+<script src="js/boar.js?v=20261106zr"></script>
+<script src="js/jetstage.js?v=20261106zr"></script>
+<script src="js/power.js?v=20261106zr"></script>
+<script src="js/art.js?v=20261106zr"></script>
+<script src="js/menu.js?v=20261106zr"></script>
+<script src="js/fujimenu.js?v=20261106zr"></script>
+<script src="js/speech.js?v=20261106zr"></script>
+<script src="js/game.js?v=20261106zr"></script>
+<script src="js/draw.js?v=20261106zr"></script>
+<script src="js/tester.js?v=20261106zr"></script>
+<script src="js/screens.js?v=20261106zr"></script>
+<script src="js/lab.js?v=20261106zr"></script>
+<script src="js/studio.js?v=20261106zr"></script>
+<script src="js/sushi.js?v=20261106zr"></script>
+<script src="js/main.js?v=20261106zr"></script>
 <!-- סנכרון בין מכשירים (משותף לכל הפרויקטים) -->
 <script src="/Ziviz-Projects-/firebase-config.js"></script>
 <script src="/Ziviz-Projects-/ls-sync.js" data-app="ninja" data-prefix="ninjaVoice" data-exclude="ninjaVoice_mute,ninjaVoice_vlog,ninjaVoice_current" data-button="#menu .mtop" data-busy="#menu:not(.show)"></script>

@@ -58,6 +58,7 @@ function renderMenu() {
   $('freeBtn').disabled = !model;
   $('shopBtnCoins').textContent = isTester() ? '∞' : coinsNow();
   $('orderBtn').classList.toggle('hide', !isTester());
+  $('coinAdmBtn').classList.toggle('hide', !isTester());
 }
 $('jGo').onclick = continueJourney;
 $('jRestart').onclick = () => play('journey', 0);
