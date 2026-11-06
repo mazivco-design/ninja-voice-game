@@ -196,6 +196,10 @@ function jsPose(P) {
 function jsGround(c, top, bottom) {                                               // אותו צבע לקרקע, לדפנות ולצוקים
   const g = c.createLinearGradient(0, top, 0, bottom); g.addColorStop(0, '#c58a5a'); g.addColorStop(1, '#8f5a38'); return g;
 }
+function jsTop(x) {                                                            // גובה פני הקרקע (לא פס ישר)
+  const u = (x + bgX) * 0.06;
+  return GROUND - 1.3 - Math.max(0, Math.sin(u) * 2.4 + Math.sin(u * 2.7 + 1) * 1.3 + Math.sin(u * 0.37 + 2) * 2.2);
+}
 function drawJetGap(o, bottom) {
   const x = jsEdge(o), w = JS.gap, t = performance.now() / 1000, WY = GROUND + 46;
   const hz = ctx.createLinearGradient(0, GROUND, 0, WY);                           // ערפל עומק עדין – הנוף נשאר נראה
@@ -207,16 +211,17 @@ function drawJetGap(o, bottom) {
   ctx.lineTo(x + w, bottom); ctx.closePath(); ctx.fill();
   JS_PILLARS.forEach((P, k) => {                                                   // צוקים קטנים לנחיתה
     const cx = x + P.dx, ty = GROUND - P.top, hw = P.w / 2;
-    ctx.fillStyle = jsGround(ctx, ty, bottom); ctx.beginPath(); ctx.moveTo(cx - hw, ty);
+    ctx.fillStyle = jsGround(ctx, GROUND - 5, GROUND + 30); ctx.beginPath(); ctx.moveTo(cx - hw, ty);
     for (let yy = ty; yy <= bottom; yy += 3) ctx.lineTo(cx - hw + 1 + Math.sin(yy * 0.5 + k * 3) * 0.9 + (yy - ty) * 0.06, yy);
     for (let yy = bottom; yy >= ty; yy -= 3) ctx.lineTo(cx + hw - 1 - Math.sin(yy * 0.45 + k) * 0.9 - (yy - ty) * 0.05, yy);
-    ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#d9a274'; ctx.fillRect(cx - hw + 0.3, ty, P.w - 0.6, 1.1);    // שפה מוארת למעלה
+    ctx.lineTo(cx + hw, ty + 0.4); ctx.lineTo(cx + hw - 0.6, ty); ctx.closePath(); ctx.fill();   // ראש שטוח – התיבה עומדת עליו
   });
   for (const [ex, dir] of [[x, 1], [x + w, -1]]) {                              // דפנות התהום – באותו צבע כמו הקרקע
-    ctx.fillStyle = jsGround(ctx, GROUND, bottom); ctx.beginPath(); ctx.moveTo(ex - dir * 2, GROUND - 1.3);
-    for (let yy = GROUND - 1.3; yy <= bottom; yy += 2.5) ctx.lineTo(ex + dir * (1.5 + Math.sin(yy * 0.6 + ex) * 1.1 - Math.max(0, yy - GROUND) * 0.05), yy);
-    ctx.lineTo(ex - dir * 6, bottom); ctx.lineTo(ex - dir * 6, GROUND - 1.3); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = jsGround(ctx, GROUND - 5, GROUND + 30);                          // בדיוק אותו מילוי כמו הקרקע – בלי קו מפריד
+    const ty = jsTop(ex), mid = (ty + GROUND) / 2;
+    ctx.beginPath(); ctx.moveTo(ex - dir * 0.6, ty);
+    for (let yy = mid; yy <= bottom; yy += 2.5) ctx.lineTo(ex + dir * (1.5 + Math.sin(yy * 0.6 + ex) * 1.1 - Math.max(0, yy - GROUND) * 0.05), yy);
+    ctx.lineTo(ex - dir * 0.6, bottom); ctx.closePath(); ctx.fill();
   }
 }
 
@@ -275,12 +280,8 @@ function cliffLayers(c, top) {
   for (const o of obstacles) if (o.type === 'jetgap') { const h = jsHole(o); c.rect(h.x + h.w, top, -h.w, GROUND + 80 - top); }
   c.clip('evenodd');
   c.fillStyle = jsGround(c, GROUND - 5, GROUND + 30); c.beginPath(); c.moveTo(L, GROUND + 70);
-  for (let x = L; x <= R + 2; x += 1.5) { const u = (x + bgX) * 0.06; c.lineTo(x, GROUND - 1.3 - Math.max(0, Math.sin(u) * 2.4 + Math.sin(u * 2.7 + 1) * 1.3 + Math.sin(u * 0.37 + 2) * 2.2)); }
+  for (let x = L; x <= R + 2; x += 1.5) c.lineTo(x, jsTop(x));
   c.lineTo(R + 2, GROUND + 70); c.closePath(); c.fill();
-  c.fillStyle = 'rgba(255,225,190,.35)'; c.beginPath();                           // שפה מוארת לאורך הקו העליון
-  for (let x = L; x <= R + 2; x += 1.5) { const u = (x + bgX) * 0.06; c.lineTo(x, GROUND - 1.3 - Math.max(0, Math.sin(u) * 2.4 + Math.sin(u * 2.7 + 1) * 1.3 + Math.sin(u * 0.37 + 2) * 2.2)); }
-  for (let x = R + 2; x >= L; x -= 1.5) { const u = (x + bgX) * 0.06; c.lineTo(x, GROUND - 0.3 - Math.max(0, Math.sin(u) * 2.4 + Math.sin(u * 2.7 + 1) * 1.3 + Math.sin(u * 0.37 + 2) * 2.2)); }
-  c.closePath(); c.fill();
   c.fillStyle = 'rgba(90,50,30,.3)';
   for (let i = 0; i < 18; i++) { const x = wr(L + cliffRnd(i + 60) * 200 - bgX, L - 3, R + 3); c.beginPath(); c.ellipse(x, GROUND + 2 + cliffRnd(i + 70) * 14, 0.9 + cliffRnd(i), 0.45, 0, 0, Math.PI * 2); c.fill(); }
   c.restore();
