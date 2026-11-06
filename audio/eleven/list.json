@@ -1588,6 +1588,42 @@
    "text": "[worried] Help! Help! ... [relieved] Thank you!",
    "voice": "lib-aaron",
    "voice_id": "B6uUx2p7cRgxseOUyP6P"
+  },
+  {
+   "file": "ninja5-kai-commands",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "voice": "lib-kai",
+   "voice_id": "S0ypc51SmsvcKXTWvjqJ",
+   "text": "Jump! ... Kick! ... Catch! ... Fly! ... Let go! ... Push!"
+  },
+  {
+   "file": "ninja5-kai-talk",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "voice": "lib-kai",
+   "voice_id": "S0ypc51SmsvcKXTWvjqJ",
+   "text": "[curious] I want a key, please. ... [excited] Whoa! A big wave! ... [happy] We did it! ... [warm] See you!"
+  },
+  {
+   "file": "ninja5-kai-help",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "voice": "lib-kai",
+   "voice_id": "S0ypc51SmsvcKXTWvjqJ",
+   "text": "[worried] Help! Help! ... [relieved] Thank you!"
   }
  ]
 }
