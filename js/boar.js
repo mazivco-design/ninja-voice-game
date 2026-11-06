@@ -87,8 +87,9 @@ function boarUpdate(dt, pb) {
   const last = S.b >= BOAR_STARTS.length, gap = last ? Infinity : boarX(o) - (PLAYER.x + PLAYER.w);   // כמה רחוק החזיר מהנינג'ה
   for (let j = 0; j < S.gone.length; j++) if (S.gone[j] >= 0) { S.gone[j] += dt; S.bos[j] += BOAR.leaveV * 1.4 * dt; }   // חזיר שסיים – מתרחק לעומק היער ונעלם
   if (demo) {                                                                         // הדגמה: SNEAK כשבטוח, HIDE כשהאוזניים זזות / כשהוא רץ
-    if ((S.np === 'stand' || S.np === 'hidden') && !last && boarSneakOK() && (S.bp !== 'graze' || S.bt > 0.8)) command('sneak', 'demo');
-    if ((S.bp === 'ears' && S.bt > 0.6 && S.np === 'stand') || (S.np === 'spotted' && S.atTree && S.bt > 0.6)) command('hide', 'demo');
+    const demoCmd = w => { const np = S.np; command(w, 'demo'); if (S.np !== np) speak(w); };   // המילה נשמעת (קול הקריינית) רק כשהפעולה באמת קרתה – פעם אחת
+    if ((S.np === 'stand' || S.np === 'hidden') && !last && boarSneakOK() && (S.bp !== 'graze' || S.bt > 0.8)) demoCmd('sneak');
+    if ((S.bp === 'ears' && S.bt > 0.6 && S.np === 'stand') || (S.np === 'spotted' && S.atTree && S.bt > 0.6)) demoCmd('hide');
   }
   // החזיר
   if (!last) switch (S.bp) {
