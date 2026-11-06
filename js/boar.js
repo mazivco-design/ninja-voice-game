@@ -19,7 +19,7 @@ const BOAR_TREES = [
   { dx: 374, w: 10.5, col: '#553b27', lean: -0.01, br: [[0.36, -1, 10], [0.58, 1, 9], [0.74, 1, 6]] }
 ];
 const BOAR_STARTS = [150, 342];   // שני חזירים: הראשון באמצע היער, השני בהמשך (יחסית לתחילת היער)
-const BOAR = { lead: 200, ramp: 70, edge: 110, tree0: 24, trees: BOAR_TREES.length,  adv: 12, stepT: 1.6, walkV: 14, duckT: 0.35,
+const BOAR = { size: 1.2, lead: 200, ramp: 70, edge: 110, tree0: 24, trees: BOAR_TREES.length,  adv: 12, stepT: 1.6, walkV: 14, duckT: 0.35,
                waitMin: 1.6, waitMax: 3.0, lookT: 1.8, chargeT: 0.7, fallT: 1.1, returnT: 1.3, knock: 7, passBy: 18, coins: 4, fade: 55 };
 const BOAR_EARS = { easy: 2.0, medium: 1.5, hard: 1.15 };                         // כמה זמן יש להגיד HIDE מרגע שהאוזניים זזות
 let boarS = null;   // { o, np: ninja phase, nt, bp: boar phase, bt, bo: מקום החזיר (יחסית ל-o.x), i: העץ שאליו הולכים, warnAt, miss, hinted }
@@ -345,8 +345,8 @@ function drawForestFront(o, top, bottom) {
   }
   const act = boarS && boarS.o === o ? boarS.b : 0;
   for (let j = 0; j < BOAR_STARTS.length; j++) {                                     // החזירים – לפני הגזעים, שלא יסתתרו מאחוריהם
-    if (j === act && boarCharging(o)) drawBoarFig(boarChargeX(), GROUND + 0.4, 1.0, o, null);   // מסתער על השביל
-    else { const bx = boarX(o, j); if (bx > viewL() - 25 && bx < viewR() + 25) drawBoarFig(bx, GROUND + 0.4, 0.95, o, j === act ? null : 'graze'); }
+    if (j === act && boarCharging(o)) drawBoarFig(boarChargeX(), GROUND + 2.2, BOAR.size * 1.04, o, null);   // מסתער על השביל
+    else { const bx = boarX(o, j); if (bx > viewL() - 25 && bx < viewR() + 25) drawBoarFig(bx, GROUND + 2.2, BOAR.size, o, j === act ? null : 'graze'); }
   }
   const t = performance.now() / 1000, L = viewL(), R = viewR();
   ctx.fillStyle = '#c98a2e';                                                           // עלים נושרים
@@ -358,7 +358,7 @@ function drawForestFront(o, top, bottom) {
   ctx.restore();
 }
 function boarChargeX() {                                                               // איפה החזיר בהסתערות / בחזרה
-  const S = boarS, home = boarX(S.o), tgt = PLAYER.x + PLAYER.w + 13;
+  const S = boarS, home = boarX(S.o), tgt = PLAYER.x + PLAYER.w + 16;
   if (S.bp === 'charge') { const k = Math.min(1, S.bt / BOAR.chargeT); return lerp(home, tgt, k * k); }
   if (S.bp === 'return') { const k = Math.min(1, S.bt / BOAR.returnT); return lerp(tgt + 4, home, k * k * (3 - 2 * k)); }
   return home;
@@ -411,7 +411,7 @@ function drawBoar(o) {                                                          
   ctx.fillStyle = '#5a9a48';
   for (let j = 0; j < BOAR_STARTS.length; j++) {                                       // עשב ליד הפה של כל חזיר
     const hx = boarX(o, j);
-    for (let k = 0; k < 9; k++) { const gx = hx - 20 + k * 1.5; ctx.beginPath(); ctx.moveTo(gx, GROUND - 0.4); ctx.lineTo(gx + 0.5, GROUND - 3 - boarRnd(k + 90) * 2.5); ctx.lineTo(gx + 1, GROUND - 0.4); ctx.fill(); }
+    for (let k = 0; k < 10; k++) { const gx = hx - 23 + k * 1.5; ctx.beginPath(); ctx.moveTo(gx, GROUND + 1.8); ctx.lineTo(gx + 0.5, GROUND - 1 - boarRnd(k + 90) * 2.8); ctx.lineTo(gx + 1, GROUND + 1.8); ctx.fill(); }
   }
   ctx.restore();
 }
