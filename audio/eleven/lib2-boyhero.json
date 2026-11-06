@@ -1,0 +1,41 @@
+[
+ {
+  "name": "Aaron - Conversational American Male",
+  "voice_id": "B6uUx2p7cRgxseOUyP6P",
+  "public_owner_id": "b2052c03eb037b3ad680c8887ebd328830c10d61808e0739397c237bfef6e56b",
+  "accent": "us midwest",
+  "age": "young",
+  "gender": "male",
+  "use_case": "conversational",
+  "descriptive": "casual",
+  "description": "Youthful, earnest American male voice with natural boy-next-door charm. Bright, energetic, and conversational with an authentic, relatable quality — the friendly young hero type. Perfect for animation",
+  "cloned_by_count": 2202,
+  "usage": 6195933
+ },
+ {
+  "name": "Moxy - Hyped Mouse",
+  "voice_id": "mdzEgLpu0FjTwYs5oot0",
+  "public_owner_id": "aee151101b46b155b13df42143ebaa5748407abb863e7eeb8ee16ba6854fc327",
+  "accent": "american",
+  "age": "young",
+  "gender": "male",
+  "use_case": "characters_animation",
+  "descriptive": "excited",
+  "description": "Oh boy you're here! I’m a fun, happy, cartoon mouse. ",
+  "cloned_by_count": 12190,
+  "usage": 3162062
+ },
+ {
+  "name": "Alexander - Loud, Clear, and Friendly",
+  "voice_id": "sXmQtIh1TPtty63PTU6Q",
+  "public_owner_id": "18b6f038186ba974fe33d7f281cb40fd9146c95a452425bd6a582689ad9c585e",
+  "accent": "standard",
+  "age": "middle_aged",
+  "gender": "male",
+  "use_case": "advertisement",
+  "descriptive": "confident",
+  "description": "Why would you hire a voice talent who is expensive but has a bad voice? You're here with Boy Advertising—the Best Voice Talent in the Philippines! He is the voice behind hundreds of radio and TV ads. ",
+  "cloned_by_count": 23450,
+  "usage": 16099271
+ }
+]
