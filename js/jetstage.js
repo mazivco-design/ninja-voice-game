@@ -6,7 +6,7 @@
    מעל הצד השני: DOWN – נוחתים, מורידים את התרמיל (הוא נשאר שם) וממשיכים.
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const JS = { crawlD: 10, crawlT: 1.8, fuelT: 30, refuel: 0.45, stop: 4, pack: 9, edge: 26, gap: 360, after: 40, lanes: [9, 19, 29], start: 1, flyV: 10, birdV: 6,
+const JS = { crawlD: 32, crawlT: 4.2, fuelT: 30, refuel: 0.45, stop: 4, pack: 9, edge: 26, gap: 360, after: 40, lanes: [9, 19, 29], start: 1, flyV: 10, birdV: 6,
              pickT: 0.8, putT: 1.1, takeT: 1.0, landT: 1.0, dropT: 0.9, hitR: 4.2, getR: 4.2, coins: 3 };
 // מה יש בדרך מעל התהום: מרחק מתחילת התהום, נתיב (0 נמוך, 1 אמצע, 2 גבוה), סוג
 const JS_ITEMS = [                                                                   // רק מטבעות באוויר (היהלומים – בתיבות על הצוקים)
@@ -17,7 +17,7 @@ const JS_ITEMS = [                                                              
 // צוקים קטנים בתוך התהום: מרכז (מתחילת התהום), רוחב, גובה הראש מעל הקרקע (שלילי = נמוך יותר) – על כל אחד תיבת אוצר
 const JS_PILLARS = [{ dx: 78, w: 15, top: 1 }, { dx: 302, w: 14, top: 17 }];   // רחוקים זה מזה: אחד נמוך, אחד גבוה
 // אי סלע באמצע התהום: כאן הדלק נגמר. מולו קיר גבוה עם מעבר נמוך בתחתית: CRAWL פנימה – PICK UP מיכל דלק – זוחל החוצה – FLY מעל הקיר
-const JS_ISLE = { x0: 150, x1: 214, top: 2, cave: 176, wallW: 20, wallTop: 25, caveL: 12, caveH: 7, can: 184 };   // cave = הפן השמאלי של הקיר הגבוה; המעבר בתחתיתו
+const JS_ISLE = { x0: 150, x1: 226, top: 2, cave: 168, wallW: 52, wallTop: 56, caveL: 40, caveH: 7, can: 203 };   // צוק ענק שמכסה כמעט את כל המסך; מעבר ארוך בתחתיתו   // cave = הפן השמאלי של הקיר הגבוה; המעבר בתחתיתו
 let jetS = null;   // { o, p: שלב, t, lane, alt, base, items, got, pill: [נפתח?], pi: על איזה צוק }
 
 function jsSetup(o) { o.w = JS.edge + JS.gap + JS.after; }
@@ -25,9 +25,9 @@ function jsEdge(o) { return o.x + JS.edge; }                                    
 function jsFar(o) { return o.x + JS.edge + JS.gap; }                               // הצד השני
 function jsHole(o) { return { x: jsEdge(o), w: JS.gap }; }                         // החור באדמה (draw.js)
 function jsBusy() { return !!jetS; }
-const JS_ISLE_P = ['dying', 'isle', 'toCave', 'atCave', 'crawlIn', 'inCave', 'grab', 'crawlOut', 'atWall', 'rise'];
+const JS_ISLE_P = ['dying', 'isle', 'toCave', 'atCave', 'crawlIn', 'inCave', 'grab', 'crawlOut', 'atWall', 'rise', 'over'];
 function jsWorn() { return !!jetS && (['wear', 'take', 'fly', 'hover', 'land', 'perchDown', 'perch'].includes(jetS.p) || JS_ISLE_P.includes(jetS.p)); }
-function jsFlying() { return !!jetS && ['take', 'fly', 'hover', 'land', 'perchDown', 'dying', 'rise'].includes(jetS.p); }
+function jsFlying() { return !!jetS && ['take', 'fly', 'hover', 'land', 'perchDown', 'dying', 'rise', 'over'].includes(jetS.p); }
 function jsIsleX(o, dx) { return jsEdge(o) + dx; }
 function jsPillarX(o, k) { return jsEdge(o) + JS_PILLARS[k].dx; }
 function jsPillarUnder(o) {                                                         // מעל איזה צוק הנינג'ה עכשיו (או -1)
@@ -42,6 +42,7 @@ function jsSpeed() {
   if (p === 'perchDown' || p === 'perch') return 0;
   if (p === 'dying') return JS.flyV * 0.75;
   if (p === 'toCave') return 9;
+  if (p === 'over') return JS.flyV;
   if (p === 'crawlIn') return JS.crawlD / JS.crawlT;
   if (p === 'crawlOut') return -JS.crawlD / JS.crawlT;
   if (JS_ISLE_P.includes(p)) return 0;
@@ -136,9 +137,14 @@ function jsUpdate(dt, pb) {
       if (S.t >= 1.0) { S.fuel = 1; go('crawlOut'); }
       break;
     case 'crawlOut': if (S.t >= JS.crawlT) go('atWall'); break;                  // זוחל החוצה – עומד מול הקיר הגבוה
-    case 'rise':                                                                 // FLY – עולה ישר למעלה, מעל הקיר
-      S.alt = lerp(JS_ISLE.top, JS.lanes[2], Math.min(1, S.t / 1.4));
-      if (S.t >= 1.4) { S.lane = 2; S.isleDone = true; go('fly'); }
+    case 'rise': {                                                               // FLY – עולה ישר למעלה לאורך הצוק הענק
+      const k = Math.min(1, S.t / 2.4);
+      S.alt = lerp(JS_ISLE.top, JS_ISLE.wallTop + 2.5, k * k * (3 - 2 * k));
+      if (S.t >= 2.4) go('over');
+      break;
+    }
+    case 'over':                                                                 // עף מעל ראש הצוק, ואז יורד בחזרה לגובה רגיל
+      if (PLAYER.x + PLAYER.w / 2 > jsIsleX(o, JS_ISLE.cave) + JS_ISLE.wallW + 8) { S.lane = 2; S.isleDone = true; go('fly'); }
       break;
     case 'land':                                                                 // יורד לקרקע בצד השני
       S.alt = Math.max(0, S.alt - dt * Math.max(14, JS.lanes[2] / JS.landT));
