@@ -6,7 +6,7 @@
    מעל הצד השני: DOWN – נוחתים, מורידים את התרמיל (הוא נשאר שם) וממשיכים.
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const JS = { stop: 4, pack: 9, edge: 26, gap: 250, after: 40, lanes: [9, 19, 29], start: 1, flyV: 10, birdV: 6,
+const JS = { fuelT: 26, refuel: 0.45, stop: 4, pack: 9, edge: 26, gap: 250, after: 40, lanes: [9, 19, 29], start: 1, flyV: 10, birdV: 6,
              pickT: 0.8, putT: 1.1, takeT: 1.0, landT: 1.0, dropT: 0.9, hitR: 4.2, getR: 4.2, coins: 3 };
 // מה יש בדרך מעל התהום: מרחק מתחילת התהום, נתיב (0 נמוך, 1 אמצע, 2 גבוה), סוג
 const JS_ITEMS = [
@@ -47,7 +47,7 @@ function jsUpdate(dt, pb) {
     if (!o) return;
     const over = pb.r - (o.x + JS.stop); if (over > 0) ropeShiftBy(-over);
     py = 0; vy = 0; duckT = 0; flyT = 0; act.run = 0;
-    jetS = { o, p: 'find', t: 0, lane: JS.start, alt: 0, base: 0, items: JS_ITEMS.map(it => Object.assign({ x: it.dx, done: false }, it)), got: 0, hit: 0, pill: JS_PILLARS.map(() => false), pi: -1 };
+    jetS = { o, fuel: 1, p: 'find', t: 0, lane: JS.start, alt: 0, base: 0, items: JS_ITEMS.map(it => Object.assign({ x: it.dx, done: false }, it)), got: 0, hit: 0, pill: JS_PILLARS.map(() => false), pi: -1 };
     return;
   }
   const S = jetS, o = S.o; S.t += dt;
@@ -67,6 +67,8 @@ function jsUpdate(dt, pb) {
       if (S.t >= JS.takeT) go('fly');
       break;
     case 'fly': case 'hover': {
+      S.fuel = Math.max(0, S.fuel - dt / JS.fuelT);                              // הדלק נגמר לאט בזמן הטיסה
+      if (S.fuel <= 0 && S.lane > 0) S.lane = 0;                                 // בלי דלק – יורדים לגובה הנמוך (ועדיין מגיעים לצד השני)
       S.alt += (JS.lanes[S.lane] - S.alt) * Math.min(1, dt * 6);
       const far = jsFar(o), nx = PLAYER.x + PLAYER.w / 2;
       for (const it of S.items) {                                               // אוספים / נפגעים
@@ -95,7 +97,7 @@ function jsUpdate(dt, pb) {
       break;
     case 'perch':                                                                // עומד על הצוק – התיבה נפתחת
       if (S.t > 0.45 && !S.pill[S.pi]) {
-        S.pill[S.pi] = true; S.got += 3; sfx('coin'); burst(jsPillarX(o, S.pi) + 3, GROUND - S.alt - 3, '#fde047', 12, 14);
+        S.pill[S.pi] = true; S.got += 3; S.fuel = Math.min(1, S.fuel + JS.refuel);   // בתיבה יש גם דלק sfx('coin'); burst(jsPillarX(o, S.pi) + 3, GROUND - S.alt - 3, '#fde047', 12, 14);
         floatText(PLAYER.x + 4, GROUND - S.alt - 18, '+3 💎', '#0891b2');
         if (mode === 'journey' && state === 'play') { picked += 3; coinsFlying++; flyCoinToHud({ x: PLAYER.x + 4 }, GROUND - S.alt - 6); }
       }
@@ -134,7 +136,7 @@ function jsCmd(word) {
   if (word === 'fly') return true;
   if (word === 'up' || (word === 'fly' && S.p === 'perch')) {
     if (S.p === 'perch') { S.base = S.alt; S.lane = Math.max(1, S.lane); S.p = 'take'; S.t = 0; sfx('jump'); }   // ממריאים מהצוק
-    else if (S.p === 'fly' || S.p === 'hover') S.lane = Math.min(2, S.lane + 1);
+    else if ((S.p === 'fly' || S.p === 'hover') && S.fuel > 0) S.lane = Math.min(2, S.lane + 1);
     return true;
   }
   if (word === 'down') {
@@ -198,7 +200,13 @@ function jsGround(c, top, bottom) {                                             
 }
 function jsTop(x) {                                                            // גובה פני הקרקע (לא פס ישר)
   const u = (x + bgX) * 0.06;
-  return GROUND - 1.3 - Math.max(0, Math.sin(u) * 2.4 + Math.sin(u * 2.7 + 1) * 1.3 + Math.sin(u * 0.37 + 2) * 2.2);
+  return GROUND - 1.3 - Math.max(0, Math.sin(u) * 0.8 + Math.sin(u * 2.7 + 1) * 0.35 + Math.sin(u * 0.37 + 2) * 0.7);   // כמעט ישר – רק גלים קטנים
+}
+function jsPTop(k, x, cx, ty) { const d = x - cx; return ty - 0.35 * Math.sin(d * 0.5 + k * 2) - 0.2 * Math.sin(d * 1.3 + k); }   // ראש הצוק – כמעט ישר
+function jsChestY(o, k) {                                                         // התיבה יושבת על הנקודה הגבוהה שמתחתיה
+  const P = JS_PILLARS[k], cx = jsEdge(o) + P.dx, ty = GROUND - P.top, bx = cx + 3; let y = Infinity;
+  for (let x = bx - 2.2; x <= bx + 2.2; x += 0.5) y = Math.min(y, jsPTop(k, x, cx, ty));
+  return y;
 }
 function drawJetGap(o, bottom) {
   const x = jsEdge(o), w = JS.gap, t = performance.now() / 1000, WY = GROUND + 46;
@@ -211,10 +219,11 @@ function drawJetGap(o, bottom) {
   ctx.lineTo(x + w, bottom); ctx.closePath(); ctx.fill();
   JS_PILLARS.forEach((P, k) => {                                                   // צוקים קטנים לנחיתה
     const cx = x + P.dx, ty = GROUND - P.top, hw = P.w / 2;
-    ctx.fillStyle = jsGround(ctx, GROUND - 5, GROUND + 30); ctx.beginPath(); ctx.moveTo(cx - hw, ty);
-    for (let yy = ty; yy <= bottom; yy += 3) ctx.lineTo(cx - hw + 1 + Math.sin(yy * 0.5 + k * 3) * 0.9 + (yy - ty) * 0.06, yy);
-    for (let yy = bottom; yy >= ty; yy -= 3) ctx.lineTo(cx + hw - 1 - Math.sin(yy * 0.45 + k) * 0.9 - (yy - ty) * 0.05, yy);
-    ctx.lineTo(cx + hw, ty + 0.4); ctx.lineTo(cx + hw - 0.6, ty); ctx.closePath(); ctx.fill();   // ראש שטוח – התיבה עומדת עליו
+    ctx.fillStyle = jsGround(ctx, GROUND - 5, GROUND + 30); ctx.beginPath();
+    for (let xx = cx - hw; xx <= cx + hw; xx += 0.5) ctx.lineTo(xx, jsPTop(k, xx, cx, ty));       // ראש כמעט ישר
+    for (let yy = ty + 1; yy <= bottom; yy += 3) ctx.lineTo(cx + hw - 0.4 - Math.sin(yy * 0.45 + k) * 0.9 - (yy - ty) * 0.05, yy);
+    for (let yy = bottom; yy >= ty + 1; yy -= 3) ctx.lineTo(cx - hw + 0.4 + Math.sin(yy * 0.5 + k * 3) * 0.9 + (yy - ty) * 0.06, yy);
+    ctx.closePath(); ctx.fill();
   });
   for (const [ex, dir] of [[x, 1], [x + w, -1]]) {                              // דפנות התהום – באותו צבע כמו הקרקע
     ctx.fillStyle = jsGround(ctx, GROUND - 5, GROUND + 30);                          // בדיוק אותו מילוי כמו הקרקע – בלי קו מפריד
@@ -322,7 +331,7 @@ function drawJetStage(o) {
   if (S && S.p === 'find') jsPack(o.x + JS.pack, GROUND - 2.4, Math.PI / 2 - 0.15, false);
   if (S && (S.p === 'drop')) { const k = Math.min(1, S.t / JS.dropT); jsPack(PLAYER.x - 1 - k * 5, GROUND - 9 + k * 6.6, (Math.PI / 2 + 0.1) * k, false); }
   JS_PILLARS.forEach((P, k) => {                                                  // תיבת אוצר על כל צוק קטן
-    const cx = jsEdge(o) + P.dx + 3, ty = GROUND - P.top, open = S ? S.pill[k] : false;
+    const cx = jsEdge(o) + P.dx + 3, ty = jsChestY(o, k) + 0.15, open = S ? S.pill[k] : false;
     if (cx < viewL() - 8 || cx > viewR() + 8) return;
     ctx.fillStyle = '#8b5a2b'; roundRect(cx - 2.2, ty - 3, 4.4, 3, 0.4); ctx.fill();
     ctx.fillStyle = '#facc15'; ctx.fillRect(cx - 2.2, ty - 1.9, 4.4, 0.5); ctx.fillRect(cx - 0.35, ty - 2.4, 0.7, 1.2);
@@ -355,6 +364,13 @@ function drawJetStage(o) {
 // התרמיל ביד / על הגב (נקרא אחרי ציור הנינג'ה)
 function drawJetHeld() {
   const S = jetS; if (!S) return;
+  if (jsWorn() && S.p !== 'wear') {                                                // מד הדלק של הסילון – מעל הראש
+    const now = performance.now() / 1000, k = S.fuel, w = 13, x = PLAYER.x + PLAYER.w / 2, y = GROUND - py - 21;
+    ctx.fillStyle = 'rgba(15,23,42,.6)'; roundRect(x - w / 2 - 0.7, y - 0.7, w + 1.4, 2.8, 1.3); ctx.fill();
+    ctx.fillStyle = k > 0.3 ? (k > 0.6 ? '#22c55e' : '#f59e0b') : (Math.floor(now * 6) % 2 ? '#ef4444' : '#fca5a5');
+    if (k > 0) { roundRect(x - w / 2, y, w * k, 1.4, 0.7); ctx.fill(); }
+    ctx.font = '900 3px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#fff'; ctx.fillText('🚀', x - w / 2 - 2.6, y + 1.9);
+  }
   if (S.p === 'pick') { const k = Math.min(1, S.t / JS.pickT); jsPack(lerp(S.o.x + JS.pack, playerHand[0] + 0.6, k), lerp(GROUND - 2.4, playerHand[1], k), (Math.PI / 2 - 0.15) * (1 - k), false); }
   if (S.p === 'hold') jsPack(playerHand[0] + 0.6, playerHand[1], 0, false);
   if (S.p === 'put') { const k = Math.min(1, S.t / JS.putT), e = k * k * (3 - 2 * k); jsPack(lerp(playerHand[0] + 0.6, PLAYER.x + 1.2, e), lerp(playerHand[1], GROUND - py - 9.5, e) - Math.sin(Math.PI * e) * 4, 0, false); }
