@@ -1490,6 +1490,44 @@
    },
    "text": "[happy] Bye!",
    "voice": "Harry"
+  },
+  {
+   "file": "lib-brave",
+   "type": "search",
+   "params": {
+    "search": "brave",
+    "gender": "male",
+    "age": "young",
+    "page_size": 30
+   }
+  },
+  {
+   "file": "lib-adventure",
+   "type": "search",
+   "params": {
+    "search": "adventurous",
+    "gender": "male",
+    "age": "young",
+    "page_size": 30
+   }
+  },
+  {
+   "file": "lib-anime",
+   "type": "search",
+   "params": {
+    "search": "anime hero",
+    "gender": "male",
+    "page_size": 30
+   }
+  },
+  {
+   "file": "lib-teen",
+   "type": "search",
+   "params": {
+    "search": "teen boy",
+    "gender": "male",
+    "page_size": 30
+   }
   }
  ]
 }
