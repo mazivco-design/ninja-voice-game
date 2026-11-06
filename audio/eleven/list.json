@@ -1736,6 +1736,126 @@
    "text": "[worried] Help! Help! ... [relieved] Thank you! ... [excited] Whoa! A big wave!",
    "voice": "lib-littledude",
    "voice_id": "fBD19tfE58bkETeiwUoC"
+  },
+  {
+   "file": "ninja7-kai-help-a",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[worried] Help! Help!",
+   "type": "tts",
+   "model": "eleven_v3",
+   "voice": "lib-kai",
+   "voice_id": "S0ypc51SmsvcKXTWvjqJ"
+  },
+  {
+   "file": "ninja7-kai-help-b",
+   "seed": 7,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[worried] Help! Help!",
+   "type": "tts",
+   "model": "eleven_v3",
+   "voice": "lib-kai",
+   "voice_id": "S0ypc51SmsvcKXTWvjqJ"
+  },
+  {
+   "file": "ninja7-kai-help-c",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[urgent] Help! Help!",
+   "type": "tts",
+   "model": "eleven_v3",
+   "voice": "lib-kai",
+   "voice_id": "S0ypc51SmsvcKXTWvjqJ"
+  },
+  {
+   "file": "ninja7-kai-help-d",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[scared] Help! Help!",
+   "type": "tts",
+   "model": "eleven_v3",
+   "voice": "lib-kai",
+   "voice_id": "S0ypc51SmsvcKXTWvjqJ"
+  },
+  {
+   "file": "ninja7-kai-help-e",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "Help! Help!",
+   "type": "tts",
+   "model": "eleven_v3",
+   "voice": "lib-kai",
+   "voice_id": "S0ypc51SmsvcKXTWvjqJ"
+  },
+  {
+   "file": "ninja7-kai-thanks-a",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[relieved] Thank you!",
+   "type": "tts",
+   "model": "eleven_v3",
+   "voice": "lib-kai",
+   "voice_id": "S0ypc51SmsvcKXTWvjqJ"
+  },
+  {
+   "file": "ninja7-kai-thanks-b",
+   "seed": 7,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[relieved] Thank you!",
+   "type": "tts",
+   "model": "eleven_v3",
+   "voice": "lib-kai",
+   "voice_id": "S0ypc51SmsvcKXTWvjqJ"
+  },
+  {
+   "file": "ninja7-kai-thanks-c",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[happy] Thank you!",
+   "type": "tts",
+   "model": "eleven_v3",
+   "voice": "lib-kai",
+   "voice_id": "S0ypc51SmsvcKXTWvjqJ"
+  },
+  {
+   "file": "ninja7-kai-thanks-d",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[grateful] Thank you!",
+   "type": "tts",
+   "model": "eleven_v3",
+   "voice": "lib-kai",
+   "voice_id": "S0ypc51SmsvcKXTWvjqJ"
+  },
+  {
+   "file": "ninja7-kai-thanks-e",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[excited] Thank you!",
+   "type": "tts",
+   "model": "eleven_v3",
+   "voice": "lib-kai",
+   "voice_id": "S0ypc51SmsvcKXTWvjqJ"
   }
  ]
 }
