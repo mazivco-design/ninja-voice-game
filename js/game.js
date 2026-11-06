@@ -77,7 +77,7 @@ function renderHud() {
   if (mode === 'stage') $('progressBar').style.width = (100 * Math.min(1, done / STAGES[stageIdx].count)) + '%';
   if (mode === 'journey') $('progressBar').style.width = (100 * Math.min(1, done / jSegN)) + '%';
   if (!isFinite(lives)) $('lives').textContent = '';
-  else $('lives').textContent = '❤️'.repeat(Math.max(0, lives)) + '🤍'.repeat(Math.max(0, cfg.lives - lives));
+  else { const f = Math.max(0, Math.floor(lives)), h = lives - f >= 0.5 ? 1 : 0; $('lives').textContent = '❤️'.repeat(f) + '💔'.repeat(h) + '🤍'.repeat(Math.max(0, cfg.lives - f - h)); }   // 💔 = חצי לב
   renderPowerHud();
 }
 
@@ -329,7 +329,15 @@ const LEARN = { pause: 1.5, gap: 0.7 };
 let learnT = 0, learnWait = null, missCount = {};
 const LEARN_SAY = { river: ['jump', 'fly'], chasm: ['let go'], door: ['want'], bat: ['fire'] };
 function learnWords(o) { return o.type === 'skyrock' ? [o.lane ? 'down' : 'up'] : (LEARN_SAY[o.type] || (OBSTACLE_WORDS[o.type] || []).slice(0, 1)); }
-function sayWords(say, t) {
+// רמז במכשול שמחכה לשחקן: במסע – שמיעת המילה עולה חצי לב (פעם אחת לכל מכשול, גם אם הרמז חוזר)
+const hintPaid = new WeakSet();
+function hintPenalty(key) {
+  if (!key || mode !== 'journey' || !isFinite(lives) || state !== 'play' || hintPaid.has(key)) return;
+  hintPaid.add(key); lives = Math.max(0, lives - 0.5); renderHud();
+  if (lives <= 0) journeyOver(false);
+}
+function sayWords(say, t, key) {
+  if (key) hintPenalty(key);
   speak(say[0]);
   if (say[1]) setTimeout(() => { if (state === 'play') speak(say[1]); }, 750);
   flash = { text: say.map(w => ((w === 'push' && (boat || cart) ? '🫸' : WORD_ICON[w]) || '') + ' ' + w.toUpperCase()).join('  →  ') + '!', t };   // בסירה ובעגלה – יד דוחפת, לא סלע

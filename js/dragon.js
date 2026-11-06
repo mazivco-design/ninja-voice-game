@@ -49,7 +49,7 @@ function rideUpdate(dt, pb) {
     return;
   }
   const r = ride; r.t += dt;
-  if (r.phase === 'wait' && !r.demo && state === 'play' && r.t >= 3.5 + (r.hinted || 0) * 6) { r.hinted = (r.hinted || 0) + 1; sayWords(['ride'], 1.6); }   // שותקים מול הדרקון – שומעים את המילה (ואחר כך שוב כל כמה שניות)
+  if (r.phase === 'wait' && !r.demo && state === 'play' && r.t >= 3.5 + (r.hinted || 0) * 6) { r.hinted = (r.hinted || 0) + 1; sayWords(['ride'], 1.6, r); }   // שותקים מול הדרקון – שומעים את המילה (ואחר כך שוב כל כמה שניות)
   if (r.phase === 'mount') {                                       // קופץ על הגב, והעולם זז כך שהאוכף מגיע מתחתיו
     const k = Math.min(1, r.t / DRAGON.mount), e = k * k * (3 - 2 * k);
     const pan = r.pan * e; ropeShiftBy(pan - r.panned); r.panned = pan;

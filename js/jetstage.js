@@ -110,7 +110,7 @@ function jsUpdate(dt, pb) {
         flash = { text: '⛽ Out of fuel! Find more on the rock', t: 2.2 };
       }
       if (S.p === 'fly' && nx > far + 6) go('hover');                            // מעל הצד השני – מחכים ל-DOWN
-      if (S.p === 'hover' && state === 'play' && S.t > 2.5 && !S.hinted) { S.hinted = 1; sayWords(['down'], 1.6); }
+      if (S.p === 'hover' && state === 'play' && S.t > 2.5 && !S.hinted) { S.hinted = 1; sayWords(['down'], 1.6, S); }
       break;
     }
     case 'perchDown':                                                            // יורד אל הצוק הקטן
@@ -124,7 +124,7 @@ function jsUpdate(dt, pb) {
         floatText(PLAYER.x + 4, GROUND - S.alt - 18, '+3 💎', '#0891b2');
         if (mode === 'journey' && state === 'play') { picked += 3; coinsFlying++; flyCoinToHud({ x: PLAYER.x + 4 }, GROUND - S.alt - 6); }
       }
-      if (S.t > 1.2 && state === 'play' && !S.hp) { S.hp = 1; sayWords(['up'], 1.4); }
+      if (S.t > 1.2 && state === 'play' && !S.hp) { S.hp = 1; sayWords(['up'], 1.4); }   // הוראה מיד אחרי הנחיתה – לא רמז, בלי חצי לב
       break;
     case 'dying': {                                                              // גולש למטה בלי דלק אל האי
       const nx = PLAYER.x + PLAYER.w / 2;
@@ -165,12 +165,12 @@ function jsUpdate(dt, pb) {
       }
       break;
   }
-  if (S.p === 'find' && state === 'play' && S.t > 4 && !S.h1) { S.h1 = 1; sayWords(['pick up'], 1.6); }
-  if (S.p === 'hold' && state === 'play' && S.t > 4 && !S.h2) { S.h2 = 1; sayWords(['put on'], 1.6); }
-  if (S.p === 'wear' && state === 'play' && S.t > 4 && !S.h3) { S.h3 = 1; sayWords(['fly'], 1.6); }
+  if (S.p === 'find' && state === 'play' && S.t > 4 && !S.h1) { S.h1 = 1; sayWords(['pick up'], 1.6, S); }
+  if (S.p === 'hold' && state === 'play' && S.t > 4 && !S.h2) { S.h2 = 1; sayWords(['put on'], 1.6, S); }
+  if (S.p === 'wear' && state === 'play' && S.t > 4 && !S.h3) { S.h3 = 1; sayWords(['fly'], 1.6, S); }
   if (state === 'play' && S.t > 3.5 && !(S.hs = S.hs || {})[S.p]) {                  // רמזים באי
     const w = { atCave: 'crawl', inCave: 'pick up', atWall: 'fly' }[S.p];
-    if (w) { S.hs[S.p] = 1; sayWords([w], 1.6); }
+    if (w) { S.hs[S.p] = 1; sayWords([w], 1.6, S); }
   }
 }
 function jsPhysics() {

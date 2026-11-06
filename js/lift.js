@@ -72,7 +72,7 @@ function liftUpdate(dt, pb) {
   if (!obstacles.includes(o)) { lift = null; return; }
   if (L.phase === 'atRock' || L.phase === 'atTarget' || L.phase === 'onRock' || L.phase === 'waitPull') {   // מחכים למילה – אחרי שתיקה ארוכה המשחק אומר אותה
     L.idle += dt;
-    if (L.idle >= LIFT.hint + L.hinted * LIFT.hintEvery && state === 'play') { L.hinted++; sayWords([liftExpected()[0]], 1.6); }
+    if (L.idle >= LIFT.hint + L.hinted * LIFT.hintEvery && state === 'play') { L.hinted++; sayWords([liftExpected()[0]], 1.6, L); }
   }
   if (o.kind === 'rescue' && liftRescueStep(L, o, dt, pb)) return;
   if (L.phase === 'lifting' && L.t >= LIFT.liftT && o.kind === 'grab') {   // אוצר: נכנס לתיק – מטבעות, והולכים הלאה

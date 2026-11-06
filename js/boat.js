@@ -83,8 +83,8 @@ function boatUpdate(dt, pb) {
     B.idle += dt;
     const w = B.phase === 'wait' ? 'push' : B.phase === 'yesWait' ? 'yes' : B.phase === 'jumpWait' ? 'jump' : B.phase === 'throwWait' ? 'throw' : 'pull';
     if (demo) { if (B.idle >= 0.9) { if (banner) banner.text = 'Say ' + w.toUpperCase() + '!'; command(w, 'demo'); } }
-    else if (B.phase === 'bite') { if (B.idle >= 1.3 && !B.hinted) { B.hinted++; sayWords([w], 1.2); } }   // בנשיכה – רמז מהר, החלון קצר
-    else if (B.idle >= BOAT.hint + B.hinted * BOAT.hintEvery) { B.hinted++; sayWords([w], 1.6); }
+    else if (B.phase === 'bite') { if (B.idle >= 1.3 && !B.hinted) { B.hinted++; sayWords([w], 1.2, B); } }   // בנשיכה – רמז מהר, החלון קצר
+    else if (B.idle >= BOAT.hint + B.hinted * BOAT.hintEvery) { B.hinted++; sayWords([w], 1.6, B); }
   }
   switch (B.phase) {
     case 'greet': if (B.t >= BOAT.greetT) { go('yesWait'); speak('friend: can you help me?'); } break;   // החבר מסתובב, מנופף ומצביע על הסירה ועל המים

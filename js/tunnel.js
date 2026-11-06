@@ -44,7 +44,7 @@ function tunnelUpdate(dt, pb) {
     const W8 = tunnelWait;
     if (!obstacles.includes(W8.o) || W8.o.inTunnel || W8.o.passed) { tunnelWait = null; return; }
     W8.idle += dt;
-    if (W8.idle >= TUN.hint + W8.hinted * TUN.hintEvery && state === 'play') { W8.hinted++; sayWords(['crawl'], 1.6); }
+    if (W8.idle >= TUN.hint + W8.hinted * TUN.hintEvery && state === 'play') { W8.hinted++; sayWords(['crawl'], 1.6, W8); }
   }
 }
 

@@ -94,7 +94,7 @@ function cartUpdate(dt, pb) {
     case 'jumpWait':
       C.idle += dt;
       if (demo) { if (C.idle >= 0.9) { if (banner) banner.text = 'Say JUMP!'; command('jump', 'demo'); } }
-      else if (C.idle >= 3.5 + (C.hinted || 0) * 6) { C.hinted = (C.hinted || 0) + 1; sayWords(['jump'], 1.6); }
+      else if (C.idle >= 3.5 + (C.hinted || 0) * 6) { C.hinted = (C.hinted || 0) + 1; sayWords(['jump'], 1.6, C); }
       break;
     case 'board': if (C.t >= CART.boardT) { go('ride'); sfx('jump'); } break;
     case 'ride':
