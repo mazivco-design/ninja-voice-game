@@ -191,6 +191,16 @@ function fTrunk(x, w, top, bottom, col, bark, roots) {
     for (let i = 0; i < 5; i++) { const bx = x - w / 2 + w * (0.15 + i * 0.18); fc.beginPath(); fc.moveTo(bx, top); for (let y = top; y < bottom; y += 3) fc.lineTo(bx + Math.sin(y * 0.4 + i) * w * 0.04, y); fc.stroke(); }
   }
 }
+// עץ ברקע: גזע שמתחדד כלפי מעלה, נטייה קלה, וצמרת עגולה בראשו
+function fTree(x, w, cy, base, col, crown, r, seed, lean, bark) {
+  const H = base - cy, tx = x + lean * H;
+  fc.fillStyle = col; fc.beginPath();
+  fc.moveTo(x - w / 2 - w * 0.25, base); fc.lineTo(tx - w * 0.28, cy + r * 0.3); fc.lineTo(tx + w * 0.28, cy + r * 0.3); fc.lineTo(x + w / 2 + w * 0.25, base); fc.closePath(); fc.fill();
+  if (bark) { fc.strokeStyle = bark; fc.lineWidth = Math.max(0.12, w * 0.06); fc.beginPath(); fc.moveTo(x, base); fc.lineTo(tx, cy + r * 0.5); fc.stroke(); }
+  fc.strokeStyle = col; fc.lineWidth = Math.max(0.2, w * 0.22); fc.lineCap = 'round';                // שני ענפים קטנים אל הצמרת
+  fc.beginPath(); fc.moveTo(tx, cy + r * 0.9); fc.lineTo(tx - r * 0.45, cy + r * 0.25); fc.moveTo(tx, cy + r * 1.1); fc.lineTo(tx + r * 0.4, cy + r * 0.35); fc.stroke();
+  fBlobs(tx, cy, r, crown, 6, seed);
+}
 function fBlobs(x, y, r, col, n, seed) {
   fc.fillStyle = col;
   for (let i = 0; i < n; i++) { const a = boarRnd(seed + i) * Math.PI * 2, d = boarRnd(seed + i * 3) * r * 0.7; fc.beginPath(); fc.arc(x + Math.cos(a) * d * 1.4, y + Math.sin(a) * d * 0.6, r * (0.45 + boarRnd(seed + i * 7) * 0.35), 0, Math.PI * 2); fc.fill(); }
@@ -278,7 +288,10 @@ function forestLayers(o, top) {
   ctx.save();
   const g = ctx.createLinearGradient(0, top, 0, G); g.addColorStop(0, '#cfe8c8'); g.addColorStop(0.5, '#9cc89a'); g.addColorStop(1, '#6f9f72');
   ctx.fillStyle = g; ctx.fillRect(L, top, R - L, G - top);
-  for (let i = 0; i < 18; i++) { const x = wrapX(L + i * 10.5 + boarRnd(i) * 5 - bgX * 0.12, L - 4, R + 4); fTrunk(x, 1 + boarRnd(i) * 1, top, G - 12, 'rgba(120,160,128,.55)'); }   // רחוק, בערפל
+  for (let i = 0; i < 16; i++) {                                                         // רחוק, בערפל: עצים דקים עם צמרת, בגבהים שונים
+    const x = wrapX(L + i * 11.5 + boarRnd(i) * 6 - bgX * 0.12, L - 8, R + 8), cy = top + 8 + boarRnd(i + 20) * 20;
+    fTree(x, 1 + boarRnd(i) * 0.9, cy, G - 10, 'rgba(118,158,126,.6)', 'rgba(150,192,150,.62)', 5 + boarRnd(i + 30) * 4, i * 5, (boarRnd(i + 60) - 0.5) * 0.04);
+  }
   fBlobs(wrapX(40 - bgX * 0.12, L - 30, R + 30), top + 8, 20, 'rgba(150,190,150,.5)', 8, 3);
   fBlobs(wrapX(120 - bgX * 0.12, L - 30, R + 30), top + 5, 24, 'rgba(150,190,150,.5)', 9, 9);
   const m = ctx.createLinearGradient(0, G - 30, 0, G - 8); m.addColorStop(0, 'rgba(225,240,220,0)'); m.addColorStop(0.6, 'rgba(225,240,220,.55)'); m.addColorStop(1, 'rgba(225,240,220,0)');
@@ -286,7 +299,10 @@ function forestLayers(o, top) {
   ctx.save(); ctx.globalCompositeOperation = 'lighter';                                   // קרני אור בין העצים
   for (let i = 0; i < 4; i++) { const x = wrapX(L + 18 + i * 42 + boarRnd(i + 40) * 12 - bgX * 0.2, L - 30, R + 10); ctx.fillStyle = 'rgba(255,240,190,' + (0.08 * a) + ')'; ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x + 7, top); ctx.lineTo(x + 26, G); ctx.lineTo(x + 12, G); ctx.closePath(); ctx.fill(); }
   ctx.restore();
-  for (let i = 0; i < 5; i++) { const x = wrapX(L + i * 35 + boarRnd(i + 5) * 9 - bgX * 0.42, L - 6, R + 6); fTrunk(x, 2.2 + boarRnd(i + 2) * 1.2, top, G - 4, '#4a5d3f', 'rgba(0,0,0,.15)'); }   // אמצע
+  for (let i = 0; i < 5; i++) {                                                          // אמצע: עצים בינוניים עם צמרת
+    const x = wrapX(L + i * 35 + boarRnd(i + 5) * 9 - bgX * 0.42, L - 12, R + 12), cy = top + 4 + boarRnd(i + 25) * 12;
+    fTree(x, 2.2 + boarRnd(i + 2) * 1.2, cy, G - 3, '#4a5d3f', i % 2 ? '#3f6e3c' : '#46733f', 10 + boarRnd(i + 35) * 4, 40 + i * 9, (boarRnd(i + 66) - 0.5) * 0.05, 'rgba(0,0,0,.15)');
+  }
   for (let i = 0; i < 13; i++) { const x = wrapX(L + i * 14 + boarRnd(i + 9) * 7 - bgX * 0.42, L - 10, R + 10); fBlobs(x, G - 5, 4.5 + boarRnd(i) * 2.5, i % 2 ? '#4f7a48' : '#45703f', 5, i * 11); }
   fBlobs(wrapX(50 - bgX * 0.42, L - 40, R + 40), top - 2, 26, '#3f6b3d', 10, 33);
   fBlobs(wrapX(135 - bgX * 0.42, L - 40, R + 40), top - 3, 28, '#3a643a', 10, 51);
