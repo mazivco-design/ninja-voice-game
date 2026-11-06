@@ -33,7 +33,8 @@ function curSpeed() {
   const mds = mudSpeed(); if (mds !== null) return mds;
   const bts = boatSpeed(); if (bts !== null) return bts;
   const cts = cartSpeed(); if (cts !== null) return cts;
-  const bos = boarSpeed(); if (bos !== null) return bos;                   // ביער: הולכים מעץ לעץ / נצמדים לגזע                   // עגלה: דוחפים במעלה / דוהרים במורד                   // סירה: דוחפים / חותרים                   // HELP: תקוע בבוץ / נשלף החוצה
+  const bos = boarSpeed(); if (bos !== null) return bos;
+  const jss = jsSpeed(); if (jss !== null) return jss;                     // תרמיל סילון                   // ביער: הולכים מעץ לעץ / נצמדים לגזע                   // עגלה: דוחפים במעלה / דוהרים במורד                   // סירה: דוחפים / חותרים                   // HELP: תקוע בבוץ / נשלף החוצה
   if (tunnelHolds()) return 0;                                            // CRAWL: עומד בפתח המחילה ומחכה
   if (state !== 'play' && obstacles.some(o => o.type === 'bramble' && o.inTunnel)) return (runSpeed || cfg.speed) * BRAMBLE.slow;   // בהדגמה – זוחל לאורך המחילה                     // PICK UP: עומדים ליד הסלע / הולכים איתו לאט / על הסלע
   const ms = merchSpeed(); if (ms !== null) return ms;                    // I WANT: הולכים עם החפץ / מטפסים על הצוק / עוברים במערה
@@ -44,12 +45,13 @@ function curSpeed() {
 // מתקרבים לחבר בסירה / לילד עם העגלה / לדוכן הסוחר: מאטים בהדרגה ומגיעים בהליכה, לא בריצה שנעצרת בבת אחת
 const APPROACH = { from: 42, to: 8, walk: 9 };   // מתחילים להאט 42 יחידות לפני, ומ-8 לפני הולכים במהירות 9
 function approachDist() {
-  if (boat || cart || merchant || boarS || typeof obstacles === 'undefined') return Infinity;
+  if (boat || cart || merchant || boarS || jetS || typeof obstacles === 'undefined') return Infinity;
   const r = PLAYER.x + PLAYER.w; let d = Infinity;
   for (const o of obstacles) {
     if (o.passed || o.waving) continue;
     if (o.type === 'boat') d = Math.min(d, boatStern(o) - BOAT.stepDX - r);
     else if (o.type === 'cart') d = Math.min(d, o.x + o.cp - CART.stepDX - CART.watch - r);
+    else if (o.type === 'jetgap' && !o.passed) d = Math.min(d, o.x + JS.stop - r);   // התרמיל ליד התהום
     else if (o.type === 'boar' && !o.passed) d = Math.min(d, boarStandR(o, 0) - r);   // העץ הראשון ביער
     else if (o.type === 'door' && !o.unlocked && !o.hit) d = Math.min(d, o.x - DOOR.stopAt - r);   // הדוכן של הסוחר
   }

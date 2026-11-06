@@ -67,7 +67,8 @@ function jetSafe() { return jetT > 0 || jetGrace > 0; }                         
 
 /* ---------- ציור ---------- */
 function drawPowerBack(fx, fy, P) {                                             // תרמיל הסילון על הגב – לפני הדמות
-  if (jetT <= 0) return;
+  const worn = typeof jsWorn === 'function' && jsWorn(), lit = jetT > 0 || (worn && jsFlying());
+  if (jetT <= 0 && !worn) return;
   const J = figureJoints(P), up = J.up, fw = J.fw;
   const at = (p, f, u) => [fx + p[0] + fw[0] * f + up[0] * u, fy + (P.bob || 0) + p[1] + fw[1] * f + up[1] * u];
   const top = at(J.neck, -2.6, -0.4), bot = at(J.waist, -2.6, -1.6);
@@ -76,6 +77,7 @@ function drawPowerBack(fx, fy, P) {                                             
   ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(top[0] - 0.5, top[1]); ctx.lineTo(bot[0] - 0.5, bot[1]); ctx.stroke();
   ctx.fillStyle = '#dc2626'; circle(top[0], top[1], 1.1);
   const f = 2.5 + Math.sin(performance.now() / 40) * 0.8;                       // להבה מתחת
+  if (!lit) { ctx.restore(); return; }
   ctx.fillStyle = '#fb923c'; ctx.beginPath(); ctx.moveTo(bot[0] - 1.1, bot[1]); ctx.lineTo(bot[0] + 1.1, bot[1]); ctx.lineTo(bot[0], bot[1] + f + 1.5); ctx.closePath(); ctx.fill();
   ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.moveTo(bot[0] - 0.6, bot[1]); ctx.lineTo(bot[0] + 0.6, bot[1]); ctx.lineTo(bot[0], bot[1] + f * 0.6 + 0.8); ctx.closePath(); ctx.fill();
   ctx.restore();

@@ -395,7 +395,7 @@ function drawWorld(left, right, top, bottom) {
   }
 
   // קרקע – עם "חורים" במקום של תהומות, כדי שרואים דרכן את הנוף שמאחור
-  const gaps = obstacles.filter(o => o.type === 'chasm');
+  const gaps = obstacles.filter(o => o.type === 'chasm').concat(obstacles.filter(o => o.type === 'jetgap').map(jsHole));
   if (gaps.length) { ctx.save(); ctx.beginPath(); ctx.rect(left, GROUND - 1, right - left, bottom - GROUND + 2); for (const o of gaps) ctx.rect(o.x + o.w, GROUND - 1, -o.w, bottom - GROUND + 2); ctx.clip('evenodd'); }
   drawGroundOnly(left, right, bottom, wd);
   if (gaps.length) ctx.restore();
@@ -482,7 +482,8 @@ function playerPose() {
   P = mudPose(P);
   P = boatPose(P);
   P = cartPose(P);
-  P = boarPose(P);                                 // ביער: הולך / נצמד לגזע / נהדף                                 // עגלה: דוחף / מחכה לשלוש                                 // סירה: דוחף / יושב וחותר                                  // HELP: תקוע בבוץ / אוחז בחבל
+  P = boarPose(P);
+  P = jsPose(P);                                   // תרמיל סילון: מרים / לובש / עף                                 // ביער: הולך / נצמד לגזע / נהדף                                 // עגלה: דוחף / מחכה לשלוש                                 // סירה: דוחף / יושב וחותר                                  // HELP: תקוע בבוץ / אוחז בחבל
   P = merchPose(P);                                // PICK UP: הסלע מעל הראש
   P = jetPose(P);                                 // תרמיל סילון – עף קדימה                     // קרב: עמידה עם חרב והנפות
   return P;
@@ -516,9 +517,10 @@ function draw() {
   ctx.save();
   ctx.beginPath(); ctx.rect(viewL() - 1, top, viewR() - viewL() + 2, bottom - top); ctx.clip();
 
-  const WIDE = { river: drawRiver, lake: drawLake, bridge: drawBridge, pond: drawPond, chasm: drawChasm };
+  const WIDE = { river: drawRiver, lake: drawLake, bridge: drawBridge, pond: drawPond, chasm: drawChasm, jetgap: drawJetGap };
   drawForestScenes(top);                                                       // היער ברקע – לפני כל השאר (boar.js)
   for (const o of obstacles) if (WIDE[o.type]) WIDE[o.type](o, bottom);
+  for (const o of obstacles) if (o.type === 'jetgap') drawJetStage(o);         // התרמיל, מטבעות, אבני חן וציפורים מעל התהום
   for (const o of obstacles) if (!WIDE[o.type]) drawObstacle(o, top);
   const tc = performance.now() / 1000;
   if (sk < 0.3) for (const c of pickups) {                                    // מטבעות קטנים מסתובבים (בשמיים – לא רואים אותם)
@@ -1464,7 +1466,8 @@ function drawNinjaBody() {
   if (hasGear('katana') && P.swordA === undefined && jetT <= 0) drawKatana(fx, fy, P);   // קטאנה על הגב – מאחורי הגוף (בקרב היא ביד)
   drawFigure({ fx, fy, facing: playerFacing(), scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
   playerHand = figHand(fx, fy, playerFacing(), 1, P, 1);           // איפה כף היד הקדמית – לחפצים שמחזיקים
-  drawMerchHeld();                                                // מפתח / חבל ביד (הלפיד – מעל החושך של המערה)
+  drawMerchHeld();
+  drawJetHeld();                                                  // תרמיל הסילון בידיים                                                // מפתח / חבל ביד (הלפיד – מעל החושך של המערה)
   drawPlayerSword(fx, fy, P);
   drawPowerFront(fx, fy);                                         // בועת מגן / טיימר הסילון
   drawLiftCarry(fx, fy);                                          // הסלע בידיים
