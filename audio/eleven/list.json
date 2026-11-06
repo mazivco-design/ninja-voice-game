@@ -1664,6 +1664,78 @@
     "search": "boy hero",
     "page_size": 40
    }
+  },
+  {
+   "file": "ninja6-bholu",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[worried] Help! Help! ... [relieved] Thank you! ... [excited] Whoa! A big wave!",
+   "voice": "lib-bholu",
+   "voice_id": "5krdMTA5HonvWAlY2vSx"
+  },
+  {
+   "file": "ninja6-vardan",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[worried] Help! Help! ... [relieved] Thank you! ... [excited] Whoa! A big wave!",
+   "voice": "lib-vardan",
+   "voice_id": "bBG9wwa23659EgIkMbc1"
+  },
+  {
+   "file": "ninja6-ryanquin",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[worried] Help! Help! ... [relieved] Thank you! ... [excited] Whoa! A big wave!",
+   "voice": "lib-ryanquin",
+   "voice_id": "tJHJUEHzOkMoPmJJ5jo2"
+  },
+  {
+   "file": "ninja6-manni",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[worried] Help! Help! ... [relieved] Thank you! ... [excited] Whoa! A big wave!",
+   "voice": "lib-manni",
+   "voice_id": "KP4GbmyDmwaoy5dUlvZY"
+  },
+  {
+   "file": "ninja6-max",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[worried] Help! Help! ... [relieved] Thank you! ... [excited] Whoa! A big wave!",
+   "voice": "lib-max",
+   "voice_id": "467tX2b9Bky3cD6jXpNa"
+  },
+  {
+   "file": "ninja6-littledude",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[worried] Help! Help! ... [relieved] Thank you! ... [excited] Whoa! A big wave!",
+   "voice": "lib-littledude",
+   "voice_id": "fBD19tfE58bkETeiwUoC"
   }
  ]
 }
