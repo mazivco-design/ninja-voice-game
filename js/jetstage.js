@@ -68,6 +68,8 @@ function jsUpdate(dt, pb) {
       break;
     case 'fly': case 'hover': {
       S.fuel = Math.max(0, S.fuel - dt / JS.fuelT);                              // הדלק נגמר לאט בזמן הטיסה
+      if (S.fuel < 0.25 && S.fuel > 0 && (S.beepT = (S.beepT || 0) - dt) <= 0) { S.beepT = 0.4 + S.fuel * 3; try { if (sfxCtx) tone(880, 660, 0.08, 'square', 0.04); } catch (e) {} }   // צפצוף אזהרה
+      if (S.fuel < 0.25 && !S.warned && state === 'play') { S.warned = 1; flash = { text: '⛽ Fuel low – land on a rock!', t: 1.6 }; }
       if (S.fuel <= 0 && S.lane > 0) S.lane = 0;                                 // בלי דלק – יורדים לגובה הנמוך (ועדיין מגיעים לצד השני)
       S.alt += (JS.lanes[S.lane] - S.alt) * Math.min(1, dt * 6);
       const far = jsFar(o), nx = PLAYER.x + PLAYER.w / 2;
@@ -122,7 +124,8 @@ function jsUpdate(dt, pb) {
 function jsPhysics() {
   if (!jetS) return false;
   py = jetS.alt; vy = 0; duckT = 0; flyT = 0;
-  if (jsFlying() && Math.random() < 0.8) particles.push({ x: PLAYER.x + 0.5 + (Math.random() - 0.5), y: GROUND - py - 2, vx: -6 + Math.random() * 4, vy: 22 + Math.random() * 10, g: 0, life: 0.3, color: Math.random() < 0.5 ? '#fb923c' : '#fde047', size: 1 + Math.random() * 0.6 });
+  const sput = jetS.fuel < 0.25 ? 0.35 + jetS.fuel * 2 : 0.8;                     // דלק נמוך – הלהבה מגמגמת
+  if (jsFlying() && Math.random() < sput) particles.push({ x: PLAYER.x + 0.5 + (Math.random() - 0.5), y: GROUND - py - 2, vx: -6 + Math.random() * 4, vy: 22 + Math.random() * 10, g: 0, life: 0.3, color: Math.random() < 0.5 ? '#fb923c' : '#fde047', size: 1 + Math.random() * 0.6 });
   return true;
 }
 
@@ -366,8 +369,10 @@ function drawJetHeld() {
   const S = jetS; if (!S) return;
   if (jsWorn() && S.p !== 'wear') {                                                // מד הדלק של הסילון – מעל הראש
     const now = performance.now() / 1000, k = S.fuel, w = 13, x = PLAYER.x + PLAYER.w / 2, y = GROUND - py - 21;
+    const low = k < 0.25, hz = 3 + (0.25 - Math.min(0.25, k)) * 24, blink = low && Math.floor(now * hz) % 2 === 0;   // לקראת סוף הדלק – מהבהב, ויותר מהר ככל שנשאר פחות
+    if (low) { ctx.fillStyle = blink ? 'rgba(239,68,68,.55)' : 'rgba(239,68,68,.15)'; roundRect(x - w / 2 - 1.6, y - 1.6, w + 3.2, 4.6, 2); ctx.fill(); }
     ctx.fillStyle = 'rgba(15,23,42,.6)'; roundRect(x - w / 2 - 0.7, y - 0.7, w + 1.4, 2.8, 1.3); ctx.fill();
-    ctx.fillStyle = k > 0.3 ? (k > 0.6 ? '#22c55e' : '#f59e0b') : (Math.floor(now * 6) % 2 ? '#ef4444' : '#fca5a5');
+    ctx.fillStyle = k > 0.25 ? (k > 0.55 ? '#22c55e' : '#f59e0b') : (blink ? '#fecaca' : '#ef4444');
     if (k > 0) { roundRect(x - w / 2, y, w * k, 1.4, 0.7); ctx.fill(); }
     ctx.font = '900 3px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#fff'; ctx.fillText('🚀', x - w / 2 - 2.6, y + 1.9);
   }

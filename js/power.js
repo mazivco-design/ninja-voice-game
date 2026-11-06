@@ -78,6 +78,7 @@ function drawPowerBack(fx, fy, P) {                                             
   ctx.fillStyle = '#dc2626'; circle(top[0], top[1], 1.1);
   const f = 2.5 + Math.sin(performance.now() / 40) * 0.8;                       // להבה מתחת
   if (!lit) { ctx.restore(); return; }
+  if (worn && jetS && jetS.fuel < 0.25 && Math.floor(performance.now() / 90) % 3 === 0) { ctx.restore(); return; }   // דלק נמוך – הלהבה מהבהבת
   ctx.fillStyle = '#fb923c'; ctx.beginPath(); ctx.moveTo(bot[0] - 1.1, bot[1]); ctx.lineTo(bot[0] + 1.1, bot[1]); ctx.lineTo(bot[0], bot[1] + f + 1.5); ctx.closePath(); ctx.fill();
   ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.moveTo(bot[0] - 0.6, bot[1]); ctx.lineTo(bot[0] + 0.6, bot[1]); ctx.lineTo(bot[0], bot[1] + f * 0.6 + 0.8); ctx.closePath(); ctx.fill();
   ctx.restore();
