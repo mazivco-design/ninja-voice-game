@@ -218,6 +218,7 @@ function playVoiceBuf(buf) {
   return true;
 }
 function speak(w) {
+  voiceSaid = (performance.now() < ignoreVoiceUntil ? voiceSaid + ' | ' : '') + String(w).toLowerCase();   // מה המשחק אומר עכשיו – רק המילים האלה ייחשבו הד מהרמקול
   const slug = VOICE_CLIPS[String(w).toLowerCase()];
   if (slug && muted) return;
   if (slug && sfxCtx) {

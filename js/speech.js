@@ -145,10 +145,11 @@ function expectedWords0() {
 }
 
 // בזמן שהמילון מקריא מילה, המיקרופון שומע אותה – לא מפעילים אותה פעמיים
-let ignoreVoiceUntil = 0, lastLoudT = -1e9;
+let ignoreVoiceUntil = 0, lastLoudT = -1e9, voiceSaid = '';
 let listenWords = [...WORDS];          // המילים שהזיהוי מקשיב להן במשחק הנוכחי
 function voiceCommand(w, how, conf, text) {
-  if (performance.now() < ignoreVoiceUntil) { dbg('heard', w + ' (ignored – speaker)'); voiceLog(w, 'speaker', conf, text); return; }
+  // רק מילה שהמשחק עצמו אומר עכשיו נחשבת הד מהרמקול – מילה אחרת של הילד עוברת
+  if (performance.now() < ignoreVoiceUntil && new RegExp('(^|[^a-z])' + w + '([^a-z]|$)').test(voiceSaid)) { dbg('heard', w + ' (ignored – speaker)'); voiceLog(w, 'speaker', conf, text); return; }
   if (!listenWords.includes(w)) { dbg('heard', w + ' (ignored – not in this stage)'); voiceLog(w, 'off', conf, text); return; }
   // מילה מתקבלת רק אם המיקרופון קלט קול ברור בשנייה וחצי האחרונות – לא רעש חלש ברקע
   if (performance.now() - lastLoudT > 2500) { dbg('heard', w + ' (ignored – too quiet)'); voiceLog(w, 'quiet', conf, text); return; }
