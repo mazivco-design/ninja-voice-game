@@ -1856,6 +1856,17 @@
    "model": "eleven_v3",
    "voice": "lib-kai",
    "voice_id": "S0ypc51SmsvcKXTWvjqJ"
+  },
+  {
+   "file": "sarah-sneak",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Sneak!",
+   "voice": "Sarah"
   }
  ]
 }
