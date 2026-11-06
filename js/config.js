@@ -99,7 +99,7 @@ const STAGES = [
   { name: 'PUSH TOGETHER', words: ['push together'], count: 1, hint: 'PUSH the boat with your friend · JUMP in', world: 0 },
   { name: 'PUSH ON THREE', words: ['push on three'], count: 3, hint: 'Count with the kid · PUSH on THREE · JUMP in', world: 0 },
   { name: 'FISHING', words: ['fishing'], count: 2, hint: 'JUMP in · THROW the line · PULL when the fish bites', world: 0 },
-  { name: 'WILD BOAR', words: ['boar'], count: 1, hint: 'When the boar\'s ears move – say HIDE!', world: 0 }   // יער: מתחבאים מאחורי העצים (boar.js)   // הילד אומר PUSH ו-JUMP (boat.js)   // הילד עוד לא אומר HELP – רק CATCH ו-HOLD (mud.js)
+  { name: 'WILD BOAR', words: ['boar'], count: 1, hint: 'GO when the boar eats · HIDE when its ears move', world: 0 }   // יער: מתחבאים מאחורי העצים (boar.js)   // הילד אומר PUSH ו-JUMP (boat.js)   // הילד עוד לא אומר HELP – רק CATCH ו-HOLD (mud.js)
 ];
 // איזה עולם לכל זוג מילים (0 במבוק, 1 כפר בלילה, 2 שלג, 3 קניון, 4 מקדש)
 const PAIR_WORLD = [0, 1, 2, 3, 0, 4, 1, 2, 3, 0, 3];

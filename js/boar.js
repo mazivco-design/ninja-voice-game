@@ -1,34 +1,45 @@
 /* ninja-voice-game – boar.js
-   חזיר בר ביער (HIDE): שביל ביער עמוק עם שלושה עצים עבים, וחזיר בר רועה עשב בצד השביל, הראש למטה.
-   כשהחזיר אוכל – הנינג'ה מתקדם לבד מעץ לעץ. מדי פעם החזיר מפסיק ללעוס והאוזניים זזות – זה הסימן.
-   אומרים HIDE – הנינג'ה נצמד מאחורי הגזע. החזיר מרים את הראש, מסתכל, לא רואה כלום – וחוזר לאכול.
-   לא הספיק להתחבא – החזיר נוחר, מסתער ומפיל אותו, וחוזר לאכול. מנסים שוב באותו עץ.
-   אחרי שלושה עצים – הנינג'ה עובר את החזיר על קצות האצבעות וממשיך.
-   היער מצויר בשכבות (רחוק בערפל, אמצע, השביל, וגזעים מטושטשים מקדימה) – תחושת עומק.
+   חזיר בר ביער (HIDE + GO): שביל ביער עמוק עם חמישה עצים עבים ורווחים גדולים ביניהם.
+   חזיר בר רועה עשב בצד השני של היער, פונה אל הנינג'ה. הוא אוכל עם הראש למטה, ומדי פעם האוזניים זזות,
+   הוא מרים את הראש ומסתכל – ואז מתקדם כמה צעדים לכיוון הנינג'ה וחוזר לאכול.
+   הנינג'ה מתגנב מעץ לעץ: GO כשהחזיר אוכל → רץ בשקט לעץ הבא. האוזניים זזות → HIDE מאחורי הגזע.
+   GO כשהאוזניים זזות / כשהוא מסתכל, או לא מתחבאים בזמן → החזיר רואה אותו, מסתער ומפיל אותו (כוכב, לא לב).
+   באמצע היער הם נפגשים – כשהחזיר מאחורי הנינג'ה, הוא כבר לא רואה אותו, והנינג'ה יוצא מהיער.
+   היער מצויר בשכבות (רחוק בערפל, אמצע, השביל) – תחושת עומק.
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const BOAR = { tree0: 24, gap: 30, trees: 3, boarAt: 40, standGap: 5, walkV: 10, duckT: 0.35, waitMin: 1.0, waitMax: 2.2,
-               lookT: 2.2, chargeT: 0.7, fallT: 1.1, returnT: 1.3, knock: 7, coins: 4, fade: 55 };
+const BOAR = { tree0: 24, gap: 40, trees: 5, start: 104, adv: 12, stepT: 1.6, standGap: 5, walkV: 11, duckT: 0.35,
+               waitMin: 1.6, waitMax: 3.0, lookT: 1.8, chargeT: 0.7, fallT: 1.1, returnT: 1.3, knock: 7, passBy: 18, coins: 4, fade: 55 };
 const BOAR_EARS = { easy: 2.0, medium: 1.5, hard: 1.15 };                         // כמה זמן יש להגיד HIDE מרגע שהאוזניים זזות
-let boarS = null;   // { o, np: ninja phase, nt, bp: boar phase, bt, i: העץ הנוכחי, warnAt, miss, hinted }
+let boarS = null;   // { o, np: ninja phase, nt, bp: boar phase, bt, bo: מקום החזיר (יחסית ל-o.x), i: העץ שאליו הולכים, warnAt, miss, hinted }
 
-function boarSetup(o) { o.w = BOAR.tree0 + BOAR.gap * (BOAR.trees - 1) + BOAR.boarAt + 34; }
+function boarSetup(o) { o.w = BOAR.tree0 + BOAR.gap * (BOAR.trees - 1) + 30; }
 function boarTreeX(o, i) { return o.x + BOAR.tree0 + BOAR.gap * i; }             // מרכז הגזע
-function boarHomeX(o) { return boarTreeX(o, BOAR.trees - 1) + BOAR.boarAt; }      // איפה החזיר רועה
+function boarX(o) { return o.x + (boarS && boarS.o === o ? boarS.bo : BOAR.start); }   // איפה החזיר עכשיו
 function boarStandR(o, i) { return boarTreeX(o, i) - BOAR.standGap; }             // הקצה הימני של הנינג'ה כשהוא עומד ליד העץ
 function boarHideDX() { return PLAYER.w + BOAR.standGap - PLAYER.w / 2; }        // כמה זזים כדי להיות בדיוק מאחורי הגזע
 function boarEarsT() { return BOAR_EARS[diffKey] || 1.6; }
 function boarBusy() { return !!boarS; }
 function boarWait() { return BOAR.waitMin + Math.random() * (BOAR.waitMax - BOAR.waitMin); }
+function boarHeadDown() { return boarS && (boarS.bp === 'graze' || boarS.bp === 'step'); }   // אוכל / הולך עם הראש למטה – לא רואה
 
 // מהירות העולם בזמן הסצנה
 function boarSpeed() {
   if (!boarS) return null;
   const S = boarS, p = S.np;
-  if (p === 'walk' || p === 'sneak') return BOAR.walkV;
+  if (p === 'walk') return BOAR.walkV;
+  if (p === 'exit') return lerp(BOAR.walkV, speed, Math.min(1, S.nt / 1.5));        // עבר את החזיר – מאיץ בהדרגה
   if (p === 'duck') return boarHideDX() / BOAR.duckT;
   if (p === 'fall') return S.nt < 0.4 ? -BOAR.knock / 0.4 : 0;                    // נהדף אחורה
   return 0;
+}
+
+function boarSpotted() {                                                             // החזיר ראה את הנינג'ה!
+  const S = boarS, goB = p => { S.bp = p; S.bt = 0; };
+  goB('charge'); S.np = 'spotted'; S.nt = 0; sfx('thud'); S.miss++;
+  burst(boarX(S.o) - 14, GROUND - 6, 'rgba(255,255,255,.8)', 5, 10);              // נחירה
+  flash = { text: '🐗 GO when he eats · HIDE when the ears move!', t: 2 };
+  if (state === 'play') { hits++; if (typeof voiceMark === 'function') voiceMark('hit'); renderHud(); }
 }
 
 function boarUpdate(dt, pb) {
@@ -37,35 +48,37 @@ function boarUpdate(dt, pb) {
     if (!o) return;
     const over = pb.r - boarStandR(o, 0); if (over > 0) ropeShiftBy(-over);
     py = 0; vy = 0; duckT = 0; flyT = 0; act.run = 0; act.hide = 0;
-    boarS = { o, np: 'stand', nt: 0, bp: 'graze', bt: 0, i: 0, warnAt: boarWait(), miss: 0, hinted: 0 };
+    boarS = { o, np: 'stand', nt: 0, bp: 'graze', bt: 0, bo: BOAR.start, i: 0, warnAt: boarWait(), miss: 0, hinted: 0 };
     return;
   }
   const S = boarS, o = S.o; S.nt += dt; S.bt += dt;
   if (!obstacles.includes(o)) { boarS = null; return; }
-  const demo = state !== 'play';
+  const demo = state !== 'play', passed = PLAYER.x > boarX(o) + 6;               // החזיר כבר מאחורי הנינג'ה
   const goN = p => { S.np = p; S.nt = 0; }, goB = p => { S.bp = p; S.bt = 0; };
+  if (demo && (S.np === 'stand' || S.np === 'hidden')) {                           // הדגמה: GO כשאוכל, HIDE כשהאוזניים זזות
+    if (S.bp === 'graze' && S.bt > 0.8) command('go', 'demo');
+    if (S.bp === 'ears' && S.bt > 0.6 && S.np === 'stand') command('hide', 'demo');
+  }
   // החזיר
   switch (S.bp) {
     case 'graze':
-      if ((S.np === 'stand' || S.np === 'hidden') && S.bt >= S.warnAt) { goB('ears'); sfx('swish'); }   // מפסיק ללעוס, האוזניים זזות
+      if (!passed && S.bt >= S.warnAt) {                                                // מפסיק ללעוס, האוזניים זזות
+        const rem = S.np === 'walk' ? (boarStandR(o, S.i) - pb.r) / BOAR.walkV : 0;    // באמצע הדרך – רק אם יספיק להגיע לעץ ולהתחבא
+        if ((S.np === 'stand' || S.np === 'hidden' || (S.np === 'walk' && rem < boarEarsT() - 0.8))) { goB('ears'); sfx('swish'); }
+      }
       break;
     case 'ears':
-      if (demo && S.np === 'stand' && S.bt >= 0.6) command('hide', 'demo');
       if (S.bt >= boarEarsT()) {
-        if (S.np === 'hidden' || S.np === 'duck') goB('look');                          // מרים את הראש – ולא רואה כלום
-        else {                                                                         // ראה את הנינג'ה!
-          goB('charge'); goN('spotted'); sfx('thud'); S.miss++;
-          burst(boarHomeX(o) - 15, GROUND - 6, 'rgba(255,255,255,.8)', 5, 10);           // נחירה
-          flash = { text: '🌿 HIDE when the ears move!', t: 1.8 };
-          if (state === 'play') { hits++; if (typeof voiceMark === 'function') voiceMark('hit'); renderHud(); }
-        }
+        if (S.np === 'hidden' || S.np === 'duck' || passed) goB('look');               // מרים את הראש – ולא רואה כלום (או שהנינג'ה כבר מאחוריו)
+        else boarSpotted();
       }
       break;
     case 'look':
-      if (S.bt >= BOAR.lookT) {                                                         // חוזר לאכול – ממשיכים
-        goB('graze'); S.warnAt = boarWait();
-        if (S.np === 'hidden') { S.i++; goN(S.i >= BOAR.trees ? 'sneak' : 'walk'); }
-      }
+      if (S.bt >= BOAR.lookT) goB('step');                                              // מתקדם כמה צעדים לכיוון הנינג'ה
+      break;
+    case 'step':
+      S.bo -= BOAR.adv * dt / BOAR.stepT;
+      if (S.bt >= BOAR.stepT) { goB('graze'); S.warnAt = boarWait(); }
       break;
     case 'charge':
       if (Math.random() < 0.5) particles.push({ x: boarChargeX() + 10, y: GROUND - 0.5, vx: 8, vy: -3, g: 8, life: 0.35, color: WORLDS[world].dust, size: 0.9 });
@@ -78,21 +91,25 @@ function boarUpdate(dt, pb) {
   // הנינג'ה
   switch (S.np) {
     case 'duck': if (S.nt >= BOAR.duckT) goN('hidden'); break;
-    case 'fall': if (S.nt >= BOAR.fallT) goN('walk'); break;                             // קם וחוזר לאותו עץ
+    case 'fall': if (S.nt >= BOAR.fallT) goN('walk'); break;                             // קם וממשיך לעץ שאליו הלך
     case 'walk':
+      if (passed && S.bp !== 'charge') { goN('exit'); break; }
       if (pb.r >= boarStandR(o, S.i) - 0.01) {
         const over = pb.r - boarStandR(o, S.i); if (over > 0) ropeShiftBy(-over);
-        goN('stand'); S.bt = 0; S.warnAt = boarWait();
+        goN('stand');
       }
       break;
-    case 'sneak':                                                                        // על קצות האצבעות ליד החזיר
-      if (PLAYER.x > boarHomeX(o) + 16) {
+    case 'stand': case 'hidden':
+      if (passed && S.bp !== 'charge' && S.bp !== 'return') goN('exit');               // החזיר מאחוריו – כבר לא רואה אותו, יוצאים מהיער
+      break;
+    case 'exit':
+      if (PLAYER.x > boarX(o) + BOAR.passBy) {
         cleared(o); boarS = null;
         if (mode === 'journey' && state === 'play') { picked += BOAR.coins; coinsFlying++; flyCoinToHud({ x: PLAYER.x + 1 }, GROUND - 18); floatText(PLAYER.x + 4, GROUND - 26, '+' + BOAR.coins + ' 🟡', '#ca8a04'); }
       }
       break;
   }
-  if (S.np === 'stand' && state === 'play' && S.bp === 'ears' && S.miss >= 2 && !S.hinted) { S.hinted = 1; sayWords(['hide'], 1.6); }
+  if (S.np === 'stand' && state === 'play' && S.miss >= 2 && !S.hinted) { S.hinted = 1; sayWords(['go', 'hide'], 1.8); }
 }
 function boarPhysics() {
   if (!boarS) return false;
@@ -107,20 +124,32 @@ function boarHide() {
   if (boarS.np === 'stand') { boarS.np = 'duck'; boarS.nt = 0; sfx('swish'); }
   return true;                                                                         // ביער – HIDE תמיד שייך לחזיר
 }
+function boarGo() {
+  if (!boarS) return false;
+  const S = boarS;
+  if (S.np !== 'stand' && S.np !== 'hidden') return true;
+  if (S.bp === 'ears' || S.bp === 'look') { boarSpotted(); return true; }             // יצא בזמן הלא נכון – החזיר רואה אותו
+  if (S.bp !== 'graze' && S.bp !== 'step') return true;
+  if (S.i < BOAR.trees - 1) S.i++;
+  S.np = 'walk'; S.nt = 0;
+  return true;
+}
 function boarExpected() {
   if (!boarS) return null;
-  return boarS.np === 'stand' ? ['hide'] : [];
+  return boarS.np === 'stand' ? ['go', 'hide'] : boarS.np === 'hidden' ? ['go'] : [];
 }
 function boarAuto() {
-  if (boarS && boarS.np === 'stand' && boarS.bp === 'ears' && boarS.bt > 0.4) command('hide', 'auto');
+  const S = boarS; if (!S || (S.np !== 'stand' && S.np !== 'hidden')) return;
+  if (S.bp === 'ears' && S.bt > 0.4 && S.np === 'stand') command('hide', 'auto');
+  else if (S.bp === 'graze' && S.bt > 0.5) command('go', 'auto');
 }
 
 /* ---------- תנוחות ---------- */
 function boarPose(P) {
   if (!boarS) return P;
   const S = boarS, p = S.np, now = performance.now() / 1000;
-  if (p === 'walk') return poseWalk(bgX * 0.42 * RIG.run.cadence * 1.6);
-  if (p === 'sneak') { P = poseWalk(bgX * 0.42 * RIG.run.cadence * 1.3); P.lean = 0.22; P.arms = [[1.6, 2.6], [1.7, 2.7]]; P.eyes = 'wide'; return P; }   // על קצות האצבעות, ידיים מורמות
+  if (p === 'exit') return S.nt < 1.2 ? poseWalk(bgX * 0.42 * RIG.run.cadence * 1.6) : poseRun(bgX * 0.42 * RIG.run.cadence);
+  if (p === 'walk') { P = poseWalk(bgX * 0.42 * RIG.run.cadence * 1.3); P.lean = 0.22; P.arms = [[1.6, 2.6], [1.7, 2.7]]; P.eyes = 'wide'; return P; }   // על קצות האצבעות, ידיים מורמות
   if (p === 'duck') { P = poseWalk(S.nt * 22); P.lean = 0.1; return P; }
   if (p === 'hidden') { P = poseIdle(now); P.lean = -0.06; P.arms = [[0.25, 0.4], [0.3, 0.45]]; P.eyes = 'wide'; return P; }   // נצמד לגזע, ידיים צמודות
   if (p === 'stand') { P = poseIdle(now); if (S.bp === 'ears') P.eyes = 'wide'; return P; }
@@ -188,6 +217,7 @@ function drawForestFront(o, top, bottom) {
     fBlobs(x, top + 2, 16, '#3c6a3a', 7, 60 + i * 13);                                   // נוף העץ למעלה
   }
   if (boarCharging(o)) drawBoarFig(boarChargeX(), GROUND + 0.5, 1.0, o);             // מסתער על השביל – לפני העצים
+  else if (forestAlpha(o) > 0) drawBoarFig(boarX(o), GROUND - 1.2, 0.95, o);          // רועה / הולך – לפני הגזעים, שלא יסתתר מאחוריהם
   const t = performance.now() / 1000, L = viewL(), R = viewR();
   ctx.fillStyle = '#c98a2e';                                                           // עלים נושרים
   for (let i = 0; i < 8; i++) {
@@ -197,7 +227,7 @@ function drawForestFront(o, top, bottom) {
   ctx.restore();
 }
 function boarChargeX() {                                                               // איפה החזיר בהסתערות / בחזרה
-  const S = boarS, home = boarHomeX(S.o), tgt = PLAYER.x + PLAYER.w + 13;
+  const S = boarS, home = boarX(S.o), tgt = PLAYER.x + PLAYER.w + 13;
   if (S.bp === 'charge') { const k = Math.min(1, S.bt / BOAR.chargeT); return lerp(home, tgt, k * k); }
   if (S.bp === 'return') { const k = Math.min(1, S.bt / BOAR.returnT); return lerp(tgt + 4, home, k * k * (3 - 2 * k)); }
   return home;
@@ -210,12 +240,13 @@ function drawBoarFig(x, y, s, o) {
   if (bp === 'look') head = Math.min(1, S.bt / 0.25) * (S.bt > BOAR.lookT - 0.3 ? (BOAR.lookT - S.bt) / 0.3 : 1);
   if (bp === 'charge') head = 0.6;
   if (bp === 'return') head = 0.3;
+  if (bp === 'step') head = 0.2;
   const chew = bp === 'graze' ? Math.sin(t * 9) * 0.06 : 0;
   const ear = bp === 'ears' ? Math.sin(t * 22) * 0.35 : 0;
   const ang = -0.6 * (1 - head) + chew;
   ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
   if (bp === 'return') ctx.scale(-1, 1);                                                // הולך חזרה – פונה ימינה
-  const legA = running ? Math.sin(t * (bp === 'charge' ? 26 : 14)) * 0.6 : 0;
+  const legA = running ? Math.sin(t * (bp === 'charge' ? 26 : 14)) * 0.6 : bp === 'step' ? Math.sin(t * 8) * 0.4 : 0;
   ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(0, 0.3, 9, 1.4, 0, 0, Math.PI * 2); ctx.fill();
   const body = '#4a3426', dark = '#2e1f16';
   ctx.strokeStyle = dark; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
@@ -246,10 +277,9 @@ function drawBoarFig(x, y, s, o) {
 function drawBoar(o) {                                                                 // החזיר ועשב סביב הפה
   const a = forestAlpha(o); if (a <= 0) return;
   ctx.save(); ctx.globalAlpha = a;
-  const hx = boarHomeX(o);
+  const hx = boarX(o);
   ctx.fillStyle = '#5a9a48';
   for (let k = 0; k < 9; k++) { const gx = hx - 20 + k * 1.5; ctx.beginPath(); ctx.moveTo(gx, GROUND - 2.4); ctx.lineTo(gx + 0.5, GROUND - 5 - boarRnd(k + 90) * 2.5); ctx.lineTo(gx + 1, GROUND - 2.4); ctx.fill(); }
-  if (!boarCharging(o)) drawBoarFig(hx, GROUND - 2.4, 0.95, o);                     // מסתער – מצויר מעל העצים והנינג'ה (drawForestFront)
   ctx.restore();
 }
 function boarCharging(o) { return !!boarS && boarS.o === o && (boarS.bp === 'charge' || boarS.bp === 'return'); }
