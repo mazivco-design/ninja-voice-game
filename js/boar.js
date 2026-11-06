@@ -8,16 +8,24 @@
    היער מצויר בשכבות (רחוק בערפל, אמצע, השביל) – תחושת עומק.
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const BOAR = { tree0: 24, gap: 40, trees: 5, start: 104, adv: 12, stepT: 1.6, standGap: 5, walkV: 11, duckT: 0.35,
+// העצים על השביל: מרחק מהעץ הראשון (לא שווה), עובי, צבע, נטייה קלה וענפים [גובה יחסי, צד, אורך]
+const BOAR_TREES = [
+  { dx: 0,   w: 9.5, col: '#5b3f2a', lean: 0,      br: [[0.40, -1, 10], [0.62, 1, 8]] },
+  { dx: 50,  w: 8.6, col: '#654730', lean: 0.025,  br: [[0.50, 1, 9]] },
+  { dx: 80,  w: 11,  col: '#523826', lean: -0.02,  br: [[0.33, -1, 12], [0.55, 1, 9], [0.72, -1, 7]] },
+  { dx: 137, w: 9,   col: '#5e4330', lean: 0.012,  br: [[0.46, -1, 9], [0.66, 1, 6]] }
+];
+const BOAR = { tree0: 24, trees: BOAR_TREES.length, start: 118, adv: 12, stepT: 1.6, walkV: 11, duckT: 0.35,
                waitMin: 1.6, waitMax: 3.0, lookT: 1.8, chargeT: 0.7, fallT: 1.1, returnT: 1.3, knock: 7, passBy: 18, coins: 4, fade: 55 };
 const BOAR_EARS = { easy: 2.0, medium: 1.5, hard: 1.15 };                         // כמה זמן יש להגיד HIDE מרגע שהאוזניים זזות
 let boarS = null;   // { o, np: ninja phase, nt, bp: boar phase, bt, bo: מקום החזיר (יחסית ל-o.x), i: העץ שאליו הולכים, warnAt, miss, hinted }
 
-function boarSetup(o) { o.w = BOAR.tree0 + BOAR.gap * (BOAR.trees - 1) + 30; }
-function boarTreeX(o, i) { return o.x + BOAR.tree0 + BOAR.gap * i; }             // מרכז הגזע
+function boarSetup(o) { o.w = BOAR.tree0 + BOAR_TREES[BOAR.trees - 1].dx + 30; }
+function boarTreeX(o, i) { return o.x + BOAR.tree0 + BOAR_TREES[i].dx; }          // מרכז הגזע
 function boarX(o) { return o.x + (boarS && boarS.o === o ? boarS.bo : BOAR.start); }   // איפה החזיר עכשיו
-function boarStandR(o, i) { return boarTreeX(o, i) - BOAR.standGap; }             // הקצה הימני של הנינג'ה כשהוא עומד ליד העץ
-function boarHideDX() { return PLAYER.w + BOAR.standGap - PLAYER.w / 2; }        // כמה זזים כדי להיות בדיוק מאחורי הגזע
+function boarStandGap(i) { return BOAR_TREES[i].w / 2 + 0.4; }
+function boarStandR(o, i) { return boarTreeX(o, i) - boarStandGap(i); }          // הקצה הימני של הנינג'ה כשהוא עומד ליד העץ
+function boarHideDX() { return boarStandGap(boarS ? boarS.i : 0) + PLAYER.w / 2; }   // כמה זזים כדי להיות בדיוק מאחורי הגזע
 function boarEarsT() { return BOAR_EARS[diffKey] || 1.6; }
 function boarBusy() { return !!boarS; }
 function boarWait() { return BOAR.waitMin + Math.random() * (BOAR.waitMax - BOAR.waitMin); }
@@ -177,6 +185,36 @@ function fBlobs(x, y, r, col, n, seed) {
   ctx.fillStyle = col;
   for (let i = 0; i < n; i++) { const a = boarRnd(seed + i) * Math.PI * 2, d = boarRnd(seed + i * 3) * r * 0.7; ctx.beginPath(); ctx.arc(x + Math.cos(a) * d * 1.4, y + Math.sin(a) * d * 0.6, r * (0.45 + boarRnd(seed + i * 7) * 0.35), 0, Math.PI * 2); ctx.fill(); }
 }
+// עץ עבה: הגזע מתרחב בבסיס לשורשים, והפסים של הקליפה מתרחבים איתו. ענפים עם עלווה, נוף למעלה
+function bigTree(x, top, T, i) {
+  const G = GROUND + 0.6, H = G - top, n = 26;
+  const half = u => T.w / 2 * (1 - 0.16 * u) + T.w * 0.55 * Math.pow(Math.max(0, 1 - u / 0.15), 2);   // u: 0 בקרקע, 1 למעלה
+  const cx = u => x + T.lean * H * u, Y = u => G - H * u;
+  ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(x, GROUND + 0.5, T.w * 0.95, 1.4, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = T.col; ctx.beginPath();
+  for (let k = 0; k <= n; k++) { const u = k / n; ctx.lineTo(cx(u) - half(u), Y(u)); }
+  for (let k = n; k >= 0; k--) { const u = k / n; ctx.lineTo(cx(u) + half(u), Y(u)); }
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,230,170,.16)'; ctx.beginPath();                               // צד מואר – צמוד לקצה, מתרחב איתו
+  for (let k = 0; k <= n; k++) { const u = k / n; ctx.lineTo(cx(u) - half(u) * 0.97, Y(u)); }
+  for (let k = n; k >= 0; k--) { const u = k / n; ctx.lineTo(cx(u) - half(u) * 0.62, Y(u)); }
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(30,18,10,.45)'; ctx.lineWidth = Math.max(0.18, T.w * 0.035); ctx.lineCap = 'round';   // קליפה – הפסים נפתחים לשורשים
+  for (let f = -0.6; f <= 0.61; f += 0.3) {
+    ctx.beginPath();
+    for (let k = 0; k <= 40; k++) { const u = k / 40, y = Y(u); ctx.lineTo(cx(u) + (f + Math.sin(y * 0.35 + f * 9 + i) * 0.05) * half(u), y); }
+    ctx.stroke();
+  }
+  for (const [h, side, len] of T.br) {                                                   // ענפים
+    const u = h, sx = cx(u) + side * half(u) * 0.8, sy = Y(u), ex = sx + side * len, ey = sy - len * 0.55, th = T.w * 0.16;
+    ctx.fillStyle = T.col; ctx.beginPath();
+    ctx.moveTo(sx, sy - th); ctx.quadraticCurveTo(sx + side * len * 0.5, sy - th - len * 0.1, ex, ey);
+    ctx.quadraticCurveTo(sx + side * len * 0.45, sy + th * 0.2 - len * 0.05, sx, sy + th); ctx.closePath(); ctx.fill();
+    fBlobs(ex, ey - 1, 3.6 + len * 0.15, i % 2 ? '#3f6e3c' : '#46753f', 5, 90 + i * 7 + h * 50);
+  }
+  ctx.fillStyle = '#2f5a2e'; ctx.beginPath(); ctx.ellipse(cx(0.3) + half(0.3) * 0.4, Y(0.3), 1.8, 1, 0.4, 0, Math.PI * 2); ctx.fill();   // טחב
+  fBlobs(cx(1), top + 2, 13 + T.w * 0.4, '#3c6a3a', 7, 60 + i * 13);                   // נוף העץ למעלה
+}
 const wrapX = (x, L, R) => { const w = R - L; return ((x - L) % w + w) % w + L; };
 // היער מאחור: שמיים ירוקים, עצים רחוקים בערפל, קרני אור, ושורת עצים ושיחים באמצע. העומק – כל שכבה זזה במהירות אחרת
 function drawForestBack(o, top) {
@@ -185,7 +223,7 @@ function drawForestBack(o, top) {
   ctx.save(); ctx.globalAlpha = a;
   const g = ctx.createLinearGradient(0, top, 0, G); g.addColorStop(0, '#cfe8c8'); g.addColorStop(0.5, '#9cc89a'); g.addColorStop(1, '#6f9f72');
   ctx.fillStyle = g; ctx.fillRect(L, top, R - L, G - top);
-  for (let i = 0; i < 26; i++) { const x = wrapX(L + i * 7.3 + boarRnd(i) * 5 - bgX * 0.12, L - 4, R + 4); fTrunk(x, 1 + boarRnd(i) * 1, top, G - 12, 'rgba(120,160,128,.55)'); }   // רחוק, בערפל
+  for (let i = 0; i < 18; i++) { const x = wrapX(L + i * 10.5 + boarRnd(i) * 5 - bgX * 0.12, L - 4, R + 4); fTrunk(x, 1 + boarRnd(i) * 1, top, G - 12, 'rgba(120,160,128,.55)'); }   // רחוק, בערפל
   fBlobs(wrapX(40 - bgX * 0.12, L - 30, R + 30), top + 8, 20, 'rgba(150,190,150,.5)', 8, 3);
   fBlobs(wrapX(120 - bgX * 0.12, L - 30, R + 30), top + 5, 24, 'rgba(150,190,150,.5)', 9, 9);
   const m = ctx.createLinearGradient(0, G - 30, 0, G - 8); m.addColorStop(0, 'rgba(225,240,220,0)'); m.addColorStop(0.6, 'rgba(225,240,220,.55)'); m.addColorStop(1, 'rgba(225,240,220,0)');
@@ -193,7 +231,7 @@ function drawForestBack(o, top) {
   ctx.save(); ctx.globalCompositeOperation = 'lighter';                                   // קרני אור בין העצים
   for (let i = 0; i < 4; i++) { const x = wrapX(L + 18 + i * 42 + boarRnd(i + 40) * 12 - bgX * 0.2, L - 30, R + 10); ctx.fillStyle = 'rgba(255,240,190,' + (0.08 * a) + ')'; ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x + 7, top); ctx.lineTo(x + 26, G); ctx.lineTo(x + 12, G); ctx.closePath(); ctx.fill(); }
   ctx.restore();
-  for (let i = 0; i < 8; i++) { const x = wrapX(L + i * 22 + boarRnd(i + 5) * 9 - bgX * 0.42, L - 6, R + 6); fTrunk(x, 2.2 + boarRnd(i + 2) * 1.2, top, G - 4, '#4a5d3f', 'rgba(0,0,0,.15)'); }   // אמצע
+  for (let i = 0; i < 5; i++) { const x = wrapX(L + i * 35 + boarRnd(i + 5) * 9 - bgX * 0.42, L - 6, R + 6); fTrunk(x, 2.2 + boarRnd(i + 2) * 1.2, top, G - 4, '#4a5d3f', 'rgba(0,0,0,.15)'); }   // אמצע
   for (let i = 0; i < 13; i++) { const x = wrapX(L + i * 14 + boarRnd(i + 9) * 7 - bgX * 0.42, L - 10, R + 10); fBlobs(x, G - 5, 4.5 + boarRnd(i) * 2.5, i % 2 ? '#4f7a48' : '#45703f', 5, i * 11); }
   fBlobs(wrapX(50 - bgX * 0.42, L - 40, R + 40), top - 2, 26, '#3f6b3d', 10, 33);
   fBlobs(wrapX(135 - bgX * 0.42, L - 40, R + 40), top - 3, 28, '#3a643a', 10, 51);
@@ -210,11 +248,7 @@ function drawForestFront(o, top, bottom) {
   for (let i = 0; i < BOAR.trees; i++) {
     const x = boarTreeX(o, i);
     if (x < viewL() - 20 || x > viewR() + 20) continue;
-    ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(x, GROUND + 0.5, 9, 1.4, 0, 0, Math.PI * 2); ctx.fill();
-    fTrunk(x, 9.5, top, GROUND + 0.6, '#5b3f2a', 'rgba(30,18,10,.45)', true);
-    ctx.fillStyle = 'rgba(255,230,170,.16)'; ctx.fillRect(x - 4.7, top, 1.8, GROUND - top);   // צד מואר
-    ctx.fillStyle = '#2f5a2e'; ctx.beginPath(); ctx.ellipse(x + 2.5, GROUND - 26, 1.8, 1, 0.4, 0, Math.PI * 2); ctx.fill();   // טחב
-    fBlobs(x, top + 2, 16, '#3c6a3a', 7, 60 + i * 13);                                   // נוף העץ למעלה
+    bigTree(x, top, BOAR_TREES[i], i);
   }
   if (boarCharging(o)) drawBoarFig(boarChargeX(), GROUND + 0.5, 1.0, o);             // מסתער על השביל – לפני העצים
   else if (forestAlpha(o) > 0) drawBoarFig(boarX(o), GROUND - 1.2, 0.95, o);          // רועה / הולך – לפני הגזעים, שלא יסתתר מאחוריהם

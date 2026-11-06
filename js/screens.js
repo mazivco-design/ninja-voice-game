@@ -324,7 +324,7 @@ function setupDemo(w) {
   if (w === 'push together') { const o = { type: 'boat' }; boatSetup(o); o.x = PLAYER.x + PLAYER.w + BOAT.stepDX - BOAT.bx0; obstacles.push(o); }   // מתחיל צמוד לסירה (boat.js מפעיל PUSH / JUMP בהדגמה)
   if (w === 'fishing') { const o = { type: 'boat', mode: 'fish' }; boatSetup(o); o.x = PLAYER.x + PLAYER.w + BOAT.stepDX - o.bx; obstacles.push(o); }   // הסירה במים והחבר בתוכה
   if (w === 'push on three') { const o = { type: 'cart' }; cartSetup(o); o.x = PLAYER.x + PLAYER.w + CART.stepDX + CART.watch - CART.cp0; obstacles.push(o); }   // מתחיל מול הילד (cart.js מפעיל PUSH / JUMP בהדגמה)
-  if (w === 'boar') { const o = { type: 'boar' }; boarSetup(o); o.x = PLAYER.x + PLAYER.w - BOAR.tree0 + BOAR.standGap; obstacles.push(o); }   // עומד ליד העץ הראשון (boar.js מפעיל HIDE בהדגמה)
+  if (w === 'boar') { const o = { type: 'boar' }; boarSetup(o); o.x = PLAYER.x + PLAYER.w - BOAR.tree0 + boarStandGap(0); obstacles.push(o); }   // עומד ליד העץ הראשון (boar.js מפעיל HIDE בהדגמה)
   if (w === 'hold') obstacles.push({ type: 'gust', x: near + 1 - GUST.stalks[2], w: GUST.stalks[2] + 4 });
   obstacles.forEach(o => { o.passed = false; o.hit = false; o.demo = true; });   // בהדגמה – בלי פגיעות
   demoSteps = w === 'fly' ? [{ at: 0.9, w: 'jump' }, { at: 1.3, w: 'fly' }]
