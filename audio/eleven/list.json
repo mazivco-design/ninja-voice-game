@@ -1867,6 +1867,63 @@
    },
    "text": "[warm] Sneak!",
    "voice": "Sarah"
+  },
+  {
+   "file": "sarah-sneak2-a",
+   "type": "tts",
+   "voice": "Sarah",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[whispers] Sneak..."
+  },
+  {
+   "file": "sarah-sneak2-b",
+   "type": "tts",
+   "voice": "Sarah",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[softly] [slowly] Sneeeak..."
+  },
+  {
+   "file": "sarah-sneak2-c",
+   "type": "tts",
+   "voice": "Sarah",
+   "model": "eleven_v3",
+   "seed": 7,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[whispering] Sneak..."
+  },
+  {
+   "file": "sarah-sneak2-d",
+   "type": "tts",
+   "voice": "Sarah",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0,
+    "speed": 0.8
+   },
+   "text": "[whispers] Sneak..."
+  },
+  {
+   "file": "sarah-sneak2-e",
+   "type": "tts",
+   "voice": "Sarah",
+   "settings": {
+    "stability": 0.5,
+    "similarity_boost": 0.75,
+    "style": 0.3,
+    "speed": 0.8
+   },
+   "text": "Sneak..."
   }
  ]
 }
