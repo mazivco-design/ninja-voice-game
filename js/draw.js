@@ -483,6 +483,7 @@ function playerPose() {
   P = boatPose(P);
   P = cartPose(P);
   P = boarPose(P);
+  P = wfPose(P);                                   // זאבים: על הסלע / תלוי בחבל
   P = jsPose(P);                                   // תרמיל סילון: מרים / לובש / עף                                 // ביער: הולך / נצמד לגזע / נהדף                                 // עגלה: דוחף / מחכה לשלוש                                 // סירה: דוחף / יושב וחותר                                  // HELP: תקוע בבוץ / אוחז בחבל
   P = merchPose(P);                                // PICK UP: הסלע מעל הראש
   P = jetPose(P);                                 // תרמיל סילון – עף קדימה                     // קרב: עמידה עם חרב והנפות
@@ -606,6 +607,7 @@ function draw() {
 function drawObstacle(o, top) {
   const x = o.x;
   if (o.type === 'boar') { drawBoar(o); return; }
+  if (o.type === 'wolfden') { drawWolves(o); return; }
   if (o.type === 'dragon') { drawDragon(o.x + DRAGON.saddle, GROUND - DRAGON.lie, ride && ride.o === o && ride.phase === 'mount' ? 'stand' : 'lie'); return; }
   if (SKY_TYPES.includes(o.type)) { drawSky(o); return; }
   if (o.type === 'duel') { drawDuelEnemy(o); return; }

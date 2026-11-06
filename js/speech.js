@@ -129,6 +129,7 @@ function expectedWords0() {
   const be = boatExpected(); if (be) return be;
   const ce = cartExpected(); if (ce) return ce;
   const bre = boarExpected(); if (bre) return bre;
+  const wfe = wfExpected(); if (wfe) return wfe;
   const jse = jsExpected(); if (jse) return jse;
   if (gustActive()) return ['hold'];
   const le = liftExpected(); if (le) return le;
@@ -245,6 +246,7 @@ function command(word, source) {
   if (state === 'sushi') { if (word === 'catch') sushiCatch(); return; }   // בונוס סושי
   if (state !== 'play' && !((state === 'demo' || state === 'intro') && source === 'demo')) return;   // במילון ובהדגמה – רק ההדגמה מזיזה את הנינג'ה
   heard = { text: word.toUpperCase(), t: 0.8 };
+  if (wfCmd(word)) return;                 // זאבים: CATCH / HOLD / LET GO
   if (jsCmd(word)) return;                 // שלב תרמיל הסילון: PICK UP / PUT ON / FLY / UP / DOWN
 
   if (word === 'jump') {
