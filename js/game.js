@@ -75,7 +75,7 @@ function renderHud() {
   $('score').textContent = score;
   $('caught').textContent = caught + picked - coinsFlying;      // מטבע שעוד עף – נספר כשהוא מגיע
   if (mode === 'stage') $('progressBar').style.width = (100 * Math.min(1, done / STAGES[stageIdx].count)) + '%';
-  if (mode === 'journey') $('progressBar').style.width = (100 * Math.min(1, done / segLen(jStation))) + '%';
+  if (mode === 'journey') $('progressBar').style.width = (100 * Math.min(1, done / jSegN)) + '%';
   if (!isFinite(lives)) $('lives').textContent = '';
   else $('lives').textContent = '❤️'.repeat(Math.max(0, lives)) + '🤍'.repeat(Math.max(0, cfg.lives - lives));
   renderPowerHud();
@@ -174,6 +174,7 @@ function obstacleValue(type) {
 
 // בוחר את המכשול הבא. לא יותר מ-3 מאותו סוג ברצף
 function pickType() {
+  if (mode === 'journey' && jDeck.length) return jDeck.shift();                 // במסע: קודם כל מכשול לפחות פעם אחת (journey.js)
   let w = playWords[Math.floor(Math.random() * playWords.length)];
   const last = obstacles.slice(-3).map(o => o.type);
   if (playWords.length > 1 && last.length === 3 && last.every(t => t === WORD_OBSTACLE[w])) {
@@ -349,6 +350,7 @@ function learnRequeue(o) {
   if (SKY_TYPES.includes(o.type) || LEARN_KEEP.includes(o.type)) return false;
   const ahead = obstacles.filter(a => a !== o && !a.hit && !a.passed && a.x > o.x);
   if (!ahead.length || ahead.some(a => LEARN_KEEP.includes(a.type) || SKY_TYPES.includes(a.type))) return false;
+  if (mode === 'journey') { jDeck.unshift(...ahead.map(a => a.type === 'boat' && a.mode === 'fish' ? 'fishboat' : a.type), nextType); jSegN++; }   // מה שנעלם חוזר לחפיסה, והחזרה על המכשול לא באה על חשבון אחר
   for (const a of ahead) {
     obstacles.splice(obstacles.indexOf(a), 1); spawned--;
     if (a.type === 'coin') coins--;
@@ -526,7 +528,7 @@ function update(dt) {
   bgX += dx;
   distSinceSpawn += dx;
   if (state === 'play' && distSinceSpawn >= nextGap && !rideBusy()) {
-    if (mode === 'free' || spawned < (mode === 'journey' ? segLen(jStation) : STAGES[stageIdx].count)) spawn();
+    if (mode === 'free' || spawned < (mode === 'journey' ? jSegN : STAGES[stageIdx].count)) spawn();
     else if (!flag) flag = { x: viewR() + 2 };
   }
 
