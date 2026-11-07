@@ -2008,6 +2008,17 @@
    "type": "sfx",
    "text": "calm soft whoosh upward like a breeze, light and friendly, kids game",
    "seconds": 1.2
+  },
+  {
+   "file": "sarah-put-on",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Put on!",
+   "voice": "Sarah"
   }
  ]
 }
