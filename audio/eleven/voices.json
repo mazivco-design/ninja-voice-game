@@ -292,32 +292,172 @@
   "description": "Friendly and comforting voice ready to narrate your stories."
  },
  {
-  "name": "Danit - Natural Israeli Hebrew",
-  "id": "s0T0DT6EAPeX57MQpn3I",
+  "name": "Manni - Youthful Know-It-All",
+  "id": "KP4GbmyDmwaoy5dUlvZY",
   "category": "professional",
   "labels": {
-   "use_case": "informative_educational",
-   "language": "he",
-   "descriptive": "casual",
-   "gender": "female",
+   "gender": "neutral",
+   "use_case": "characters_animation",
+   "accent": "standard",
    "age": "young",
-   "accent": "standard"
+   "descriptive": "excited",
+   "language": "de"
   },
-  "description": "A native Israeli female voice speaking Hebrew in a natural, conversational style. Well suited to personal storytelling, podcasts, educational videos, and everyday dialogue. An approachable voice with an authentic Israeli accent and a personal, relatable delivery."
+  "description": "A young voice that is absolutely certain to be the smartest person in any room. Think precocious boy detective meets unreliable narrator: breathlessly breaking the fourth wall, imitating witnesses, shifting from whispered stakeout commentary to full theatrical courtroom drama in a single breath. Equal parts Sherlock and class clown who doesn't know he's funny. Delivers rapid-fire deductions, stumbles over his own bravado, gets genuinely tender when he thinks nobody's listening. German. Young."
+ },
+ {
+  "name": "Lukas - Excited youthful young man",
+  "id": "wSqOdjeNqDrHcoK0zorF",
+  "category": "professional",
+  "labels": {
+   "use_case": "characters_animation",
+   "gender": "male",
+   "accent": "american",
+   "age": "young",
+   "descriptive": "excited",
+   "language": "en"
+  },
+  "description": "Young man with a lot of passion and excitement in tone, happy, hopeful and confident. Good for characters and catchy Socil Media narration. "
  },
  {
   "name": "Bholu – Cute, Innocent Kids Character",
   "id": "5krdMTA5HonvWAlY2vSx",
   "category": "professional",
   "labels": {
+   "gender": "male",
    "use_case": "characters_animation",
+   "accent": "standard",
    "language": "hi",
    "descriptive": "cute",
-   "gender": "male",
-   "age": "young",
-   "accent": "standard"
+   "age": "young"
   },
   "description": "Bubbly, wide-eyed, and full of wonder — Bholu reacts to everything like it's the first time, peaking with genuine excitement at just the right moments. His animated delivery brings warmth and charm to every scene without ever feeling exaggerated for its own sake. Built for cartoons, kids shows, animated series, and children's storytelling content. Ideal for animation studios, kids content platforms, and family entertainment brands."
+ },
+ {
+  "name": "Edrin Silversong - The Curious Alchemist",
+  "id": "C5GgjTyGQ2aQx8uMiLh9",
+  "category": "professional",
+  "labels": {
+   "gender": "male",
+   "use_case": "characters_animation",
+   "accent": "american",
+   "language": "en",
+   "descriptive": "calm",
+   "age": "young"
+  },
+  "description": "A teenage alchemist whose journey is as much inward as it is out in the mysterious lands he explores. His personality is a blend of curiosity, resilience, and compassion, shaped by his transformative journey from a young, ambitious seeker of power to a wise, reflective soul. Resilient, brave, compassionate, kind, inquisitive, intelligent, humble, reflective, and spiritually grounded."
+ },
+ {
+  "name": "Michael Dalton - Modern Male Lead",
+  "id": "QZ1okeFI43NQd6lXAzQ5",
+  "category": "professional",
+  "labels": {
+   "use_case": "characters_animation",
+   "gender": "male",
+   "accent": "american",
+   "age": "young",
+   "descriptive": "upbeat",
+   "language": "en"
+  },
+  "description": "Cool, charismatic, all-American 20-something voice with natural confidence, subtle emotional depth, and a grounded, relatable tone. Ideal for audiobooks, video games, animation, and character-driven content — especially young male leads, teen protagonists, athletes, high school or college students, and coming-of-age stories. Perfect for storytelling, dialogue, and voiceover projects that need a modern, cinematic feel with just the right edge."
+ },
+ {
+  "name": "Little Dude II - Cartoon Character",
+  "id": "fBD19tfE58bkETeiwUoC",
+  "category": "professional",
+  "labels": {
+   "gender": "male",
+   "use_case": "characters_animation",
+   "accent": "american",
+   "age": "young",
+   "descriptive": "confident",
+   "language": "en"
+  },
+  "description": "A high-pitched, energetic cartoon-style voice with a playful, mischievous edge.\nThe delivery has a light Southern drawl, giving the voice a quirky regional flavor and a hint of friendly rural warmth.\nExpressive emphasis, comedic timing, and exaggerated intonation patterns make the voice perfect for humorous characters, sidekicks, or whimsical narrators.\nBright, fast, and slightly raspy at the top end, elongated vowels, and lively emotional swings."
+ },
+ {
+  "name": "Max - USA Energetic Animated Cartoon",
+  "id": "467tX2b9Bky3cD6jXpNa",
+  "category": "professional",
+  "labels": {
+   "gender": "male",
+   "use_case": "social_media",
+   "accent": "american",
+   "age": "young",
+   "descriptive": "excited",
+   "language": "en"
+  },
+  "description": "Max is a high-energy, versatile American character voice engineered specifically for animation, social media, gaming, and dynamic commercial content. Delivering punchy articulation, vibrant dynamic range, and cinematic presence, Max is built to bring animated leads, zany cartoon heroes, and fast-paced social media promos to life. Recorded in a broadcast-spec booth with a pristine signal chain for zero-lag, studio-grade renders every time."
+ },
+ {
+  "name": "DYLO - Dark Anime Hero",
+  "id": "JjsQrIrIBD6TZ656NQfi",
+  "category": "professional",
+  "labels": {
+   "use_case": "characters_animation",
+   "gender": "male",
+   "accent": "american",
+   "age": "young",
+   "descriptive": "intense",
+   "language": "en"
+  },
+  "description": "Young adult male, fierce voice."
+ },
+ {
+  "name": "Jett - Gritty, Spunky Young Hero",
+  "id": "6IwYbsNENZgAB1dtBZDp",
+  "category": "professional",
+  "labels": {
+   "use_case": "characters_animation",
+   "gender": "male",
+   "accent": "american",
+   "age": "young",
+   "descriptive": "hyped",
+   "language": "en"
+  },
+  "description": "A young hero with a bit of an edge to him. He could fight demons or host your podcast!"
+ },
+ {
+  "name": "Noku ",
+  "id": "Sth0oyItcRdvk3sFrPiq",
+  "category": "professional",
+  "labels": {
+   "use_case": "characters_animation",
+   "gender": "male",
+   "accent": "american",
+   "age": "middle_aged",
+   "descriptive": "confident",
+   "language": "en"
+  },
+  "description": "Inspired by a heroic male anime character. The main protagonist in an action-packed anime story or animated action cartoon."
+ },
+ {
+  "name": "Danit - Natural Israeli Hebrew",
+  "id": "s0T0DT6EAPeX57MQpn3I",
+  "category": "professional",
+  "labels": {
+   "use_case": "informative_educational",
+   "gender": "female",
+   "accent": "standard",
+   "age": "young",
+   "descriptive": "casual",
+   "language": "he"
+  },
+  "description": "A native Israeli female voice speaking Hebrew in a natural, conversational style. Well suited to personal storytelling, podcasts, educational videos, and everyday dialogue. An approachable voice with an authentic Israeli accent and a personal, relatable delivery."
+ },
+ {
+  "name": "Itamar - Israeli Hebrew Narrator",
+  "id": "l7Q9rbdCC6j3J5dNlOOg",
+  "category": "professional",
+  "labels": {
+   "gender": "male",
+   "use_case": "informative_educational",
+   "accent": "standard",
+   "language": "he",
+   "descriptive": "crisp",
+   "age": "middle_aged"
+  },
+  "description": "A native Israeli Hebrew speaker with a clear, natural male voice, measured pacing, and a conversational delivery. His distinctly Israeli sound suits educational videos, online courses, tutorials, explainers, and documentary-style narration. Professional and approachable, with subtle expression that makes detailed content easy to follow."
  },
  {
   "name": "Austin Boy",
@@ -325,11 +465,11 @@
   "category": "professional",
   "labels": {
    "use_case": "characters_animation",
+   "gender": "male",
+   "accent": "american",
    "language": "en",
    "descriptive": "soft",
-   "gender": "male",
-   "age": "young",
-   "accent": "american"
+   "age": "young"
   },
   "description": "A young American timid orphan boy. Tone is soft. Voice works well for characters & Animation."
  },
@@ -339,209 +479,13 @@
   "category": "professional",
   "labels": {
    "use_case": "conversational",
+   "gender": "male",
+   "accent": "us midwest",
    "language": "en",
    "descriptive": "casual",
-   "gender": "male",
-   "age": "young",
-   "accent": "us midwest"
+   "age": "young"
   },
   "description": "Youthful, earnest American male voice with natural boy-next-door charm. Bright, energetic, and conversational with an authentic, relatable quality — the friendly young hero type. Perfect for animation, video game characters, explainers, tech content, teen and young adult audiobooks, and upbeat commercials. Clean studio recording from a professional video producer. Neutral American accent."
- },
- {
-  "name": "Itamar - Israeli Hebrew Narrator",
-  "id": "l7Q9rbdCC6j3J5dNlOOg",
-  "category": "professional",
-  "labels": {
-   "use_case": "informative_educational",
-   "language": "he",
-   "descriptive": "crisp",
-   "gender": "male",
-   "age": "middle_aged",
-   "accent": "standard"
-  },
-  "description": "A native Israeli Hebrew speaker with a clear, natural male voice, measured pacing, and a conversational delivery. His distinctly Israeli sound suits educational videos, online courses, tutorials, explainers, and documentary-style narration. Professional and approachable, with subtle expression that makes detailed content easy to follow."
- },
- {
-  "name": "Edrin Silversong - The Curious Alchemist",
-  "id": "C5GgjTyGQ2aQx8uMiLh9",
-  "category": "professional",
-  "labels": {
-   "use_case": "characters_animation",
-   "descriptive": "calm",
-   "language": "en",
-   "gender": "male",
-   "age": "young",
-   "accent": "american"
-  },
-  "description": "A teenage alchemist whose journey is as much inward as it is out in the mysterious lands he explores. His personality is a blend of curiosity, resilience, and compassion, shaped by his transformative journey from a young, ambitious seeker of power to a wise, reflective soul. Resilient, brave, compassionate, kind, inquisitive, intelligent, humble, reflective, and spiritually grounded."
- },
- {
-  "name": "Jett - Gritty, Spunky Young Hero",
-  "id": "6IwYbsNENZgAB1dtBZDp",
-  "category": "professional",
-  "labels": {
-   "use_case": "characters_animation",
-   "descriptive": "hyped",
-   "language": "en",
-   "gender": "male",
-   "age": "young",
-   "accent": "american"
-  },
-  "description": "A young hero with a bit of an edge to him. He could fight demons or host your podcast!"
- },
- {
-  "name": "Little Dude II - Cartoon Character",
-  "id": "fBD19tfE58bkETeiwUoC",
-  "category": "professional",
-  "labels": {
-   "use_case": "characters_animation",
-   "language": "en",
-   "descriptive": "confident",
-   "gender": "male",
-   "age": "young",
-   "accent": "american"
-  },
-  "description": "A high-pitched, energetic cartoon-style voice with a playful, mischievous edge.\nThe delivery has a light Southern drawl, giving the voice a quirky regional flavor and a hint of friendly rural warmth.\nExpressive emphasis, comedic timing, and exaggerated intonation patterns make the voice perfect for humorous characters, sidekicks, or whimsical narrators.\nBright, fast, and slightly raspy at the top end, elongated vowels, and lively emotional swings."
- },
- {
-  "name": "Lukas - Excited youthful young man",
-  "id": "wSqOdjeNqDrHcoK0zorF",
-  "category": "professional",
-  "labels": {
-   "use_case": "characters_animation",
-   "descriptive": "excited",
-   "language": "en",
-   "gender": "male",
-   "age": "young",
-   "accent": "american"
-  },
-  "description": "Young man with a lot of passion and excitement in tone, happy, hopeful and confident. Good for characters and catchy Socil Media narration. "
- },
- {
-  "name": "Manni - Youthful Know-It-All",
-  "id": "KP4GbmyDmwaoy5dUlvZY",
-  "category": "professional",
-  "labels": {
-   "use_case": "characters_animation",
-   "descriptive": "excited",
-   "language": "de",
-   "gender": "neutral",
-   "age": "young",
-   "accent": "standard"
-  },
-  "description": "A young voice that is absolutely certain to be the smartest person in any room. Think precocious boy detective meets unreliable narrator: breathlessly breaking the fourth wall, imitating witnesses, shifting from whispered stakeout commentary to full theatrical courtroom drama in a single breath. Equal parts Sherlock and class clown who doesn't know he's funny. Delivers rapid-fire deductions, stumbles over his own bravado, gets genuinely tender when he thinks nobody's listening. German. Young."
- },
- {
-  "name": "Max - USA Energetic Animated Cartoon",
-  "id": "467tX2b9Bky3cD6jXpNa",
-  "category": "professional",
-  "labels": {
-   "use_case": "social_media",
-   "descriptive": "excited",
-   "language": "en",
-   "gender": "male",
-   "age": "young",
-   "accent": "american"
-  },
-  "description": "Max is a high-energy, versatile American character voice engineered specifically for animation, social media, gaming, and dynamic commercial content. Delivering punchy articulation, vibrant dynamic range, and cinematic presence, Max is built to bring animated leads, zany cartoon heroes, and fast-paced social media promos to life. Recorded in a broadcast-spec booth with a pristine signal chain for zero-lag, studio-grade renders every time."
- },
- {
-  "name": "Michael Dalton - Modern Male Lead",
-  "id": "QZ1okeFI43NQd6lXAzQ5",
-  "category": "professional",
-  "labels": {
-   "use_case": "characters_animation",
-   "language": "en",
-   "descriptive": "upbeat",
-   "gender": "male",
-   "age": "young",
-   "accent": "american"
-  },
-  "description": "Cool, charismatic, all-American 20-something voice with natural confidence, subtle emotional depth, and a grounded, relatable tone. Ideal for audiobooks, video games, animation, and character-driven content — especially young male leads, teen protagonists, athletes, high school or college students, and coming-of-age stories. Perfect for storytelling, dialogue, and voiceover projects that need a modern, cinematic feel with just the right edge."
- },
- {
-  "name": "Kai - Energetic Anime Hero",
-  "id": "S0ypc51SmsvcKXTWvjqJ",
-  "category": "professional",
-  "labels": {
-   "use_case": "characters_animation",
-   "descriptive": "hyped",
-   "language": "en",
-   "gender": "male",
-   "age": "young",
-   "accent": "american"
-  },
-  "description": "Bright, mid-high young male with tons of energy and personality. Perfect for anime-style protagonists and main leads. He can be goofy and nerdy one moment, then loud, proud and fully determined the next. Great for animation, video game heroes, quirky sidekicks, fan dubs and fun character content."
- },
- {
-  "name": "Super VM – Ang Boses ng Pag-asa at mga Hindi Naririnig",
-  "id": "gQRS0Lnh5XQOAqujMqUX",
-  "category": "professional",
-  "labels": {
-   "use_case": "characters_animation",
-   "descriptive": "hyped",
-   "language": "fil",
-   "gender": "male",
-   "age": "young",
-   "accent": "standard"
-  },
-  "description": "He sounds like a brave  Super VoiceMaster with a heart full of dreams and a voice that cuts through silence.\nHis tone is bright, hopeful, and filled with emotional sincerity—like a man, who’s been quiet for a long time but finally found the courage to speak for himself and for others. Filipino, Voice Hero Hero, Cute But Brave, Tagalog VO, Young Narrator, Empowering, Inspiring Man, Real and Relatable, Superhero Voice."
- },
- {
-  "name": "Teddy Twinkle - Cute Cartoon Boy",
-  "id": "XjGYkUkzth8BPs29fmcV",
-  "category": "professional",
-  "labels": {
-   "use_case": "characters_animation",
-   "descriptive": "cute",
-   "language": "en",
-   "gender": "male",
-   "age": "young",
-   "accent": "american"
-  },
-  "description": "A sweet, playful, and adorable little cartoon boy inspired by popular kids' characters. He is kind, cheerful, and lovable. Ideal for children's animations, kids' audiobooks, storybook apps, educational content, and social media."
- },
- {
-  "name": "Ryan - Calm, asmr, narration, social media.",
-  "id": "tJHJUEHzOkMoPmJJ5jo2",
-  "category": "professional",
-  "labels": {
-   "use_case": "narrative_story",
-   "language": "en",
-   "descriptive": "relaxed",
-   "gender": "male",
-   "age": "young",
-   "accent": "american"
-  },
-  "description": "Kevin’s voice is a gentle, calm American boy’s voice, perfect for storytelling. His soft, soothing tone creates a peaceful and comforting atmosphere that easily draws listeners into a story. With his warm and steady delivery, Kevin’s voice brings a sense of innocence and wonder, making every narrative feel intimate and engaging, perfect for captivating the audiences."
- },
- {
-  "name": "VALF - Anime Protagonist Charismatic",
-  "id": "unWb9iRIK7Xxf4A5Hfis",
-  "category": "professional",
-  "labels": {
-   "use_case": "characters_animation",
-   "language": "en",
-   "descriptive": "neutral",
-   "gender": "male",
-   "age": "young",
-   "accent": "american"
-  },
-  "description": "Youthful, expressive anime protagonist voice with natural charm, curiosity, determination, and emotion. Versatile from casual, playful dialogue to intense battles, dramatic speeches, heartfelt scenes, and emotional moments. Perfect for anime, animation, games, RPGs, visual novels, storytelling, and character skits. Ideal for young heroes, adventurous protagonists, energetic leads, aspiring warriors, supernatural characters, and relatable anime characters."
- },
- {
-  "name": "Noku ",
-  "id": "Sth0oyItcRdvk3sFrPiq",
-  "category": "professional",
-  "labels": {
-   "use_case": "characters_animation",
-   "descriptive": "confident",
-   "language": "en",
-   "gender": "male",
-   "age": "middle_aged",
-   "accent": "american"
-  },
-  "description": "Inspired by a heroic male anime character. The main protagonist in an action-packed anime story or animated action cartoon."
  },
  {
   "name": "Vardan – Fun Kids Show Character",
@@ -549,13 +493,55 @@
   "category": "professional",
   "labels": {
    "use_case": "characters_animation",
-   "descriptive": "modulated",
-   "language": "hi",
    "gender": "male",
-   "age": "young",
-   "accent": "standard"
+   "accent": "standard",
+   "language": "hi",
+   "descriptive": "modulated",
+   "age": "young"
   },
   "description": "Quirky, energetic, playful, Vardan brings cheerful mischief to every line, sounding like a genuine cartoon hero kids actually root for. Built for animated series, kids' show dubbing, children's audiobooks, mobile game characters, and school learning apps. "
+ },
+ {
+  "name": "VALF - Anime Protagonist Charismatic",
+  "id": "unWb9iRIK7Xxf4A5Hfis",
+  "category": "professional",
+  "labels": {
+   "gender": "male",
+   "use_case": "characters_animation",
+   "accent": "american",
+   "age": "young",
+   "descriptive": "neutral",
+   "language": "en"
+  },
+  "description": "Youthful, expressive anime protagonist voice with natural charm, curiosity, determination, and emotion. Versatile from casual, playful dialogue to intense battles, dramatic speeches, heartfelt scenes, and emotional moments. Perfect for anime, animation, games, RPGs, visual novels, storytelling, and character skits. Ideal for young heroes, adventurous protagonists, energetic leads, aspiring warriors, supernatural characters, and relatable anime characters."
+ },
+ {
+  "name": "Teddy Twinkle - Cute Cartoon Boy",
+  "id": "XjGYkUkzth8BPs29fmcV",
+  "category": "professional",
+  "labels": {
+   "use_case": "characters_animation",
+   "gender": "male",
+   "accent": "american",
+   "age": "young",
+   "descriptive": "cute",
+   "language": "en"
+  },
+  "description": "A sweet, playful, and adorable little cartoon boy inspired by popular kids' characters. He is kind, cheerful, and lovable. Ideal for children's animations, kids' audiobooks, storybook apps, educational content, and social media."
+ },
+ {
+  "name": "Kai - Energetic Anime Hero",
+  "id": "S0ypc51SmsvcKXTWvjqJ",
+  "category": "professional",
+  "labels": {
+   "use_case": "characters_animation",
+   "gender": "male",
+   "accent": "american",
+   "age": "young",
+   "descriptive": "hyped",
+   "language": "en"
+  },
+  "description": "Bright, mid-high young male with tons of energy and personality. Perfect for anime-style protagonists and main leads. He can be goofy and nerdy one moment, then loud, proud and fully determined the next. Great for animation, video game heroes, quirky sidekicks, fan dubs and fun character content."
  },
  {
   "name": "VALF - Child, Young, Playful & Sarcastic",
@@ -563,27 +549,13 @@
   "category": "professional",
   "labels": {
    "use_case": "characters_animation",
+   "gender": "male",
+   "accent": "american",
    "language": "en",
    "descriptive": "cute",
-   "gender": "male",
-   "age": "young",
-   "accent": "american"
+   "age": "young"
   },
   "description": "A very Young voice with an energetic, playful. Perfect for cartoons, animation, anime dubbing, video games, children's content,  videos, narration, and character acting. Ideal for kid characters, young heroes, mischievous boys, and expressive character performances."
- },
- {
-  "name": "DYLO - Dark Anime Hero",
-  "id": "JjsQrIrIBD6TZ656NQfi",
-  "category": "professional",
-  "labels": {
-   "use_case": "characters_animation",
-   "descriptive": "intense",
-   "language": "en",
-   "gender": "male",
-   "age": "young",
-   "accent": "american"
-  },
-  "description": "Young adult male, fierce voice."
  },
  {
   "name": "Nimrod - Warm and Confident",
@@ -591,12 +563,40 @@
   "category": "professional",
   "labels": {
    "use_case": "narrative_story",
+   "gender": "male",
+   "accent": "standard",
    "language": "he",
    "descriptive": "neutral",
-   "gender": "male",
-   "age": "middle_aged",
-   "accent": "standard"
+   "age": "middle_aged"
   },
   "description": "A natural, warm and confident Israeli male voice with clear native Hebrew pronunciation and an engaging, conversational tone.  Versatile and expressive, with a smooth, friendly delivery that works beautifully for storytelling, narration, commercials, educational content, podcasts and social media videos.  Authentic, approachable and professional, with a distinctly Israeli character."
+ },
+ {
+  "name": "Ryan - Calm, asmr, narration, social media.",
+  "id": "tJHJUEHzOkMoPmJJ5jo2",
+  "category": "professional",
+  "labels": {
+   "gender": "male",
+   "use_case": "narrative_story",
+   "accent": "american",
+   "language": "en",
+   "descriptive": "relaxed",
+   "age": "young"
+  },
+  "description": "Kevin’s voice is a gentle, calm American boy’s voice, perfect for storytelling. His soft, soothing tone creates a peaceful and comforting atmosphere that easily draws listeners into a story. With his warm and steady delivery, Kevin’s voice brings a sense of innocence and wonder, making every narrative feel intimate and engaging, perfect for captivating the audiences."
+ },
+ {
+  "name": "Super VM – Ang Boses ng Pag-asa at mga Hindi Naririnig",
+  "id": "gQRS0Lnh5XQOAqujMqUX",
+  "category": "professional",
+  "labels": {
+   "use_case": "characters_animation",
+   "gender": "male",
+   "accent": "standard",
+   "age": "young",
+   "descriptive": "hyped",
+   "language": "fil"
+  },
+  "description": "He sounds like a brave  Super VoiceMaster with a heart full of dreams and a voice that cuts through silence.\nHis tone is bright, hopeful, and filled with emotional sincerity—like a man, who’s been quiet for a long time but finally found the courage to speak for himself and for others. Filipino, Voice Hero Hero, Cute But Brave, Tagalog VO, Young Narrator, Empowering, Inspiring Man, Real and Relatable, Superhero Voice."
  }
 ]
