@@ -144,7 +144,21 @@ function jumpLightState() {
   if (tc <= win[1] + JUMP_LIGHT.ready) return 'wait';
   return null;
 }
+// המילה נקלטה ומחכה למכשול: תג ירוק "KICK ✓" מעל הראש – הפעולה תקרה לבד בזמן הנכון
+function drawEarlyBadge(fx, fy) {
+  if (typeof earlyWord === 'undefined' || !earlyWord || state !== 'play') return false;
+  const now = performance.now() / 1000, x = fx + 0.5, y = fy - 23 + Math.sin(now * 5) * 0.4;
+  const txt = earlyWord.w.toUpperCase() + (earlyWord.then ? ' + FLY' : '') + ' ✓';
+  ctx.save(); ctx.font = '900 3.4px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = ctx.measureText(txt).width + 3.4;
+  ctx.fillStyle = 'rgba(22,163,74,.92)'; roundRect(x - w / 2, y - 2.4, w, 4.8, 2.3); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 0.35; roundRect(x - w / 2, y - 2.4, w, 4.8, 2.3); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.fillText(txt, x, y + 0.2);
+  ctx.restore();
+  return true;
+}
 function drawJumpLight(fx, fy) {
+  if (drawEarlyBadge(fx, fy)) return;                                           // כבר אמר – לא צריך נורה
   const st = jumpLightState(); if (!st) return;
   const now = performance.now() / 1000, x = fx + 0.5, y = fy - 21;
   ctx.save();
