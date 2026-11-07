@@ -149,7 +149,7 @@ const LAKE = { factor: 3.0 }, SWIM_TIME = 1.2;                       // SWIM –
 const DROWN = { easy: 1.1, other: 0.8 };                              // כמה זמן שוקעים במים לפני שנכשלים – אפשר עוד להציל עם SWIM
 const CLIFF = { w: 14, h: 40, range: 2.5, time: 1.3, ladder: 12 };  // CLIMB – צוק גבוה עם סולם נשען. מטפסים כשמגיעים לסולם
 const BOULDER = { r: 10, range: 25 };                                // PUSH – סלע עגול גדול, אפשר לדחוף מרחוק
-const GATE = { w: 5, rope: 4, lift: 38, time: 1.4, want: 0.9 };     // PULL – עוצרים ליד החבל ומושכים עד שהסורג עולה למעלה
+const GATE = { w: 5, rope: 4, lift: 38, time: 1.4, want: 2.5 };   // want ארוך – מתקרבים לאט (approachSlow), שה-PULL לא יפוג בדרך     // PULL – עוצרים ליד החבל ומושכים עד שהסורג עולה למעלה
 const GUARD = { w: 9, h: 18, walk: 14, gap: 5 }, HIDE_TIME = 1.8;    // HIDE – שני שומרים עם פנסים
 GUARD.span = GUARD.w * 2 + GUARD.gap;                                 // רוחב הזוג
 const HIDE_ROCK = { w: 34, h: 12, lead: 25 };                          // HIDE – ערימת סלעים: הנינג'ה מתכופף לפניה, השומרים עוברים מאחוריה (רואים אותם מעליה)

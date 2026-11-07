@@ -55,6 +55,7 @@ function approachDist() {
     else if (o.type === 'jetgap' && !o.passed) d = Math.min(d, o.x + JS.stop - r);
     else if (o.type === 'wolfden' && !o.passed) d = Math.min(d, o.x + WF.stop - r);   // הסלע הקטן מול הזאבים   // התרמיל ליד התהום
     else if (o.type === 'boar' && !o.passed) d = Math.min(d, boarStandR(o, 0) - r);   // העץ הראשון ביער
+    else if (o.type === 'gate' && !o.open && !o.lifting && !o.hit) d = Math.min(d, o.x - GATE.rope - r);   // השער עם החבל: מאטים לפני – יותר זמן להגיד PULL
     else if (o.type === 'door' && !o.unlocked && !o.hit) d = Math.min(d, o.x - DOOR.stopAt - r);   // הדוכן של הסוחר
   }
   return d < -2 ? Infinity : d;

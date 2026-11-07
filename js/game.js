@@ -174,8 +174,17 @@ function obstacleValue(type) {
 }
 
 // בוחר את המכשול הבא. לא יותר מ-3 מאותו סוג ברצף
+// מכשולים שמתבלבלים ביניהם (PUSH / PULL) – לא אחד אחרי השני
+const CLASH = { boulder: 'gate', gate: 'boulder' };
 function pickType() {
-  if (mode === 'journey' && jDeck.length) return jDeck.shift();                 // במסע: קודם כל מכשול לפחות פעם אחת (journey.js)
+  const prev = obstacles.length ? obstacles[obstacles.length - 1].type : null;
+  if (mode === 'journey' && jDeck.length) {                                     // במסע: קודם כל מכשול לפחות פעם אחת (journey.js)
+    const i = jDeck.findIndex(t => CLASH[prev] !== t);
+    return i > 0 ? jDeck.splice(i, 1)[0] : jDeck.shift();
+  }
+  for (let k = 0; k < 6; k++) { const t = pickType0(); if (CLASH[prev] !== t || k === 5) return t; }
+}
+function pickType0() {
   let w = playWords[Math.floor(Math.random() * playWords.length)];
   const last = obstacles.slice(-3).map(o => o.type);
   if (playWords.length > 1 && last.length === 3 && last.every(t => t === WORD_OBSTACLE[w])) {

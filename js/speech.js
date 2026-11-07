@@ -259,6 +259,8 @@ function command(word, source) {
   else if (word === 'ride') { rideCmd(); }                             // RIDE – עולים על הדרקון
   else if (word === 'down') {
     if (rideLane(false)) return;           // על הדרקון – יורדים לגובה התחתון
+    const ex = expectedWords0();
+    if (ex.length && !ex.includes('down')) return;   // DOWN ששמענו בטעות ליד מכשול אחר – לא עושים כלום (שלא יפיל באמצע קפיצה / טיסה)
     duckT = DUCK_TIME;                     // כל "down" נוסף מאריך את ההתכופפות
     flyT = 0;
     if (py > 0) vy = Math.min(vy, -60);    // באוויר – נוחת מהר

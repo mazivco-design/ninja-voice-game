@@ -8,7 +8,7 @@
 let ride = null;   // { o, phase: 'wait' | 'mount' | 'takeoff' | 'fly' | 'land' | 'leave', t, py, lane, left, dist, gap, demo }
 const DRAGON = { w: 34, saddle: 20, stopAt: 4, lie: 6, hi: 34, lo: 12, climb: 60, mount: 0.7, takeoff: 0.9, land: 1.0, sky: 7, leave: 1.6, gapMul: 1.35 };   // sky = כמה מכשולים בטיסה
 const SKY_TYPES = ['skyrock', 'bat'];
-const SKYROCK = { w: 11 }, BAT = { w: 12, h: 9, fly: 10, flee: 1.2 };
+const SKYROCK = { w: 11 }, BAT = { w: 12, h: 9, fly: 4, flee: 1.2, gapMul: 1.5 };   // fly – כמה מהר העטלף מתקרב (לאט יותר = יותר זמן להתכונן)
 let skyPrizes = [];   // מטבעות וכוכבים בשמיים: { x, y, star, got }
 function laneY(lane) { return GROUND - (lane ? DRAGON.hi : DRAGON.lo) - 4; }   // גובה הנינג'ה היושב בכל נתיב
 
@@ -71,7 +71,7 @@ function rideUpdate(dt, pb) {
     r.dist += curSpeed() * dt;
     if (r.left > 0 && r.dist >= r.gap && state === 'play') skySpawn(r);
     const pending = obstacles.some(o => SKY_TYPES.includes(o.type) && o.x + o.w > PLAYER.x - 10);
-    if (r.left <= 0 && !pending && r.dist > speed * 0.5) { r.phase = 'land'; r.t = 0; r.from = r.py; }
+    if (r.left <= 0 && !pending && r.dist > speed * 0.5) { r.phase = 'land'; r.t = 0; r.from = r.py; skyPrizes = skyPrizes.filter(c => c.got || c.x < PLAYER.x); }   // יורדים – מה שעוד לפנינו נעלם
   } else if (r.phase === 'land') {                                 // יורדים לקרקע
     const k = Math.min(1, r.t / DRAGON.land);
     r.py = r.from * (1 - k * k * (3 - 2 * k));
@@ -94,6 +94,8 @@ function skySpawn(r) {
   o.passed = false; o.hit = false; o.pts = obstacleValue(o.type); o.seed = Math.random() * 100;
   obstacles.push(o); spawned++; r.left--; r.dist = 0;
   r.gap = speed * rand(cfg.gapT[0], cfg.gapT[1]) * DRAGON.gapMul + o.w;     // רווחים נדיבים – לא קשה מדי
+  if (bat) o.x += speed * BAT.gapMul * 0.5;                                      // עטלף מופיע רחוק יותר – רואים אותו מוקדם ויש זמן להגיד FIRE
+  if (r.left <= 0) return;                                                      // אחרי המכשול האחרון הדרקון יורד – בלי מטבעות וכוכבים שאי אפשר לאסוף
   // פרסים ברווח שאחרי המכשול: שורת מטבעות בנתיב הבטוח (ליד סלע – בנתיב השני), ולפעמים כוכב גדול
   const lane = o.type === 'skyrock' ? 1 - o.lane : o.lane, x0 = o.x + o.w + speed * 0.6, n = 4;
   for (let i = 0; i < n; i++) skyPrizes.push({ x: x0 + i * 5, y: laneY(lane) - Math.sin(i / (n - 1) * Math.PI) * 2, star: false });
