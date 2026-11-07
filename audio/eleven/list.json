@@ -2042,6 +2042,39 @@
    "text": "[happy] Hi!",
    "voice": "lib-kai",
    "voice_id": "S0ypc51SmsvcKXTWvjqJ"
+  },
+  {
+   "file": "sarah-a-key-please",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] A key, please.",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-a-rope-please",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] A rope, please.",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-a-torch-please",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] A torch, please.",
+   "voice": "Sarah"
   }
  ]
 }
