@@ -163,38 +163,45 @@ function wfMask(o, x) {                                                         
   const a = o.x - 70, b = o.x + o.w + 10, r = 40;
   return Math.max(0, Math.min(1, (x - a) / r, (b - x) / r));
 }
+// הזאב לפי הסקיצה (צללית זוויתית). נקודות בפיקסלים של הסקיצה, הראש משמאל; הקרקע ב-y=1124
+const WOLF_SK = [[796, 913], [830, 895], [838, 873], [866, 862], [863, 840], [900, 862], [963, 900], [1123, 912], [1190, 977], [1236, 1015], [1160, 1005],
+  [1125, 938], [1122, 1000], [1130, 1062], [1128, 1125], [1108, 1125], [1114, 1066], [1095, 1038], [1078, 1124], [1060, 1124], [1069, 1043], [1043, 999],
+  [974, 1013], [976, 1122], [951, 1122], [958, 1104], [947, 1018], [932, 1012], [915, 1120], [889, 1121], [901, 1111], [913, 1000], [854, 929], [804, 931]];
+const WOLF_K = 0.05, WOLF_CX = 1010, WOLF_GY = 1124;
 function drawWolfFig(x, y, dir, t, mode) {                                           // dir: 1 = פונה ימינה, -1 = שמאלה
   ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
-  const walk = mode === 'walk' || mode === 'run', legA = walk ? Math.sin(t * (mode === 'run' ? 16 : 9)) * 0.5 : 0;
-  const body = '#6b7280', dark = '#374151', light = '#8d94a0';                       // כל הגוף בצבע אחד, גוון בהיר רק על הגב
-  ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(0, 0.3, 8, 1.2, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = body; ctx.lineWidth = 1.3; ctx.lineCap = 'round';
-  [[-5, 1], [-3.4, -1], [4, 1], [5.6, -1]].forEach(([lx, d]) => { ctx.beginPath(); ctx.moveTo(lx, -5); ctx.lineTo(lx + Math.sin(legA * d) * 2.6, -0.3); ctx.stroke(); });
-  ctx.fillStyle = body; ctx.beginPath(); ctx.ellipse(0, -7, 8, 3.6, 0.04, 0, Math.PI * 2); ctx.fill();   // גוף
-  ctx.save(); ctx.beginPath(); ctx.ellipse(0, -7, 8, 3.6, 0.04, 0, Math.PI * 2); ctx.clip();
-  ctx.fillStyle = light; ctx.beginPath(); ctx.ellipse(-0.5, -10.2, 7.2, 1.9, 0.03, 0, Math.PI * 2); ctx.fill(); ctx.restore();   // גוון בהיר על הגב
-  ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(-7.4, -8.5); ctx.quadraticCurveTo(-12, -7 + Math.sin(t * 3) * 0.8, -13.5, -3.5 + Math.sin(t * 3) * 0.8); ctx.quadraticCurveTo(-10, -6, -7.2, -6.2); ctx.fill();   // זנב
-  const hy = mode === 'growl' ? -8.4 : mode === 'up' ? -12 : -9.5;                     // ראש: מורכן כשנוהם, מורם כשמסתכל למעלה
-  ctx.save(); ctx.translate(6.5, hy);
-  if (mode === 'up') ctx.rotate(-0.5);
-  const snarl = mode !== 'up';                                                          // נוהם – פה פתוח עם ניבים (חוץ מכשמסתכל למעלה)
-  const open = mode === 'growl' ? 1.25 : mode === 'run' ? 1.4 : snarl ? 0.75 : 0.2;
-  ctx.fillStyle = body; ctx.beginPath(); ctx.ellipse(0.5, 0, 3.2, 2.6, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(1.8, -1.5); ctx.lineTo(7.2, 0.1); ctx.lineTo(7, 0.9); ctx.lineTo(2, 0.9); ctx.fill();   // לסת עליונה וחוטם
-  ctx.fillStyle = '#7f1d1d'; ctx.beginPath(); ctx.moveTo(2.4, 0.9); ctx.lineTo(6.9, 0.9); ctx.lineTo(6.2, 0.9 + open); ctx.lineTo(2.4, 1.2 + open * 0.6); ctx.fill();   // פה פתוח (אדום כהה)
-  ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(2.2, 1.2 + open * 0.6); ctx.lineTo(6.2, 0.9 + open); ctx.lineTo(5.9, 1.6 + open); ctx.lineTo(2.2, 2.2 + open * 0.5); ctx.fill();   // לסת תחתונה
-  ctx.fillStyle = '#fff';                                                              // ניבים חדים למעלה ולמטה
-  for (const [x, l] of [[3.3, 1.0], [4.4, 0.7], [5.4, 0.7], [6.4, 1.1]]) { ctx.beginPath(); ctx.moveTo(x - 0.32, 0.9); ctx.lineTo(x, 0.9 + l * Math.min(1, open + 0.2)); ctx.lineTo(x + 0.32, 0.9); ctx.fill(); }
-  if (open > 0.5) for (const [x, l] of [[3.8, 0.8], [5.8, 0.8]]) { const y0 = 0.9 + open * 0.95; ctx.beginPath(); ctx.moveTo(x - 0.3, y0 + 0.2); ctx.lineTo(x, y0 - l * 0.8); ctx.lineTo(x + 0.3, y0 + 0.2); ctx.fill(); }
-  ctx.strokeStyle = dark; ctx.lineWidth = 0.22;                                        // קמטים של נהימה על החוטם
-  if (snarl) { ctx.beginPath(); ctx.moveTo(3.8, -0.7); ctx.quadraticCurveTo(4.3, -1.1, 4.8, -0.6); ctx.moveTo(4.6, -0.4); ctx.quadraticCurveTo(5.1, -0.8, 5.6, -0.3); ctx.stroke(); }
-  ctx.fillStyle = '#111827'; ctx.beginPath(); ctx.arc(7.05, 0.35, 0.55, 0, Math.PI * 2); ctx.fill();   // אף
-  ctx.fillStyle = dark; ctx.beginPath(); ctx.moveTo(-1.6, -1.6); ctx.lineTo(-1.1, -5.4); ctx.lineTo(0.6, -2); ctx.fill(); ctx.beginPath(); ctx.moveTo(0.2, -2); ctx.lineTo(1.1, -5.6); ctx.lineTo(2.2, -1.6); ctx.fill();   // אוזניים מחודדות לאחור
-  // עין צרה וחדה: שקד צהוב-כתום עם אישון אנכי, וגבה כהה בזווית למטה
-  ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(1.6, -0.5); ctx.quadraticCurveTo(2.5, -1.3, 3.4, -0.9); ctx.quadraticCurveTo(2.5, -0.15, 1.6, -0.5); ctx.fill();
-  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.ellipse(2.6, -0.75, 0.16, 0.36, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 0.45; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(1.3, -1.7); ctx.lineTo(3.6, -1.05); ctx.stroke();   // גבה זועפת
+  const walk = mode === 'walk' || mode === 'run', ph = walk ? t * (mode === 'run' ? 16 : 9) : 0;
+  const body = '#6b7280', light = '#8a91a0', K = WOLF_K;
+  const bob = walk ? Math.abs(Math.sin(ph)) * 0.35 : 0;
+  // הסקיצה פונה שמאלה – הופכים, כך ש-dir=1 פונה ימינה. רגליים: מזיזים את כפות הרגליים קדימה/אחורה לסירוגין
+  const pt = ([sx, sy]) => {
+    let dx = 0;
+    if (walk && sy > 1040) { const leg = sx < 990 ? (sx < 940 ? 0 : 1) : (sx < 1100 ? 2 : 3), k = (sy - 1040) / 85; dx = Math.sin(ph + (leg % 2 ? Math.PI : 0) + (leg > 1 ? Math.PI / 2 : 0)) * 1.3 * k / K; }
+    return [-(sx + dx - WOLF_CX) * K, (sy - WOLF_GY) * K - (sy < 1040 ? bob : 0)];
+  };
+  const P = WOLF_SK.map(pt);
+  const path = () => { ctx.beginPath(); P.forEach(([px, py], i) => i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)); ctx.closePath(); };
+  ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(0, 0.3, 9, 1.2, 0, 0, Math.PI * 2); ctx.fill();
+  if (mode === 'up') { ctx.translate(8, -9); ctx.rotate(-0.12); ctx.translate(-8, 9); }   // מרים את הראש אל הכדור הפורח
+  ctx.fillStyle = body; path(); ctx.fill();
+  ctx.save(); path(); ctx.clip();                                                    // גוון בהיר לאורך הגב
+  ctx.fillStyle = light; ctx.beginPath(); const back = [[900, 862], [963, 900], [1123, 912], [1190, 977]].map(pt);
+  ctx.moveTo(back[0][0], back[0][1] - 1); back.forEach(([px, py]) => ctx.lineTo(px, py - 0.4)); for (let i = back.length - 1; i >= 0; i--) ctx.lineTo(back[i][0], back[i][1] + 1.6); ctx.closePath(); ctx.fill();
   ctx.restore();
+  // פנים: עין צרה עם גבה זועפת, פה נוהם עם ניבים
+  const H = (sx, sy) => pt([sx, sy]);
+  const [ex, ey] = H(852, 886);
+  ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(ex - 0.9, ey + 0.1); ctx.quadraticCurveTo(ex, ey - 0.65, ex + 0.9, ey - 0.2); ctx.quadraticCurveTo(ex, ey + 0.45, ex - 0.9, ey + 0.1); ctx.fill();
+  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.ellipse(ex + 0.1, ey - 0.08, 0.15, 0.32, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 0.4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(ex - 1.0, ey - 0.85); ctx.lineTo(ex + 1.1, ey - 0.3); ctx.stroke();
+  if (mode !== 'up') {
+    const open = mode === 'growl' ? 1.1 : mode === 'run' ? 1.3 : 0.7;
+    const [n1x, n1y] = H(800, 918), [j1x, j1y] = H(850, 922);
+    ctx.fillStyle = '#7f1d1d'; ctx.beginPath(); ctx.moveTo(n1x, n1y); ctx.lineTo(j1x, j1y); ctx.lineTo(n1x - 0.4 * Math.sign(n1x - j1x), n1y + open); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff';
+    for (const k of [0.15, 0.45, 0.75]) { const fx = n1x + (j1x - n1x) * k, fy = n1y + (j1y - n1y) * k; ctx.beginPath(); ctx.moveTo(fx - 0.28, fy); ctx.lineTo(fx, fy + 0.75 * (k < 0.3 ? 1.2 : 1)); ctx.lineTo(fx + 0.28, fy); ctx.fill(); }
+  }
+  ctx.fillStyle = '#111827'; const [nx, ny] = H(797, 914); ctx.beginPath(); ctx.arc(nx - 0.15, ny - 0.1, 0.45, 0, Math.PI * 2); ctx.fill();   // אף
   ctx.restore();
 }
 function drawPine(x, base, h, seed) {
