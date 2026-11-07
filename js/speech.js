@@ -123,7 +123,7 @@ function tokenize(text, detail) {
 // המילים שמתאימות למכשולים שעל המסך לפני הנינג'ה (ולסוחר). אם אין כלום – כל המילים של השלב
 function expectedWords() { return [...expectedWords0(), ...powerWordsOwned()]; }   // SHIELD / JET – תמיד מופעלות מיד
 function expectedWords0(strict) {                                              // strict – בלי ברירת המחדל "כל המילים"
-  if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? (merchant.t >= MERCH.askAt ? ['want'] : []) : merchant.phase === 'choose' ? [...ITEM_WORDS] : [];
+  if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? (merchant.t >= MERCH.askAt ? ['want'] : []) : merchant.phase === 'choose' ? (merchant.t >= MERCH.pickAt ? [...ITEM_WORDS] : []) : [];
   if (duelActive()) return ['fight'];
   const me = mudExpected(); if (me) return me;
   const be = boatExpected(); if (be) return be;

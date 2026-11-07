@@ -83,6 +83,6 @@ function testerAutoScenes(t) {
   if (tunnelWait && tunnelWait.idle > 0.3) command('crawl', 'auto');
   if (gust && gust.phase === 'storm' && gust.held === null && gust.t > 1.0) command('hold', 'auto');
   if (rope && rope.phase === 'wait') command('catch', 'auto'); else if (rope && rope.phase === 'hang' && rope.theta >= ROPE.amp * ROPE.farAt) command('let go', 'auto');
-  if (merchant && merchant.t > 1) { if (merchant.phase === 'ask' && merchant.t > MERCH.askAt + 0.6) command('want', 'auto'); else if (merchant.phase === 'choose') command(needOf(merchant.o), 'auto'); }
+  if (merchant && merchant.t > 1) { if (merchant.phase === 'ask' && merchant.t > MERCH.askAt + 0.6) command('want', 'auto'); else if (merchant.phase === 'choose' && merchant.t > MERCH.pickAt) command(needOf(merchant.o), 'auto'); }
   if (autoSt.flyAt !== null && t >= autoSt.flyAt) { command('fly', 'auto'); autoSt.flyAt = null; }
 }

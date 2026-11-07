@@ -1,6 +1,6 @@
 /* ninja-voice-game – merchant.js
    I WANT: לפני דלת נעולה עומד סוחר עם עגלה. הוא שואל פעם אחת "What would you like?" (בבועת קומיקס), והחפצים מוצגים עם השמות שלהם.
-   כשהוא מסיים לשאול – בועה מעל הנינג'ה עם מיקרופון מהבהב: תורך. אומרים I WANT A KEY (במשפט אחד), או I WANT ואז KEY.
+   כשהוא מסיים לשאול – בועה מעל הנינג'ה עם מיקרופון מהבהב: תורך. בשני שלבים: I WANT – הסוחר שואל "Which one?" – ואז KEY. משפט שלם ונכון (I WANT A KEY) נקלט מיד.
    אחרי שתיקה – המשחק אומר את המשפט בקול ומדגיש את החפץ הנכון.
    מה שעומד אחרי הדוכן קובע מה לבקש (לסירוגין): דלת נעולה → KEY · צוק גבוה → ROPE (זורק חבל עם וו ומטפס) · מערה חשוכה → TORCH (לפיד שמאיר את הדרך).
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
@@ -16,7 +16,7 @@ const MERCHANT_OFFER = ['key', 'rope', 'torch'];
 // קודם אומרים שלום זה לזה (הסוחר מנופף, הנינג'ה מנופף בחזרה), ורק אז הסוחר שואל
 const SAY_ASK = [[0.3, -1, 'merchant: hi there!'], [1.3, -1, 'ninja: hi!'], [2.4, -1, 'What would you like?']];
 const GATE_CLIMB = 1.6;
-const MERCH = { askAt: 2.4, giveT: 2.0, thankT: 0.95, turn: 4.1, hint: 7.6, hintEvery: 7, choiceHint: 4 };   // turn: מתי מופיעה בועת "תורך" (אחרי שהשאלה נגמרה)
+const MERCH = { pickAt: 0, askAt: 2.4, whichAt: 0.6, giveT: 2.0, thankT: 0.95, turn: 4.1, hint: 7.6, hintEvery: 7, choiceHint: 4 };   // turn: מתי מופיעה בועת "תורך" (אחרי שהשאלה נגמרה)
 
 function cartX(o) { return o.x - 46; }                        // העגלה עומדת לפני הדלת, והסוחר בינה לבין הדלת
 const ITEM_GAP = 7;
@@ -35,10 +35,11 @@ function merchantUpdate(dt, pb) {
     }
     if (m.t > MERCH.turn && m.hinted === 0) m.hi = Math.floor((m.t - MERCH.turn) / 0.9) % MERCHANT_OFFER.length;
     if (m.t >= MERCH.hint + m.hinted * MERCH.hintEvery && state === 'play') {   // שתיקה – המשחק אומר את המשפט ומדגיש את המפתח
-      const nd = needOf(m.o); m.hinted++; m.hi = MERCHANT_OFFER.indexOf(nd); speak('I want a ' + nd + ', please'); flash = { text: '🙋 I WANT A ' + nd.toUpperCase() + ', PLEASE!', t: 2 };
+      m.hinted++; speak('want'); flash = { text: '🙋 I WANT…', t: 2 };       // קודם רק I WANT – את החפץ בוחרים אחרי שהסוחר שואל
     }
   } else if (m.phase === 'choose') {
     const nd = needOf(m.o);
+    if (!m.asked && m.t >= MERCH.whichAt) { m.asked = 1; speak('which one?'); }
     if (m.t >= MERCH.choiceHint + m.hinted * MERCH.hintEvery && state === 'play') { m.hinted++; m.hi = MERCHANT_OFFER.indexOf(nd); speak(nd); flash = { text: ITEMS[nd].icon + ' ' + nd.toUpperCase() + '!', t: 1.6 }; }
   } else if (m.phase === 'give') {                              // החפץ עף מהעגלה לנינג'ה, והנינג'ה מודה לסוחר בקידה קטנה
     if (m.t > MERCH.thankT && !m.thanked) { m.thanked = 1; speak('ninja: thank you!'); }
@@ -63,10 +64,10 @@ function merchantUpdate(dt, pb) {
 
 function merchantWant() {
   const m = merchant; if (!m || m.phase !== 'ask' || m.t < MERCH.askAt) return;   // עוד אומרים שלום
-  m.phase = 'choose'; m.t = 0; m.hi = -1; m.hinted = 0; setBubble(m, 'Which one?');   // בלי קול – כדי שהמילה הבאה של הילד ("key") לא תיבלע
+  m.phase = 'choose'; m.t = 0; m.hi = -1; m.hinted = 0; m.asked = 0; setBubble(m, 'Which one?');   // "Which one?" נשמע רק אם החפץ לא נאמר כבר באותו משפט
 }
 function merchantItem(w) {
-  const m = merchant; if (!m || m.phase !== 'choose') return;  // צריך קודם להגיד I WANT
+  const m = merchant; if (!m || m.phase !== 'choose' || m.t < MERCH.pickAt) return;  // צריך קודם להגיד I WANT, ולחכות לשאלה "Which one?"
   m.hi = MERCHANT_OFFER.indexOf(w);
   if (w === needOf(m.o)) { m.phase = 'give'; m.t = 0; m.item = w; setBubble(m, 'Here you go!'); speak('Here you go!'); sfx('coin'); return; }
   if (needOf(m.o) === 'key') { setBubble(m, 'Hmm… a ' + w + ' won\'t open the door!'); speak('Hmm, that won\'t open the door.'); }   // חפץ לא מתאים – מנסים שוב
@@ -200,7 +201,7 @@ function drawMerchant(o) {
   const myTurn = m && ((m.phase === 'ask' && m.t > MERCH.turn) || (m.phase === 'choose' && m.t > 1.1));   // תור הילד – הבועה של הסוחר נעלמת
   if (m && m.bubble && !myTurn) drawBubble(m.bubble, mx - 4, GROUND - 25, { age: m.bT, tail: 1 });   // הסוחר מדבר
   if (myTurn) {   // תורך! בועה מעל הנינג'ה עם מיקרופון מהבהב
-    const blink = Math.floor(now * 3) % 2, txt = (blink ? '🎤 ' : '🎙️ ') + (m.phase === 'ask' ? 'I want a …, please' : 'KEY? ROPE? TORCH?');
+    const blink = Math.floor(now * 3) % 2, txt = (blink ? '🎤 ' : '🎙️ ') + (m.phase === 'ask' ? 'I WANT…' : 'KEY? ROPE? TORCH?');
     drawBubble(txt, PLAYER.x + 9, GROUND - 22, { age: m.phase === 'ask' ? m.t - MERCH.turn : m.t - 1.1, tail: -1, fill: '#fef9c3', color: '#1d4ed8', size: 3.8 });
   }
   if (!m && !o.unlocked && labelsVisible()) label('I WANT', x + 8, GROUND - 28, 4, '#fde047', '#1e293b');
