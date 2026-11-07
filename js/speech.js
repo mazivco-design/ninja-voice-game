@@ -122,7 +122,7 @@ function tokenize(text, detail) {
 
 // המילים שמתאימות למכשולים שעל המסך לפני הנינג'ה (ולסוחר). אם אין כלום – כל המילים של השלב
 function expectedWords() { return [...expectedWords0(), ...powerWordsOwned()]; }   // SHIELD / JET – תמיד מופעלות מיד
-function expectedWords0() {
+function expectedWords0(strict) {                                              // strict – בלי ברירת המחדל "כל המילים"
   if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? (merchant.t >= MERCH.askAt ? ['want'] : []) : merchant.phase === 'choose' ? [...ITEM_WORDS] : [];
   if (duelActive()) return ['fight'];
   const me = mudExpected(); if (me) return me;
@@ -142,12 +142,13 @@ function expectedWords0() {
     if (o.passed || o.hit || o.caught || o.x + (o.w || 0) < pb.l || o.x > W + 10) continue;
     for (const w of OBSTACLE_WORDS[o.type] || []) if (!out.includes(w)) out.push(w);
   }
-  return out.length ? out : [...listenWords];
+  return out.length || strict ? out : [...listenWords];
 }
 
 // מילה נכונה שנאמרה מוקדם מדי: לא נפסלים על זה – שומרים אותה ומפעילים בדיוק כשמגיעים למכשול
 const EARLY_TYPES = ['box', 'beam', 'wall', 'cliff', 'boulder', 'gate', 'window', 'tramp', 'bramble', 'lake', 'bridge', 'river', 'pond'];
 let earlyWord = null;   // { o, w }
+let okBadge = null;     // { w, t } – תג ירוק קצר: המילה הנכונה נקלטה
 function nextObstacle() {
   const pb = playerBox(); let next = null;
   for (const o of obstacles) if (!o.passed && !o.hit && !o.caught && o.x + (o.w || 0) > pb.l && (!next || o.x < next.x)) next = o;
@@ -164,6 +165,7 @@ function earlyHold(w) {
   earlyWord = { o, w }; return true;
 }
 function earlyUpdate(dt) {
+  if (okBadge && (okBadge.t -= dt) <= 0) okBadge = null;
   const e = earlyWord; if (!e) return;
   if (e.o.passed || e.o.hit || !obstacles.includes(e.o) || state !== 'play') { earlyWord = null; return; }
   if (e.flyAt !== undefined) { if ((e.flyAt -= dt) <= 0) { earlyWord = null; command('fly', 'early'); } return; }
@@ -281,7 +283,8 @@ function command(word, source) {
   heard = { text: word.toUpperCase(), t: 0.8 };
   if (wfCmd(word)) return;                 // זאבים: CATCH / HOLD / LET GO
   if (jsCmd(word)) return;                 // שלב תרמיל הסילון: PICK UP / PUT ON / FLY / UP / DOWN
-  if ((source === 'voice' || source === 'tap') && earlyHold(word)) return;   // מילה נכונה שנאמרה מוקדם – נשמרת ומופעלת כשמגיעים למכשול
+  if ((source === 'voice' || source === 'tap') && state === 'play' && expectedWords0(true).includes(word)) okBadge = { w: word, t: 1.0 };   // פידבק: נקלט נכון
+  if ((source === 'voice' || source === 'tap') && earlyHold(word)) { okBadge = null; return; }   // מילה נכונה שנאמרה מוקדם – נשמרת ומופעלת כשמגיעים למכשול
 
   if (word === 'jump') {
     if (mudBusy()) return;                 // תקוע בבוץ – אי אפשר לקפוץ

@@ -146,10 +146,12 @@ function jumpLightState() {
 }
 // המילה נקלטה ומחכה למכשול: תג ירוק "KICK ✓" מעל הראש – הפעולה תקרה לבד בזמן הנכון
 function drawEarlyBadge(fx, fy) {
-  if (typeof earlyWord === 'undefined' || !earlyWord || state !== 'play') return false;
-  const now = performance.now() / 1000, x = fx + 0.5, y = fy - 23 + Math.sin(now * 5) * 0.4;
-  const txt = earlyWord.w.toUpperCase() + (earlyWord.then ? ' + FLY' : '') + ' ✓';
-  ctx.save(); ctx.font = '900 3.4px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (typeof earlyWord === 'undefined' || state !== 'play') return false;
+  const e = earlyWord || okBadge; if (!e) return false;
+  const now = performance.now() / 1000, x = fx + 0.5, y = fy - (typeof jsWorn === 'function' && jsWorn() ? 28 : 23) + Math.sin(now * 5) * 0.4;   // עם תרמיל – מעל מד הדלק
+  const txt = e.w.toUpperCase() + (e.then ? ' + FLY' : '') + ' ✓';
+  ctx.save(); if (!earlyWord) ctx.globalAlpha = Math.min(1, okBadge.t / 0.3);   // התג הקצר דוהה בסוף
+  ctx.font = '900 3.4px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const w = ctx.measureText(txt).width + 3.4;
   ctx.fillStyle = 'rgba(22,163,74,.92)'; roundRect(x - w / 2, y - 2.4, w, 4.8, 2.3); ctx.fill();
   ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 0.35; roundRect(x - w / 2, y - 2.4, w, 4.8, 2.3); ctx.stroke();
