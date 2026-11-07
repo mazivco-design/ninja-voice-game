@@ -41,7 +41,7 @@ function merchantUpdate(dt, pb) {
   } else if (m.phase === 'choose') {
     const nd = needOf(m.o);
     if (!m.asked && m.t >= MERCH.whichAt) { m.asked = 1; speak('which one?'); }
-    if (m.t >= MERCH.choiceHint + m.hinted * MERCH.hintEvery && state === 'play') { m.hinted++; m.hi = MERCHANT_OFFER.indexOf(nd); speak(nd); flash = { text: ITEMS[nd].icon + ' ' + nd.toUpperCase() + '!', t: 1.6 }; }
+    if (m.t >= MERCH.choiceHint + m.hinted * MERCH.hintEvery && state === 'play') { m.hinted++; m.hi = MERCHANT_OFFER.indexOf(nd); const ph = 'a ' + nd + ', please'; speak(VOICE_CLIPS[ph] ? ph : nd); flash = { text: ITEMS[nd].icon + ' A ' + nd.toUpperCase() + ', PLEASE!', t: 1.8 }; }   // מלמדים תשובה מנומסת (עד שיש הקלטה – רק שם החפץ)
   } else if (m.phase === 'give') {                              // החפץ עף מהעגלה לנינג'ה, והנינג'ה מודה לסוחר בקידה קטנה
     if (m.t > MERCH.thankT && !m.thanked) { m.thanked = 1; speak('ninja: thank you!'); }
     if (m.t > MERCH.giveT) { m.phase = 'walk'; m.t = 0; }
