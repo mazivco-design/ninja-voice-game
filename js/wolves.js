@@ -6,7 +6,7 @@
    אם הזאבים מגיעים אליו לפני שהתרומם – נפגע, הזאבים נסוגים, והחבל משתלשל מחדש.
    פאזות: arrive → circle → rope → caught → lift → ride → lower → hover → drop → land → exit */
 
-const WF = { stop: 30, rockH: 2.4, hill: 108, hillW: 30, hillH: 8, flyV: 16, liftT: 1.7, liftH: 15, balH: 29, lowerT: 1.3, arriveT: 1.8, balloonIn: 1.0, balloonT: 2.4,
+const WF = { stop: 30, rockH: 2.4, hill: 108, hillW: 30, hillH: 8, flyV: 16, liftT: 1.7, liftH: 11, balH: 25, balS: 1.6, lowerT: 1.3, arriveT: 1.8, balloonIn: 1.0, balloonT: 2.4,
              ropeT: 0.8, bite: 9.5, backT: 1.1, hint: 4, hintEvery: 6, coins: 4, after: 40 };
 const WF_WOLVES = [{ side: -1, d0: 32, sp: 0.8 }, { side: 1, d0: 30, sp: 0.85 }, { side: 1, d0: 50, sp: 1 }];   // צד, מרחק התחלה, יחס מהירות (הזאב המהיר מגיע ראשון)
 const WF_THREAT = { easy: 17, medium: 13, hard: 10 };                              // כמה שניות עד שהזאבים מגיעים (מההתחלה של המעגל)
@@ -233,7 +233,7 @@ function drawWolfScene(o) {
     if (S && ['lift', 'ride', 'lower', 'hover', 'drop', 'land', 'exit'].includes(S.p)) {
       mode = 'up'; d = S.liftD ? S.liftD[i] : d;
       if (!S.liftD) S.liftD = WF_WOLVES.map((w, j) => wfDist(j));
-      if (i === 1 && S.leapT >= 0 && S.leapT < 0.9) { const k = S.leapT / 0.9; yy = GROUND - Math.sin(Math.PI * k) * 10; d = S.liftD[i] - Math.sin(Math.PI * k) * 5; mode = 'run'; }   // קופץ – ומפספס
+      if (i === 1 && S.leapT >= 0 && S.leapT < 0.9) { const k = S.leapT / 0.9; yy = GROUND - Math.sin(Math.PI * k) * 8; d = S.liftD[i] - Math.sin(Math.PI * k) * 5; mode = 'run'; }   // קופץ – ומפספס
     }
     if (!S) mode = 'walk';
     const x = c + W8.side * d;
@@ -243,7 +243,7 @@ function drawWolfScene(o) {
 }
 function drawBalloon(bx, by) {                                                        // by = תחתית הסל
   const t = performance.now() / 1000, sw = Math.sin(t * 1.4) * 0.6;
-  ctx.save(); ctx.translate(bx + sw, by); ctx.scale(0.78, 0.78);
+  ctx.save(); ctx.translate(bx + sw, by); ctx.scale(WF.balS, WF.balS);   // כדור פורח גדול באמת – החלק העליון יכול לצאת מהמסך
   ctx.strokeStyle = '#78350f'; ctx.lineWidth = 0.35;
   [[-3, -11.5], [3, -11.5], [-1, -11], [1, -11]].forEach(([x2, y2]) => { ctx.beginPath(); ctx.moveTo(x2 * 1.2, -3.6); ctx.lineTo(x2 * 2.4, y2 - 2); ctx.stroke(); });
   const g = ctx.createLinearGradient(-11, 0, 11, 0); g.addColorStop(0, '#b91c1c'); g.addColorStop(0.5, '#f87171'); g.addColorStop(1, '#991b1b');
@@ -251,7 +251,7 @@ function drawBalloon(bx, by) {                                                  
   ctx.fillStyle = '#fde68a'; ctx.beginPath(); ctx.moveTo(-1.6, -12.6); ctx.bezierCurveTo(-4.5, -18, -4.5, -33, 0, -34); ctx.bezierCurveTo(4.5, -33, 4.5, -18, 1.6, -12.6); ctx.closePath(); ctx.fill();   // פס צהוב באמצע
   ctx.fillStyle = '#92400e'; ctx.fillRect(-3.6, -3.6, 7.2, 3.6); ctx.fillStyle = '#b45309'; ctx.fillRect(-3.6, -3.6, 7.2, 0.8);   // הסל
   ctx.restore();
-  drawFigure({ fx: bx + sw - 0.4, fy: by - 2.5, facing: -1, scale: 0.45, kind: 'ninja', accent: mudAccent(), pose: Object.assign(poseIdle(t), { arms: [[1.2, 1.6], [0.2, 0.4]] }) });   // החבר בסל
+  drawFigure({ fx: bx + sw - 0.6, fy: by - 1.2, facing: -1, scale: 0.72, kind: 'ninja', accent: mudAccent(), pose: Object.assign(poseIdle(t), { arms: [[1.2, 1.6], [0.2, 0.4]] }) });   // החבר בסל
 }
 function drawWolves(o) {
   drawWolfScene(o);
