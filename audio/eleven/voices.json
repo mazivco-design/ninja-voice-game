@@ -464,12 +464,12 @@
   "id": "QZ1okeFI43NQd6lXAzQ5",
   "category": "professional",
   "labels": {
-   "use_case": "characters_animation",
-   "gender": "male",
-   "age": "young",
-   "descriptive": "upbeat",
    "language": "en",
-   "accent": "american"
+   "descriptive": "upbeat",
+   "age": "young",
+   "accent": "american",
+   "gender": "male",
+   "use_case": "characters_animation"
   },
   "description": "Cool, charismatic, all-American 20-something voice with natural confidence, subtle emotional depth, and a grounded, relatable tone. Ideal for audiobooks, video games, animation, and character-driven content — especially young male leads, teen protagonists, athletes, high school or college students, and coming-of-age stories. Perfect for storytelling, dialogue, and voiceover projects that need a modern, cinematic feel with just the right edge."
  },
