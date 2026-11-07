@@ -145,6 +145,12 @@ function expectedWords0() {
   return out.length ? out : [...listenWords];
 }
 
+// מילה "תועה": המכשול הבא בדרך (גם אם עוד רחוק) לא צריך אותה – למשל RUN ששמענו בטעות לפני קיר, שהיה מאיץ את הנינג'ה לתוכו
+function strayWord(w) {
+  const pb = playerBox(); let next = null;
+  for (const o of obstacles) if (!o.passed && !o.hit && !o.caught && o.x + (o.w || 0) > pb.l && (!next || o.x < next.x)) next = o;
+  return !!next && !(OBSTACLE_WORDS[next.type] || []).includes(w);
+}
 // בזמן שהמילון מקריא מילה, המיקרופון שומע אותה – לא מפעילים אותה פעמיים
 let ignoreVoiceUntil = 0, lastLoudT = -1e9, voiceSaid = '';
 let listenWords = [...WORDS];          // המילים שהזיהוי מקשיב להן במשחק הנוכחי
@@ -259,9 +265,10 @@ function command(word, source) {
   else if (word === 'ride') { rideCmd(); }                             // RIDE – עולים על הדרקון
   else if (word === 'down') {
     if (rideLane(false)) return;           // על הדרקון – יורדים לגובה התחתון
-    const ex = expectedWords0();
-    if (ex.length && !ex.includes('down')) return;   // DOWN ששמענו בטעות ליד מכשול אחר – לא עושים כלום (שלא יפיל באמצע קפיצה / טיסה)
+    if (strayWord('down')) return;         // DOWN ששמענו בטעות – המכשול הבא צריך מילה אחרת: לא עושים כלום (שלא יפיל באמצע קפיצה / טיסה)
     duckT = DUCK_TIME;                     // כל "down" נוסף מאריך את ההתכופפות
+    const bm = obstacles.find(o => o.type === 'beam' && !o.passed && !o.hit && o.x + (o.w || 0) > playerBox().l);   // אמר DOWN מוקדם לפני קורה – נשאר כפוף עד שעוברים אותה
+    if (bm && curSpeed() > 0) duckT = Math.max(DUCK_TIME, Math.min(3, (bm.x + (bm.w || 0) - playerBox().l) / curSpeed() + 0.15));
     flyT = 0;
     if (py > 0) vy = Math.min(vy, -60);    // באוויר – נוחת מהר
   } else if (word === 'kick') {
@@ -288,7 +295,7 @@ function command(word, source) {
       burst(PLAYER.x + 4, GROUND - py - 16, '#f8fafc', 6);
     }
   } else if (word === 'stop') { act.stop = STOP_TIME; act.run = 0; }       // העולם עוצר
-  else if (word === 'run')   { const ex = expectedWords0(); if (ex.length && !ex.includes('run')) return; act.run = RUN_BOOST.time; act.stop = 0; }   // דוהר מהר – אבל RUN ששמענו בטעות ליד מכשול אחר לא מאיץ אל תוכו
+  else if (word === 'run')   { if (strayWord('run')) return; act.run = RUN_BOOST.time; act.stop = 0; }   // דוהר מהר – אבל RUN ששמענו בטעות ליד מכשול אחר לא מאיץ אל תוכו
   else if (word === 'swim')  { act.swim = SWIM_TIME; duckT = 0; }
   else if (word === 'climb') { act.climbWant = 0.8; }                     // מטפס כשהנינג'ה מגיע לסולם (אם זה קורה בשנייה הקרובה)
   else if (word === 'yes' && boatYes()) {}                                         // YES – עונים לחבר בסירה
