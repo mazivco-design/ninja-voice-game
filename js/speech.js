@@ -145,6 +145,33 @@ function expectedWords0() {
   return out.length ? out : [...listenWords];
 }
 
+// מילה נכונה שנאמרה מוקדם מדי: לא נפסלים על זה – שומרים אותה ומפעילים בדיוק כשמגיעים למכשול
+const EARLY_TYPES = ['box', 'beam', 'wall', 'cliff', 'boulder', 'gate', 'window', 'tramp', 'bramble', 'lake', 'bridge', 'river', 'pond'];
+let earlyWord = null;   // { o, w }
+function nextObstacle() {
+  const pb = playerBox(); let next = null;
+  for (const o of obstacles) if (!o.passed && !o.hit && !o.caught && o.x + (o.w || 0) > pb.l && (!next || o.x < next.x)) next = o;
+  return next;
+}
+function earlyHold(w) {
+  const o = nextObstacle();
+  if (!o || !EARLY_TYPES.includes(o.type) || !(OBSTACLE_WORDS[o.type] || []).includes(w)) return false;
+  if (o.type === 'river' && w === 'fly') {                                      // JUMP + FLY מוקדם: FLY מחכה לקפיצה
+    if (earlyWord && earlyWord.o === o) { earlyWord.then = 'fly'; return true; }
+    return false;
+  }
+  if (typeof autoFireNow === 'function' && autoFireNow(o, playerBox())) return false;   // כבר בטווח – מפעילים עכשיו
+  earlyWord = { o, w }; return true;
+}
+function earlyUpdate(dt) {
+  const e = earlyWord; if (!e) return;
+  if (e.o.passed || e.o.hit || !obstacles.includes(e.o) || state !== 'play') { earlyWord = null; return; }
+  if (e.flyAt !== undefined) { if ((e.flyAt -= dt) <= 0) { earlyWord = null; command('fly', 'early'); } return; }
+  if (autoFireNow(e.o, playerBox())) {
+    command(e.w, 'early');
+    if (e.then === 'fly') { e.flyAt = 0.3; e.w = 'fly'; } else earlyWord = null;
+  }
+}
 // מילה "תועה": המכשול הבא בדרך (גם אם עוד רחוק) לא צריך אותה – למשל RUN ששמענו בטעות לפני קיר, שהיה מאיץ את הנינג'ה לתוכו
 function strayWord(w) {
   const pb = playerBox(); let next = null;
@@ -254,6 +281,7 @@ function command(word, source) {
   heard = { text: word.toUpperCase(), t: 0.8 };
   if (wfCmd(word)) return;                 // זאבים: CATCH / HOLD / LET GO
   if (jsCmd(word)) return;                 // שלב תרמיל הסילון: PICK UP / PUT ON / FLY / UP / DOWN
+  if ((source === 'voice' || source === 'tap') && earlyHold(word)) return;   // מילה נכונה שנאמרה מוקדם – נשמרת ומופעלת כשמגיעים למכשול
 
   if (word === 'jump') {
     if (mudBusy()) return;                 // תקוע בבוץ – אי אפשר לקפוץ

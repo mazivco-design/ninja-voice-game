@@ -46,7 +46,7 @@ function startGame(m, idx) {
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
   learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = null; liftIdx = 0; ptIdx = 0; merchNext = 'key'; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; cart = null; boarS = null; jetS = null; wolfS = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
-  py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
+  earlyWord = null; py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
   if (mode === 'journey') { jStation = stageIdx; startJourneySegment(true); }
   banner = mode === 'stage' ? { text: '🥋 ' + STAGES[stageIdx].name, sub: STAGES[stageIdx].hint, t: 3 }
@@ -567,6 +567,7 @@ function update(dt) {
   cartUpdate(dt, pb);
   boarUpdate(dt, pb);
   jsUpdate(dt, pb);
+  earlyUpdate(dt);                                   // מילה נכונה שנאמרה מוקדם – מופעלת כשמגיעים למכשול
   wfUpdate(dt, pb);
   powerTick(dt);
   if (state === 'play' && testerMode === 'auto' && isTester()) testerAuto(pb, dt);   // מצב בודק: משחק אוטומטי

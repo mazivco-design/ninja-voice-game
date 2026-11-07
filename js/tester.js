@@ -49,8 +49,19 @@ function testerAuto(pb, dt) {
   const t = autoSt.t;
   for (const o of obstacles) {
     if (o.passed || o.hit || o._a) continue;
+    const fire = autoFireNow(o, pb);
+    if (!fire) continue;
+    o._a = 1;
+    if (o.type === 'river') { command('jump', 'auto'); autoSt.flyAt = t + 0.35; }
+    else if (o.type === 'skyrock') command(o.lane ? 'down' : 'up', 'auto');
+    else if (o.type !== 'door' && o.type !== 'chasm' && o.type !== 'dragon') command((OBSTACLE_WORDS[o.type] || ['jump'])[0], 'auto');
+  }
+  testerAutoScenes(t);
+}
+// לכל מכשול – מאיזה מרחק המילה שלו עובדת (משמש גם את השחקן האוטומטי וגם את "מילה מוקדמת" ב-speech.js)
+function autoFireNow(o, pb) {
     const dd = o.x - pb.r;
-    const fire = {
+    return {
       box: dd <= speed * 0.2, beam: dd <= speed * 0.3, wall: dd <= KICK.range + speed * 0.2, enemy: dd <= 70, coin: o.x <= PLAYER.x + 25,
       river: dd <= speed * 0.05, rock: dd <= speed * 1.6 && dd > 0, bridge: dd <= speed * 0.35, lake: dd <= speed * 0.4,
       cliff: dd <= CLIFF.ladder + CLIFF.range + speed * 0.3, boulder: dd <= BOULDER.range + speed * 0.2, gate: dd <= GATE.rope + speed * 0.5,
@@ -58,12 +69,8 @@ function testerAuto(pb, dt) {
       pond: (netX(o) - pb.r) <= speed * 0.4, guard: dd <= (speed + GUARD.walk) * 0.9, arrows: dd <= (curSpeed() + ARROWS.speed) * 0.35,
       skyrock: dd <= speed * 0.7, bat: dd <= 55
     }[o.type];
-    if (!fire) continue;
-    o._a = 1;
-    if (o.type === 'river') { command('jump', 'auto'); autoSt.flyAt = t + 0.35; }
-    else if (o.type === 'skyrock') command(o.lane ? 'down' : 'up', 'auto');
-    else if (o.type !== 'door' && o.type !== 'chasm' && o.type !== 'dragon') command((OBSTACLE_WORDS[o.type] || ['jump'])[0], 'auto');
-  }
+}
+function testerAutoScenes(t) {
   if (ride && ride.phase === 'wait') command('ride', 'auto');
   if (duel && duel.phase === 'face' && duel.t > 0.35) command('fight', 'auto');
   liftAuto();
