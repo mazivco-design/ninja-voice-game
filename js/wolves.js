@@ -171,7 +171,7 @@ const WOLF_K = 0.05, WOLF_CX = 1010, WOLF_GY = 1124;
 function drawWolfFig(x, y, dir, t, mode) {                                           // dir: 1 = פונה ימינה, -1 = שמאלה
   ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
   const walk = mode === 'walk' || mode === 'run', ph = walk ? t * (mode === 'run' ? 16 : 9) : 0;
-  const body = '#6b7280', light = '#8a91a0', K = WOLF_K;
+  const body = '#6b7280', K = WOLF_K;                                            // צבע אחד לכל הגוף
   const bob = walk ? Math.abs(Math.sin(ph)) * 0.35 : 0;
   // הסקיצה פונה שמאלה – הופכים, כך ש-dir=1 פונה ימינה. רגליים: מזיזים את כפות הרגליים קדימה/אחורה לסירוגין
   const pt = ([sx, sy]) => {
@@ -184,10 +184,6 @@ function drawWolfFig(x, y, dir, t, mode) {                                      
   ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(0, 0.3, 9, 1.2, 0, 0, Math.PI * 2); ctx.fill();
   if (mode === 'up') { ctx.translate(8, -9); ctx.rotate(-0.12); ctx.translate(-8, 9); }   // מרים את הראש אל הכדור הפורח
   ctx.fillStyle = body; path(); ctx.fill();
-  ctx.save(); path(); ctx.clip();                                                    // גוון בהיר לאורך הגב
-  ctx.fillStyle = light; ctx.beginPath(); const back = [[900, 862], [963, 900], [1123, 912], [1190, 977]].map(pt);
-  ctx.moveTo(back[0][0], back[0][1] - 1); back.forEach(([px, py]) => ctx.lineTo(px, py - 0.4)); for (let i = back.length - 1; i >= 0; i--) ctx.lineTo(back[i][0], back[i][1] + 1.6); ctx.closePath(); ctx.fill();
-  ctx.restore();
   // פנים: עין צרה עם גבה זועפת, פה נוהם עם ניבים
   const H = (sx, sy) => pt([sx, sy]);
   const [ex, ey] = H(852, 886);
