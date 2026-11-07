@@ -2019,6 +2019,29 @@
    },
    "text": "[warm] Put on!",
    "voice": "Sarah"
+  },
+  {
+   "file": "merchant3-roger-hi-there",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "Hi there!",
+   "voice": "Roger"
+  },
+  {
+   "file": "ninja7-kai-hi",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 7,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "[happy] Hi!",
+   "voice": "lib-kai",
+   "voice_id": "S0ypc51SmsvcKXTWvjqJ"
   }
  ]
 }
