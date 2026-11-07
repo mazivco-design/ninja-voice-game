@@ -339,7 +339,7 @@ function setupDemo(w) {
   if (w === 'hold') obstacles.push({ type: 'gust', x: near + 1 - GUST.stalks[2], w: GUST.stalks[2] + 4 });
   obstacles.forEach(o => { o.passed = false; o.hit = false; o.demo = true; });   // בהדגמה – בלי פגיעות
   demoSteps = w === 'fly' ? [{ at: 0.9, w: 'jump' }, { at: 1.3, w: 'fly' }]
-            : w === 'want' ? [{ at: 3.2, w: 'want' }, { at: 4.9, w: 'key' }]   // אחרי השלום
+            : w === 'want' ? [{ at: 8.2, w: 'want' }, { at: 9.9, w: 'key' }]   // אחרי השלום
             : w === 'let go' ? [{ at: 0.9, w: 'catch' }, { at: 2.7, w: 'let go' }]
             : w === 'ride' ? [{ at: 0.9, w: 'ride' }, { at: 2.9, w: 'up' }, { at: 3.8, w: 'down' }, { at: 4.6, w: 'fire' }]
             : w === 'hold' ? [{ at: 1.2, w }]
@@ -373,7 +373,7 @@ function introNext() {
   setupDemo(w);
   if (w !== 'help' && w !== 'push together' && w !== 'push on three' && w !== 'fishing' && w !== 'boar' && w !== 'jetpack' && w !== 'wolves') speak(w);                                                  // HELP: הנינג'ה עצמו צועק בסצנה
   banner = { text: w === 'help' ? 'CATCH the rope, then HOLD!' : w === 'push together' ? 'PUSH with your friend, then JUMP in!' : w === 'push on three' ? 'PUSH on THREE, then JUMP in!' : w === 'fishing' ? 'THROW the line, then PULL!' : w === 'boar' ? 'SNEAK when he eats · HIDE when the ears move!' : w === 'jetpack' ? 'PICK UP · PUT ON · FLY!' : w === 'wolves' ? 'CATCH the rope · HOLD · LET GO!' : 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
-  introT = w === 'fly' ? 4.6 : w === 'want' ? 7.8 : w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'put down' ? 6.8 : w === 'pick up' ? 2.8 : w === 'crawl' ? 5.2 : w === 'help' ? 12.7 : w === 'push together' ? 14 : w === 'push on three' ? 31 : w === 'fishing' ? 12.5 : w === 'boar' ? 10 : w === 'jetpack' ? 14 : w === 'wolves' ? 16 : 2.8;
+  introT = w === 'fly' ? 4.6 : w === 'want' ? 12.8 : w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'put down' ? 6.8 : w === 'pick up' ? 2.8 : w === 'crawl' ? 5.2 : w === 'help' ? 12.7 : w === 'push together' ? 14 : w === 'push on three' ? 31 : w === 'fishing' ? 12.5 : w === 'boar' ? 10 : w === 'jetpack' ? 14 : w === 'wolves' ? 16 : 2.8;
 }
 
 function finishIntro() {

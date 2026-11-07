@@ -14,9 +14,10 @@ const MERCHANT_WALK = 0.4;    // מהירות ההליכה אל הדלת (חלק
 const KEY_HAND = { dx: 6, dy: 9 };   // איפה המפתח ביד הנינג'ה
 const MERCHANT_OFFER = ['key', 'rope', 'torch'];
 // קודם אומרים שלום זה לזה (הסוחר מנופף, הנינג'ה מנופף בחזרה), ורק אז הסוחר שואל
-const SAY_ASK = [[0.3, -1, 'merchant: hi there!'], [1.3, -1, 'ninja: hi!'], [2.4, -1, 'What would you like?']];
+// ואז מציג בקול כל חפץ, לאט וברור, והחפץ נדלק בזמן שהוא אומר אותו
+const SAY_ASK = [[0.3, -1, 'merchant: hi there!'], [1.3, -1, 'ninja: hi!'], [2.4, -1, 'What would you like?'], [4.0, 0, 'key'], [5.4, 1, 'rope'], [6.8, 2, 'torch']];
 const GATE_CLIMB = 1.6;
-const MERCH = { pickAt: 0, askAt: 2.4, whichAt: 0.6, giveT: 2.0, thankT: 0.95, turn: 4.1, hint: 7.6, hintEvery: 7, choiceHint: 4 };   // turn: מתי מופיעה בועת "תורך" (אחרי שהשאלה נגמרה)
+const MERCH = { pickAt: 0, askAt: 2.4, whichAt: 0.6, giveT: 2.0, thankT: 0.95, turn: 8.0, hint: 11.5, hintEvery: 7, choiceHint: 4 };   // turn: מתי מופיעה בועת "תורך" (אחרי שהשאלה נגמרה)
 
 function cartX(o) { return o.x - 46; }                        // העגלה עומדת לפני הדלת, והסוחר בינה לבין הדלת
 const ITEM_GAP = 7;
