@@ -1984,6 +1984,30 @@
    "type": "sfx",
    "text": "cartoon engine runs out of fuel, sad sputter and pfft fizzle out",
    "seconds": 1.3
+  },
+  {
+   "file": "jet2-takeoff-a",
+   "type": "sfx",
+   "text": "soft gentle air whoosh rising upward, quiet jet pack lift off, no explosion",
+   "seconds": 1.3
+  },
+  {
+   "file": "jet2-takeoff-b",
+   "type": "sfx",
+   "text": "quiet airy puff of a small thruster lifting off, smooth and calm",
+   "seconds": 1.2
+  },
+  {
+   "file": "jet2-takeoff-c",
+   "type": "sfx",
+   "text": "gentle hiss of compressed air rising in pitch, soft takeoff, cartoon",
+   "seconds": 1.3
+  },
+  {
+   "file": "jet2-takeoff-d",
+   "type": "sfx",
+   "text": "calm soft whoosh upward like a breeze, light and friendly, kids game",
+   "seconds": 1.2
   }
  ]
 }
