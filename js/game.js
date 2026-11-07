@@ -25,7 +25,7 @@ async function play(m, idx) {
   if (words.includes('let go') && !words.includes('catch')) listenWords.push('catch');
   if (words.includes('pick up') || words.includes('put down')) for (const w of ['pick up', 'put down', 'jump', 'throw', 'pull']) if (!listenWords.includes(w)) listenWords.push(w);   // PICK UP → PUT DOWN → JUMP
   if (words.includes('help')) { for (const w of ['catch', 'hold']) if (!listenWords.includes(w)) listenWords.push(w); listenWords = listenWords.filter(w => w !== 'help'); }   // HELP: בינתיים המשחק אומר HELP, הילד אומר CATCH ו-HOLD
-  if (words.includes('push together') || words.includes('push on three')) { for (const w of ['push', 'jump', ...(words.includes('push together') ? ['yes'] : [])]) if (!listenWords.includes(w)) listenWords.push(w); }   // סירה / עגלה: PUSH ואז JUMP
+  if (words.includes('push together') || words.includes('push on three')) { for (const w of ['push', 'jump', 'yes']) if (!listenWords.includes(w)) listenWords.push(w); }   // סירה / עגלה: PUSH ואז JUMP
   if (words.includes('fishing')) { for (const w of ['jump', 'throw', 'pull']) if (!listenWords.includes(w)) listenWords.push(w); }   // דייג: JUMP, THROW, PULL
   if (words.includes('jetpack')) for (const w of ['pick up', 'put on', 'fly', 'up', 'down', 'crawl']) if (!listenWords.includes(w)) listenWords.push(w);
   if (words.includes('wolves')) for (const w of ['catch', 'hold', 'let go']) if (!listenWords.includes(w)) listenWords.push(w);   // זאבים: CATCH / HOLD / LET GO   // תרמיל סילון
@@ -175,14 +175,14 @@ function obstacleValue(type) {
 
 // בוחר את המכשול הבא. לא יותר מ-3 מאותו סוג ברצף
 // מכשולים שמתבלבלים ביניהם (PUSH / PULL) – לא אחד אחרי השני
-const CLASH = { boulder: 'gate', gate: 'boulder' };
+const CLASH = { boulder: ['gate'], gate: ['boulder'], boat: ['cart'], cart: ['boat'] };   // + סירה ועגלה (שתיהן דחיפה עם חבר)
 function pickType() {
   const prev = obstacles.length ? obstacles[obstacles.length - 1].type : null;
   if (mode === 'journey' && jDeck.length) {                                     // במסע: קודם כל מכשול לפחות פעם אחת (journey.js)
-    const i = jDeck.findIndex(t => CLASH[prev] !== t);
+    const i = jDeck.findIndex(t => !(CLASH[prev] || []).includes(t));
     return i > 0 ? jDeck.splice(i, 1)[0] : jDeck.shift();
   }
-  for (let k = 0; k < 6; k++) { const t = pickType0(); if (CLASH[prev] !== t || k === 5) return t; }
+  for (let k = 0; k < 6; k++) { const t = pickType0(); if (!(CLASH[prev] || []).includes(t) || k === 5) return t; }
 }
 function pickType0() {
   let w = playWords[Math.floor(Math.random() * playWords.length)];

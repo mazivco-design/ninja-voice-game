@@ -326,7 +326,7 @@ function command(word, source) {
   else if (word === 'run')   { if (strayWord('run')) return; act.run = RUN_BOOST.time; act.stop = 0; }   // דוהר מהר – אבל RUN ששמענו בטעות ליד מכשול אחר לא מאיץ אל תוכו
   else if (word === 'swim')  { act.swim = SWIM_TIME; duckT = 0; }
   else if (word === 'climb') { act.climbWant = 2.5; }                     // מטפס כשהנינג'ה מגיע לסולם (ההתקרבות איטית – ה-CLIMB לא פג בדרך)
-  else if (word === 'yes' && boatYes()) {}                                         // YES – עונים לחבר בסירה
+  else if (word === 'yes' && (boatYes() || cartYes())) {}                                         // YES – עונים לחבר בסירה
   else if (word === 'push' && (boatPush() || cartPush())) {}                            // דוחפים את הסירה עם החבר
   else if (word === 'push')  { act.push = 0.6; duckT = 0; }
   else if (word === 'pull' && boatPull()) {}                             // FISHING: מושך את הדג

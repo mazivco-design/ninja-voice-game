@@ -10,7 +10,7 @@
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
 const HILL = { up: 46, top: 26, down: 46, h: 19 };
-const CART = { watch: 26, tryT: 1.9, watchT: 3.8, walkT: 1.1, len: 18, cp0: 4, pushes: 3, step: 15, pushT: 0.75, askT: 1.8, stepT: 0.5, stepDX: 7, beat: 0.9, win: 2.4, backT: 1.0,
+const CART = { watch: 26, tryT: 1.9, watchT: 1.2, walkT: 1.1, len: 18, cp0: 4, pushes: 3, step: 15, pushT: 0.75, askT: 1.8, stepT: 0.5, stepDX: 7, beat: 0.9, win: 2.4, backT: 1.0,
                boardT: 0.6, boardDX: 9, outT: 0.8, outDX: 24, coins: 5,
                rollT: 3.2, rollV: 64, kidOutT: 0.8, fiveT: 1.2, thanksT: 1.7, byeT: 1.4 };   // roll: אחרי הגבעה ממשיכה ומאטה בהדרגה
 let cart = null;   // { o, phase: 'ask' | 'step' | 'count' | 'push' | 'early' | 'late' | 'kidIn' | 'jumpWait' | 'board' | 'ride' | 'out', t, idle, n, late, beats }
@@ -72,7 +72,12 @@ function cartUpdate(dt, pb) {
   if (['push', 'ride', 'roll', 'early', 'late'].includes(C.phase)) o.cp += v * dt;        // העגלה זזה יחד עם הנינג'ה
   switch (C.phase) {
     case 'watch': if (C.t >= CART.watchT - 0.02) { go('ask'); speak('kid: can you help me push?'); } break;   // שני ניסיונות לבד, ואז מבקש עזרה
-    case 'ask': if (C.t >= CART.askT) go('nod'); break;
+    case 'ask': if (C.t >= CART.askT) go('yesWait'); break;                         // הילד שאל – מחכים ל-YES
+    case 'yesWait':
+      C.idle += dt;
+      if (demo) { if (C.idle >= 0.9) { if (banner) banner.text = 'Say YES!'; command('yes', 'demo'); speak('yes'); } }
+      else if (C.idle >= 3.5 + (C.hinted || 0) * 6) { C.hinted = (C.hinted || 0) + 1; sayWords(['yes'], 1.6, C); }
+      break;
     case 'nod': if (C.t >= 0.95) go('step'); break;                                // הנינג'ה מהנהן "כן" ורק אז רץ
     case 'step': if (C.t >= CART.walkT) { go('count'); C.beats = 0; } break;
     case 'count':                                                                 // One… two… THREE! – ואז חלון ל-PUSH
@@ -142,6 +147,11 @@ function cartPush() {
   }
   return true;
 }
+function cartYes() {                                                              // YES – עונים לילד שביקש עזרה
+  if (!cart || cart.phase !== 'yesWait') return false;
+  cart.phase = 'nod'; cart.t = 0; cart.idle = 0;
+  return true;
+}
 function cartJump() {
   if (!cart) return false;
   if (cart.phase === 'jumpWait') { cart.phase = 'board'; cart.t = 0; sfx('jump'); }
@@ -149,12 +159,13 @@ function cartJump() {
 }
 function cartExpected() {
   if (!cart) return null;
-  return cart.phase === 'count' ? ['push'] : cart.phase === 'jumpWait' ? ['jump'] : [];
+  return cart.phase === 'count' ? ['push'] : cart.phase === 'yesWait' ? ['yes'] : cart.phase === 'jumpWait' ? ['jump'] : [];
 }
 function cartAuto() {
   if (!cart) return;
   if (cart.phase === 'count' && cart.t >= CART.beat * 2 + 0.35) command('push', 'auto');
   if (cart.phase === 'jumpWait' && cart.idle > 0.4) command('jump', 'auto');
+  if (cart.phase === 'yesWait' && cart.idle > 0.4) command('yes', 'auto');
 }
 
 /* ---------- תנוחות ---------- */

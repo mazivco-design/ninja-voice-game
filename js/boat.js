@@ -9,7 +9,7 @@
    סבלני: העולם מחכה למילה. אחרי שתיקה ארוכה המשחק אומר את המילה בקול.
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const BOAT = { shore: 72, sail: 230, isl: 50, islands: 1, len: 28, h: 6.5, bx0: 30, pushes: 1, step: 30, pushT: 1.4, greetT: 2.6, greatT: 2.0, thanksT: 2.7, byeT: 1.4,
+const BOAT = { shore: 72, sail: 230, isl: 50, islands: 0,   /* בלי אי – שטים ישר לחוף השני */ len: 28, h: 6.5, bx0: 30, pushes: 1, step: 30, pushT: 1.4, greetT: 2.6, greatT: 2.0, thanksT: 2.7, byeT: 1.4,
                askT: 1.6, stepT: 0.5, stepDX: 7, hiT: 1.3, boardT: 0.7, boardDX: 13, row: 26, waveT: 1.4, waveAt: 24, stuckT: 0.7,
                outT: 0.7, landT: 0.75, landDX: 21, hint: 3.5, hintEvery: 6, coins: 6 };
 let boat = null;   // { o, phase, t, idle, hinted, n }
