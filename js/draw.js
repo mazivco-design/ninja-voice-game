@@ -1440,6 +1440,7 @@ function drawNinjaBody() {
   if (!swim && !drowning && !dive && !tunO && !(act.hiding > 0) && mudSink(fx) < 0.3 && !(boat && ['board', 'row', 'land'].includes(boat.phase))) ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';   // כשכורעים – בלי צל (הברך על הקרקע)
   else ctx.fillStyle = 'rgba(0,0,0,0)';
   if (riding) ctx.fillStyle = 'rgba(0,0,0,0)';                       // על הדרקון – בלי צל על הקרקע
+  if (jetS && (jsFlying() || JS_ISLE_P.includes(jetS.p) || ['perchDown', 'perch'].includes(jetS.p))) ctx.fillStyle = 'rgba(0,0,0,0)';   // מעל התהום / על הצוק – אין קרקע מתחת
   ctx.beginPath(); ctx.ellipse(fx + 0.5, GROUND + 0.6, Math.max(1.5, 4.5 - py * 0.08), 0.9, 0, 0, Math.PI * 2); ctx.fill();
   if (invulnT > 0 && Math.floor(invulnT * 10) % 2 === 0) return;   // הבהוב אחרי פגיעה
 
