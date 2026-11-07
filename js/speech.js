@@ -288,7 +288,7 @@ function command(word, source) {
       burst(PLAYER.x + 4, GROUND - py - 16, '#f8fafc', 6);
     }
   } else if (word === 'stop') { act.stop = STOP_TIME; act.run = 0; }       // העולם עוצר
-  else if (word === 'run')   { act.run = RUN_BOOST.time; act.stop = 0; }   // דוהר מהר
+  else if (word === 'run')   { const ex = expectedWords0(); if (ex.length && !ex.includes('run')) return; act.run = RUN_BOOST.time; act.stop = 0; }   // דוהר מהר – אבל RUN ששמענו בטעות ליד מכשול אחר לא מאיץ אל תוכו
   else if (word === 'swim')  { act.swim = SWIM_TIME; duckT = 0; }
   else if (word === 'climb') { act.climbWant = 0.8; }                     // מטפס כשהנינג'ה מגיע לסולם (אם זה קורה בשנייה הקרובה)
   else if (word === 'yes' && boatYes()) {}                                         // YES – עונים לחבר בסירה
