@@ -506,12 +506,12 @@
   "id": "tJHJUEHzOkMoPmJJ5jo2",
   "category": "professional",
   "labels": {
-   "descriptive": "relaxed",
+   "gender": "male",
    "accent": "american",
-   "age": "young",
    "use_case": "narrative_story",
    "language": "en",
-   "gender": "male"
+   "descriptive": "relaxed",
+   "age": "young"
   },
   "description": "Kevin’s voice is a gentle, calm American boy’s voice, perfect for storytelling. His soft, soothing tone creates a peaceful and comforting atmosphere that easily draws listeners into a story. With his warm and steady delivery, Kevin’s voice brings a sense of innocence and wonder, making every narrative feel intimate and engaging, perfect for captivating the audiences."
  },
