@@ -176,13 +176,23 @@ function drawWolfFig(x, y, dir, t, mode) {                                      
   const hy = mode === 'growl' ? -8.4 : mode === 'up' ? -12 : -9.5;                     // ראש: מורכן כשנוהם, מורם כשמסתכל למעלה
   ctx.save(); ctx.translate(6.5, hy);
   if (mode === 'up') ctx.rotate(-0.5);
+  const snarl = mode !== 'up';                                                          // נוהם – פה פתוח עם ניבים (חוץ מכשמסתכל למעלה)
+  const open = mode === 'growl' ? 1.25 : mode === 'run' ? 1.4 : snarl ? 0.75 : 0.2;
   ctx.fillStyle = body; ctx.beginPath(); ctx.ellipse(0.5, 0, 3.2, 2.6, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(2, -1.4); ctx.lineTo(7, 0.4); ctx.lineTo(6.6, 1.4); ctx.lineTo(2, 1.8); ctx.fill();   // חוטם
-  ctx.fillStyle = '#111827'; ctx.beginPath(); ctx.arc(6.9, 0.6, 0.55, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = dark; ctx.beginPath(); ctx.moveTo(-1.6, -1.6); ctx.lineTo(-0.9, -5); ctx.lineTo(0.6, -2); ctx.fill(); ctx.beginPath(); ctx.moveTo(0.2, -2); ctx.lineTo(1, -5.2); ctx.lineTo(2.2, -1.6); ctx.fill();   // אוזניים
-  ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(2.4, -0.6, 0.6, 0, Math.PI * 2); ctx.fill();   // עין צהובה
-  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(2.6, -0.6, 0.28, 0, Math.PI * 2); ctx.fill();
-  if (mode === 'growl') { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(3.5, 1.5); ctx.lineTo(4, 2.5); ctx.lineTo(4.5, 1.6); ctx.moveTo(5, 1.5); ctx.lineTo(5.4, 2.4); ctx.lineTo(5.8, 1.5); ctx.fill(); }   // שיניים
+  ctx.beginPath(); ctx.moveTo(1.8, -1.5); ctx.lineTo(7.2, 0.1); ctx.lineTo(7, 0.9); ctx.lineTo(2, 0.9); ctx.fill();   // לסת עליונה וחוטם
+  ctx.fillStyle = '#7f1d1d'; ctx.beginPath(); ctx.moveTo(2.4, 0.9); ctx.lineTo(6.9, 0.9); ctx.lineTo(6.2, 0.9 + open); ctx.lineTo(2.4, 1.2 + open * 0.6); ctx.fill();   // פה פתוח (אדום כהה)
+  ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(2.2, 1.2 + open * 0.6); ctx.lineTo(6.2, 0.9 + open); ctx.lineTo(5.9, 1.6 + open); ctx.lineTo(2.2, 2.2 + open * 0.5); ctx.fill();   // לסת תחתונה
+  ctx.fillStyle = '#fff';                                                              // ניבים חדים למעלה ולמטה
+  for (const [x, l] of [[3.3, 1.0], [4.4, 0.7], [5.4, 0.7], [6.4, 1.1]]) { ctx.beginPath(); ctx.moveTo(x - 0.32, 0.9); ctx.lineTo(x, 0.9 + l * Math.min(1, open + 0.2)); ctx.lineTo(x + 0.32, 0.9); ctx.fill(); }
+  if (open > 0.5) for (const [x, l] of [[3.8, 0.8], [5.8, 0.8]]) { const y0 = 0.9 + open * 0.95; ctx.beginPath(); ctx.moveTo(x - 0.3, y0 + 0.2); ctx.lineTo(x, y0 - l * 0.8); ctx.lineTo(x + 0.3, y0 + 0.2); ctx.fill(); }
+  ctx.strokeStyle = dark; ctx.lineWidth = 0.22;                                        // קמטים של נהימה על החוטם
+  if (snarl) { ctx.beginPath(); ctx.moveTo(3.8, -0.7); ctx.quadraticCurveTo(4.3, -1.1, 4.8, -0.6); ctx.moveTo(4.6, -0.4); ctx.quadraticCurveTo(5.1, -0.8, 5.6, -0.3); ctx.stroke(); }
+  ctx.fillStyle = '#111827'; ctx.beginPath(); ctx.arc(7.05, 0.35, 0.55, 0, Math.PI * 2); ctx.fill();   // אף
+  ctx.fillStyle = dark; ctx.beginPath(); ctx.moveTo(-1.6, -1.6); ctx.lineTo(-1.1, -5.4); ctx.lineTo(0.6, -2); ctx.fill(); ctx.beginPath(); ctx.moveTo(0.2, -2); ctx.lineTo(1.1, -5.6); ctx.lineTo(2.2, -1.6); ctx.fill();   // אוזניים מחודדות לאחור
+  // עין צרה וחדה: שקד צהוב-כתום עם אישון אנכי, וגבה כהה בזווית למטה
+  ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(1.6, -0.5); ctx.quadraticCurveTo(2.5, -1.3, 3.4, -0.9); ctx.quadraticCurveTo(2.5, -0.15, 1.6, -0.5); ctx.fill();
+  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.ellipse(2.6, -0.75, 0.16, 0.36, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 0.45; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(1.3, -1.7); ctx.lineTo(3.6, -1.05); ctx.stroke();   // גבה זועפת
   ctx.restore();
   ctx.restore();
 }
