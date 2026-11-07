@@ -592,7 +592,7 @@ function draw() {
 
   // המילה הנכונה אחרי פגיעה / כותרת פתיחה
   if (state === 'play' || state === 'demo' || state === 'intro') {
-    if (flash) bigText(flash.text, 40, 14, '#dc2626');
+    if (flash) bigText(flash.text, flash.size ? 30 : 40, flash.size || 14, '#dc2626');   // size – הודעה קטנה (למשל בשלב הג'ט)
     else if (banner) {
       bigText(banner.text, 32, 9, '#4f46e5');
       if (banner.sub) bigText(banner.sub, 43, 5, '#1e293b');

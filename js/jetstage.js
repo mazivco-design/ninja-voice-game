@@ -74,11 +74,11 @@ function jsUpdate(dt, pb) {
   }
   switch (S.p) {
     case 'pick': if (S.t >= JS.pickT) go('hold'); break;                         // מרים את התרמיל
-    case 'put': if (S.t >= JS.putT) { go('empty'); sfx('thud'); flash = { text: '⛽ The tank is empty! PICK UP the fuel', t: 2.6 }; } break;   // לובש – והמד ריק
+    case 'put': if (S.t >= JS.putT) { go('empty'); sfx('thud'); flash = { text: '⛽ Empty! PICK UP', t: 2.2, size: 7 }; } break;   // לובש – והמד ריק
     case 'fuelPick': if (S.t >= JS.pickT) { go('fuelPour'); sfxFile('jet-refuel'); } break;                 // מרים את מיכל הדלק שליד התרמיל
     case 'fuelPour':                                                             // שופך לתרמיל – המד מתמלא
       S.fuel = Math.min(1, Math.max(0, (S.t - 0.4) / 1.0));
-      if (S.t >= 1.6) { S.fuel = 1; go('wear'); flash = { text: '🚀 Full tank! Now FLY', t: 1.8 }; sfx('coin'); }
+      if (S.t >= 1.6) { S.fuel = 1; go('wear'); flash = { text: '🚀 Full! FLY', t: 1.6, size: 7 }; sfx('coin'); }
       break;
     case 'take':                                                                 // ממריא
       S.alt = lerp(S.base, JS.lanes[S.lane], Math.min(1, S.t / JS.takeT));
@@ -91,11 +91,11 @@ function jsUpdate(dt, pb) {
         S.rate = Math.max(0.02, (S.fuel - JS.left) / Math.max(1, (tx - nx0) / JS.flyV));
       }
       S.fuel = Math.max(0, S.fuel - dt * (S.rate || 1 / JS.fuelT));               // הדלק יורד בזמן הטיסה
-      if (S.fuel <= 0 && S.p === 'fly' && !JS.cave) { go('fall'); sfx('thud'); flash = { text: '⛽ Out of fuel!', t: 1.6 }; break; }   // נגמר באוויר – נופלים
+      if (S.fuel <= 0 && S.p === 'fly' && !JS.cave) { go('fall'); sfx('thud'); flash = { text: '⛽ Out of fuel!', t: 1.6, size: 7 }; break; }   // נגמר באוויר – נופלים
       if (S.fuel > JS.lowAt + 0.05) { S.warned = 0; S.emptySnd = 0; }                       // אחרי מילוי – אפשר להזהיר שוב
       if (S.fuel < JS.lowAt && !S.emptySnd) { S.emptySnd = 1; sfxFile('jet-empty'); }       // המיכל מתרוקן – פעם אחת בכל טיסה
       if (S.fuel < JS.lowAt && S.fuel > 0 && (S.beepT = (S.beepT || 0) - dt) <= 0) { S.beepT = 0.25 + S.fuel * 1.6; try { if (sfxCtx) tone(880, 660, 0.08, 'square', 0.04); } catch (e) {} }   // צפצוף אזהרה
-      if (S.fuel < JS.lowAt && !S.warned && state === 'play') { S.warned = 1; flash = { text: S.drain ? '⛽ Fuel low!' : '⛽ Fuel low – land on a rock!', t: 1.6 }; }
+      if (S.fuel < JS.lowAt && !S.warned && state === 'play') { S.warned = 1; flash = { text: '⛽ Fuel low!', t: 1.6, size: 7 }; }
       if (S.fuel <= 0 && S.lane > 0 && JS.cave) S.lane = 0;                                 // בלי דלק – יורדים לגובה הנמוך (ועדיין מגיעים לצד השני)
       S.alt += (JS.lanes[S.lane] - S.alt) * Math.min(1, dt * 6);
       const far = jsFar(o), nx = PLAYER.x + PLAYER.w / 2;
@@ -122,7 +122,7 @@ function jsUpdate(dt, pb) {
       }
       if (JS.cave && S.p === 'fly' && !S.isleDone && nx > jsIsleX(o, JS_ISLE.face) - 46) {      // הדלק נגמר! גולשים למטה אל השן שבצוק
         S.fuel = 0; S.lane = 0; go('dying'); sfx('thud');
-        flash = { text: '⛽ Out of fuel! Find more on the rock', t: 2.2 };
+        flash = { text: '⛽ Out of fuel!', t: 2.2, size: 7 };
       }
       if (S.p === 'fly' && nx > far + 6) go('hover');                            // מעל הצד השני – מחכים ל-DOWN
       if (S.p === 'hover' && state === 'play' && S.t > 2.5 && !S.hinted) { S.hinted = 1; sayWords(['down'], 1.6, S); }
@@ -137,7 +137,7 @@ function jsUpdate(dt, pb) {
     case 'pPour': {                                                              // שופך לתרמיל – המד מתמלא
       const f0 = S.f0 === undefined ? (S.f0 = S.fuel) : S.f0;
       S.fuel = Math.min(1, f0 + (1 - f0) * Math.max(0, Math.min(1, (S.t - 0.4) / 1.0)));
-      if (S.t >= 1.6) { S.fuel = 1; S.f0 = undefined; S.pill[S.pi] = true; go('pReady'); sfx('coin'); flash = { text: '🚀 Full tank! UP', t: 1.4 }; }
+      if (S.t >= 1.6) { S.fuel = 1; S.f0 = undefined; S.pill[S.pi] = true; go('pReady'); sfx('coin'); flash = { text: '🚀 Full! UP', t: 1.4, size: 7 }; }
       break;
     }
     case 'fall': {                                                               // נגמר הדלק באוויר: גולש ונופל לתהום, ואז חוזר לתחנה האחרונה
@@ -152,8 +152,8 @@ function jsUpdate(dt, pb) {
         const X = k >= 0 ? jsPillarX(o, k) : o.x + JS.stop - PLAYER.w / 2;
         ropeShiftBy(-(nx - X)); S.rate = 0;
         for (const it of S.items) if (it.k === 'coin' && jsEdge(o) + it.x > X) it.done = it.done;   // המטבעות שכבר נאספו – נשארים נאספים
-        if (k >= 0) { S.pi = k; S.pill[k] = false; S.alt = JS_PILLARS[k].top; S.fuel = 0.05; go('perch'); flash = { text: '⛽ Try again: PICK UP the fuel', t: 2 }; }
-        else { S.alt = 0; S.fuel = 1; go('wear'); flash = { text: '🚀 Try again: FLY', t: 2 }; }
+        if (k >= 0) { S.pi = k; S.pill[k] = false; S.alt = JS_PILLARS[k].top; S.fuel = 0.05; go('perch'); flash = { text: '⛽ Try again: PICK UP', t: 2, size: 7 }; }
+        else { S.alt = 0; S.fuel = 1; go('wear'); flash = { text: '🚀 Try again: FLY', t: 2, size: 7 }; }
       }
       break;
     }
@@ -220,7 +220,7 @@ function jsCmd(word) {
   if (word === 'pick up' && S.p === 'perch') { S.p = 'pFuel'; S.t = 0; sfx('swish'); return true; }   // בתחנה: מרים את מיכל הדלק
   if (word === 'pick up') { if (S.p === 'find') { S.p = 'pick'; S.t = 0; sfx('swish'); } else if (S.p === 'empty') { S.p = 'fuelPick'; S.t = 0; sfx('swish'); } else if (S.p === 'inCave') { S.p = 'grab'; S.t = 0; sfx('coin'); } return true; }
   if (word === 'crawl') { if (S.p === 'atCave') { S.p = 'crawlIn'; S.t = 0; sfx('swish'); } return true; }
-  if (word === 'fly' && S.p === 'atWall') { S.p = 'rise'; S.t = 0; sfxFile('jet-takeoff'); flash = { text: '🚀 Full tank!', t: 1.2 }; return true; }
+  if (word === 'fly' && S.p === 'atWall') { S.p = 'rise'; S.t = 0; sfxFile('jet-takeoff'); flash = { text: '🚀 Full!', t: 1.2, size: 7 }; return true; }
   if (word === 'put on') { if (S.p === 'hold') { S.p = 'put'; S.t = 0; sfx('swish'); } return true; }
   if (word === 'fly' && S.p === 'wear') { S.base = 0; S.p = 'take'; S.t = 0; sfxFile('jet-takeoff'); return true; }
   if (word === 'fly') return true;
