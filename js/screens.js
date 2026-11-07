@@ -209,7 +209,7 @@ function voicePreload() { if (!sfxCtx) return; for (const slug of new Set(Object
 document.addEventListener('pointerdown', () => setTimeout(voicePreload, 50), { capture: true });   // אחרי שהצליל נפתח בנגיעה
 function playVoiceBuf(buf) {
   const out = voiceChain(); if (!out) return false;
-  try { if (sfxCtx.state !== 'running') sfxCtx.resume(); } catch (e) {}
+  if (sfxCtx.state !== 'running') { try { sfxCtx.resume(); } catch (e) {} return false; }   // ההקשר מושהה (קורה באייפד אחרי קול של הדפדפן) – מנגנים בנגן הרגיל במקום לשתוק
   if (voiceSrc) { try { const g0 = voiceSrc.g, t0 = sfxCtx.currentTime; g0.gain.setValueAtTime(g0.gain.value, t0); g0.gain.linearRampToValueAtTime(0, t0 + 0.04); voiceSrc.stop(t0 + 0.05); } catch (e) {} }   // הקול הקודם דועך במקום להיחתך (אחרת נשמע "תק")
   const src = sfxCtx.createBufferSource(), g = sfxCtx.createGain(); src.buffer = buf; src.connect(g); g.connect(out); src.g = g; src.start();
   voiceSrc = src;
