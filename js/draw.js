@@ -5,7 +5,7 @@
 /* ============================================================
    ציור
    ============================================================ */
-let cw = 0, ch = 0, scale = 1, ox = 0, oy = 0;
+let cw = 0, ch = 0, scale = 1, ox = 0, oy = 0, camDY = 0;   // camDY – הורדת המצלמה (יותר שמיים) בשלבים שצריכים מקום למעלה
 
 // מצמידים את המשחק בדיוק לשטח שרואים (Safari מזיז אותו לפעמים מתחת לשורת הכתובת)
 function fitApp() {
@@ -497,6 +497,9 @@ function draw() {
   g.addColorStop(0, wd.sky[0]); g.addColorStop(1, wd.sky[1]);
   ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
 
+  const camT = typeof wfCamLift === 'function' ? wfCamLift() : 0;            // שלב הזאבים: הקרקע יורדת – מקום לכדור הפורח
+  camDY += (camT - camDY) * 0.05; if (Math.abs(camT - camDY) < 0.01) camDY = camT;
+  const oyIn = oy; oy += camDY * scale;                                       // רק בזמן הציור (מוחזר בסוף)
   ctx.save();
   ctx.translate(ox, oy); ctx.scale(scale, scale);
   if (shakeT > 0) ctx.translate((Math.random() - 0.5) * 2.4 * shakeT * 3, (Math.random() - 0.5) * 2.4 * shakeT * 3);
@@ -602,6 +605,7 @@ function draw() {
 
   // הבזק אדום בפגיעה
   if (shakeT > 0) { ctx.fillStyle = 'rgba(220,38,38,' + (shakeT * 0.6) + ')'; ctx.fillRect(0, 0, cw, ch); }
+  oy = oyIn;
 }
 
 function drawObstacle(o, top) {

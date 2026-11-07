@@ -14,6 +14,10 @@ let wolfS = null;   // { o, p, t, k (0..1 – כמה התקרבו), idle, hinted
 
 function wfSetup(o) { o.w = WF.hill + WF.hillW + WF.after; }
 function wfBusy() { return !!wolfS; }
+function wfCamLift() {                                                             // כמה להוריד את המצלמה: כשהסצנה על המסך
+  const o = obstacles.find(o => o.type === 'wolfden' && !o.passed && o.x < viewR() + 30 && o.x + o.w > viewL());
+  return o ? 16 : 0;
+}
 function wfC(o) { return o.x + WF.stop - PLAYER.w / 2; }                            // מרכז הסלע (העולם)
 function wfHillX(o) { return o.x + WF.hill; }
 function wfHillY(o, x) {                                                            // גובה הגבעה בנקודה x
@@ -196,13 +200,21 @@ function drawWolfScene(o) {
   const L = viewL() - 2, R = viewR() + 2, t = performance.now() / 1000;
   // ערב: השמיים מתכהים לסגול ככל שהסצנה במרכז המסך
   const mid = wfMask(o, (L + R) / 2);
-  if (mid > 0) { ctx.fillStyle = 'rgba(55,40,95,' + (0.38 * mid) + ')'; ctx.fillRect(L, 0, R - L, GROUND); }
-  // עצי אורן מאחור
-  for (let i = 0; i < 16; i++) {
-    const x = o.x - 60 + i * 15 + wfRnd(i) * 8, m = wfMask(o, x);
-    if (m <= 0 || x < L - 10 || x > R + 10) continue;
-    ctx.globalAlpha = m; drawPine(x, GROUND + 0.5, 22 + wfRnd(i + 3) * 14, i); ctx.globalAlpha = 1;
+  if (mid > 0) {                                                                    // רקע שקט משלו: שמיים רכים + גבעות מושלגות רחוקות (מכסה את העצים של העולם)
+    const top = (0 - oy) / scale - 2;
+    ctx.globalAlpha = mid;
+    const g = ctx.createLinearGradient(0, top, 0, GROUND);
+    g.addColorStop(0, '#8fa3c8'); g.addColorStop(1, '#d6deec');
+    ctx.fillStyle = g; ctx.fillRect(L, top, R - L, GROUND - top + 1);
+    ctx.fillStyle = '#c3cde0'; ctx.beginPath(); ctx.moveTo(L, GROUND + 1);                 // גבעות רחוקות, נמוכות ובהירות
+    for (let x = L; x <= R + 2; x += 2) ctx.lineTo(x, GROUND - 13 - Math.sin((x + bgX * 0.15) * 0.035) * 4 - Math.sin((x + bgX * 0.15) * 0.011 + 1) * 3);
+    ctx.lineTo(R + 2, GROUND + 1); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#e2e8f2'; ctx.beginPath(); ctx.moveTo(L, GROUND + 1);
+    for (let x = L; x <= R + 2; x += 2) ctx.lineTo(x, GROUND - 6 - Math.sin((x + bgX * 0.3) * 0.05 + 2) * 2.5);
+    ctx.lineTo(R + 2, GROUND + 1); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
   }
+  // בלי עצים – רקע שקט, שהזאבים והנינג'ה בולטים
   // שלג על הקרקע
   ctx.fillStyle = '#f1f5f9';
   ctx.beginPath(); ctx.moveTo(L, GROUND + 6);
