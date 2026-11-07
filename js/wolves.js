@@ -166,12 +166,13 @@ function wfMask(o, x) {                                                         
 function drawWolfFig(x, y, dir, t, mode) {                                           // dir: 1 = פונה ימינה, -1 = שמאלה
   ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
   const walk = mode === 'walk' || mode === 'run', legA = walk ? Math.sin(t * (mode === 'run' ? 16 : 9)) * 0.5 : 0;
-  const body = '#6b7280', dark = '#374151', light = '#d1d5db';
+  const body = '#6b7280', dark = '#374151', light = '#8d94a0';                       // כל הגוף בצבע אחד, גוון בהיר רק על הגב
   ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(0, 0.3, 8, 1.2, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = dark; ctx.lineWidth = 1.3; ctx.lineCap = 'round';
+  ctx.strokeStyle = body; ctx.lineWidth = 1.3; ctx.lineCap = 'round';
   [[-5, 1], [-3.4, -1], [4, 1], [5.6, -1]].forEach(([lx, d]) => { ctx.beginPath(); ctx.moveTo(lx, -5); ctx.lineTo(lx + Math.sin(legA * d) * 2.6, -0.3); ctx.stroke(); });
   ctx.fillStyle = body; ctx.beginPath(); ctx.ellipse(0, -7, 8, 3.6, 0.04, 0, Math.PI * 2); ctx.fill();   // גוף
-  ctx.fillStyle = light; ctx.beginPath(); ctx.ellipse(1, -5.2, 6, 1.6, 0, 0, Math.PI * 2); ctx.fill();   // בטן בהירה
+  ctx.save(); ctx.beginPath(); ctx.ellipse(0, -7, 8, 3.6, 0.04, 0, Math.PI * 2); ctx.clip();
+  ctx.fillStyle = light; ctx.beginPath(); ctx.ellipse(-0.5, -10.2, 7.2, 1.9, 0.03, 0, Math.PI * 2); ctx.fill(); ctx.restore();   // גוון בהיר על הגב
   ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(-7.4, -8.5); ctx.quadraticCurveTo(-12, -7 + Math.sin(t * 3) * 0.8, -13.5, -3.5 + Math.sin(t * 3) * 0.8); ctx.quadraticCurveTo(-10, -6, -7.2, -6.2); ctx.fill();   // זנב
   const hy = mode === 'growl' ? -8.4 : mode === 'up' ? -12 : -9.5;                     // ראש: מורכן כשנוהם, מורם כשמסתכל למעלה
   ctx.save(); ctx.translate(6.5, hy);
