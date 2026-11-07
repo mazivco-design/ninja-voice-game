@@ -127,7 +127,7 @@ function drawPet(fx, fy) {
   const pet = getEquip().pet; if (!pet || !player) return;
   const now = performance.now() / 1000;
   const jet = typeof jsWorn === 'function' && jsWorn();                             // עם תרמיל הסילון – הדרקון עף מאחור בגובה הגוף, שלא יסתיר את מד הדלק שמעל הראש
-  const tx = fx - (jet ? 15 : 10), ty = (jet ? fy - 8 : Math.min(fy, GROUND) - 22) + Math.sin(now * 3) * 1.4;
+  const tx = fx - (jet ? 17 : 10), ty = (jet ? fy - 1 : Math.min(fy, GROUND) - 22) + Math.sin(now * 3) * 1.4;
   if (!petX) { petX = tx; petY = ty; }
   petX += (tx - petX) * 0.15; petY += (ty - petY) * 0.15;
   const flap = Math.sin(now * 14);
