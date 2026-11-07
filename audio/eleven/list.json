@@ -2075,6 +2075,28 @@
    },
    "text": "[warm] A torch, please.",
    "voice": "Sarah"
+  },
+  {
+   "file": "merchant3-roger-i-have",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "I have a key... a rope... and a torch!",
+   "voice": "Roger"
+  },
+  {
+   "file": "merchant3-roger-which-one",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 0.5
+   },
+   "text": "Which one?",
+   "voice": "Roger"
   }
  ]
 }
