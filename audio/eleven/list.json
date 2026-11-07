@@ -1924,6 +1924,66 @@
     "speed": 0.8
    },
    "text": "Sneak..."
+  },
+  {
+   "file": "jet1-refuel-a",
+   "type": "sfx",
+   "text": "fuel being poured from a jerrycan into a small tank, glugging liquid, cartoon game",
+   "seconds": 1.6
+  },
+  {
+   "file": "jet1-refuel-b",
+   "type": "sfx",
+   "text": "liquid glug glug pouring into a metal tank, short and bubbly, kids game sound",
+   "seconds": 1.6
+  },
+  {
+   "file": "jet1-refuel-c",
+   "type": "sfx",
+   "text": "quick cartoon refuel: gurgling pour then a bright little ding",
+   "seconds": 1.6
+  },
+  {
+   "file": "jet1-takeoff-a",
+   "type": "sfx",
+   "text": "small jet pack ignites and lifts off, short whoosh with a rising rocket burst, cartoon game",
+   "seconds": 1.5
+  },
+  {
+   "file": "jet1-takeoff-b",
+   "type": "sfx",
+   "text": "cartoon rocket backpack blast off, punchy fwoosh going up",
+   "seconds": 1.2
+  },
+  {
+   "file": "jet1-takeoff-c",
+   "type": "sfx",
+   "text": "jetpack thruster start: click, ignition, rising whoosh, soft and friendly",
+   "seconds": 1.5
+  },
+  {
+   "file": "jet1-sputter-a",
+   "type": "sfx",
+   "text": "small jet engine sputtering and coughing, running out of fuel, cartoon",
+   "seconds": 1.4
+  },
+  {
+   "file": "jet1-sputter-b",
+   "type": "sfx",
+   "text": "cartoon jetpack misfiring, putt putt cough, almost empty",
+   "seconds": 1.4
+  },
+  {
+   "file": "jet1-cutoff-a",
+   "type": "sfx",
+   "text": "jet pack engine dies: last cough and a descending power-down whine, cartoon",
+   "seconds": 1.3
+  },
+  {
+   "file": "jet1-cutoff-b",
+   "type": "sfx",
+   "text": "cartoon engine runs out of fuel, sad sputter and pfft fizzle out",
+   "seconds": 1.3
   }
  ]
 }
