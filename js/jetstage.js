@@ -552,14 +552,15 @@ function drawJetHeld() {
     }
   }
   if (jsWorn()) {                                                // מד הדלק של הסילון – מעל הראש
-    const now = performance.now() / 1000, k = S.fuel, w = 22;                     // מד קבוע באמצע ראש המסך – לא זז עם הנינג'ה ולא מוסתר על ידי הדרקון
-    const x = (viewL() + viewR()) / 2, y = (0 - oy) / scale + 10;
+    const now = performance.now() / 1000, k = S.fuel, w = 16, topY = (0 - oy) / scale;   // מד הדלק צמוד לנינג'ה – מעל הראש (הדרקון עף מאחור)
+    const x = PLAYER.x + PLAYER.w / 2, above = GROUND - py - 21, y = above > topY + 22 ? above : GROUND - py + 3;   // קרוב לראש המסך (מתחת לשורת השלבים) – עובר אל מתחת לרגליים
     const low = k < 0.25, hz = 3 + (0.25 - Math.min(0.25, k)) * 24, blink = low && Math.floor(now * hz) % 2 === 0;   // לקראת סוף הדלק – מהבהב, ויותר מהר ככל שנשאר פחות
     if (low) { ctx.fillStyle = blink ? 'rgba(239,68,68,.55)' : 'rgba(239,68,68,.15)'; roundRect(x - w / 2 - 1.6, y - 1.6, w + 3.2, 4.6, 2); ctx.fill(); }
-    ctx.fillStyle = 'rgba(15,23,42,.6)'; roundRect(x - w / 2 - 0.7, y - 0.7, w + 1.4, 2.8, 1.3); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.85)'; roundRect(x - w / 2 - 4.6, y - 1.5, w + 5.8, 4.4, 2.2); ctx.fill();   // רקע לבן – שיבלוט על כל רקע
+    ctx.fillStyle = 'rgba(15,23,42,.7)'; roundRect(x - w / 2 - 0.5, y - 0.5, w + 1, 2.4, 1.2); ctx.fill();
     ctx.fillStyle = k > 0.25 ? (k > 0.55 ? '#22c55e' : '#f59e0b') : (blink ? '#fecaca' : '#ef4444');
     if (k > 0) { roundRect(x - w / 2, y, w * k, 1.4, 0.7); ctx.fill(); }
-    ctx.font = '900 3px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#fff'; ctx.fillText('🚀', x - w / 2 - 2.6, y + 1.9);
+    ctx.font = '900 3px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('⛽', x - w / 2 - 2.4, y + 0.8);
   }
   if (S.p === 'pick') { const k = Math.min(1, S.t / JS.pickT); jsPack(lerp(S.o.x + JS.pack, playerHand[0] + 0.6, k), lerp(GROUND - 2.4, playerHand[1], k), (Math.PI / 2 - 0.15) * (1 - k), false); }
   if (S.p === 'hold') jsPack(playerHand[0] + 0.6, playerHand[1], 0, false);
