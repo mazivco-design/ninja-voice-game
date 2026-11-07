@@ -63,5 +63,25 @@ function windSound(level) {
 }
 setInterval(() => { if (windNode && typeof state !== 'undefined' && state !== 'play' && state !== 'intro' && state !== 'demo') windSound(0); }, 250);   // השהיה / סוף משחק – שקט
 function sfx(name) { if (muted || !sfxCtx || !SFX[name]) return; try { SFX[name](); } catch (e) {} }
+// אפקטים מוקלטים (ElevenLabs) מ-audio/sfx/ – קצרים בלבד, כדי לא להפריע לזיהוי הדיבור
+const SFX_FILES = ['jet-refuel', 'jet-takeoff', 'jet-empty'], sfxBuf = {};
+function sfxFileLoad(n) {
+  if (sfxBuf[n] || !sfxCtx) return;
+  sfxBuf[n] = 'loading';
+  fetch('audio/sfx/' + n + '.mp3?v=' + (typeof VOICE_VER !== 'undefined' ? VOICE_VER : '')).then(r => r.arrayBuffer())
+    .then(b => new Promise((res, rej) => sfxCtx.decodeAudioData(b, res, rej)))
+    .then(buf => { sfxBuf[n] = buf; }).catch(() => { delete sfxBuf[n]; });
+}
+function sfxFile(n, vol) {
+  if (muted || !sfxCtx) return;
+  const buf = sfxBuf[n];
+  if (!buf || buf === 'loading') { sfxFileLoad(n); return; }                 // עוד לא נטען – בפעם הבאה
+  try {
+    if (sfxCtx.state !== 'running') sfxCtx.resume();
+    const src = sfxCtx.createBufferSource(), g = sfxCtx.createGain();
+    src.buffer = buf; g.gain.value = vol || 1; src.connect(g); g.connect(sfxCtx.destination); src.start();
+  } catch (e) {}
+}
+document.addEventListener('pointerdown', () => setTimeout(() => SFX_FILES.forEach(sfxFileLoad), 80), { capture: true });
 document.addEventListener('pointerdown', sfxInit, { capture: true });
 

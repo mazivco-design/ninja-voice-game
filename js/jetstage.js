@@ -75,7 +75,7 @@ function jsUpdate(dt, pb) {
   switch (S.p) {
     case 'pick': if (S.t >= JS.pickT) go('hold'); break;                         // מרים את התרמיל
     case 'put': if (S.t >= JS.putT) { go('empty'); sfx('thud'); flash = { text: '⛽ The tank is empty! PICK UP the fuel', t: 2.6 }; } break;   // לובש – והמד ריק
-    case 'fuelPick': if (S.t >= JS.pickT) go('fuelPour'); break;                 // מרים את מיכל הדלק שליד התרמיל
+    case 'fuelPick': if (S.t >= JS.pickT) { go('fuelPour'); sfxFile('jet-refuel'); } break;                 // מרים את מיכל הדלק שליד התרמיל
     case 'fuelPour':                                                             // שופך לתרמיל – המד מתמלא
       S.fuel = Math.min(1, Math.max(0, (S.t - 0.4) / 1.0));
       if (S.t >= 1.6) { S.fuel = 1; go('wear'); flash = { text: '🚀 Full tank! Now FLY', t: 1.8 }; sfx('coin'); }
@@ -92,7 +92,8 @@ function jsUpdate(dt, pb) {
       }
       S.fuel = Math.max(0, S.fuel - dt * (S.rate || 1 / JS.fuelT));               // הדלק יורד בזמן הטיסה
       if (S.fuel <= 0 && S.p === 'fly' && !JS.cave) { go('fall'); sfx('thud'); flash = { text: '⛽ Out of fuel!', t: 1.6 }; break; }   // נגמר באוויר – נופלים
-      if (S.fuel > JS.lowAt + 0.05) S.warned = 0;                                            // אחרי מילוי – אפשר להזהיר שוב
+      if (S.fuel > JS.lowAt + 0.05) { S.warned = 0; S.emptySnd = 0; }                       // אחרי מילוי – אפשר להזהיר שוב
+      if (S.fuel < JS.lowAt && !S.emptySnd) { S.emptySnd = 1; sfxFile('jet-empty'); }       // המיכל מתרוקן – פעם אחת בכל טיסה
       if (S.fuel < JS.lowAt && S.fuel > 0 && (S.beepT = (S.beepT || 0) - dt) <= 0) { S.beepT = 0.25 + S.fuel * 1.6; try { if (sfxCtx) tone(880, 660, 0.08, 'square', 0.04); } catch (e) {} }   // צפצוף אזהרה
       if (S.fuel < JS.lowAt && !S.warned && state === 'play') { S.warned = 1; flash = { text: S.drain ? '⛽ Fuel low!' : '⛽ Fuel low – land on a rock!', t: 1.6 }; }
       if (S.fuel <= 0 && S.lane > 0 && JS.cave) S.lane = 0;                                 // בלי דלק – יורדים לגובה הנמוך (ועדיין מגיעים לצד השני)
@@ -132,7 +133,7 @@ function jsUpdate(dt, pb) {
       if (S.alt <= JS_PILLARS[S.pi].top) { S.lastK = S.pi; go('perch'); sfx('thud'); burst(PLAYER.x + 4, GROUND - S.alt - 1, '#e7c39a', 6, 10); }
       break;
     case 'perch': break;                                                         // עומד על התחנה – מחכה ל-PICK UP
-    case 'pFuel': if (S.t >= JS.pickT) go('pPour'); break;                       // מרים את המיכל מהסלע
+    case 'pFuel': if (S.t >= JS.pickT) { go('pPour'); sfxFile('jet-refuel'); } break;                       // מרים את המיכל מהסלע
     case 'pPour': {                                                              // שופך לתרמיל – המד מתמלא
       const f0 = S.f0 === undefined ? (S.f0 = S.fuel) : S.f0;
       S.fuel = Math.min(1, f0 + (1 - f0) * Math.max(0, Math.min(1, (S.t - 0.4) / 1.0)));
@@ -219,12 +220,12 @@ function jsCmd(word) {
   if (word === 'pick up' && S.p === 'perch') { S.p = 'pFuel'; S.t = 0; sfx('swish'); return true; }   // בתחנה: מרים את מיכל הדלק
   if (word === 'pick up') { if (S.p === 'find') { S.p = 'pick'; S.t = 0; sfx('swish'); } else if (S.p === 'empty') { S.p = 'fuelPick'; S.t = 0; sfx('swish'); } else if (S.p === 'inCave') { S.p = 'grab'; S.t = 0; sfx('coin'); } return true; }
   if (word === 'crawl') { if (S.p === 'atCave') { S.p = 'crawlIn'; S.t = 0; sfx('swish'); } return true; }
-  if (word === 'fly' && S.p === 'atWall') { S.p = 'rise'; S.t = 0; sfx('jump'); flash = { text: '🚀 Full tank!', t: 1.2 }; return true; }
+  if (word === 'fly' && S.p === 'atWall') { S.p = 'rise'; S.t = 0; sfxFile('jet-takeoff'); flash = { text: '🚀 Full tank!', t: 1.2 }; return true; }
   if (word === 'put on') { if (S.p === 'hold') { S.p = 'put'; S.t = 0; sfx('swish'); } return true; }
-  if (word === 'fly' && S.p === 'wear') { S.base = 0; S.p = 'take'; S.t = 0; sfx('jump'); return true; }
+  if (word === 'fly' && S.p === 'wear') { S.base = 0; S.p = 'take'; S.t = 0; sfxFile('jet-takeoff'); return true; }
   if (word === 'fly') return true;
   if (word === 'up' || (word === 'fly' && S.p === 'pReady')) {
-    if (S.p === 'pReady') { S.base = S.alt; S.lane = Math.max(1, S.lane); S.p = 'take'; S.t = 0; sfx('jump'); }   // ממריאים מהצוק
+    if (S.p === 'pReady') { S.base = S.alt; S.lane = Math.max(1, S.lane); S.p = 'take'; S.t = 0; sfxFile('jet-takeoff'); }   // ממריאים מהצוק
     else if ((S.p === 'fly' || S.p === 'hover') && S.fuel > 0) S.lane = Math.min(2, S.lane + 1);
     return true;
   }
