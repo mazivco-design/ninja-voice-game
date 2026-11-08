@@ -1413,7 +1413,7 @@ function drawNinjaBody() {
   const wading = swimmingNow() && !swim && !dive && py <= 0;
   const tunO = crawl ? tunnelHere() : null;                                     // זוחל בתוך המחילה – על הרצפה שלה                     // בשפה של הבריכה: הולך בתוך המים הרדודים, על השיפוע
   const riding = rideCtl() && ride.phase !== 'mount';
-  const duck = duckT > 0, fx = riding ? PLAYER.x + 4 : rope && rope.phase === 'fall' && rope.fallX !== undefined ? rope.fallX : leap || dive || crawl ? PLAYER.x + 3 : pb.l + (duck ? 5.5 : swim ? 3 : 4);
+  const duck = duckT > 0, fx = riding ? PLAYER.x + 4 : rope && rope.phase === 'fall' && rope.fallX !== undefined ? rope.fallX : leap || dive || crawl ? PLAYER.x + 3 : pb.l + (duck ? 5.5 : swim ? 3 : 4) + boatDX();   // boatDX – בדייג: נגרר לחרטום / נופל למים
   const fy = riding ? GROUND - py : dive ? diveFit(fx).y : leap ? GROUND - py : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : wading ? wadeY(fx) : tunO ? tunnelFloor(tunO, fx) : pb.b + mudSink(fx) + boatSink();   // בבוץ – שקוע עד המותניים
   const now = performance.now() / 1000;
   if (sinkT > 0 && sinkType === 'burn') {                                       // נשרף בשדה האש – מושחר ועשן עולה
@@ -1441,7 +1441,7 @@ function drawNinjaBody() {
     for (let k = 0; k < 3; k++) { const yy = fy - 4 - k * 3.5, o2 = ((now * 60 + k * 7) % 10); ctx.beginPath(); ctx.moveTo(fx - 6 - o2, yy); ctx.lineTo(fx - 13 - o2, yy); ctx.stroke(); }
   }
   // צל על הקרקע
-  if (!swim && !drowning && !dive && !tunO && !(act.hiding > 0) && mudSink(fx) < 0.3 && !(boat && ['board', 'row', 'land'].includes(boat.phase))) ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';   // כשכורעים – בלי צל (הברך על הקרקע)
+  if (!swim && !drowning && !dive && !tunO && !(act.hiding > 0) && mudSink(fx) < 0.3 && !(boat && (['board', 'row', 'land'].includes(boat.phase) || FISHING.includes(boat.phase)))) ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';   // כשכורעים – בלי צל (הברך על הקרקע)
   else ctx.fillStyle = 'rgba(0,0,0,0)';
   if (riding) ctx.fillStyle = 'rgba(0,0,0,0)';                       // על הדרקון – בלי צל על הקרקע
   if (jetS && (jsFlying() || JS_ISLE_P.includes(jetS.p) || ['perchDown', 'perch'].includes(jetS.p))) ctx.fillStyle = 'rgba(0,0,0,0)';   // מעל התהום / על הצוק – אין קרקע מתחת
