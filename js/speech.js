@@ -77,7 +77,7 @@ async function ensureAudio() {
 // מילה אחרת מחכה לתוצאה הסופית, שמגיעה עם ציון ביטחון: ציון גבוה – מופעלת (וזו טעות, כמו היום). ציון נמוך – כנראה בלבול עם מילה דומה, מתעלמים.
 // אם Vosk "מתקן" את המילה האחרונה (שמע down ואז הבין שזה jump) – מטפלים במילה המתוקנת.
 function handleText(text, isFinal, detail) {
-  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'yes' || w === 'sneak' || w === 'put down' || w === 'put on' || POWER_WORDS.includes(w);
+  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'yes' || w === 'sneak' || w === 'put down' || w === 'put on' || w === 'ring' || w === 'brake' || w === 'get off' || POWER_WORDS.includes(w);
   const { words, confs } = tokenize(text, detail);
   for (let i = 0; i < words.length; i++) {
     const exp = expectedWords();                                   // מחושב לכל מילה – "I WANT KEY": אחרי WANT מצפים כבר לשם החפץ
@@ -108,14 +108,14 @@ function handleText(text, isFinal, detail) {
 
 // מפרק את הטקסט למילים של המשחק. "let go" (שתי מילים אצל Vosk) הופך למילה אחת 'let go', עם הציון הנמוך מבין השתיים
 function tokenize(text, detail) {
-  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'yes' || w === 'sneak' || w === 'put down' || w === 'put on' || POWER_WORDS.includes(w);
+  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'yes' || w === 'sneak' || w === 'put down' || w === 'put on' || w === 'ring' || w === 'brake' || w === 'get off' || POWER_WORDS.includes(w);
   const toks = (text || '').toLowerCase().split(/\s+/).filter(Boolean);
   const dconf = detail && detail.length ? detail.map(d => d.conf) : null;
   const words = [], confs = [];
   for (let i = 0; i < toks.length; i++) {
     const pair = toks[i] + ' ' + toks[i + 1];
     if (pair === 'jump in') { words.push('jump'); confs.push(dconf ? Math.max(dconf[i], dconf[i + 1]) : undefined); i++; }   // JUMP IN (סירה / עגלה) = JUMP
-    else if (pair === 'let go' || pair === 'pick up' || pair === 'put down' || pair === 'put on') { words.push(pair); confs.push(dconf ? Math.min(dconf[i], dconf[i + 1]) : undefined); i++; }
+    else if (pair === 'let go' || pair === 'pick up' || pair === 'put down' || pair === 'put on' || pair === 'get off') { words.push(pair); confs.push(dconf ? Math.min(dconf[i], dconf[i + 1]) : undefined); i++; }
     else if (ok(toks[i])) { words.push(toks[i]); confs.push(dconf ? dconf[i] : undefined); }
   }
   return { words, confs: dconf ? confs : null };
@@ -130,6 +130,7 @@ function expectedWords0(strict) {                                              /
   const be = boatExpected(); if (be) return be;
   const ce = cartExpected(); if (ce) return ce;
   const bre = boarExpected(); if (bre) return bre;
+  const bke = bkExpected(); if (bke) return bke;
   const wfe = wfExpected(); if (wfe) return wfe;
   const jse = jsExpected(); if (jse) return jse;
   if (gustActive()) return ['hold'];
@@ -282,6 +283,7 @@ function command(word, source) {
   if (state === 'sushi') { if (word === 'catch') sushiCatch(); return; }   // בונוס סושי
   if (state !== 'play' && !((state === 'demo' || state === 'intro') && source === 'demo')) return;   // במילון ובהדגמה – רק ההדגמה מזיזה את הנינג'ה
   heard = { text: word.toUpperCase(), t: 0.8 };
+  if (bkCmd(word)) return;                 // אופניים: RIDE / RING / JUMP / BRAKE / STOP / GET OFF
   if (wfCmd(word)) return;                 // זאבים: CATCH / HOLD / LET GO
   if (jsCmd(word)) return;                 // שלב תרמיל הסילון: PICK UP / PUT ON / FLY / UP / DOWN
   if ((source === 'voice' || source === 'tap') && state === 'play' && expectedWords0(true).includes(word)) okBadge = { w: word, t: 1.0 };   // פידבק: נקלט נכון

@@ -612,6 +612,7 @@ function drawObstacle(o, top) {
   const x = o.x;
   if (o.type === 'boar') { drawBoar(o); return; }
   if (o.type === 'wolfden') { drawWolves(o); return; }
+  if (o.type === 'bikeway') { drawBikeWay(o); return; }
   if (o.type === 'dragon') { drawDragon(o.x + DRAGON.saddle, GROUND - DRAGON.lie, ride && ride.o === o && ride.phase === 'mount' ? 'stand' : 'lie'); return; }
   if (SKY_TYPES.includes(o.type)) { drawSky(o); return; }
   if (o.type === 'duel') { drawDuelEnemy(o); return; }
@@ -1405,6 +1406,7 @@ function drawNinja() {                                           // הנינג'�
 function drawNinjaBody() {
   if (drawGustNinja()) return;                                                    // בטורנדו: מחזיק בקנה / עף
   if (ropeHanging()) return;
+  if (bkDrawNinja()) return;                                                      // על האופניים – הנינג'ה והאופניים יחד (bike.js)
   if (cartRiding()) return;                                                       // יושב בעגלה – מצויר בתוכה (cart.js)                                                      // תלוי על החבל – מצויר ב-drawRopeSwing
   const pb = playerBox();
   const swim = swimShown();
