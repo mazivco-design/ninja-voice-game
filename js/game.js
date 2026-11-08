@@ -28,7 +28,7 @@ async function play(m, idx) {
   if (words.includes('push together') || words.includes('push on three')) { for (const w of ['push', 'jump', 'yes']) if (!listenWords.includes(w)) listenWords.push(w); }   // סירה / עגלה: PUSH ואז JUMP
   if (words.includes('fishing')) { for (const w of ['jump', 'throw', 'pull']) if (!listenWords.includes(w)) listenWords.push(w); }   // דייג: JUMP, THROW, PULL
   if (words.includes('jetpack')) for (const w of ['pick up', 'put on', 'fly', 'up', 'down', 'crawl']) if (!listenWords.includes(w)) listenWords.push(w);
-  if (words.includes('wolves')) for (const w of ['catch', 'hold', 'let go']) if (!listenWords.includes(w)) listenWords.push(w);   // זאבים: CATCH / HOLD / LET GO   // תרמיל סילון
+  if (words.includes('wolves')) for (const w of ['catch', 'hold', 'climb', 'jump']) if (!listenWords.includes(w)) listenWords.push(w);   // זאבים: CATCH / HOLD / LET GO   // תרמיל סילון
   if (words.includes('boar')) for (const w of ['hide', 'sneak']) if (!listenWords.includes(w)) listenWords.push(w);   // חזיר בר: SNEAK ו-HIDE
   listenWords = listenWords.filter(w => w !== 'push together' && w !== 'push on three' && w !== 'fishing' && w !== 'boar' && w !== 'jetpack' && w !== 'wolves');
   if (m !== 'demo') for (const w of powerWordsOwned()) if (!listenWords.includes(w)) listenWords.push(w);   // SHIELD / JET – אם יש מנות

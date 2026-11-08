@@ -101,7 +101,7 @@ const STAGES = [
   { name: 'FISHING', words: ['fishing'], count: 2, hint: 'JUMP in · THROW the line · PULL when the fish bites', world: 0 },
   { name: 'WILD BOAR', words: ['boar'], count: 1, hint: 'SNEAK when the boar eats · HIDE when its ears move', world: 0 },   // יער: מתחבאים מאחורי העצים (boar.js)   // הילד אומר PUSH ו-JUMP (boat.js)   // הילד עוד לא אומר HELP – רק CATCH ו-HOLD (mud.js)
   { name: 'JET PACK', words: ['jetpack'], count: 1, hint: 'PICK UP · PUT ON · FLY · UP / DOWN · DOWN to land', world: 0 },   // תהום: לובשים תרמיל סילון ועפים (jetstage.js)
-  { name: 'WOLVES', words: ['wolves'], count: 1, hint: 'CATCH the rope · HOLD · LET GO over the hill', world: 2 }   // זאבים ביער מושלג: כדור פורח מחלץ (wolves.js)
+  { name: 'WOLVES', words: ['wolves'], count: 1, hint: 'CATCH the rope · HOLD · CLIMB · JUMP onto the hill', world: 2 }   // זאבים ביער מושלג: כדור פורח מחלץ (wolves.js)
 ];
 // איזה עולם לכל זוג מילים (0 במבוק, 1 כפר בלילה, 2 שלג, 3 קניון, 4 מקדש)
 const PAIR_WORLD = [0, 1, 2, 3, 0, 4, 1, 2, 3, 0, 3];

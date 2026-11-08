@@ -1475,7 +1475,8 @@ function drawNinjaBody() {
   drawFigure({ fx, fy, facing: playerFacing(), scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
   playerHand = figHand(fx, fy, playerFacing(), 1, P, 1);           // איפה כף היד הקדמית – לחפצים שמחזיקים
   drawMerchHeld();
-  drawJetHeld();                                                  // תרמיל הסילון בידיים                                                // מפתח / חבל ביד (הלפיד – מעל החושך של המערה)
+  drawJetHeld();
+  if (typeof drawWolvesFront === 'function') drawWolvesFront();   // זאבים: דופן הסל לפני הנינג'ה                                                  // תרמיל הסילון בידיים                                                // מפתח / חבל ביד (הלפיד – מעל החושך של המערה)
   drawPlayerSword(fx, fy, P);
   drawPowerFront(fx, fy);                                         // בועת מגן / טיימר הסילון
   drawLiftCarry(fx, fy);                                          // הסלע בידיים

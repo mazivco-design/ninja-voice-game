@@ -372,8 +372,8 @@ function introNext() {
   const w = introWords.shift();
   setupDemo(w);
   if (w !== 'help' && w !== 'push together' && w !== 'push on three' && w !== 'fishing' && w !== 'boar' && w !== 'jetpack' && w !== 'wolves') speak(w);                                                  // HELP: הנינג'ה עצמו צועק בסצנה
-  banner = { text: w === 'help' ? 'CATCH the rope, then HOLD!' : w === 'push together' ? 'PUSH with your friend, then JUMP in!' : w === 'push on three' ? 'PUSH on THREE, then JUMP in!' : w === 'fishing' ? 'THROW the line, then PULL!' : w === 'boar' ? 'SNEAK when he eats · HIDE when the ears move!' : w === 'jetpack' ? 'PICK UP · PUT ON · FLY!' : w === 'wolves' ? 'CATCH the rope · HOLD · LET GO!' : 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
-  introT = w === 'fly' ? 4.6 : w === 'want' ? 12.8 : w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'put down' ? 6.8 : w === 'pick up' ? 2.8 : w === 'crawl' ? 5.2 : w === 'help' ? 12.7 : w === 'push together' ? 14 : w === 'push on three' ? 31 : w === 'fishing' ? 12.5 : w === 'boar' ? 10 : w === 'jetpack' ? 14 : w === 'wolves' ? 16 : 2.8;
+  banner = { text: w === 'help' ? 'CATCH the rope, then HOLD!' : w === 'push together' ? 'PUSH with your friend, then JUMP in!' : w === 'push on three' ? 'PUSH on THREE, then JUMP in!' : w === 'fishing' ? 'THROW the line, then PULL!' : w === 'boar' ? 'SNEAK when he eats · HIDE when the ears move!' : w === 'jetpack' ? 'PICK UP · PUT ON · FLY!' : w === 'wolves' ? 'CATCH · HOLD · CLIMB · JUMP!' : 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
+  introT = w === 'fly' ? 4.6 : w === 'want' ? 12.8 : w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'put down' ? 6.8 : w === 'pick up' ? 2.8 : w === 'crawl' ? 5.2 : w === 'help' ? 12.7 : w === 'push together' ? 14 : w === 'push on three' ? 31 : w === 'fishing' ? 12.5 : w === 'boar' ? 10 : w === 'jetpack' ? 14 : w === 'wolves' ? 26 : 2.8;
 }
 
 function finishIntro() {
