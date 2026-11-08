@@ -505,6 +505,7 @@ function drawRiverLife(o, P, t, fishOnly) {                                     
     const home = P.x + 30 + i * 55 + hash(i * 7.1) * 20, dir = Math.cos(t * 0.35 + i * 1.7) >= 0 ? 1 : -1;
     const x = home + Math.sin(t * 0.35 + i * 1.7) * 9, y = GROUND + 9 + hash(i * 2.9) * 11 + Math.sin(t * 1.2 + i) * 0.6;
     if (x < viewL() - 6 || x > viewR() + 6) continue;
+    if (fishOnly && boat && boat.o === o && ['float', 'bite', 'fight', 'gone'].includes(boat.phase) && Math.abs(x - fishBobX() - 2) < 14) continue;   // ליד הקרס – רק הדג שנושך, שלא יתבלבלו
     const tail = Math.sin(t * 9 + i) * 0.5;
     ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
     ctx.fillStyle = cols[i % cols.length];
@@ -607,32 +608,40 @@ function drawWetCover(o) {                                                      
   const r = 2.5 + (t * 2 % 1) * 2; ctx.beginPath(); ctx.ellipse(x + 0.5, wy + 0.4, r, r * 0.22, 0, 0, Math.PI * 2); ctx.stroke();   // טבעות סביבו
 }
 // מתחת למים: החוט יורד מהמצוף אל הקרס עם תולעת, והדג מתקרב, מסתובב ונושך. בזמן המאבק – הדג על הקרס מושך
-function fishUnderPos(B) {
+function fishUnderPos(B) {                                                        // מרכז הדג. הפה בקצה הקדמי (3 יחידות לכיוון הפנים)
   const hx = fishBobX(), hy = waterY() + FISH.hookD, now = performance.now() / 1000;
   if (B.phase === 'float') {
-    const k = Math.min(1, B.t / B.wait), r = 1 - k;
-    return { x: hx + 3.2 + r * 26 + Math.sin(k * 11) * 3 * r, y: hy + 0.6 + Math.sin(k * 7 + 1) * 5 * r, dir: Math.cos(k * 11) * r > 0.15 ? 1 : -1, a: Math.sin(now * 8) * 0.06 };
+    const k = Math.min(1, B.t / B.wait), r = Math.max(0, (0.8 - k) / 0.8);             // ב-80% הראשונים מתקרב ומסתובב, ואז מרחרח את הפיתיון
+    if (r > 0) return { x: hx + 3.4 + r * 26 + Math.sin(k * 11) * 3 * r, y: hy + Math.sin(k * 7 + 1) * 5 * r, dir: Math.cos(k * 11) * r > 0.15 ? 1 : -1, a: Math.sin(now * 8) * 0.06 };
+    return { x: hx + 3.4 + Math.abs(Math.sin(now * 7)) * 1.2, y: hy + Math.sin(now * 3) * 0.2, dir: -1, a: Math.sin(now * 8) * 0.05 };   // נוגע ומתרחק – מנקר בפיתיון
   }
-  if (B.phase === 'bite') return { x: hx + 3.2 + Math.sin(now * 20) * 0.4, y: hy + 0.6 + Math.sin(now * 13) * 0.3, dir: -1, a: Math.sin(now * 25) * 0.2 };
-  if (B.phase === 'fight') return { x: hx + 4 + B.drag * 6 + Math.sin(now * 9) * 1.2, y: hy + 2 + B.drag * 4 + Math.sin(now * 6) * 1, dir: 1, a: Math.sin(now * 22) * 0.3 };
-  if (B.phase === 'gone' && B.t < 1) return { x: hx + 4 + B.t * 40, y: hy + 1 + B.t * 6, dir: 1, a: Math.sin(now * 25) * 0.2 };   // בורח
+  if (B.phase === 'bite') return { x: hx + 2.8 + Math.sin(now * 20) * 0.35, y: hy + Math.sin(now * 13) * 0.25, dir: -1, a: Math.sin(now * 25) * 0.12 };   // הפיתיון בפה
+  if (B.phase === 'fight') return { x: hx + 5 + B.drag * 6 + Math.sin(now * 9) * 1.2, y: hy + 1.5 + B.drag * 4 + Math.sin(now * 6) * 1, dir: -1, a: Math.sin(now * 22) * 0.3 };   // נמשך אחורה ומשתולל, הקרס בפה
+  if (B.phase === 'gone' && B.t < 1) return { x: hx + 4 + B.t * 40, y: hy + 1 + B.t * 6, dir: 1, a: Math.sin(now * 25) * 0.2 };   // בורח עם הפיתיון
   return null;
+}
+function fishMouth(F) { return { x: F.x + F.dir * 2.9 * Math.cos(F.a), y: F.y + 2.9 * Math.sin(F.a) }; }   // drawBigFish: הפה ב-(3,0), מסובב ב-a והפוך לפי הכיוון
+function drawHook(x, y, bait, t) {                                               // (x,y) = כיפוף הקרס, שם יושב הפיתיון
+  ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 0.28; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x + 0.8, y - 1.6); ctx.lineTo(x + 0.8, y); ctx.arc(x, y, 0.8, 0, Math.PI, false); ctx.lineTo(x - 0.8, y - 0.6); ctx.stroke();
+  if (bait) { ctx.strokeStyle = '#f472b6'; ctx.lineWidth = 0.55; ctx.beginPath(); ctx.moveTo(x + 0.6, y - 0.9); ctx.quadraticCurveTo(x - 0.6 + Math.sin(t * 6) * 0.5, y + 0.2, x + 0.2, y + 1.9 + Math.sin(t * 5) * 0.2); ctx.stroke(); }   // תולעת מתפתלת
 }
 function drawFishUnder(o) {
   const B = boat && boat.o === o ? boat : null;
   if (!B || !['float', 'bite', 'fight', 'gone'].includes(B.phase)) return;
-  const hx = fishBobX(), wy = waterY(), hy = wy + FISH.hookD, F = fishUnderPos(B), col = B.col || '#fb923c';
-  const end = B.phase === 'fight' && F ? { x: F.x + 3 * F.dir, y: F.y } : B.phase === 'bite' && F ? { x: F.x - 3, y: F.y } : { x: hx, y: hy };
+  const t = performance.now() / 1000, hx = fishBobX(), wy = waterY(), hy = wy + FISH.hookD, F = fishUnderPos(B), col = B.col || '#fb923c';
+  const inMouth = F && (B.phase === 'bite' || B.phase === 'fight'), M = F ? fishMouth(F) : null;
+  const hook = inMouth ? { x: M.x + 0.3, y: M.y + 0.2 } : { x: hx - 0.8, y: hy };   // בנשיכה הקרס בפה של הדג
   ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 0.15;                  // החוט מתחת למים
-  ctx.beginPath(); ctx.moveTo(hx, wy + 0.3); ctx.lineTo(end.x, end.y - 1.2); ctx.stroke();
-  if (B.phase === 'float' || (B.phase === 'gone' && B.t < 1.2)) {                 // הקרס והתולעת
-    ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 0.28; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(hx, hy - 1.2); ctx.lineTo(hx, hy + 0.4); ctx.arc(hx - 0.8, hy + 0.4, 0.8, 0, Math.PI, false); ctx.lineTo(hx - 1.6, hy - 0.2); ctx.stroke();
-    if (B.phase === 'float') { const t = performance.now() / 1000; ctx.strokeStyle = '#f472b6'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(hx - 0.2, hy - 0.4); ctx.quadraticCurveTo(hx + 1 + Math.sin(t * 6) * 0.5, hy + 0.6, hx + 0.2, hy + 1.6); ctx.stroke(); }
-  }
+  ctx.beginPath(); ctx.moveTo(hx, wy + 0.3); ctx.lineTo(hook.x + 0.8, hook.y - 1.6); ctx.stroke();
+  drawHook(hook.x, hook.y, B.phase === 'float', t);                              // הקרס (עם תולעת לפני הנשיכה) – מאחורי הדג
   if (!F) return;
   ctx.save(); ctx.translate(F.x, F.y); ctx.scale(F.dir, 1); drawBigFish(0, 0, F.a, col); ctx.restore();
-  if (B.phase === 'bite' || B.phase === 'fight') { const t = performance.now() / 1000; if (Math.random() < 0.2) particles.push({ x: F.x, y: F.y - 1, vx: 0, vy: -6, g: -3, life: 0.6, color: 'rgba(255,255,255,.75)', size: 0.5 }); }   // בועות
+  if (inMouth) {                                                                   // הפה סגור על הפיתיון: קצה התולעת מציץ החוצה
+    ctx.strokeStyle = '#f472b6'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(M.x + 0.4, M.y + 0.1); ctx.quadraticCurveTo(M.x - 0.6, M.y + 0.6 + Math.sin(t * 9) * 0.3, M.x - 0.3 + Math.sin(t * 7) * 0.4, M.y + 1.6); ctx.stroke();
+    ctx.strokeStyle = 'rgba(15,23,42,.6)'; ctx.lineWidth = 0.2; ctx.beginPath(); ctx.moveTo(M.x + 0.1, M.y + 0.15); ctx.lineTo(M.x + 1.1, M.y + 0.45); ctx.stroke();   // קו הפה
+    if (Math.random() < 0.2) particles.push({ x: M.x, y: M.y - 1, vx: 0, vy: -6, g: -3, life: 0.6, color: 'rgba(255,255,255,.75)', size: 0.5 });   // בועות
+  }
 }
 function drawRod(R) {
   ctx.strokeStyle = '#78350f'; ctx.lineWidth = 0.55; ctx.lineCap = 'round';
