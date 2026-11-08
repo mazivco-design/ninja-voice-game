@@ -541,3 +541,41 @@ function captureKeys(move, n) {
   tune.raw = false;
   return out;
 }
+
+// נינג'ה במבט מאחור (טיפוס בחבל): גוף, ראש בלי פנים, סרט ראש עם קשר וזנבות על הגב, חגורה,
+// שתי ידיים למעלה ושתי רגליים. s (0..1) מחליף צד: יד אחת פרוסה למעלה + הרגל באותו צד מקופלת, ובצד השני להפך.
+// מחזיר את מיקום היד הגבוהה (לחבל).
+function drawNinjaBack(F) {
+  const C = F.suit ? Object.assign({}, RIG.colors.ninja, F.suit) : RIG.colors.ninja, acc = C.accent || F.accent || '#dc2626';
+  const S = RIG.shape, sc = F.scale || 1, s = F.s === undefined ? 0 : F.s, now = performance.now() / 1000;
+  const L = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+  const legLen = S.thigh + S.shin, hipY = -legLen, shY = hipY - S.torso - 0.3, headY = shY - 1.8, hr = S.headR * 0.82;
+  // לכל צד: יד פרוסה/מקופלת, רגל מקופלת/ישרה (k=0 – יד פרוסה ורגל מקופלת, k=1 – להפך)
+  const side = (d, k) => {
+    const sh = [d * 1.9, shY + 0.5], hip = [d * 1.1, hipY + 0.2];
+    const armOut = [[d * 2.6, shY - 2.9], [d * 2.1, shY - 7.6]], armBent = [[d * 4.3, shY - 1.6], [d * 1.9, headY - hr - 0.4]];   // פרוסה: גבוה מעל הראש; מקופלת: מרפק בצד, יד ליד קודקוד הראש
+    const legBent = [[d * 2.9, hipY + 2.0], [d * 1.7, hipY + 4.0]], legStr = [[d * 1.35, hipY + 2.5], [d * 1.25, 0.2]];
+    return { sh, hip, el: L(armOut[0], armBent[0], k), hand: L(armOut[1], armBent[1], k), kn: L(legBent[0], legStr[0], k), ft: L(legBent[1], legStr[1], k) };
+  };
+  const A = side(-1, s), B = side(1, 1 - s);
+  ctx.save(); ctx.translate(F.fx, F.fy); ctx.scale(sc, sc); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const limb = (pts, w, col) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]); ctx.stroke(); };
+  const halo = hexA(C.outline, C.outlineAlpha), ow = S.outlineW;
+  // הילה בהירה מסביב (כמו בדמות מהצד) – שהידיים והרגליים ייראו על רקע הגוף והשמיים
+  [A, B].forEach(q => { limb([q.hip, q.kn, q.ft], S.legW + ow, halo); limb([q.sh, q.el, q.hand], S.armW + ow, halo); });
+  ctx.fillStyle = halo; roundRect(-2.2 - ow / 2, shY - 0.4 - ow / 2, 4.4 + ow, hipY - shY + 1.0 + ow, 1.2); ctx.fill(); circle(0, headY, hr + ow / 2);
+  [A, B].forEach(q => limb([q.hip, q.kn, q.ft], S.legW, C.back));                  // רגליים
+  ctx.fillStyle = C.body; roundRect(-2.2, shY - 0.4, 4.4, hipY - shY + 1.0, 0.9); ctx.fill();   // גוף
+  ctx.fillStyle = acc; ctx.fillRect(-2.25, hipY - 1.4, 4.5, 1.1);                    // חגורה
+  ctx.fillStyle = C.body; circle(0, headY, hr);                                      // ראש מאחור – בלי פנים
+  [A, B].forEach(q => { limb([q.sh, q.el, q.hand], S.armW + 0.5, C.edge); limb([q.sh, q.el, q.hand], S.armW, C.front); ctx.fillStyle = acc; circle(q.hand[0], q.hand[1], S.handR); });   // ידיים (מעל הראש, עם קו כהה)
+  ctx.fillStyle = acc; ctx.fillRect(-hr, headY - 1.1, hr * 2, 1.0);                  // סרט ראש
+  circle(0, headY - 0.6, 0.7);
+  const wv = Math.sin(now * 7) * 0.35;
+  ctx.strokeStyle = acc; ctx.lineWidth = 0.75;                                       // זנבות הקשר על הגב
+  ctx.beginPath(); ctx.moveTo(0, headY - 0.5); ctx.quadraticCurveTo(-0.7 + wv, headY + 1.6, -1.3 + wv, headY + 3.6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, headY - 0.5); ctx.quadraticCurveTo(0.6 + wv, headY + 1.6, 0.9 + wv, headY + 3.4); ctx.stroke();
+  ctx.restore();
+  const hi = A.hand[1] < B.hand[1] ? A.hand : B.hand;
+  return [F.fx + hi[0] * sc, F.fy + hi[1] * sc];
+}

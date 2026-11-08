@@ -1472,8 +1472,11 @@ function drawNinjaBody() {
   if (riding) drawRideDragon(fx, fy);                            // הדרקון מתחת לנינג'ה
   drawPowerBack(fx, fy, P);                                       // תרמיל הסילון על הגב
   if (hasGear('katana') && P.swordA === undefined && jetT <= 0) drawKatana(fx, fy, P);   // קטאנה על הגב – מאחורי הגוף (בקרב היא ביד)
-  drawFigure({ fx, fy, facing: playerFacing(), scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
-  playerHand = figHand(fx, fy, playerFacing(), 1, P, 1);           // איפה כף היד הקדמית – לחפצים שמחזיקים
+  if (P.backView) playerHand = drawNinjaBack({ fx: fx + 1, fy, scale: 1, accent: playerColor(), suit: playerSuit(), s: P.backS });   // מבט מאחור (טיפוס בחבל)
+  else {
+    drawFigure({ fx, fy, facing: playerFacing(), scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
+    playerHand = figHand(fx, fy, playerFacing(), 1, P, 1);         // איפה כף היד הקדמית – לחפצים שמחזיקים
+  }
   drawMerchHeld();
   drawJetHeld();
   if (typeof drawWolvesFront === 'function') drawWolvesFront();   // זאבים: דופן הסל לפני הנינג'ה                                                  // תרמיל הסילון בידיים                                                // מפתח / חבל ביד (הלפיד – מעל החושך של המערה)
