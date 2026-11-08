@@ -8,7 +8,13 @@
 
 const WF = { stop: 30, rockH: 2.4, hill: 118, hillW: 30, hillH: 8, flyV: 14, liftT: 1.7, liftUp: 10, L0: 30, handH: 17, carryA: 44, hoverA: 14, climbT: 2.4, boardT: 0.6, balS: 1.6, lowerT: 1.5, arriveT: 3.2, balloonT: 3.2,
              ropeT: 0.8, bite: 9.5, backT: 1.1, hint: 4, hintEvery: 6, coins: 4, after: 75 };
-const WF_WOLVES = [{ side: -1, d0: 32, sp: 0.8 }, { side: 1, d0: 30, sp: 0.85 }, { side: 1, d0: 50, sp: 1 }];   // צד, מרחק התחלה, יחס מהירות (הזאב המהיר מגיע ראשון)
+// הזאבים מגיעים בגלים: הראשונים נעצרים קרוב, ומאחוריהם מגיעים עוד. לכל אחד גוון וגודל משלו
+// side – צד, d0 – איפה נעצר, sp – כמה מהר מתקרב אחר כך (1 = הראשון שמגיע אל הנינג'ה), at – מתי יוצא, col – גוון, sz – גודל
+const WF_WOLVES = [
+  { side: 1, d0: 28, sp: 0.85, at: 0, col: '#6b7280', sz: 1.05 }, { side: -1, d0: 30, sp: 0.8, at: 0.3, col: '#71717a', sz: 1 }, { side: 1, d0: 44, sp: 1, at: 0.8, col: '#57534e', sz: 0.95 },
+  { side: -1, d0: 46, sp: 0.7, at: 3.2, col: '#7c7f88', sz: 0.9 }, { side: 1, d0: 60, sp: 0.75, at: 3.8, col: '#4b5563', sz: 1.12 },
+  { side: -1, d0: 62, sp: 0.6, at: 6.4, col: '#8a8178', sz: 0.95 }, { side: 1, d0: 76, sp: 0.65, at: 7.0, col: '#5f6673', sz: 1 }];
+const WF_WALK = 2.8;                                                                // כמה זמן לוקח לזאב להגיע מקצה המסך
 const WF_THREAT = { easy: 17, medium: 13, hard: 10 };                              // כמה שניות עד שהזאבים מגיעים (מההתחלה של המעגל)
 let wolfS = null;   // { o, p, t, k (0..1 – כמה התקרבו), idle, hinted, miss, leapT }
 
@@ -28,7 +34,9 @@ function wfHillY(o, x) {                                                        
 function wfThreat() { return (WF_THREAT[diffKey] || 13) * (cfg && cfg.forgive ? 1.15 : 1); }
 function wfDist(i) {                                                                 // כמה רחוק זאב i מהסלע
   const W8 = WF_WOLVES[i], S = wolfS, k = S ? S.k : 0;
-  return Math.max(WF.bite, W8.d0 - (W8.d0 - WF.bite) * Math.min(1, k * W8.sp));
+  let d0 = W8.d0;
+  if (S && S.edge) { const a = Math.max(0, Math.min(1, ((S.tt || 0) - W8.at) / WF_WALK)); d0 = S.edge[i] + (W8.d0 - S.edge[i]) * (1 - (1 - a) * (1 - a)); }   // עדיין בדרך מקצה המסך
+  return Math.max(WF.bite, d0 - (W8.d0 - WF.bite) * Math.min(1, k * W8.sp));
 }
 function wfBase() { return WF.rockH + WF.handH + WF.L0; }                         // גובה תחתית הסל כשהנינג'ה על הסלע
 function wfSpeed() {
@@ -49,7 +57,7 @@ function wfUpdate(dt, pb) {
     sfx('woof');
     return;
   }
-  const S = wolfS, o = S.o; S.t += dt;
+  const S = wolfS, o = S.o; S.t += dt; S.tt = (S.tt || 0) + dt;
   if (!obstacles.includes(o)) { wolfS = null; return; }
   const go = p => { S.p = p; S.t = 0; S.idle = 0; S.hinted = 0; }, demo = state !== 'play', e = q => q * q * (3 - 2 * q);
   if (demo) {
@@ -206,10 +214,11 @@ const WOLF_SKF = (() => {
   });
   return out;
 })();
-function drawWolfFig(x, y, dir, t, mode) {                                           // dir: 1 = פונה ימינה, -1 = שמאלה
-  ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
+function drawWolfFig(x, y, dir, t, mode, col, sz) {                                           // dir: 1 = פונה ימינה, -1 = שמאלה
+  sz = sz || 1;
+  ctx.save(); ctx.translate(x, y); ctx.scale(dir * sz, sz);
   const walk = mode === 'walk' || mode === 'run', ph = walk ? t * (mode === 'run' ? 16 : 9) : 0;
-  const body = '#6b7280', K = WOLF_K;                                            // צבע אחד לכל הגוף
+  const body = col || '#6b7280', K = WOLF_K;                                            // צבע אחד לכל הגוף
   const bob = walk ? Math.abs(Math.sin(ph)) * 0.35 : 0;
   // הסקיצה פונה שמאלה – הופכים, כך ש-dir=1 פונה ימינה. רגליים: מזיזים את כפות הרגליים קדימה/אחורה לסירוגין
   const pt = ([sx, sy]) => {
@@ -222,7 +231,7 @@ function drawWolfFig(x, y, dir, t, mode) {                                      
   ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(0, 0.3, 9, 1.2, 0, 0, Math.PI * 2); ctx.fill();
   if (mode === 'up') { ctx.translate(8, -9); ctx.rotate(-0.12); ctx.translate(-8, 9); }   // מרים את הראש אל הכדור הפורח
   ctx.fillStyle = body; path(); ctx.fill();
-  ctx.strokeStyle = '#596070'; ctx.lineWidth = 0.22; ctx.lineCap = 'round';          // קווי פרווה עדינים על הגוף
+  ctx.strokeStyle = 'rgba(0,0,0,.16)'; ctx.lineWidth = 0.22; ctx.lineCap = 'round';          // קווי פרווה עדינים על הגוף
   for (const [sx, sy, l] of [[1000, 935, 30], [1040, 945, 34], [1080, 940, 30], [960, 960, 26], [1010, 975, 28], [1060, 980, 26], [905, 930, 22], [930, 960, 22]]) {
     const [ax, ay] = pt([sx, sy]), [bx2, by2] = pt([sx + l, sy + 8]); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx2, by2); ctx.stroke();
   }
@@ -295,21 +304,20 @@ function drawWolfScene(o) {
   const S = wolfS && wolfS.o === o ? wolfS : null;
   WF_WOLVES.forEach((W8, i) => {
     let d = S ? wfDist(i) : W8.d0 + 40, yy = GROUND, mode = 'walk', dir = -W8.side;
-    if (S && S.p === 'arrive') {                                                         // נכנסים מקצה המסך ומתקרבים לאט
-      if (!S.edge) S.edge = WF_WOLVES.map((w, j) => (w.side > 0 ? R - c : c - L) + 12 + j * 7);
-      const k = Math.min(1, S.t / WF.arriveT); d = S.edge[i] + (W8.d0 - S.edge[i]) * (1 - (1 - k) * (1 - k));
-    }
-    if (S && ['circle', 'rope', 'caught'].includes(S.p)) mode = Math.sin(t * 1.3 + i * 2) > 0.2 ? 'growl' : 'walk';
+    if (S && !S.edge) S.edge = WF_WOLVES.map(w => (w.side > 0 ? R - c : c - L) + 14);   // נקודת הכניסה – קצה המסך
+    if (S && S.edge && !S.liftD) d = wfDist(i);
+    const coming = S && (S.tt || 0) - W8.at < WF_WALK;                                  // עדיין הולך פנימה
+    if (S && ['circle', 'rope', 'caught'].includes(S.p) && !coming) mode = Math.sin(t * 1.3 + i * 2) > 0.2 ? 'growl' : 'walk';
     if (S && S.p === 'back') mode = 'walk';
     if (S && ['lift', 'hang', 'climb', 'board', 'carry', 'lower', 'hover', 'drop', 'land', 'exit'].includes(S.p)) {
       mode = 'up'; d = S.liftD ? S.liftD[i] : d;
       if (!S.liftD) S.liftD = WF_WOLVES.map((w, j) => wfDist(j));
-      if (i === 1 && S.leapT >= 0 && S.leapT < 0.9) { const k = S.leapT / 0.9; yy = GROUND - Math.sin(Math.PI * k) * 8; d = S.liftD[i] - Math.sin(Math.PI * k) * 5; mode = 'run'; }   // קופץ – ומפספס
+      if (i === 0 && S.leapT >= 0 && S.leapT < 0.9) { const k = S.leapT / 0.9; yy = GROUND - Math.sin(Math.PI * k) * 8; d = S.liftD[i] - Math.sin(Math.PI * k) * 5; mode = 'run'; }   // קופץ – ומפספס
     }
     if (!S) mode = 'walk';
     const x = c + W8.side * d;
     if (x < L - 20 || x > R + 20 || !S) return;
-    drawWolfFig(x, yy, dir, t + i, mode);
+    drawWolfFig(x, yy, dir, t + i, mode, W8.col, W8.sz);
   });
 }
 function drawBalloon(bx, by, sc, alpha) {                                             // by = תחתית הסל; sc – קטן כשהוא רחוק
