@@ -143,10 +143,12 @@
 /* חלון השחקנים: רחב ונמוך, בתחתית המסך – כדי שההר יישאר גלוי */
 #players.fujiW { align-items: flex-end; padding: 16px 16px max(26px, env(safe-area-inset-bottom)); }
 #players.fujiW .panel { width: min(1060px, 100%); display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; text-align: start;
-  grid-template-areas: "top grid" "sub grid" "manage grid"; gap: 4px 22px; padding: 16px 20px; }
+  grid-template-areas: "top grid" "sub grid" "manage grid" "tester grid"; gap: 4px 22px; padding: 16px 20px; }
 #players.fujiW .wTop { grid-area: top; justify-content: flex-start; }
 #players.fujiW .panel > p { grid-area: sub; margin: 0; }
 #players.fujiW .free.manage { grid-area: manage; justify-self: start; margin-top: 6px; }
+#players.fujiW .testerSlide { grid-area: tester; justify-self: start; margin-top: 8px; }   /* כניסת בודק – מתחת ל-Manage players */
+#editP .testerSlide { margin: 14px auto 0; }
 #players.fujiW .playerGrid { grid-area: grid; display: flex; flex-wrap: nowrap; gap: 10px; margin: 0; max-height: none; overflow-x: auto; overflow-y: hidden;
   -webkit-overflow-scrolling: touch; padding: 2px 2px 6px; }
 #players.fujiW .pcard { flex: 0 0 124px; padding: 8px 6px 10px; }
