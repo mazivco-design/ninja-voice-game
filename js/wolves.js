@@ -181,7 +181,8 @@ function wfPose(P) {
   if (p === 'climb') {                                                                 // ידיים ורגליים לסירוגין במעלה החבל
     P = poseIdle(now); const a = Math.sin(now * 9) * 0.28;
     P.arms = [[2.85 + a, 3.05 + a], [2.85 - a, 3.05 - a]]; P.legs = [[-0.35 + a, 0.6], [0.35 - a, 0.6]]; P.bob = 0;
-    P.backView = true; P.backS = (Math.sin(S.t * 5.2) + 1) / 2;                     // מאחור: יד פרוסה + רגל מקופלת, מתחלפים בכל צעד
+    P.backView = true; P.backS = (Math.sin(S.t * 5.2 - Math.PI / 2) + 1) / 2;       // מאחור: יד פרוסה + רגל מקופלת, מתחלפים בכל צעד (מתחיל מהיד שכבר למעלה)
+    P.backTilt = 0.32 * Math.max(0, 1 - S.t / 0.6) + Math.sin(S.t * 5.2) * 0.08;    // מהאלכסון של התלייה – אל ההצלבה האלכסונית של הטיפוס
     return P;
   }
   if (wfHanging()) {
@@ -189,7 +190,7 @@ function wfPose(P) {
     P.arms = [[2.95, 3.05], [2.95, 3.05]]; P.lean = sw; P.bob = 0;
     P.legs = p === 'caught' ? P.legs : [[-0.25 + sw, -0.15], [0.2 + sw, 0.25]];
     P.eyes = p === 'caught' || p === 'lift' ? 'wide' : P.eyes;
-    if (p === 'hang') { P.backView = true; P.backS = 0.15; }                          // תלוי בשמיים – מאחור, נאחז בחבל
+    if (p === 'hang') { P.backView = true; P.backHang = true; P.backS = 0; P.backTilt = 0.32 + Math.sin(now * 1.6) * 0.06; }   // תלוי ביד אחת, הגוף באלכסון ומתנדנד
     return P;
   }
   if (p === 'board') { P = poseIdle(now); P.arms = [[2.4, 2.8], [2.2, 2.6]]; return P; }
