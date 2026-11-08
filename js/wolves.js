@@ -7,7 +7,7 @@
    פאזות: arrive → circle → rope → caught → lift → hang → climb → board → carry → lower → hover → drop → land → exit */
 
 const WF = { skyA: 105, skyEnd: 60, waitD: 110, stop: 30, rockH: 2.4, hill: 250, hillW: 30, hillH: 8, flyV: 16, liftT: 1.7, liftUp: 10, L0: 30, handH: 17, carryA: 44, hoverA: 14, climbT: 2.4, boardT: 0.6, balS: 1.6, lowerT: 1.5, arriveT: 3.2, balloonT: 3.2,
-             ropeT: 0.8, bite: 9.5, backT: 1.1, hint: 4, hintEvery: 6, coins: 4, after: 75 };
+             ropeT: 0.8, kickAt: 0.42, bite: 9.5, backT: 1.1, hint: 4, hintEvery: 6, coins: 4, after: 75 };
 // הזאבים מגיעים בגלים: הראשונים נעצרים קרוב, ומאחוריהם מגיעים עוד. לכל אחד גוון וגודל משלו
 // side – צד, d0 – איפה נעצר, sp – כמה מהר מתקרב אחר כך (1 = הראשון שמגיע אל הנינג'ה), at – מתי יוצא, col – גוון, sz – גודל
 const WF_WOLVES = [
@@ -129,7 +129,14 @@ function wfUpdate(dt, pb) {
       }
       break;
   }
-  if (S.leapT >= 0) S.leapT += dt;
+  if (S.leapT >= 0) {
+    S.leapT += dt;
+    if (!S.kicked && S.leapT >= WF.kickAt) {                                          // בעיטה אוטומטית בזאב שקפץ
+      S.kicked = 1; sfx('thud'); sfx('woof'); shakeT = 0.15;
+      burst(PLAYER.x + 6, GROUND - py + 1, '#e5e7eb', 10, 14);
+      floatText(PLAYER.x + 8, GROUND - py - 2, 'KICK!', '#dc2626');
+    }
+  }
   if (S.ropeK !== undefined && S.p !== 'rope' && S.p !== 'back') S.ropeK = 1;
   // רמז כשהשחקן שותק (במסע – חצי לב, פעם אחת לכל המכשול). ב-HANG – רק כשהכדור כבר עוצר לפני הגבעה
   const want = wfExpected();
@@ -190,6 +197,12 @@ function wfPose(P) {
     P.arms = [[2.95, 3.05], [2.95, 3.05]]; P.lean = sw; P.bob = 0;
     P.legs = p === 'caught' ? P.legs : [[-0.25 + sw, -0.15], [0.2 + sw, 0.25]];
     P.eyes = p === 'caught' || p === 'lift' ? 'wide' : P.eyes;
+    if (p === 'lift' && S.leapT >= 0 && S.leapT < WF.kickAt + 0.35) {                 // בועט למטה-קדימה בזאב שקופץ
+      const k = S.leapT / (WF.kickAt + 0.35);
+      if (k < 0.45) { const e = k / 0.45; P.legs = [[-0.2, 0], [0.3 + 1.0 * e, 0.2 - 0.5 * e]]; }
+      else { const e = Math.min(1, (k - 0.45) / 0.2); P.legs = [[-0.25, 0], [1.3 - 0.35 * e, -0.3 + 1.2 * e]]; P.kickFoot = k < 0.85; }
+      P.eyes = 'squint';
+    }
     if (p === 'hang') { P.backView = true; P.backHang = true; P.backS = 0; P.backTilt = 0.32 + Math.sin(now * 1.6) * 0.06; }   // תלוי ביד אחת, הגוף באלכסון ומתנדנד
     return P;
   }
@@ -329,7 +342,7 @@ function drawWolfScene(o) {
   // הזאבים
   const S = wolfS && wolfS.o === o ? wolfS : null;
   WF_WOLVES.forEach((W8, i) => {
-    let d = S ? wfDist(i) : W8.d0 + 40, yy = GROUND, mode = 'walk', dir = -W8.side;
+    let d = S ? wfDist(i) : W8.d0 + 40, yy = GROUND, mode = 'walk', dir = -W8.side, rot = 0;
     if (S && !S.edge) S.edge = WF_WOLVES.map(w => (w.side > 0 ? R - c : c - L) + 14);   // נקודת הכניסה – קצה המסך
     if (S && S.edge && !S.liftD) d = wfDist(i);
     const coming = S && (S.tt || 0) - W8.at < WF_WALK;                                  // עדיין הולך פנימה
@@ -338,13 +351,18 @@ function drawWolfScene(o) {
     if (S && ['lift', 'hang', 'climb', 'board', 'carry', 'lower', 'hover', 'drop', 'land', 'exit'].includes(S.p)) {
       mode = 'up'; d = S.liftD ? S.liftD[i] : d;
       if (!S.liftD) S.liftD = WF_WOLVES.map((w, j) => wfDist(j));
-      if (i === 0 && S.leapT >= 0 && S.leapT < 0.9) { const k = S.leapT / 0.9; yy = GROUND - Math.sin(Math.PI * k) * 8; d = S.liftD[i] - Math.sin(Math.PI * k) * 5; mode = 'run'; }   // קופץ – ומפספס
+      if (i === 0 && S.leapT >= 0 && S.leapT < WF.kickAt + 0.9) {                   // קופץ על הנינג'ה – ומקבל בעיטה שמעיפה אותו אחורה
+        const L0 = S.liftD[i];
+        if (S.leapT < WF.kickAt) { const k = S.leapT / WF.kickAt; d = L0 + (5 - L0) * k; yy = GROUND - Math.sin(k * Math.PI / 2) * 9; mode = 'run'; }
+        else { const u = (S.leapT - WF.kickAt) / 0.9; d = 5 + 22 * u; yy = GROUND - 9 * (1 - u * u) - 3 * Math.sin(Math.PI * u); rot = u * 2.6; mode = 'run'; if (u >= 0.98) S.liftD[i] = 27; }
+      }
     }
     if (!S) mode = 'walk';
     const x = c + W8.side * d;
     if (x < L - 20 || x > R + 20 || !S) return;
     WOLF_HEAD_A = mode === 'up' ? 0.3 : (W8.head || 0) + Math.sin(t * 0.7 + i * 1.9) * 0.05;   // כל זאב עם זווית ראש משלו
-    drawWolfFig(x, yy, dir, t + i, mode, W8.col, W8.sz);
+    if (rot) { ctx.save(); ctx.translate(x, yy - 6); ctx.rotate(rot * W8.side); drawWolfFig(0, 6, dir, t + i, mode, W8.col, W8.sz); ctx.restore(); }   // מסתחרר מהבעיטה
+    else drawWolfFig(x, yy, dir, t + i, mode, W8.col, W8.sz);
     WOLF_HEAD_A = 0;
   });
 }
