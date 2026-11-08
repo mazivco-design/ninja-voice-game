@@ -6,7 +6,7 @@
    אם הזאבים מגיעים אליו לפני שהתרומם – נפגע, הזאבים נסוגים, והחבל משתלשל מחדש.
    פאזות: arrive → circle → rope → caught → lift → hang → climb → board → carry → lower → hover → drop → land → exit */
 
-const WF = { stop: 30, rockH: 2.4, hill: 140, hillW: 30, hillH: 8, flyV: 14, liftT: 1.7, liftUp: 10, L0: 30, handH: 17, carryA: 44, hoverA: 14, climbT: 2.4, boardT: 0.6, balS: 1.6, lowerT: 1.5, arriveT: 3.2, balloonT: 3.2,
+const WF = { skyA: 105, skyEnd: 60, waitD: 110, stop: 30, rockH: 2.4, hill: 250, hillW: 30, hillH: 8, flyV: 16, liftT: 1.7, liftUp: 10, L0: 30, handH: 17, carryA: 44, hoverA: 14, climbT: 2.4, boardT: 0.6, balS: 1.6, lowerT: 1.5, arriveT: 3.2, balloonT: 3.2,
              ropeT: 0.8, bite: 9.5, backT: 1.1, hint: 4, hintEvery: 6, coins: 4, after: 75 };
 // הזאבים מגיעים בגלים: הראשונים נעצרים קרוב, ומאחוריהם מגיעים עוד. לכל אחד גוון וגודל משלו
 // side – צד, d0 – איפה נעצר, sp – כמה מהר מתקרב אחר כך (1 = הראשון שמגיע אל הנינג'ה), at – מתי יוצא, col – גוון, sz – גודל
@@ -22,7 +22,9 @@ function wfSetup(o) { o.w = WF.hill + WF.hillW + WF.after; }
 function wfBusy() { return !!wolfS; }
 function wfCamLift() {                                                             // כמה להוריד את המצלמה: כשהסצנה על המסך
   const o = obstacles.find(o => o.type === 'wolfden' && !o.passed && o.x < viewR() + 30 && o.x + o.w > viewL());
-  return o ? 16 : 0;
+  if (!o) return 0;
+  if (wolfS && wolfS.o === o && ['hang', 'climb', 'board', 'carry', 'lower', 'hover'].includes(wolfS.p)) return Math.max(16, wolfS.bA - 42);   // בשמיים – המצלמה עולה עם הכדור, הקרקע יוצאת מהמסך
+  return 16;
 }
 function wfC(o) { return o.x + WF.stop - PLAYER.w / 2; }                            // מרכז הסלע (העולם)
 function wfHillX(o) { return o.x + WF.hill; }
@@ -42,8 +44,8 @@ function wfBase() { return WF.rockH + WF.handH + WF.L0; }                       
 function wfSpeed() {
   if (!wolfS) return null;
   const S = wolfS, p = S.p, nx = PLAYER.x + PLAYER.w / 2, hx = wfHillX(S.o);
-  if (p === 'hang' || p === 'climb') return nx < hx - 34 ? WF.flyV * (p === 'hang' ? Math.min(1, S.t / 0.8) : 1) : 0;   // לפני הגבעה – מחכים ל-CLIMB
-  if (p === 'board' || p === 'carry') return nx < hx - 1 ? WF.flyV : 0;
+  if (p === 'hang' || p === 'climb') return nx < hx - WF.waitD ? WF.flyV * (p === 'hang' ? Math.min(1, S.t / 0.8) : 1) : 0;   // עפים בשמיים; בלי CLIMB – הכדור עוצר ומחכה
+  if (p === 'board' || p === 'carry' || p === 'lower') return nx < hx - 1 ? WF.flyV : 0;
   if (p === 'exit') return null;
   return 0;
 }
@@ -96,16 +98,23 @@ function wfUpdate(dt, pb) {
       if (S.leapT < 0 && S.t > 0.35) S.leapT = 0;
       if (S.t >= WF.liftT) go('hang');
       break;
+    case 'hang': S.bA += (WF.skyA - S.bA) * Math.min(1, dt * 0.7); break;           // עולים גבוה לשמיים – חלק שכולו שמיים
     case 'climb':                                                                      // מטפס בחבל אל הסל
+      S.bA += (WF.skyA - S.bA) * Math.min(1, dt * 0.7);
       S.L = WF.L0 * (1 - Math.min(1, S.t / WF.climbT));
       if (S.t >= WF.climbT) { S.L = 0; go('board'); sfx('swish'); }
       break;
     case 'board': if (S.t >= WF.boardT) go('carry'); break;                          // נכנס לסל
-    case 'carry':                                                                      // בסל – הכדור יורד קצת וטס אל הגבעה
-      S.bA += (WF.carryA - S.bA) * Math.min(1, dt * 1.5);
-      if (nx >= wfHillX(o) - 1) { go('lower'); S.bA0 = S.bA; }
+    case 'carry':                                                                      // טיסה משותפת בשמיים, בין העננים
+      S.bA += (WF.skyA - S.bA) * Math.min(1, dt * 0.7);
+      if (nx >= wfHillX(o) - WF.skyEnd) { go('lower'); S.bA0 = S.bA; S.x0 = nx; }
       break;
-    case 'lower': S.bA = S.bA0 + (WF.hoverA - S.bA0) * e(Math.min(1, S.t / WF.lowerT)); if (S.t >= WF.lowerT) go('hover'); break;
+    case 'lower': {                                                                    // יורדים אל הגבעה הבטוחה
+      const k = Math.min(1, (nx - S.x0) / Math.max(1, wfHillX(o) - 1 - S.x0));
+      S.bA = S.bA0 + (WF.hoverA - S.bA0) * e(k);
+      if (nx >= wfHillX(o) - 1) { S.bA = WF.hoverA; go('hover'); }
+      break;
+    }
     case 'drop': if (S.t >= 0.5) { go('land'); sfx('thud'); burst(PLAYER.x + 4, GROUND - WF.hillH, '#f8fafc', 8, 10); } break;
     case 'land': S.bA += dt * 18; if (S.t >= 0.7) go('exit'); break;                 // הכדור עף משם
     case 'exit':
@@ -271,6 +280,12 @@ function drawWolfScene(o) {
     const g = ctx.createLinearGradient(0, top, 0, GROUND);
     g.addColorStop(0, '#8fa3c8'); g.addColorStop(1, '#d6deec');
     ctx.fillStyle = g; ctx.fillRect(L, top, R - L, GROUND - top + 1);
+    ctx.fillStyle = 'rgba(255,255,255,.85)';                                          // עננים גבוהים – רואים אותם כשעולים לשמיים
+    for (let i = 0; i < 14; i++) {
+      const span = R - L + 60, cxw = L - 30 + (((wfRnd(i + 40) * 600 - bgX * (0.35 + wfRnd(i) * 0.3)) % span) + span) % span, cyw = GROUND - 34 - wfRnd(i + 21) * 120, w = 9 + wfRnd(i + 5) * 12;
+      if (cyw > GROUND - 30) continue;
+      ctx.beginPath(); ctx.ellipse(cxw, cyw, w, w * 0.32, 0, 0, Math.PI * 2); ctx.ellipse(cxw - w * 0.35, cyw - w * 0.18, w * 0.45, w * 0.3, 0, 0, Math.PI * 2); ctx.ellipse(cxw + w * 0.3, cyw - w * 0.22, w * 0.5, w * 0.32, 0, 0, Math.PI * 2); ctx.fill();
+    }
     ctx.fillStyle = '#c3cde0'; ctx.beginPath(); ctx.moveTo(L, GROUND + 1);                 // גבעות רחוקות, נמוכות ובהירות
     for (let x = L; x <= R + 2; x += 2) ctx.lineTo(x, GROUND - 13 - Math.sin((x + bgX * 0.15) * 0.035) * 4 - Math.sin((x + bgX * 0.15) * 0.011 + 1) * 3);
     ctx.lineTo(R + 2, GROUND + 1); ctx.closePath(); ctx.fill();
@@ -297,7 +312,7 @@ function drawWolfScene(o) {
   // נפתית שלג
   ctx.fillStyle = 'rgba(255,255,255,.75)';
   for (let i = 0; i < 26; i++) {
-    const sx = L + ((wfRnd(i) * (R - L) + t * (3 + wfRnd(i + 9) * 3) + bgX * 0.3) % (R - L) + (R - L)) % (R - L), sy = (wfRnd(i + 4) * 80 + t * (5 + wfRnd(i + 2) * 4)) % 80;
+    const sx = L + ((wfRnd(i) * (R - L) + t * (3 + wfRnd(i + 9) * 3) + bgX * 0.3) % (R - L) + (R - L)) % (R - L), top0 = (0 - oy) / scale, sy = top0 + (wfRnd(i + 4) * 80 + t * (5 + wfRnd(i + 2) * 4)) % 80;
     if (wfMask(o, sx) > 0.3) { ctx.beginPath(); ctx.arc(sx, sy, 0.35 + wfRnd(i + 7) * 0.3, 0, Math.PI * 2); ctx.fill(); }
   }
   // הזאבים
