@@ -123,7 +123,7 @@ function boatUpdate(dt, pb) {
     case 'stuck': if (B.t >= BOAT.stuckT) go('out'); break;                        // הסירה על האי – יוצאים
     // ---------- דייג ----------
     case 'fishAsk': if (B.t >= FISH.askT) go('throwWait'); break;                   // החבר: "Let's fish!"
-    case 'cast': if (B.t >= FISH.castT) { go('float'); B.col = ['#fb923c', '#facc15', '#38bdf8', '#f472b6'][Math.floor(Math.random() * 4)]; B.wait = FISH.floatMin + Math.random() * (FISH.floatMax - FISH.floatMin); sfx('splash'); burst(fishBobX(), waterY(), '#e0f2fe', 6, 12); } break;
+    case 'cast': if (B.t >= FISH.castT) { go('float'); B.col = '#1e3a8a'; B.wait = FISH.floatMin + Math.random() * (FISH.floatMax - FISH.floatMin); sfx('splash'); burst(fishBobX(), waterY(), '#e0f2fe', 6, 12); } break;   // הדג שנושך – כחול כהה, בולט על המים הבהירים
     case 'float': if (B.early > 0) B.early -= dt; if (B.t >= B.wait) { const held = B.pullHeld; B.pullHeld = 0; go('bite'); sfx('splash'); burst(fishBobX(), waterY(), '#e0f2fe', 8, 16); if (held) boatPull(); } break;   // PULL שנאמר רגע לפני הנשיכה – מושכים מיד כשהיא מגיעה   // המצוף צף ... עד שהדג נושך
     case 'bite':
       if (Math.random() < dt * 5) burst(fishBobX(), waterY(), '#e0f2fe', 3, 10);    // המצוף קופץ ושוקע
@@ -483,10 +483,10 @@ function drawClearWater(o, P, bottom, t) {
     ctx.fillStyle = rg; ctx.beginPath(); ctx.moveTo(x, wy); ctx.lineTo(x + w, wy); ctx.lineTo(x + w - 9, bed); ctx.lineTo(x - 11, bed); ctx.closePath(); ctx.fill();
   }
   drawRiverLife(o, P, t, true);                                                   // רק הדגים – הצמחים כבר על הקרקעית
-  drawFishUnder(o);
   const dg = ctx.createLinearGradient(0, wy, 0, bed + 4);                         // עומק: מה שרחוק מפני המים קצת דהוי וכחול
   dg.addColorStop(0, 'rgba(8,47,73,0)'); dg.addColorStop(0.4, 'rgba(8,47,73,.12)'); dg.addColorStop(1, 'rgba(8,47,73,.45)');
   ctx.fillStyle = dg; ctx.fillRect(P.x - 2, wy - 1, P.w + 4, bottom - wy + 2);
+  drawFishUnder(o);                                                               // אחרי הגוון של העומק – הקרס והדג נשארים חדים
   ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(P.x - 2, wy - 0.2, P.w + 4, 0.6);   // ברק דק על פני המים
   ctx.restore();
 }
@@ -636,7 +636,9 @@ function drawFishUnder(o) {
   ctx.beginPath(); ctx.moveTo(hx, wy + 0.3); ctx.lineTo(hook.x + 0.8, hook.y - 1.6); ctx.stroke();
   drawHook(hook.x, hook.y, B.phase === 'float', t);                              // הקרס (עם תולעת לפני הנשיכה) – מאחורי הדג
   if (!F) return;
-  ctx.save(); ctx.translate(F.x, F.y); ctx.scale(F.dir, 1); drawBigFish(0, 0, F.a, col); ctx.restore();
+  ctx.save(); ctx.translate(F.x, F.y); ctx.scale(F.dir, 1);
+  ctx.save(); ctx.rotate(F.a); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 0.35; ctx.beginPath(); ctx.ellipse(0, 0, 3.0, 1.5, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();   // קו בהיר סביב – בולט במים
+  drawBigFish(0, 0, F.a, col); ctx.restore();
   if (inMouth) {                                                                   // הפה סגור על הפיתיון: קצה התולעת מציץ החוצה
     ctx.strokeStyle = '#f472b6'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(M.x + 0.4, M.y + 0.1); ctx.quadraticCurveTo(M.x - 0.6, M.y + 0.6 + Math.sin(t * 9) * 0.3, M.x - 0.3 + Math.sin(t * 7) * 0.4, M.y + 1.6); ctx.stroke();
     ctx.strokeStyle = 'rgba(15,23,42,.6)'; ctx.lineWidth = 0.2; ctx.beginPath(); ctx.moveTo(M.x + 0.1, M.y + 0.15); ctx.lineTo(M.x + 1.1, M.y + 0.45); ctx.stroke();   // קו הפה
