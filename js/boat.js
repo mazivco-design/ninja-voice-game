@@ -652,10 +652,19 @@ function drawRod(R) {
 }
 function drawBigFish(x, y, a, col) {
   ctx.save(); ctx.translate(x, y); ctx.rotate(a);
+  const fl = Math.sin(performance.now() / 1000 * 9 + x) * 0.25;                    // הסנפירים מנפנפים
+  ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(-2.0, -0.9); ctx.lineTo(-1.6, -3.3 - fl * 0.4); ctx.quadraticCurveTo(0.2, -3.0, 1.2, -1.25); ctx.closePath(); ctx.fill();   // סנפיר גב
+  ctx.beginPath(); ctx.moveTo(-1.3, 1.1); ctx.lineTo(-1.5, 2.5); ctx.quadraticCurveTo(-0.3, 2.0, 0.4, 1.25); ctx.closePath(); ctx.fill();   // סנפיר בטן קטן
+  ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.moveTo(-2.0, -0.9); ctx.lineTo(-1.6, -3.3 - fl * 0.4); ctx.quadraticCurveTo(0.2, -3.0, 1.2, -1.25); ctx.closePath(); ctx.fill();
   ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(0, 0, 3.0, 1.5, 0, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.moveTo(-2.4, 0); ctx.lineTo(-4.4, -1.5); ctx.lineTo(-4.4, 1.5); ctx.closePath(); ctx.fill();
   ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.ellipse(0.3, -0.5, 1.6, 0.45, 0, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(1.7, -0.35, 0.33, 0, Math.PI * 2); ctx.fill();
+  ctx.save(); ctx.translate(0.9, 0.35); ctx.rotate(0.5 + fl);                      // סנפיר צד מאחורי הזימים
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-1.3, -0.9, -2.5, 0.0); ctx.quadraticCurveTo(-1.3, 0.9, 0, 0);
+  ctx.fillStyle = col; ctx.fill(); ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 0.14; ctx.stroke(); ctx.restore();
+  ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 0.15; ctx.beginPath(); ctx.arc(1.0, 0, 1.0, -1.1, 1.1); ctx.stroke();   // קו הזימים
   ctx.restore();
 }
 
