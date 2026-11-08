@@ -6,7 +6,7 @@
    אם הזאבים מגיעים אליו לפני שהתרומם – נפגע, הזאבים נסוגים, והחבל משתלשל מחדש.
    פאזות: arrive → circle → rope → caught → lift → hang → climb → board → carry → lower → hover → drop → land → exit */
 
-const WF = { stop: 30, rockH: 2.4, hill: 118, hillW: 30, hillH: 8, flyV: 14, liftT: 1.7, liftUp: 10, L0: 30, handH: 17, carryA: 44, hoverA: 14, climbT: 2.4, boardT: 0.6, balS: 1.6, lowerT: 1.5, arriveT: 3.2, balloonT: 3.2,
+const WF = { stop: 30, rockH: 2.4, hill: 140, hillW: 30, hillH: 8, flyV: 14, liftT: 1.7, liftUp: 10, L0: 30, handH: 17, carryA: 44, hoverA: 14, climbT: 2.4, boardT: 0.6, balS: 1.6, lowerT: 1.5, arriveT: 3.2, balloonT: 3.2,
              ropeT: 0.8, bite: 9.5, backT: 1.1, hint: 4, hintEvery: 6, coins: 4, after: 75 };
 // הזאבים מגיעים בגלים: הראשונים נעצרים קרוב, ומאחוריהם מגיעים עוד. לכל אחד גוון וגודל משלו
 // side – צד, d0 – איפה נעצר, sp – כמה מהר מתקרב אחר כך (1 = הראשון שמגיע אל הנינג'ה), at – מתי יוצא, col – גוון, sz – גודל
