@@ -98,7 +98,10 @@ function wfUpdate(dt, pb) {
       if (S.leapT < 0 && S.t > 0.35) S.leapT = 0;
       if (S.t >= WF.liftT) go('hang');
       break;
-    case 'hang': S.bA += (WF.skyA - S.bA) * Math.min(1, dt * 0.7); break;           // עולים גבוה לשמיים – חלק שכולו שמיים
+    case 'hang':                                                                       // עולים גבוה לשמיים – חלק שכולו שמיים
+      S.bA += (WF.skyA - S.bA) * Math.min(1, dt * 0.7);
+      if (!S.saidUp && S.t > 0.5) { S.saidUp = 1; flash = { text: '🗣️ Climb up!', t: 1.8, size: 8 }; if (VOICE_CLIPS['friend: climb up!']) speak('friend: climb up!'); }   // החבר קורא לו לטפס
+      break;
     case 'climb':                                                                      // מטפס בחבל אל הסל
       S.bA += (WF.skyA - S.bA) * Math.min(1, dt * 0.7);
       S.L = WF.L0 * (1 - Math.min(1, S.t / WF.climbT));
