@@ -395,6 +395,7 @@ function drawFigure(F) {
       ctx.restore();
     },
     face: (ex, col) => {
+      if (P.back) return;                                 // מבט מהגב (למשל טיפוס בחבל) – לא רואים פנים
       ctx.save(); ctx.translate(head[0], head[1]); ctx.rotate(headA); ctx.scale(hs, hs);
       const e = ex / 2 / hs;
       if (style === 'samurai') {                         // פנים גלויות, גבות כועסות, שפם
@@ -442,6 +443,14 @@ function drawFigure(F) {
         ctx.fillStyle = col || accent;
         ctx.beginPath(); ctx.moveTo(-5 - e, -1.0 + e); ctx.lineTo(0.3, -5.2 - e); ctx.lineTo(5.6 + e, -1.0 + e); ctx.closePath(); ctx.fill();
         if (!col) { ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 0.25; ctx.beginPath(); ctx.moveTo(0.3, -5.2); ctx.lineTo(-2.4, -1); ctx.moveTo(0.3, -5.2); ctx.lineTo(3, -1); ctx.stroke(); }
+        ctx.restore(); return;
+      }
+      if (P.back) {                                       // מהגב: הסרט מקיף את כל הראש, והקשר באמצע עם שני זנבות למטה
+        ctx.fillStyle = col || accent; ctx.fillRect(-3.3 - e, -1.7 - e, 6.6 + 2 * e, 1.0 + 2 * e);
+        circle(0, -1.2, 0.75 + e);
+        ctx.strokeStyle = col || accent; ctx.lineWidth = 0.75 + 2 * e;
+        ctx.beginPath(); ctx.moveTo(0, -1.1); ctx.quadraticCurveTo(-0.9 + wv * 0.4, 1.2, -1.6 + wv * 0.6, 3.4); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, -1.1); ctx.quadraticCurveTo(0.9 + wv * 0.4, 1.2, 1.3 + wv * 0.6, 3.2); ctx.stroke();
         ctx.restore(); return;
       }
       ctx.fillStyle = col || accent; ctx.fillRect(-2.9 - e, -2.3 - e, 5.7 + 2 * e, 0.95 + 2 * e);

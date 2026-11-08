@@ -180,7 +180,7 @@ function wfPose(P) {
   const S = wolfS, p = S.p, now = performance.now() / 1000;
   if (p === 'climb') {                                                                 // ידיים ורגליים לסירוגין במעלה החבל
     P = poseIdle(now); const a = Math.sin(now * 9) * 0.28;
-    P.arms = [[2.85 + a, 3.05 + a], [2.85 - a, 3.05 - a]]; P.legs = [[-0.35 + a, 0.6], [0.35 - a, 0.6]]; P.bob = 0;
+    P.arms = [[2.85 + a, 3.05 + a], [2.85 - a, 3.05 - a]]; P.legs = [[-0.35 + a, 0.6], [0.35 - a, 0.6]]; P.bob = 0; P.back = true;   // רואים אותו מהגב
     return P;
   }
   if (wfHanging()) {
@@ -188,6 +188,7 @@ function wfPose(P) {
     P.arms = [[2.95, 3.05], [2.95, 3.05]]; P.lean = sw; P.bob = 0;
     P.legs = p === 'caught' ? P.legs : [[-0.25 + sw, -0.15], [0.2 + sw, 0.25]];
     P.eyes = p === 'caught' || p === 'lift' ? 'wide' : P.eyes;
+    if (p === 'hang') P.back = true;                                                 // תלוי בשמיים – כבר מסתובב אל החבל
     return P;
   }
   if (p === 'board') { P = poseIdle(now); P.arms = [[2.4, 2.8], [2.2, 2.6]]; return P; }
