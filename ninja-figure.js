@@ -559,8 +559,8 @@ function drawNinjaBack(F) {
   };
   const A = side(-1, s), B = side(1, 1 - s);
   if (F.hang) {                                                                      // תלוי ביד אחת: היד השנייה למטה, הרגליים משתלשלות
-    A.el = [-2.5, shY - 3.0]; A.hand = [-2.0, shY - 7.6];
-    B.el = [2.9, shY + 1.6]; B.hand = [2.6, shY + 3.9];
+    A.el = [-1.95, shY - 3.4]; A.hand = [-1.95, shY - 7.6];                          // היד שתופסת – כמעט ישרה
+    B.el = [2.55, shY + 2.2]; B.hand = [2.45, shY + 4.8];                            // היד השנייה – למטה
     A.kn = [-1.5, hipY + 2.4]; A.ft = [-1.0, hipY + 4.7]; B.kn = [1.7, hipY + 2.3]; B.ft = [1.5, hipY + 4.6];
   }
   ctx.save(); ctx.translate(F.fx, F.fy); ctx.scale(sc, sc); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
