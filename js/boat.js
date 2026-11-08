@@ -15,7 +15,7 @@ const BOAT = { shore: 72, sail: 230, isl: 50, islands: 0,   /* בלי אי – �
 let boat = null;   // { o, phase, t, idle, hinted, n }
 // FISHING (o.mode === 'fish'): הסירה כבר במים ליד החוף והחבר יושב בה – JUMP פנימה, שטים, ובכל מקום דייג:
 // THROW – זורקים חכה. המצוף צף ... שוקע (נשיכה) – PULL ומושכים דג. מוקדם מדי – "Wait for the bite!", מאוחר מדי – הדג בורח וזורקים שוב.
-const FISH = { spots: 2, first: 70, gap: 150, tail: 90, askT: 1.3, castT: 0.75, floatMin: 1.6, floatMax: 3.0, biteT: 2.8, reelT: 1.0, caughtT: 1.5, goneT: 1.2, cast: 36, coins: 2 };
+const FISH = { spots: 2, first: 70, gap: 150, tail: 90, askT: 1.3, castT: 0.75, floatMin: 1.6, floatMax: 3.0, biteT: 4.5, earlyOk: 1.2, reelT: 1.0, caughtT: 1.5, goneT: 1.2, cast: 36, coins: 2 };
 const FISHING = ['fishAsk', 'throwWait', 'cast', 'float', 'bite', 'reel', 'caught', 'gone'];
 // phase: ask → step → wait ⇄ push → friendIn → jumpWait → board → row → wave → stuck → out → hi → wait … → row → land
 
@@ -83,7 +83,7 @@ function boatUpdate(dt, pb) {
     B.idle += dt;
     const w = B.phase === 'wait' ? 'push' : B.phase === 'yesWait' ? 'yes' : B.phase === 'jumpWait' ? 'jump' : B.phase === 'throwWait' ? 'throw' : 'pull';
     if (demo) { if (B.idle >= 0.9) { if (banner) banner.text = 'Say ' + w.toUpperCase() + '!'; command(w, 'demo'); } }
-    else if (B.phase === 'bite') { if (B.idle >= 1.3 && !B.hinted) { B.hinted++; sayWords([w], 1.2, B); } }   // בנשיכה – רמז מהר, החלון קצר
+    else if (B.phase === 'bite') { if (B.idle >= 2.2 && !B.hinted) { B.hinted++; sayWords([w], 1.2, B); } }   // בנשיכה – רמז מהר, החלון קצר
     else if (B.idle >= BOAT.hint + B.hinted * BOAT.hintEvery) { B.hinted++; sayWords([w], 1.6, B); }
   }
   switch (B.phase) {
@@ -117,7 +117,7 @@ function boatUpdate(dt, pb) {
     // ---------- דייג ----------
     case 'fishAsk': if (B.t >= FISH.askT) go('throwWait'); break;                   // החבר: "Let's fish!"
     case 'cast': if (B.t >= FISH.castT) { go('float'); B.wait = FISH.floatMin + Math.random() * (FISH.floatMax - FISH.floatMin); sfx('splash'); burst(fishBobX(), waterY(), '#e0f2fe', 6, 12); } break;
-    case 'float': if (B.early > 0) B.early -= dt; if (B.t >= B.wait) { go('bite'); sfx('splash'); burst(fishBobX(), waterY(), '#e0f2fe', 8, 16); } break;   // המצוף צף ... עד שהדג נושך
+    case 'float': if (B.early > 0) B.early -= dt; if (B.t >= B.wait) { const held = B.pullHeld; B.pullHeld = 0; go('bite'); sfx('splash'); burst(fishBobX(), waterY(), '#e0f2fe', 8, 16); if (held) boatPull(); } break;   // PULL שנאמר רגע לפני הנשיכה – מושכים מיד כשהיא מגיעה   // המצוף צף ... עד שהדג נושך
     case 'bite':
       if (Math.random() < dt * 5) burst(fishBobX(), waterY(), '#e0f2fe', 3, 10);    // המצוף קופץ ושוקע
       if (B.t >= FISH.biteT) { go('gone'); sfx('hit'); }                            // איחרנו – הדג ברח עם הפיתיון
@@ -183,7 +183,10 @@ function boatThrow() {                                                          
 function boatPull() {                                                             // דייג: PULL מושך כשהדג נושך
   if (!boat || boat.o.mode !== 'fish') return false;
   if (boat.phase === 'bite') { boat.phase = 'reel'; boat.t = 0; burst(fishBobX(), waterY(), '#e0f2fe', 12, 22); sfx('splash'); }
-  else if (boat.phase === 'float') boat.early = 1.4;                              // מוקדם מדי – מחכים לנשיכה
+  else if (boat.phase === 'float') {
+    if (boat.wait - boat.t <= FISH.earlyOk) { boat.pullHeld = 1; earlyWord = null; }   // כמעט נשיכה – לא פוסלים: ה-PULL נשמר ומושך ברגע שהדג נושך
+    else boat.early = 1.4;                                                        // מוקדם מדי – מחכים לנשיכה
+  }
   return true;
 }
 function boatJump() {                                                             // true = ה-JUMP טופל כאן
@@ -193,7 +196,7 @@ function boatJump() {                                                           
 }
 function boatExpected() {
   if (!boat) return null;
-  return boat.phase === 'wait' ? ['push'] : boat.phase === 'yesWait' ? ['yes'] : boat.phase === 'jumpWait' ? ['jump'] : boat.phase === 'throwWait' ? ['throw'] : boat.phase === 'bite' ? ['pull'] : [];
+  return boat.phase === 'wait' ? ['push'] : boat.phase === 'yesWait' ? ['yes'] : boat.phase === 'jumpWait' ? ['jump'] : boat.phase === 'throwWait' ? ['throw'] : boat.phase === 'bite' || (boat.phase === 'float' && boat.wait - boat.t <= FISH.earlyOk) ? ['pull'] : [];
 }
 function boatAuto() { if (boat && boat.idle > 0.4) { const w = boatExpected()[0]; if (w) command(w, 'auto'); } }
 
