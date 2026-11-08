@@ -82,9 +82,10 @@ function boatUpdate(dt, pb) {
   if (B.phase === 'wait' || B.phase === 'yesWait' || B.phase === 'jumpWait' || B.phase === 'throwWait' || B.phase === 'bite') {   // מחכים למילה – אחרי שתיקה ארוכה המשחק אומר אותה
     B.idle += dt;
     const w = B.phase === 'wait' ? 'push' : B.phase === 'yesWait' ? 'yes' : B.phase === 'jumpWait' ? 'jump' : B.phase === 'throwWait' ? 'throw' : 'pull';
-    if (demo) { if (B.idle >= 0.9) { if (banner) banner.text = 'Say ' + w.toUpperCase() + '!'; command(w, 'demo'); } }
+    const sw = w === 'jump' ? 'jump in' : w;                                     // בסירה מלמדים JUMP IN (גם JUMP לבד עובד)
+    if (demo) { if (B.idle >= 0.9) { if (banner) banner.text = 'Say ' + sw.toUpperCase() + '!'; command(w, 'demo'); } }
     else if (B.phase === 'bite') { if (B.idle >= 2.2 && !B.hinted) { B.hinted++; sayWords([w], 1.2, B); } }   // בנשיכה – רמז מהר, החלון קצר
-    else if (B.idle >= BOAT.hint + B.hinted * BOAT.hintEvery) { B.hinted++; sayWords([w], 1.6, B); }
+    else if (B.idle >= BOAT.hint + B.hinted * BOAT.hintEvery) { B.hinted++; sayWords([sw], 1.6, B); }
   }
   switch (B.phase) {
     case 'greet': if (B.t >= BOAT.greetT) { go('yesWait'); speak('friend: can you help me?'); } break;   // החבר מסתובב, מנופף ומצביע על הסירה ועל המים
@@ -511,7 +512,7 @@ function drawBoatTalk(o) {
     if (p === 'caught') say('Nice catch! 🐟', { age: B.t, size: 3.8, color: '#15803d' });
     if (p === 'gone') say('Oh no! It got away!', { age: B.t, size: 3.6, color: '#b91c1c' });
     if (labelsVisible()) {
-      if (p === 'jumpWait') label('JUMP', PLAYER.x + 4, GROUND - 24, 4, '#fde047', '#1e293b');
+      if (p === 'jumpWait') label('JUMP IN', PLAYER.x + 4, GROUND - 24, 4, '#fde047', '#1e293b');
       if (p === 'throwWait') label('THROW', PLAYER.x + 6, GROUND - 26, 4, '#fde047', '#1e293b');
       if (p === 'bite') label('PULL', PLAYER.x + 6, GROUND - 26, 4, '#fde047', '#1e293b');
     }
@@ -535,6 +536,6 @@ function drawBoatTalk(o) {
   if (labelsVisible()) {
     if (p === 'wait') label('PUSH', boatStern(o) - 3, GROUND - 24, 4, '#fde047', '#1e293b');
     if (p === 'yesWait') label('YES', PLAYER.x + 4, GROUND - 24, 4, '#fde047', '#1e293b');
-    if (p === 'jumpWait') label('JUMP', PLAYER.x + 4, GROUND - 24, 4, '#fde047', '#1e293b');
+    if (p === 'jumpWait') label('JUMP IN', PLAYER.x + 4, GROUND - 24, 4, '#fde047', '#1e293b');
   }
 }

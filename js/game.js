@@ -25,6 +25,7 @@ async function play(m, idx) {
   if (words.includes('let go') && !words.includes('catch')) listenWords.push('catch');
   if (words.includes('pick up') || words.includes('put down')) for (const w of ['pick up', 'put down', 'jump', 'throw', 'pull']) if (!listenWords.includes(w)) listenWords.push(w);   // PICK UP → PUT DOWN → JUMP
   if (words.includes('help')) { for (const w of ['catch', 'hold']) if (!listenWords.includes(w)) listenWords.push(w); listenWords = listenWords.filter(w => w !== 'help'); }   // HELP: בינתיים המשחק אומר HELP, הילד אומר CATCH ו-HOLD
+  if (words.includes('push together') || words.includes('push on three') || words.includes('fishing')) listenWords.push('jump in');   // בסירה ובעגלה אפשר להגיד JUMP IN
   if (words.includes('push together') || words.includes('push on three')) { for (const w of ['push', 'jump', 'yes']) if (!listenWords.includes(w)) listenWords.push(w); }   // סירה / עגלה: PUSH ואז JUMP
   if (words.includes('fishing')) { for (const w of ['jump', 'throw', 'pull']) if (!listenWords.includes(w)) listenWords.push(w); }   // דייג: JUMP, THROW, PULL
   if (words.includes('jetpack')) for (const w of ['pick up', 'put on', 'fly', 'up', 'down', 'crawl']) if (!listenWords.includes(w)) listenWords.push(w);
@@ -352,7 +353,7 @@ function sayWords(say, t, key) {
   if (key) hintPenalty(key);
   speak(say[0]);
   if (say[1]) setTimeout(() => { if (state === 'play') speak(say[1]); }, 750);
-  flash = { text: say.map(w => ((w === 'push' && (boat || cart) ? '🫸' : WORD_ICON[w]) || '') + ' ' + w.toUpperCase()).join('  →  ') + '!', t };   // בסירה ובעגלה – יד דוחפת, לא סלע
+  flash = { text: say.map(w => ((w === 'push' && (boat || cart) ? '🫸' : WORD_ICON[w] || WORD_ICON[w.split(' ')[0]]) || '') + ' ' + w.toUpperCase()).join('  →  ') + '!', t };   // בסירה ובעגלה – יד דוחפת, לא סלע
 }
 function learnAfterHit(o) {
   const say = learnWords(o);

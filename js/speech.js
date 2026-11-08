@@ -114,7 +114,8 @@ function tokenize(text, detail) {
   const words = [], confs = [];
   for (let i = 0; i < toks.length; i++) {
     const pair = toks[i] + ' ' + toks[i + 1];
-    if (pair === 'let go' || pair === 'pick up' || pair === 'put down' || pair === 'put on') { words.push(pair); confs.push(dconf ? Math.min(dconf[i], dconf[i + 1]) : undefined); i++; }
+    if (pair === 'jump in') { words.push('jump'); confs.push(dconf ? Math.max(dconf[i], dconf[i + 1]) : undefined); i++; }   // JUMP IN (סירה / עגלה) = JUMP
+    else if (pair === 'let go' || pair === 'pick up' || pair === 'put down' || pair === 'put on') { words.push(pair); confs.push(dconf ? Math.min(dconf[i], dconf[i + 1]) : undefined); i++; }
     else if (ok(toks[i])) { words.push(toks[i]); confs.push(dconf ? dconf[i] : undefined); }
   }
   return { words, confs: dconf ? confs : null };

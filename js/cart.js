@@ -98,8 +98,8 @@ function cartUpdate(dt, pb) {
     case 'kidIn': if (C.t >= 0.7) { go('jumpWait'); speak('kid: jump in!'); } break;
     case 'jumpWait':
       C.idle += dt;
-      if (demo) { if (C.idle >= 0.9) { if (banner) banner.text = 'Say JUMP!'; command('jump', 'demo'); } }
-      else if (C.idle >= 3.5 + (C.hinted || 0) * 6) { C.hinted = (C.hinted || 0) + 1; sayWords(['jump'], 1.6, C); }
+      if (demo) { if (C.idle >= 0.9) { if (banner) banner.text = 'Say JUMP IN!'; command('jump', 'demo'); } }
+      else if (C.idle >= 3.5 + (C.hinted || 0) * 6) { C.hinted = (C.hinted || 0) + 1; sayWords(['jump in'], 1.6, C); }
       break;
     case 'board': if (C.t >= CART.boardT) { go('ride'); sfx('jump'); } break;
     case 'ride':
@@ -327,7 +327,7 @@ function drawCartFront(o) {
   if (p === 'push') say(C.n === CART.pushes - 1 ? 'Yes! The top!' : 'Hup!', { age: C.t, size: 3.6, color: '#111827' });
   if (p === 'early') say('Wait for three!', { age: C.t, size: 3.6, color: '#b91c1c' });
   if (p === 'late') say('Again!', { age: C.t, size: 3.8, color: '#b91c1c' });
-  if (p === 'jumpWait' || (p === 'kidIn' && C.t > 0.5)) { say('Jump in!', { age: p === 'jumpWait' ? C.t + 0.3 : 0 }); if (labelsVisible() && p === 'jumpWait') label('JUMP', PLAYER.x + 4, hillYo(o, PLAYER.x + 4) - 24, 4, '#fde047', '#1e293b'); }
+  if (p === 'jumpWait' || (p === 'kidIn' && C.t > 0.5)) { say('Jump in!', { age: p === 'jumpWait' ? C.t + 0.3 : 0 }); if (labelsVisible() && p === 'jumpWait') label('JUMP IN', PLAYER.x + 4, hillYo(o, PLAYER.x + 4) - 24, 4, '#fde047', '#1e293b'); }
   if (p === 'five' && C.t > 0.35) drawBubble('High five! ✋', (C.kx + PLAYER.x + 4) / 2, GROUND - 22, { age: C.t - 0.35, size: 3.4, color: '#b45309' });
   if (p === 'thanks') drawBubble('Thank you!', C.kx - 1, GROUND - 19, { age: C.t, tail: -1, size: 3.6, color: '#be185d' });
   if (p === 'byeK') { drawBubble('Bye! 👋', C.kx - 1, GROUND - 19, { age: C.t, tail: -1, size: 3.4, color: '#be185d' }); if (C.t > 0.3) drawBubble('Bye!', PLAYER.x + 5, GROUND - 22, { age: C.t - 0.3, tail: 1, size: 3.4, color: '#1d4ed8' }); }
