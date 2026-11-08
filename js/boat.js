@@ -426,23 +426,63 @@ function drawBoatBack(o) {
   drawBoatHull(o, true);                                                          // פנים הסירה (הדופן הרחוקה)
   if (F.inBoat) drawFigure({ fx: F.x, fy: F.y, facing: 1, scale: F.scale, kind: 'ninja', accent: mudAccent(), pose: F.P });
 }
+const BED_Y = x => GROUND + 22.5 + Math.sin(x * 0.07) * 1.2 + Math.sin(x * 0.19 + 1) * 0.5;   // גובה הקרקעית בנקודה x
+function drawRiverBed(P, bottom, t) {
+  const L = Math.max(P.x - 2, viewL() - 6), R = Math.min(P.x + P.w + 2, viewR() + 6);
+  const sg = ctx.createLinearGradient(0, GROUND + 21, 0, GROUND + 30);               // חול
+  sg.addColorStop(0, '#d9c38f'); sg.addColorStop(1, '#a8895a');
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.moveTo(L, bottom);
+  for (let x = L; x <= R; x += 1.5) ctx.lineTo(x, BED_Y(x));
+  ctx.lineTo(R, bottom); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(120,96,60,.35)';                                          // חלוקים קטנים
+  for (let i = Math.floor((L - P.x) / 4.3); P.x + i * 4.3 < R; i++) { const x = P.x + i * 4.3 + hash(i) * 2; ctx.beginPath(); ctx.ellipse(x, BED_Y(x) + 1.6 + hash(i * 1.7) * 3, 0.6 + hash(i * 3.1) * 0.5, 0.3, 0, 0, Math.PI * 2); ctx.fill(); }
+  // כל ~11 יחידות: אבן גדולה, צמח ארוך (אצה), שיח עלים רחבים, או עשב קצר – לפי hash קבוע (לא מרצד)
+  const step = 11;
+  for (let i = Math.floor((L - P.x - 12) / step); P.x + i * step < R + 12; i++) {
+    const x = P.x + 6 + i * step + hash(i * 9.1) * 6, y = BED_Y(x), k = hash(i * 4.7), sw = Math.sin(t * 1.2 + i * 1.3);
+    if (x < P.x + 4 || x > P.x + P.w - 4) continue;
+    if (k < 0.3) {                                                                  // אבנים: אחת גדולה ועוד קטנות לידה
+      const n = 1 + Math.floor(hash(i * 2.3) * 3);
+      for (let j = 0; j < n; j++) {
+        const rx = x + (j - (n - 1) / 2) * 2.6 + hash(i + j * 5.5) * 0.8, rw = (j === 0 ? 2.4 : 1.4) + hash(i * 3 + j) * 0.9, rh = rw * (0.55 + hash(i * 7 + j) * 0.2);
+        const shade = ['#64748b', '#78716c', '#57534e', '#6b7280'][Math.floor(hash(i * 11 + j) * 4)];
+        ctx.fillStyle = shade; ctx.beginPath(); ctx.ellipse(rx, BED_Y(rx) + 0.4 - rh * 0.55, rw, rh, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.beginPath(); ctx.ellipse(rx - rw * 0.25, BED_Y(rx) + 0.4 - rh * 0.95, rw * 0.5, rh * 0.3, -0.2, 0, Math.PI * 2); ctx.fill();   // אור מלמעלה
+        ctx.fillStyle = 'rgba(34,197,94,.35)'; ctx.beginPath(); ctx.ellipse(rx + rw * 0.3, BED_Y(rx) + 0.4 - rh * 0.2, rw * 0.45, rh * 0.25, 0, 0, Math.PI * 2); ctx.fill();   // אצה ירוקה על האבן
+      }
+    } else if (k < 0.55) {                                                           // אצה ארוכה: כמה סרטים מתנופפים
+      for (let b = 0; b < 4; b++) {
+        const bx = x + (b - 1.5) * 0.9, h = 9 + hash(i * 5 + b) * 8, s = sw * 1.8 + Math.sin(t * 1.7 + b) * 0.6;
+        ctx.strokeStyle = ['#15803d', '#16a34a', '#166534', '#22c55e'][b]; ctx.lineWidth = 0.75; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(bx, y + 0.5); ctx.bezierCurveTo(bx + s * 0.3, y - h * 0.35, bx - s * 0.4, y - h * 0.7, bx + s, y - h); ctx.stroke();
+      }
+    } else if (k < 0.78) {                                                           // שיח עלים רחבים
+      for (let b = 0; b < 5; b++) {
+        const a = -Math.PI / 2 + (b - 2) * 0.42 + sw * 0.08, len = 4 + hash(i * 3 + b) * 2.5;
+        ctx.save(); ctx.translate(x, y + 0.3); ctx.rotate(a);
+        ctx.fillStyle = b % 2 ? '#059669' : '#10b981';
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(len * 0.5, -1.1, len, 0); ctx.quadraticCurveTo(len * 0.5, 1.1, 0, 0); ctx.fill();
+        ctx.restore();
+      }
+    } else {                                                                         // עשב קצר ודק
+      ctx.strokeStyle = '#4d7c0f'; ctx.lineWidth = 0.4; ctx.lineCap = 'round';
+      for (let b = 0; b < 6; b++) { const bx = x + (b - 2.5) * 0.6, h = 2.5 + hash(i * 13 + b) * 2.5; ctx.beginPath(); ctx.moveTo(bx, y + 0.4); ctx.quadraticCurveTo(bx + sw * 0.3, y - h * 0.6, bx + sw * 0.6 + (b - 2.5) * 0.25, y - h); ctx.stroke(); }
+    }
+  }
+}
 function drawClearWater(o, P, bottom, t) {
   const wy = waterY(), bed = GROUND + 27;
   ctx.save(); waterPath(P, bottom); ctx.clip();
   const g = ctx.createLinearGradient(0, wy, 0, bed + 6);                          // בהיר ושקוף למעלה, כחול עמוק למטה
   g.addColorStop(0, '#a5f3fc'); g.addColorStop(0.35, '#38bdf8'); g.addColorStop(1, '#075985');
   ctx.fillStyle = g; ctx.fillRect(P.x - 2, wy - 1, P.w + 4, bottom - wy + 2);
-  const sg = ctx.createLinearGradient(0, bed - 2, 0, bed + 6);                     // קרקעית חול רחוקה
-  sg.addColorStop(0, 'rgba(214,192,138,.0)'); sg.addColorStop(0.35, 'rgba(214,192,138,.55)'); sg.addColorStop(1, 'rgba(161,134,84,.7)');
-  ctx.fillStyle = sg; ctx.fillRect(P.x - 2, bed - 2, P.w + 4, bottom - bed + 2);
-  ctx.fillStyle = 'rgba(120,96,60,.35)';
-  for (let x = P.x + 3, i = 0; x < P.x + P.w; x += 4.7, i++) { if (x < viewL() - 4 || x > viewR() + 4) continue; ctx.beginPath(); ctx.ellipse(x + hash(i) * 2, bed + 1.5 + hash(i * 1.7) * 2, 0.7 + hash(i * 3.1) * 0.6, 0.35, 0, 0, Math.PI * 2); ctx.fill(); }   // חלוקי אבן
+  drawRiverBed(P, bottom, t);                                                      // קרקעית: חול גלי, אבנים וצמחי מים
   for (let i = 0; i < 7; i++) {                                                     // קרני אור מהשמש שנכנסות למים
     const x = viewL() + 8 + i * 24 + Math.sin(t * 0.6 + i * 1.9) * 3, w = 3 + (i % 3) * 1.5;
     const rg = ctx.createLinearGradient(0, wy, 0, bed); rg.addColorStop(0, 'rgba(255,255,255,.22)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = rg; ctx.beginPath(); ctx.moveTo(x, wy); ctx.lineTo(x + w, wy); ctx.lineTo(x + w - 9, bed); ctx.lineTo(x - 11, bed); ctx.closePath(); ctx.fill();
   }
-  drawRiverLife(o, P, t);
+  drawRiverLife(o, P, t, true);                                                   // רק הדגים – הצמחים כבר על הקרקעית
   drawFishUnder(o);
   const dg = ctx.createLinearGradient(0, wy, 0, bed + 4);                         // עומק: מה שרחוק מפני המים קצת דהוי וכחול
   dg.addColorStop(0, 'rgba(8,47,73,0)'); dg.addColorStop(0.4, 'rgba(8,47,73,.12)'); dg.addColorStop(1, 'rgba(8,47,73,.45)');
@@ -450,9 +490,9 @@ function drawClearWater(o, P, bottom, t) {
   ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(P.x - 2, wy - 0.2, P.w + 4, 0.6);   // ברק דק על פני המים
   ctx.restore();
 }
-function drawRiverLife(o, P, t) {                                                 // מעט צמחי מים שמתנופפים מהקרקעית, ודגים ששוחים לאט הלוך ושוב
+function drawRiverLife(o, P, t, fishOnly) {                                                 // מעט צמחי מים שמתנופפים מהקרקעית, ודגים ששוחים לאט הלוך ושוב
   const bed = GROUND + 27;
-  for (let i = 0, x = P.x + 22; x < P.x + P.w - 22; i++, x += 38 + hash(i * 3.3) * 22) {
+  if (!fishOnly) for (let i = 0, x = P.x + 22; x < P.x + P.w - 22; i++, x += 38 + hash(i * 3.3) * 22) {
     if (x < viewL() - 10 || x > viewR() + 10) continue;
     for (let b = 0; b < 3; b++) {
       const bx = x + b * 1.6, h = 7 + hash(i * 5 + b) * 7, sw = Math.sin(t * 1.3 + i + b * 0.8) * 1.6;
