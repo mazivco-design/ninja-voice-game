@@ -11,9 +11,9 @@ const WF = { skyA: 105, skyEnd: 60, waitD: 110, stop: 30, rockH: 2.4, hill: 250,
 // הזאבים מגיעים בגלים: הראשונים נעצרים קרוב, ומאחוריהם מגיעים עוד. לכל אחד גוון וגודל משלו
 // side – צד, d0 – איפה נעצר, sp – כמה מהר מתקרב אחר כך (1 = הראשון שמגיע אל הנינג'ה), at – מתי יוצא, col – גוון, sz – גודל
 const WF_WOLVES = [
-  { side: 1, d0: 28, sp: 0.85, at: 0, col: '#6b7280', sz: 1.05 }, { side: -1, d0: 30, sp: 0.8, at: 0.3, col: '#71717a', sz: 1 }, { side: 1, d0: 44, sp: 1, at: 0.8, col: '#57534e', sz: 0.95 },
-  { side: -1, d0: 46, sp: 0.7, at: 3.2, col: '#7c7f88', sz: 0.9 }, { side: 1, d0: 60, sp: 0.75, at: 3.8, col: '#4b5563', sz: 1.12 },
-  { side: -1, d0: 62, sp: 0.6, at: 6.4, col: '#8a8178', sz: 0.95 }, { side: 1, d0: 76, sp: 0.65, at: 7.0, col: '#5f6673', sz: 1 }];
+  { side: 1, d0: 28, sp: 0.85, at: 0, col: '#6b7280', sz: 1.05, head: -0.42 }, { side: -1, d0: 30, sp: 0.8, at: 0.3, col: '#71717a', sz: 1, head: -0.15 }, { side: 1, d0: 44, sp: 1, at: 0.8, col: '#57534e', sz: 0.95, head: 0.12 },
+  { side: -1, d0: 46, sp: 0.7, at: 3.2, col: '#7c7f88', sz: 0.9, head: -0.38 }, { side: 1, d0: 60, sp: 0.75, at: 3.8, col: '#4b5563', sz: 1.12, head: 0.05 },
+  { side: -1, d0: 62, sp: 0.6, at: 6.4, col: '#8a8178', sz: 0.95, head: 0.2 }, { side: 1, d0: 76, sp: 0.65, at: 7.0, col: '#5f6673', sz: 1, head: -0.3 }];
 const WF_WALK = 2.8;                                                                // כמה זמן לוקח לזאב להגיע מקצה המסך
 const WF_THREAT = { easy: 17, medium: 13, hard: 10 };                              // כמה שניות עד שהזאבים מגיעים (מההתחלה של המעגל)
 let wolfS = null;   // { o, p, t, k (0..1 – כמה התקרבו), idle, hinted, miss, leapT }
@@ -215,6 +215,7 @@ const WOLF_SK = [[796, 913], [830, 895], [838, 873], [866, 862], [863, 840], [90
   [1125, 938], [1122, 1000], [1130, 1062], [1128, 1125], [1108, 1125], [1114, 1066], [1095, 1038], [1078, 1124], [1060, 1124], [1069, 1043], [1043, 999],
   [974, 1013], [976, 1122], [951, 1122], [958, 1104], [947, 1018], [932, 1012], [915, 1120], [889, 1121], [901, 1111], [913, 1000], [854, 929], [804, 931]];
 const WOLF_K = 0.05, WOLF_CX = 1010, WOLF_GY = 1124;
+let WOLF_HEAD_A = 0;                                                                // נקבע לפני כל ציור של זאב
 // פרווה: על הקטעים האלה (גב, צוואר, חזה, בטן, זנב) הקו נשבר לשיניים קטנות כלפי חוץ
 const WOLF_FUR = new Set([5, 6, 7, 8, 9, 10, 21, 31, 32]);
 const WOLF_SKF = (() => {
@@ -236,7 +237,12 @@ function drawWolfFig(x, y, dir, t, mode, col, sz) {                             
   const body = col || '#6b7280', K = WOLF_K;                                            // צבע אחד לכל הגוף
   const bob = walk ? Math.abs(Math.sin(ph)) * 0.35 : 0;
   // הסקיצה פונה שמאלה – הופכים, כך ש-dir=1 פונה ימינה. רגליים: מזיזים את כפות הרגליים קדימה/אחורה לסירוגין
+  const hrot = (WOLF_HEAD_A || 0);                                                   // זווית הראש של הזאב הזה (שלילי = ראש נמוך, הצוואר בקו אחד עם הגב)
   const pt = ([sx, sy]) => {
+    if (hrot && sx < 975 && sy < 1005) {                                             // מסובבים את הראש והצוואר סביב הכתף
+      const w = Math.min(1, (975 - sx) / 45), a = hrot * w, px = 975, py = 930, ddx = sx - px, ddy = sy - py;
+      sx = px + ddx * Math.cos(a) - ddy * Math.sin(a); sy = py + ddx * Math.sin(a) + ddy * Math.cos(a);
+    }
     let dx = 0;
     if (walk && sy > 1040) { const leg = sx < 990 ? (sx < 940 ? 0 : 1) : (sx < 1100 ? 2 : 3), k = (sy - 1040) / 85; dx = Math.sin(ph + (leg % 2 ? Math.PI : 0) + (leg > 1 ? Math.PI / 2 : 0)) * 1.3 * k / K; }
     return [-(sx + dx - WOLF_CX) * K, (sy - WOLF_GY) * K - (sy < 1040 ? bob : 0)];
@@ -244,7 +250,6 @@ function drawWolfFig(x, y, dir, t, mode, col, sz) {                             
   const P = WOLF_SKF.map(pt);
   const path = () => { ctx.beginPath(); P.forEach(([px, py], i) => i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)); ctx.closePath(); };
   ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(0, 0.3, 9, 1.2, 0, 0, Math.PI * 2); ctx.fill();
-  if (mode === 'up') { ctx.translate(8, -9); ctx.rotate(-0.12); ctx.translate(-8, 9); }   // מרים את הראש אל הכדור הפורח
   ctx.fillStyle = body; path(); ctx.fill();
   ctx.strokeStyle = 'rgba(0,0,0,.16)'; ctx.lineWidth = 0.22; ctx.lineCap = 'round';          // קווי פרווה עדינים על הגוף
   for (const [sx, sy, l] of [[1000, 935, 30], [1040, 945, 34], [1080, 940, 30], [960, 960, 26], [1010, 975, 28], [1060, 980, 26], [905, 930, 22], [930, 960, 22]]) {
@@ -338,7 +343,9 @@ function drawWolfScene(o) {
     if (!S) mode = 'walk';
     const x = c + W8.side * d;
     if (x < L - 20 || x > R + 20 || !S) return;
+    WOLF_HEAD_A = mode === 'up' ? 0.3 : (W8.head || 0) + Math.sin(t * 0.7 + i * 1.9) * 0.05;   // כל זאב עם זווית ראש משלו
     drawWolfFig(x, yy, dir, t + i, mode, W8.col, W8.sz);
+    WOLF_HEAD_A = 0;
   });
 }
 function drawBalloon(bx, by, sc, alpha) {                                             // by = תחתית הסל; sc – קטן כשהוא רחוק

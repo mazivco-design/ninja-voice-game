@@ -560,7 +560,7 @@ function drawNinjaBack(F) {
   const A = side(-1, s), B = side(1, 1 - s);
   if (F.hang) {                                                                      // תלוי ביד אחת: היד השנייה למטה, הרגליים משתלשלות
     A.el = [-1.95, shY - 3.4]; A.hand = [-1.95, shY - 7.6];                          // היד שתופסת – כמעט ישרה
-    B.el = [2.55, shY + 2.2]; B.hand = [2.45, shY + 4.8];                            // היד השנייה – למטה
+    B.el = [2.75, shY + 2.2]; B.hand = [2.8, shY + 4.8];                             // היד השנייה – למטה, לצד הגוף
     A.kn = [-1.5, hipY + 2.4]; A.ft = [-1.0, hipY + 4.7]; B.kn = [1.7, hipY + 2.3]; B.ft = [1.5, hipY + 4.6];
   }
   ctx.save(); ctx.translate(F.fx, F.fy); ctx.scale(sc, sc); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
@@ -568,10 +568,12 @@ function drawNinjaBack(F) {
   if (F.tilt) { ctx.translate(top[0], top[1]); ctx.rotate(F.tilt); ctx.translate(-top[0], -top[1]); }   // הגוף באלכסון – תלוי מהיד שלמעלה
   const limb = (pts, w, col) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]); ctx.stroke(); };
   [A, B].forEach(q => limb([q.hip, q.kn, q.ft], S.legW, C.body));                  // רגליים – הכול בצבע אחד, בלי קו מתאר
+  const down = F.hang ? B : null;                                                    // בתלייה: היד שלמטה – מאחורי הגוף (מצוירת לפניו, והגוף מכסה אותה)
+  if (down) { limb([down.sh, down.el, down.hand], S.armW, C.body); ctx.fillStyle = C.body; circle(down.hand[0], down.hand[1], S.handR); }
   ctx.fillStyle = C.body; roundRect(-2.2, shY - 0.4, 4.4, hipY - shY + 1.0, 0.9); ctx.fill();   // גוף
   ctx.fillStyle = acc; ctx.fillRect(-2.25, hipY - 1.4, 4.5, 1.1);                    // חגורה
   ctx.fillStyle = C.body; circle(0, headY, hr);                                      // ראש מאחור – בלי פנים
-  [A, B].forEach(q => { limb([q.sh, q.el, q.hand], S.armW, C.body); ctx.fillStyle = acc; circle(q.hand[0], q.hand[1], S.handR); });   // ידיים
+  [A, B].forEach(q => { if (q === down) return; limb([q.sh, q.el, q.hand], S.armW, C.body); ctx.fillStyle = acc; circle(q.hand[0], q.hand[1], S.handR); });   // ידיים
   ctx.fillStyle = acc; ctx.fillRect(-hr, headY - 1.1, hr * 2, 1.0);                  // סרט ראש
   circle(0, headY - 0.6, 0.7);
   const wv = Math.sin(now * 7) * 0.35;
