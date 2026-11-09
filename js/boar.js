@@ -17,7 +17,7 @@ const BOAR_TREES = [
 ];
 const BOAR = { size: 1.2, lead: 200, ramp: 70, edge: 110, tree0: 24, trees: BOAR_TREES.length, walkV: 16, duckT: 0.35,
                bWalkV: 10, walkMin: 1.6, walkMax: 2.6, grazeMin: 3.0, grazeMax: 6.5, lookT: 1.5, pawT: 1.0, lostT: 1.3,
-               fallT: 1.1, knock: 7, passBy: 26, coins: 4, enter: 16, rockH: 15, tutor: 2, near: 24, deepY: -3.4, deepS: 0.74, frontDY: 8 };   // frontDY: ביער הנינג'ה, החבר, העצים והסלע יורדים למטה (קרובים אלינו); החזירים על הקרקע מאחוריהם
+               fallT: 1.1, knock: 7, passBy: 26, coins: 4, enter: 16, rockH: 15, tutor: 2, near: 24, deepY: -3.4, deepS: 0.74, frontDY: 8, ninjaDY: 4 };   // frontDY: ביער הנינג'ה, החבר, העצים והסלע יורדים למטה (קרובים אלינו); החזירים על הקרקע מאחוריהם
 const BOAR_EARS = { easy: 2.0, medium: 1.5, hard: 1.15 };                         // כמה זמן יש להגיד HIDE מרגע שהאוזניים זזות
 const BOAR_GRAZE = { easy: 1.25, medium: 1, hard: 0.85 };                         // כמה זמן החזיר אוכל (פס ירוק)
 const BOAR_CHARGE = { easy: 2.8, medium: 2.2, hard: 1.7 };                           // כמה שניות לוקחת ההסתערות (אחרי הגריפה) – יש זמן להתחבא
@@ -58,7 +58,7 @@ function boarNew(dir, x, delay) { return { x, dir, m: delay ? 'off' : 'walk', t:
 function boarDeep(B) { return true; }                                               // כל החזירים מאחורי העצים
 function boarFrontDY() {                                                           // כמה להוריד את מה שקרוב אלינו ביער (עם מעבר רך בכניסה וביציאה)
   const o = (boarS && boarS.o) || obstacles.find(o => o.type === 'boar' && forestOn(o));
-  return o ? BOAR.frontDY * forestMask(o, boarNX()) : 0;
+  return o ? (BOAR.frontDY + BOAR.ninjaDY) * forestMask(o, boarNX()) : 0;   // הנינג'ות עוד קצת יותר למטה מהעצים
 }
 function boarPathOn() { return false; }                                              // (אין יותר חזירים על השביל)
 function boarDanger(B) {                                                             // יכול לראות את הנינג'ה: במסך ולא בדיוק מאחורי המחסה שלו

@@ -1448,7 +1448,7 @@ function drawNinjaBody() {
   else ctx.fillStyle = 'rgba(0,0,0,0)';
   if (riding) ctx.fillStyle = 'rgba(0,0,0,0)';                       // על הדרקון – בלי צל על הקרקע
   if (jetS && (jsFlying() || JS_ISLE_P.includes(jetS.p) || ['perchDown', 'perch'].includes(jetS.p))) ctx.fillStyle = 'rgba(0,0,0,0)';   // מעל התהום / על הצוק – אין קרקע מתחת
-  ctx.beginPath(); ctx.ellipse(fx + 0.5, GROUND + 0.6 + boarFrontDY(), Math.max(1.5, 4.5 - py * 0.08), 0.9, 0, 0, Math.PI * 2); ctx.fill();
+  if (!boarFrontDY()) { ctx.beginPath(); ctx.ellipse(fx + 0.5, GROUND + 0.6, Math.max(1.5, 4.5 - py * 0.08), 0.9, 0, 0, Math.PI * 2); ctx.fill(); }   // ביער – בלי צל
   if (invulnT > 0 && Math.floor(invulnT * 10) % 2 === 0) return;   // הבהוב אחרי פגיעה
 
   // גלשן מעל הראש בזמן FLY
