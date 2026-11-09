@@ -17,7 +17,7 @@ const BOAR_TREES = [
 ];
 const BOAR = { size: 1.2, lead: 200, ramp: 70, edge: 110, tree0: 24, trees: BOAR_TREES.length, walkV: 16, duckT: 0.35,
                bWalkV: 10, walkMin: 1.6, walkMax: 2.6, grazeMin: 3.0, grazeMax: 6.5, lookT: 1.5, pawT: 1.0, lostT: 1.3,
-               fallT: 1.1, knock: 7, passBy: 26, coins: 4, enter: 16, rockH: 15, tutor: 2, near: 24, deepY: -6.5, deepS: 0.78 };
+               fallT: 1.1, knock: 7, passBy: 26, coins: 4, enter: 16, rockH: 15, tutor: 2, near: 24, deepY: 0.6, deepS: 0.8, frontDY: 8 };   // frontDY: ביער הנינג'ה, החבר, העצים והסלע יורדים למטה (קרובים אלינו); החזירים על הקרקע מאחוריהם
 const BOAR_EARS = { easy: 2.0, medium: 1.5, hard: 1.15 };                         // כמה זמן יש להגיד HIDE מרגע שהאוזניים זזות
 const BOAR_GRAZE = { easy: 1.25, medium: 1, hard: 0.85 };                         // כמה זמן החזיר אוכל (פס ירוק)
 const BOAR_CHARGE = { easy: 2.8, medium: 2.2, hard: 1.7 };                           // כמה שניות לוקחת ההסתערות (אחרי הגריפה) – יש זמן להתחבא
@@ -56,6 +56,10 @@ function boarSpeed() {
 // dir -1: על השביל, הולך שמאלה (אל הנינג'ה). dir 1: מאחורי העצים, הולך ימינה. שניהם: הליכה → אוכל (פס ירוק) → אוזניים → מרים ראש → ממשיך
 function boarNew(dir, x, delay) { return { x, dir, m: delay ? 'off' : 'walk', t: 0, dur: delay || rnd(BOAR.walkMin, BOAR.walkMax), g: boarGrazeDur() }; }
 function boarDeep(B) { return true; }                                               // כל החזירים מאחורי העצים
+function boarFrontDY() {                                                           // כמה להוריד את מה שקרוב אלינו ביער (עם מעבר רך בכניסה וביציאה)
+  const o = (boarS && boarS.o) || obstacles.find(o => o.type === 'boar' && forestOn(o));
+  return o ? BOAR.frontDY * forestMask(o, boarNX()) : 0;
+}
 function boarPathOn() { return false; }                                              // (אין יותר חזירים על השביל)
 function boarDanger(B) {                                                             // יכול לראות את הנינג'ה: במסך ולא בדיוק מאחורי המחסה שלו
   return B.m !== 'off' && B.x < viewR() - 4 && B.x > viewL() + 4 && Math.abs(B.x - boarNX()) > 8;
@@ -446,16 +450,18 @@ function drawForestFront(o, top, bottom) {
   if (!forestOn(o)) return;
   ctx.save();
   const S = boarS && boarS.o === o ? boarS : o.lastS || null, live = S && S === boarS;
+  ctx.save(); ctx.translate(0, BOAR.frontDY);                                       // המחסות קרובים אלינו – יורדים למטה
   for (let i = 0; i < BOAR.trees; i++) {
     const x = boarTreeX(o, i), T = BOAR_TREES[i];
     if (x < viewL() - 20 || x > viewR() + 20) continue;
-    if (T.kind === 'rock') drawRock(x, T.w); else bigTree(x, top, T, i);
+    if (T.kind === 'rock') drawRock(x, T.w); else bigTree(x, top - BOAR.frontDY, T, i);
   }
+  ctx.restore();
   if (S) {
     if (S.f.side === 'front' && S.f.np === 'hidden') drawBoarFriend(S);               // החבר בצד הקדמי של המחסה
     if (live && S.side === 'front' && (S.np === 'hidden' || (S.np === 'duck' && S.nt > 0.12))) drawNinja();   // הנינג'ה בצד הקדמי – מעל הגזע
     const B = S.ch;                                                                   // המסתער יוצא מבין העצים אל השביל
-    if (B && B.x > viewL() - 25 && B.x < viewR() + 25) { const k = B.lift === undefined ? 1 : B.lift; drawBoarFig(B.x, lerp(GROUND + BOAR.deepY, GROUND + 2.2, k), BOAR.size * lerp(BOAR.deepS, 1.04, k), Object.assign({}, B, { dir: B.cdir })); }
+    if (B && B.x > viewL() - 25 && B.x < viewR() + 25) { const k = B.lift === undefined ? 1 : B.lift; drawBoarFig(B.x, lerp(GROUND + BOAR.deepY, GROUND + BOAR.frontDY + 2.2, k), BOAR.size * lerp(BOAR.deepS, 1.04, k), Object.assign({}, B, { dir: B.cdir })); }
     if (live) { drawBoarBars(S); drawSneakSign(S); drawFriendTalk(S); }
   }
   const t = performance.now() / 1000, L = viewL(), R = viewR();
@@ -489,12 +495,12 @@ function drawBoarFriend(S) {
   else P = poseIdle(now);
   if (S.fs === 'now' && F.np === 'stand') P.arms = [[0.4, 0.5], [2.0, 2.3 + Math.sin(now * 8) * 0.3]];   // מסמן "עכשיו!"
   const hx = F.np === 'hidden' && F.i < BOAR.trees ? boarTreeX(S.o, F.i) : F.x;     // מתחבא – צמוד למרכז המחסה
-  drawFigure({ fx: hx, fy: GROUND, facing: F.np === 'wave' ? -1 : 1, scale: 0.92, kind: 'ninja', accent: '#2563eb', pose: P, suit: null });
+  drawFigure({ fx: hx, fy: GROUND + boarFrontDY(), facing: F.np === 'wave' ? -1 : 1, scale: 0.92, kind: 'ninja', accent: '#2563eb', pose: P, suit: null });
 }
 function drawFriendTalk(S) {                                                          // מה החבר לוחש
   const txt = { now: 'Now!', hide: 'Hide!' }[S.fs];
   if (!txt) return;
-  const red = S.fs === 'hide', F = S.f, x = F.np === 'hidden' && F.i < BOAR.trees ? boarTreeX(S.o, F.i) : F.x, y = GROUND - 19;
+  const red = S.fs === 'hide', F = S.f, x = F.np === 'hidden' && F.i < BOAR.trees ? boarTreeX(S.o, F.i) : F.x, y = GROUND - 19 + boarFrontDY();
   ctx.save(); ctx.font = '900 3.2px -apple-system, system-ui, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const w = ctx.measureText(txt).width + 3;
   ctx.fillStyle = red ? '#fee2e2' : '#ffffff'; roundRect(x - w / 2, y - 2.6, w, 5.2, 2); ctx.fill();
@@ -506,7 +512,7 @@ function drawBoarBars(S) {
   const t = performance.now() / 1000;
   for (const B of S.boars) {
     if (B === S.ch || !boarDanger(B)) continue;
-    const deep = boarDeep(B), x = B.x - B.dir * -3, y = deep ? GROUND + BOAR.deepY - 17 : GROUND - 17.5, w = deep ? 10 : 12;
+    const deep = boarDeep(B), x = B.x - B.dir * -3, y = GROUND + BOAR.deepY - 15.5, w = 10;
     let f = 1, col = '#22c55e', icon = '🌿';
     if (B.m === 'graze') { f = 1 - B.t / B.dur; col = f < 0.3 ? '#f59e0b' : '#22c55e'; }
     else if (B.m === 'walk') { f = 1; col = '#86efac'; icon = '👃'; }
@@ -602,7 +608,7 @@ function drawBoarFig(x, y, s, B) {
 function drawSneakSign(S) {
   if (S.np !== 'stand' && S.np !== 'hidden') return;
   const safe = boarSneakGood(), t = performance.now() / 1000;
-  const x = PLAYER.x + PLAYER.w / 2, y = GROUND - 21 + Math.sin(t * 4) * 0.4, r = 2.7 * (safe ? 1 + Math.sin(t * 6) * 0.06 : 1);
+  const x = PLAYER.x + PLAYER.w / 2, y = GROUND - 21 + boarFrontDY() + Math.sin(t * 4) * 0.4, r = 2.7 * (safe ? 1 + Math.sin(t * 6) * 0.06 : 1);
   ctx.save();
   ctx.fillStyle = safe ? 'rgba(34,197,94,.92)' : 'rgba(220,38,38,.92)'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = '#fff'; ctx.lineWidth = 0.35; ctx.stroke();

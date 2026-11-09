@@ -1416,7 +1416,7 @@ function drawNinjaBody() {
   const tunO = crawl ? tunnelHere() : null;                                     // זוחל בתוך המחילה – על הרצפה שלה                     // בשפה של הבריכה: הולך בתוך המים הרדודים, על השיפוע
   const riding = rideCtl() && ride.phase !== 'mount';
   const duck = duckT > 0, fx = riding ? PLAYER.x + 4 : rope && rope.phase === 'fall' && rope.fallX !== undefined ? rope.fallX : leap || dive || crawl ? PLAYER.x + 3 : pb.l + (duck ? 5.5 : swim ? 3 : 4) + boatDX();   // boatDX – בדייג: נגרר לחרטום / נופל למים
-  const fy = riding ? GROUND - py : dive ? diveFit(fx).y : leap ? GROUND - py : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : wading ? wadeY(fx) : tunO ? tunnelFloor(tunO, fx) : pb.b + mudSink(fx) + boatSink();   // בבוץ – שקוע עד המותניים
+  const fy = riding ? GROUND - py : dive ? diveFit(fx).y : leap ? GROUND - py : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : wading ? wadeY(fx) : tunO ? tunnelFloor(tunO, fx) : pb.b + mudSink(fx) + boatSink() + boarFrontDY();   // בבוץ – שקוע עד המותניים. ביער – קרוב יותר אלינו (boarFrontDY)
   const now = performance.now() / 1000;
   if (sinkT > 0 && sinkType === 'burn') {                                       // נשרף בשדה האש – מושחר ועשן עולה
     const k = 1 - sinkT / SINK_TIME;
@@ -1447,7 +1447,7 @@ function drawNinjaBody() {
   else ctx.fillStyle = 'rgba(0,0,0,0)';
   if (riding) ctx.fillStyle = 'rgba(0,0,0,0)';                       // על הדרקון – בלי צל על הקרקע
   if (jetS && (jsFlying() || JS_ISLE_P.includes(jetS.p) || ['perchDown', 'perch'].includes(jetS.p))) ctx.fillStyle = 'rgba(0,0,0,0)';   // מעל התהום / על הצוק – אין קרקע מתחת
-  ctx.beginPath(); ctx.ellipse(fx + 0.5, GROUND + 0.6, Math.max(1.5, 4.5 - py * 0.08), 0.9, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(fx + 0.5, GROUND + 0.6 + boarFrontDY(), Math.max(1.5, 4.5 - py * 0.08), 0.9, 0, 0, Math.PI * 2); ctx.fill();
   if (invulnT > 0 && Math.floor(invulnT * 10) % 2 === 0) return;   // הבהוב אחרי פגיעה
 
   // גלשן מעל הראש בזמן FLY
