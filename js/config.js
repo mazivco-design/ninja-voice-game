@@ -99,7 +99,7 @@ const STAGES = [
   { name: 'PUSH TOGETHER', words: ['push together'], count: 1, hint: 'PUSH the boat with your friend · JUMP in', world: 0 },
   { name: 'PUSH ON THREE', words: ['push on three'], count: 3, hint: 'Count with the kid · PUSH on THREE · JUMP in', world: 0 },
   { name: 'FISHING', words: ['fishing'], count: 2, hint: 'JUMP in · THROW the line · PULL when the fish bites', world: 0 },
-  { name: 'WILD BOAR', words: ['boar'], count: 1, hint: 'SNEAK when the boar eats · HIDE when its ears move', world: 0 },   // יער: מתחבאים מאחורי העצים (boar.js)   // הילד אומר PUSH ו-JUMP (boat.js)   // הילד עוד לא אומר HELP – רק CATCH ו-HOLD (mud.js)
+  { name: 'WILD BOAR', words: ['boar'], count: 1, hint: 'SNEAK when the bar is green · HIDE when its ears move · CLIMB at the end', world: 0 },   // יער: מתחבאים מאחורי העצים (boar.js)   // הילד אומר PUSH ו-JUMP (boat.js)   // הילד עוד לא אומר HELP – רק CATCH ו-HOLD (mud.js)
   { name: 'JET PACK', words: ['jetpack'], count: 1, hint: 'PICK UP · PUT ON · FLY · UP / DOWN · DOWN to land', world: 0 },   // תהום: לובשים תרמיל סילון ועפים (jetstage.js)
   { name: 'WOLVES', words: ['wolves'], count: 1, hint: 'CATCH the rope · HOLD · CLIMB · JUMP onto the hill', world: 2 },   // זאבים ביער מושלג: כדור פורח מחלץ (wolves.js)
   { name: 'BIKE', words: ['bike'], count: 1, hint: 'RIDE · RING the bell · JUMP · BRAKE · STOP · GET OFF', world: 0 }   // רכיבה על אופניים עם חבר (bike.js)

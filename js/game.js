@@ -31,7 +31,7 @@ async function play(m, idx) {
   if (words.includes('jetpack')) for (const w of ['pick up', 'put on', 'fly', 'up', 'down', 'crawl']) if (!listenWords.includes(w)) listenWords.push(w);
   if (words.includes('wolves')) for (const w of ['catch', 'hold', 'climb', 'jump']) if (!listenWords.includes(w)) listenWords.push(w);   // זאבים: CATCH / HOLD / LET GO   // תרמיל סילון
   if (words.includes('bike')) for (const w of ['ride', 'ring', 'jump', 'brake', 'stop', 'get off']) if (!listenWords.includes(w)) listenWords.push(w);   // אופניים
-  if (words.includes('boar')) for (const w of ['hide', 'sneak']) if (!listenWords.includes(w)) listenWords.push(w);   // חזיר בר: SNEAK ו-HIDE
+  if (words.includes('boar')) for (const w of ['hide', 'sneak', 'climb']) if (!listenWords.includes(w)) listenWords.push(w);   // חזיר בר: SNEAK, HIDE ו-CLIMB
   listenWords = listenWords.filter(w => w !== 'push together' && w !== 'push on three' && w !== 'fishing' && w !== 'boar' && w !== 'jetpack' && w !== 'wolves' && w !== 'bike');
   if (m !== 'demo') for (const w of powerWordsOwned()) if (!listenWords.includes(w)) listenWords.push(w);   // SHIELD / JET – אם יש מנות
   if (words.includes('ride')) for (const w of ['up', 'down', 'fire']) if (!listenWords.includes(w)) listenWords.push(w);   // RIDE: בשמיים צריך UP / DOWN / FIRE   // LET GO צריך גם CATCH                              // I WANT + שמות החפצים
