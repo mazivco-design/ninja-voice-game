@@ -386,15 +386,14 @@ function drawForestScenes(top) {                                                
   if (forestFull()) { drawForestBack(os[0] || null, top); return; }
   for (const o of os) drawForestBack(o, top);
 }
-function drawForestBack(o, top) {
+function drawForestBack(o, top) {                                                  // סדר קבוע מאחור לפנים: רקע → חזירים → עצי מחסה וסלע → נינג'ות
   if (o && !forestOn(o)) return;
-  forestPass(o, top, 1);                                                          // רחוק: עצים דקים בערפל
-  const S = o && (boarS && boarS.o === o ? boarS : o.lastS);                     // החזירים – מאחורי כל העצים, על קרקע היער מאחור
+  forestPass(o, top, 0);                                                          // כל הרקע
+  const S = o && (boarS && boarS.o === o ? boarS : o.lastS);                     // החזירים – לפני הרקע, מאחורי המחסות
   if (S) for (const B of S.boars) {
     if (B === S.ch || B.m === 'off' || B.x < viewL() - 25 || B.x > viewR() + 25) continue;
     ctx.save(); ctx.globalAlpha *= forestMask(o, B.x); drawBoarFig(B.x, GROUND + BOAR.deepY, BOAR.size * BOAR.deepS, B); ctx.restore();
   }
-  forestPass(o, top, 2);                                                          // אמצע: עצים בינוניים, קרקע ושביל – מעל החזירים
 }
 function forestPass(o, top, part) {
   if (!forestCv) forestCv = document.createElement('canvas');
