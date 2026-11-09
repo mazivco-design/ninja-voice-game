@@ -270,15 +270,15 @@ function poseSneak(q) {
 }
 function poseCrouchHide(now) {                                                        // כורע מאחורי סלע
   const P = poseIdle(now); P.hipY = -2.0; P.lean = 0.35; P.legs = [[1.5, -0.4], [1.3, -0.6]]; P.arms = [[0.9, 2.2], [1.1, 2.4]]; P.eyes = 'wide'; P.bob = 0;
-  return P;
+  return boarPoseApply(P, 'crouch');
 }
 function poseCover(now, kind) {                                                       // צמוד למחסה, כפוף ומציץ – תנוחת הסתתרות
   if (kind === 'rock') return poseCrouchHide(now);
   const P = poseIdle(now), b = Math.sin(now * 2) * 0.03;
   P.hipY = -3.9; P.lean = 0.16 + b; P.spine = 0.1; P.legs = [[0.55, -0.25], [0.15, -0.45]]; P.arms = [[1.35, 1.75], [1.1, 1.45]]; P.eyes = 'wide'; P.headTilt = 0.12; P.bob = 0;
-  return P;
+  return boarPoseApply(P, 'cover');
 }
-function poseTreeHug(now) { const P = poseIdle(now); P.hipY = -3.5; P.lean = -0.1; P.spine = -0.04; P.legs = [[0.45, -0.35], [0.7, -0.2]]; P.arms = [[-0.35, -0.6], [-0.25, -0.5]]; P.eyes = 'wide'; P.bob = 0; return P; }   // גב צמוד לגזע, כפוף, ידיים לאחור על העץ
+function poseTreeHug(now) { const P = poseIdle(now); P.hipY = -3.5; P.lean = -0.1; P.spine = -0.04; P.legs = [[0.45, -0.35], [0.7, -0.2]]; P.arms = [[-0.35, -0.6], [-0.25, -0.5]]; P.eyes = 'wide'; P.bob = 0; return boarPoseApply(P, 'hug'); }   // גב צמוד לגזע, כפוף, ידיים לאחור על העץ
 function poseFor(np, nt, now, kind, bt) {                                             // התנוחה לפי מצב (גם לחבר)
   if (np === 'walk') return poseSneak(bt);
   if (np === 'duck') { const P = poseWalk(nt * 22); P.lean = 0.1; return P; }
@@ -292,6 +292,7 @@ function poseFor(np, nt, now, kind, bt) {                                       
 function boarPose(P) {
   if (!boarS) return P;
   const S = boarS, p = S.np, now = performance.now() / 1000, kind = BOAR_TREES[S.i].kind;
+  const ep = edPoseName(); if (ep) return ep === 'cover' ? poseCover(now, 'tree') : ep === 'hug' ? poseTreeHug(now) : poseCrouchHide(now);   // העורך: מראה את התנוחה הנערכת
   if (p === 'exit') return S.nt < 1.2 ? poseWalk(bgX * 0.42 * RIG.run.cadence * 1.6) : poseRun(bgX * 0.42 * RIG.run.cadence);
   if (p === 'stand') return poseCover(now, kind);                                   // צמוד לעץ / לסלע
   return poseFor(p, S.nt, now, kind, bgX * 0.42 * RIG.run.cadence * 1.25);
@@ -483,7 +484,7 @@ function drawForestFront(o, top, bottom) {
     if (live) { S.front = 1; drawNinja(); S.front = 0; }                              // הנינג'ה – תמיד לפני העצים
     const B = S.ch;                                                                   // המסתער יוצא מבין העצים אל השביל
     if (B && B.x > viewL() - 25 && B.x < viewR() + 25) { const k = B.lift === undefined ? 1 : B.lift; drawBoarFig(B.x, lerp(GROUND + BOAR.deepY, GROUND + BOAR.frontDY + 2.2, k), BOAR.size * lerp(BOAR.deepS, 1.04, k), Object.assign({}, B, { dir: B.cdir })); }
-    if (live) { drawBoarBars(S); drawSneakSign(S); drawFriendTalk(S); }
+    if (live) { drawBoarBars(S); drawSneakSign(S); drawFriendTalk(S); edDraw(); }
   }
   const t = performance.now() / 1000, L = viewL(), R = viewR();
   ctx.fillStyle = '#c98a2e';                                                           // עלים נושרים

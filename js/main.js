@@ -9,11 +9,12 @@ function loop(t) {
   const now = t / 1000;
   const dt = Math.min(0.05, lastT ? now - lastT : 0);
   lastT = now;
-  if (state === 'play' || state === 'demo' || state === 'intro') update(dt);
+  if ((state === 'play' || state === 'demo' || state === 'intro') && !edPaused()) update(dt);   // העורך עוצר את המשחק
   updateEffects(dt);
   updateMic();
   if (state === 'sushi') updateSushi(dt);
   if (state === 'lab') drawLab(dt); else if (state === 'studio') drawStudio(dt); else if (state === 'sushi') drawSushi(); else draw();
+  edTick();                                                   // כפתור העורך (בודק, שלב החזיר)
   $('sushiBtn').classList.toggle('hide', state !== 'menu');   // 🍣 בונוס סושי (אב-טיפוס) – רק בתפריט
   $('introBar').classList.toggle('hide', state !== 'intro');   // כפתורי Again / START רק בתחילת שלב
   requestAnimationFrame(loop);
