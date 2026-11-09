@@ -56,11 +56,15 @@ function boarSpeed() {
 // dir -1: על השביל, הולך שמאלה (אל הנינג'ה). dir 1: מאחורי העצים, הולך ימינה. שניהם: הליכה → אוכל (פס ירוק) → אוזניים → מרים ראש → ממשיך
 function boarNew(dir, x, delay) { return { x, dir, m: delay ? 'off' : 'walk', t: 0, dur: delay || rnd(BOAR.walkMin, BOAR.walkMax), g: boarGrazeDur() }; }
 function boarDeep(B) { return B.dir === 1; }                                        // מאחורי העצים
+function boarPathOn() {                                                             // יש חזיר על השביל במסך (לפני הנינג'ה)
+  return !!boarS && boarS.boars.some(b => b.dir === -1 && b.m !== 'off' && b !== boarS.ch && b.x > boarNX() - 4 && b.x < viewR() + 4) || !!(boarS && boarS.ch && boarS.ch.cdir < 0 && boarS.ch.lift >= 1);
+}
 function boarDanger(B) {                                                             // יכול לראות את הנינג'ה מאיפה שהוא
   if (B.m === 'off' || B.x > viewR() - 4 || B.x < viewL() + 4) return false;
-  return B.dir === -1 ? B.x > boarNX() + BOAR.near : Math.abs(B.x - boarNX()) > 8;
+  if (B.dir === -1) return B.x > boarNX() + BOAR.near;
+  return Math.abs(B.x - boarNX()) > 8 && !boarPathOn();                            // מאחורי העצים – רק כשאין חזיר על השביל (אי אפשר להתחבא מקדימה מולו)
 }
-function boarSideFor(B) { return boarDeep(B) ? 'front' : 'back'; }                 // באיזה צד של הגזע מתחבאים ממנו
+function boarSideFor(B) { return boarDeep(B) && !boarPathOn() ? 'front' : 'back'; }   // באיזה צד של הגזע מתחבאים ממנו (כשיש חזיר על השביל – תמיד מאחור)
 function boarSafeFrom(B) { const S = boarS; return (S.np === 'hidden' || (S.np === 'duck' && S.nt > 0.15)) && S.side === boarSideFor(B); }
 function boarSees(B) { return boarDanger(B) && B.m === 'look' && !boarSafeFrom(B); }
 function boarThreat() {                                                              // החזיר שהכי קרוב להרים את הראש
@@ -82,6 +86,7 @@ function boarPatrol(B, dt) {
   B.t += dt;
   const L = viewL() - BOAR.enter, R = viewR() + BOAR.enter;
   if (B.dir === -1 && (B.m === 'graze' || B.m === 'ears' || B.m === 'look') && B.x < boarNX() + BOAR.near) { B.m = 'walk'; B.t = 0; B.dur = 99; }   // הנינג'ה התקרב – ממשיך ללכת ועובר
+  if (B.dir === 1 && (B.m === 'graze' || B.m === 'ears' || B.m === 'look') && !boarDanger(B)) { B.m = 'walk'; B.t = 0; B.dur = 99; }   // הגיע חזיר לשביל – זה שמאחור ממשיך ללכת
   switch (B.m) {
     case 'off': if (B.t >= B.dur) { B.m = 'walk'; B.t = 0; B.dur = rnd(BOAR.walkMin, BOAR.walkMax); B.x = B.dir === -1 ? R : L; } break;
     case 'walk':
@@ -153,6 +158,7 @@ function boarUpdate(dt, pb) {
       if (B.x < viewL() - BOAR.enter || B.x > viewR() + BOAR.enter) { B.dir = B.cdir < 0 ? 1 : -1; B.m = 'off'; B.t = 0; B.dur = rnd(1, 2.5); B.lift = 0; B.stops = 0; S.ch = null; }
     }
   }
+  if (S.np === 'hidden' && S.side === 'front' && boarPathOn()) { S.side = 'back'; S.np = 'duck'; S.nt = 0; }   // חזיר הגיע לשביל – עובר מאחורי הגזע (אי אפשר להישאר מקדימה מולו)
   // הנינג'ה
   switch (S.np) {
     case 'duck': if (S.nt >= BOAR.duckT) { goN('hidden'); S.atTrunk = 1; } break;
