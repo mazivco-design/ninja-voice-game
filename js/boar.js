@@ -10,10 +10,10 @@
 
 // המחסות: מרחק מהמחסה הראשון (שונים – קצר / ארוך), סוג, עובי, צבע, נטייה וענפים [גובה יחסי, צד, אורך]
 const BOAR_TREES = [
-  { dx: 0,   kind: 'tree', w: 9.5, col: '#8a6a4c', lean: 0,      br: [[0.40, -1, 10], [0.62, 1, 8]] },
-  { dx: 42,  kind: 'tree', w: 8.8, col: '#93734f', lean: 0.025,  br: [[0.50, 1, 9]] },
+  { dx: 0,   kind: 'tree', w: 14, col: '#8a6a4c', lean: 0,      br: [[0.40, -1, 10], [0.62, 1, 8]] },
+  { dx: 42,  kind: 'tree', w: 13, col: '#93734f', lean: 0.025,  br: [[0.50, 1, 9]] },
   { dx: 104, kind: 'rock', w: 24 },
-  { dx: 146, kind: 'tree', w: 10.5, col: '#826347', lean: -0.01, br: [[0.36, -1, 10], [0.58, 1, 9], [0.74, 1, 6]] }
+  { dx: 146, kind: 'tree', w: 15, col: '#826347', lean: -0.01, br: [[0.36, -1, 10], [0.58, 1, 9], [0.74, 1, 6]] }
 ];
 const BOAR = { size: 1.2, lead: 200, ramp: 70, edge: 110, tree0: 24, trees: BOAR_TREES.length, walkV: 16, duckT: 0.35,
                bWalkV: 10, walkMin: 1.6, walkMax: 2.6, grazeMin: 3.0, grazeMax: 6.5, lookT: 1.5, pawT: 1.0, lostT: 1.3,
@@ -175,23 +175,26 @@ function boarUpdate(dt, pb) {
       }
       break;
   }
-  // החבר: מחסה אחד לפני הנינג'ה. מתחבא לבד בצד הנכון, ויוצא למחסה הבא כשהנינג'ה יוצא
+  // החבר: מדלג ראשון למחסה שאחרי (כשבטוח), מתחבא שם וקורא לנינג'ה "Come!" – אף פעם לא שניהם באותו מחסה
   const F = S.f; F.nt += dt;
   const fx = boarFriendX(o, F.i);
-  if (F.x < fx - 0.05) { F.np = 'walk'; F.x = Math.min(fx, F.x + BOAR.walkV * 1.15 * dt); }
-  else {
+  if (F.x < fx - 0.05) {                                                              // מדלג: מהר, בקפיצות קטנות
+    F.np = 'hop'; F.x = Math.min(fx, F.x + BOAR.walkV * (F.hop ? 2.0 : 1.15) * dt);
+  } else {
+    F.hop = 0;
     const th = S.boars.find(b => (b.m === 'ears' || b.m === 'look' || b === S.ch) && boarDanger(b));
-    F.np = th && F.i < BOAR.trees ? 'hidden' : F.i >= BOAR.trees ? 'wave' : 'stand'; F.side = th ? boarSideFor(th) : F.side || 'back';
+    F.np = th && F.i < BOAR.trees ? 'hidden' : F.i >= BOAR.trees ? 'wave' : 'stand'; F.side = 'front';
+    const hopT = (boarFriendX(o, Math.min(BOAR.trees, F.i + 1)) - F.x) / (BOAR.walkV * 2.0) + 0.6;
+    if (F.i === S.i + 1 && F.i < BOAR.trees && atCover && !th && !S.ch && S.boars.every(b => boarTimeToLook(b) > hopT) && F.nt > 0.8) {
+      F.i++; F.hop = 1; F.nt = 0; S.fs = null;                                        // יוצא ראשון
+    }
   }
-  // החבר לוחש "Now!" / "Hide!" בשני המחסות הראשונים (וגם אחרי שתי נפילות)
+  // החבר קורא "Come!" כשהגיע ובטוח לבוא; בשני המחסות הראשונים (וגם אחרי שתי נפילות) גם לוחש "Hide!"
   const tutor = (S.i < BOAR.tutor || S.miss >= 2) && !demo && S.np !== 'exit';
-  if (tutor && atCover) {
-    const ears = S.boars.find(b => b.m === 'ears' && boarDanger(b) && !boarSafeFrom(b));
-    if (ears) { if (S.fs !== 'hide') { S.fs = 'hide'; S.fsT = 0; if (VOICE_CLIPS['friend: hide!']) speak('friend: hide!'); } }
-    else if (boarSneakGood() && S.fs !== 'now' && S.nt > 0.6) { S.fs = 'now'; S.fsT = 0; if (VOICE_CLIPS['friend: now!']) speak('friend: now!'); }
-    else if (!boarSneakGood() && S.fs === 'now') S.fs = null;
-    else if (S.fs === 'hide' && !ears) S.fs = null;
-  } else S.fs = null;
+  const ears = atCover && S.boars.find(b => b.m === 'ears' && boarDanger(b) && !boarSafeFrom(b));
+  if (tutor && ears) { if (S.fs !== 'hide') { S.fs = 'hide'; S.fsT = 0; if (VOICE_CLIPS['friend: hide!']) speak('friend: hide!'); } }
+  else if (atCover && F.np !== 'hop' && F.i >= S.i + 2 && boarSneakGood()) { if (S.fs !== 'come') { S.fs = 'come'; S.fsT = 0; if (VOICE_CLIPS['friend: come here!']) speak('friend: come here!'); } }
+  else if (S.fs) S.fs = null;
   if (demo) {                                                                        // הדגמה: SNEAK כשכדאי, HIDE כשהאוזניים זזות
     const say = w => { const np = S.np, sd = S.side; command(w, 'demo'); if (S.np !== np || S.side !== sd) speak(w); };
     if (atCover && S.boars.some(b => b.m === 'ears' && boarDanger(b) && !boarSafeFrom(b) && b.t > 0.3)) say('hide');
@@ -234,9 +237,9 @@ function boarSneak() {                                                          
   if (!boarS) return false;
   const S = boarS;
   if (S.np !== 'stand' && S.np !== 'hidden') return true;
-  if (S.i >= BOAR.trees - 1) { S.np = 'exit'; S.nt = 0; S.f.i = BOAR.trees; return true; }
+  if (S.i >= BOAR.trees - 1) { S.np = 'exit'; S.nt = 0; if (S.f.i < BOAR.trees) { S.f.i = BOAR.trees; S.f.hop = 1; } return true; }
   S.i++; S.np = 'walk'; S.nt = 0; S.walking = 1; S.atTrunk = 0; S.fs = null; S.fsT = 0;
-  S.f.i = Math.min(BOAR.trees, S.i + 1);                                              // החבר יוצא למחסה שאחרי
+  if (S.f.i <= S.i) { S.f.i = Math.min(BOAR.trees, S.i + 1); S.f.hop = 1; }            // לא חיכה לחבר – החבר מדלג קדימה באותו רגע
   return true;
 }
 function boarExpected() {
@@ -498,15 +501,17 @@ function drawBoarFriend(S) {
   let P;
   if (F.np === 'run') P = poseRun(now * 9);
   else if (F.np === 'walk') P = poseSneak(now * 9);
+  else if (F.np === 'hop') P = poseAir(Math.sin(now * 12) > 0);
   else if (F.np === 'hidden') P = kind === 'rock' ? poseCrouchHide(now) : poseTreeHug(now);
   else if (F.np === 'wave') { P = poseIdle(now); P.arms = [[0.4, 0.5], [2.7, 3.1 + Math.sin(now * 10) * 0.35]]; }   // מחכה מחוץ ליער ומנופף
   else P = poseIdle(now);
-  if (S.fs === 'now' && F.np === 'stand') P.arms = [[0.4, 0.5], [2.0, 2.3 + Math.sin(now * 8) * 0.3]];   // מסמן "עכשיו!"
+  if (S.fs === 'come' && F.np === 'stand') { P.arms = [[0.4, 0.5], [1.8 + Math.sin(now * 9) * 0.5, 2.6 + Math.sin(now * 9) * 0.6]]; }   // מנופף "בוא!"
   const hx = F.np === 'hidden' && F.i < BOAR.trees ? boarTreeX(S.o, F.i) : F.x;     // מתחבא – צמוד למרכז המחסה
-  drawFigure({ fx: hx, fy: GROUND + boarFrontDY(), facing: F.np === 'wave' ? -1 : 1, scale: 0.92, kind: 'ninja', accent: '#2563eb', pose: P, suit: null });
+  const hop = F.np === 'hop' ? Math.abs(Math.sin(now * 12)) * 3 : 0;                 // הקפיצות בדילוג
+  drawFigure({ fx: hx, fy: GROUND + boarFrontDY() - hop, facing: F.np === 'wave' || (S.fs === 'come' && F.np === 'stand') ? -1 : 1, scale: 0.92, kind: 'ninja', accent: '#2563eb', pose: P, suit: null });
 }
 function drawFriendTalk(S) {                                                          // מה החבר לוחש
-  const txt = { now: 'Now!', hide: 'Hide!' }[S.fs];
+  const txt = { come: 'Come!', hide: 'Hide!' }[S.fs];
   if (!txt) return;
   const red = S.fs === 'hide', F = S.f, x = F.np === 'hidden' && F.i < BOAR.trees ? boarTreeX(S.o, F.i) : F.x, y = GROUND - 19 + boarFrontDY();
   ctx.save(); ctx.font = '900 3.2px -apple-system, system-ui, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
