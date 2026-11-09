@@ -17,7 +17,7 @@ const BOAR_TREES = [
 ];
 const BOAR = { size: 1.2, lead: 200, ramp: 70, edge: 110, tree0: 24, trees: BOAR_TREES.length, walkV: 16, duckT: 0.35,
                bWalkV: 10, walkMin: 1.6, walkMax: 2.6, grazeMin: 3.0, grazeMax: 6.5, lookT: 1.5, pawT: 1.0, lostT: 1.3,
-               fallT: 1.1, knock: 7, passBy: 26, coins: 4, enter: 16, rockH: 15, tutor: 2, near: 24, deepY: 0.6, deepS: 0.8, frontDY: 8 };   // frontDY: ביער הנינג'ה, החבר, העצים והסלע יורדים למטה (קרובים אלינו); החזירים על הקרקע מאחוריהם
+               fallT: 1.1, knock: 7, passBy: 26, coins: 4, enter: 16, rockH: 15, tutor: 2, near: 24, deepY: -3.4, deepS: 0.74, frontDY: 8 };   // frontDY: ביער הנינג'ה, החבר, העצים והסלע יורדים למטה (קרובים אלינו); החזירים על הקרקע מאחוריהם
 const BOAR_EARS = { easy: 2.0, medium: 1.5, hard: 1.15 };                         // כמה זמן יש להגיד HIDE מרגע שהאוזניים זזות
 const BOAR_GRAZE = { easy: 1.25, medium: 1, hard: 0.85 };                         // כמה זמן החזיר אוכל (פס ירוק)
 const BOAR_CHARGE = { easy: 2.8, medium: 2.2, hard: 1.7 };                           // כמה שניות לוקחת ההסתערות (אחרי הגריפה) – יש זמן להתחבא
@@ -388,11 +388,20 @@ function drawForestScenes(top) {                                                
 }
 function drawForestBack(o, top) {
   if (o && !forestOn(o)) return;
+  forestPass(o, top, 1);                                                          // רחוק: עצים דקים בערפל
+  const S = o && (boarS && boarS.o === o ? boarS : o.lastS);                     // החזירים – מאחורי כל העצים, על קרקע היער מאחור
+  if (S) for (const B of S.boars) {
+    if (B === S.ch || B.m === 'off' || B.x < viewL() - 25 || B.x > viewR() + 25) continue;
+    ctx.save(); ctx.globalAlpha *= forestMask(o, B.x); drawBoarFig(B.x, GROUND + BOAR.deepY, BOAR.size * BOAR.deepS, B); ctx.restore();
+  }
+  forestPass(o, top, 2);                                                          // אמצע: עצים בינוניים, קרקע ושביל – מעל החזירים
+}
+function forestPass(o, top, part) {
   if (!forestCv) forestCv = document.createElement('canvas');
   if (forestCv.width !== canvas.width || forestCv.height !== canvas.height) { forestCv.width = canvas.width; forestCv.height = canvas.height; }
   const c = forestCv.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, forestCv.width, forestCv.height); c.setTransform(ctx.getTransform());
   fc = c;
-  forestLayers(o, top);
+  forestLayers(o, top, part);
   if (!o) { fc = ctx; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(forestCv, 0, 0); ctx.restore(); return; }
   const L = viewL() - 2, R = viewR() + 2, g = c.createLinearGradient(fo(o) - BOAR.ramp, 0, fo(o) + fw(o) + BOAR.ramp, 0), W = fw(o) + BOAR.ramp * 2;
   g.addColorStop(0, forestFull() ? 'rgba(0,0,0,1)' : 'rgba(0,0,0,0)'); g.addColorStop(Math.min(0.49, (BOAR.ramp - 5) / W), 'rgba(0,0,0,1)'); g.addColorStop(Math.max(0.51, 1 - (BOAR.ramp - 5) / W), 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
@@ -400,10 +409,11 @@ function drawForestBack(o, top) {
   fc = ctx;
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(forestCv, 0, 0); ctx.restore();
 }
-function forestLayers(o, top) {
+function forestLayers(o, top, part) {
   const ctx = fc, a = 1;
   const L = viewL() - 2, R = viewR() + 2, G = GROUND - 1;
   ctx.save();
+  if (part !== 2) {
   const g = ctx.createLinearGradient(0, top, 0, G); g.addColorStop(0, '#cfe8c8'); g.addColorStop(0.5, '#9cc89a'); g.addColorStop(1, '#6f9f72');
   ctx.fillStyle = g; ctx.fillRect(L, top, R - L, G - top);
   for (let i = 0; i < 11; i++) {                                                         // רחוק, בערפל: עצים דקים עם צמרת, בגבהים שונים
@@ -417,6 +427,8 @@ function forestLayers(o, top) {
   ctx.save(); ctx.globalCompositeOperation = 'lighter';                                   // קרני אור בין העצים
   for (let i = 0; i < 4; i++) { const x = wrapX(L + 18 + i * 42 + boarRnd(i + 40) * 12 - bgX * 0.2, L - 30, R + 10); ctx.fillStyle = 'rgba(255,240,190,' + (0.08 * a) + ')'; ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x + 7, top); ctx.lineTo(x + 26, G); ctx.lineTo(x + 12, G); ctx.closePath(); ctx.fill(); }
   ctx.restore();
+  }
+  if (part !== 1) {
   for (let i = 0; i < 4; i++) {                                                          // אמצע: עצים בינוניים עם צמרת
     const x = wrapX(L + i * 45 + boarRnd(i + 5) * 12 - bgX * 0.42, L - 12, R + 12), cy = top + 4 + boarRnd(i + 25) * 12;
     fTree(x, 2.2 + boarRnd(i + 2) * 1.2, cy, G - 3, '#8a7458', i % 2 ? '#3f6e3c' : '#46733f', 10 + boarRnd(i + 35) * 4, 40 + i * 9, (boarRnd(i + 66) - 0.5) * 0.05);
@@ -432,6 +444,7 @@ function forestLayers(o, top) {
   const pg = ctx.createLinearGradient(0, GROUND, 0, GROUND + 30); pg.addColorStop(0, '#a88a62'); pg.addColorStop(1, '#836747');   // שביל עפר ביער
   ctx.fillStyle = pg; ctx.fillRect(L, GROUND - 1.3, R - L, 60);
   ctx.fillStyle = 'rgba(0,0,0,.13)'; for (let i = 0; i < 24; i++) { const x = wrapX(L + boarRnd(i + 70) * 200 - bgX, L - 3, R + 3); ctx.beginPath(); ctx.ellipse(x, GROUND + 2 + boarRnd(i + 80) * 14, 0.8 + boarRnd(i), 0.35, 0, 0, Math.PI * 2); ctx.fill(); }
+  }
   ctx.restore();
 }
 // המחסות על השביל (מעל הנינג'ה – מתחבאים מאחוריהם), החזיר המסתער, הסימנים ועלים נושרים
@@ -458,8 +471,8 @@ function drawForestFront(o, top, bottom) {
   }
   ctx.restore();
   if (S) {
-    if (S.f.side === 'front' && S.f.np === 'hidden') drawBoarFriend(S);               // החבר בצד הקדמי של המחסה
-    if (live && S.side === 'front' && (S.np === 'hidden' || (S.np === 'duck' && S.nt > 0.12))) drawNinja();   // הנינג'ה בצד הקדמי – מעל הגזע
+    drawBoarFriend(S);                                                                // החבר – תמיד לפני העצים
+    if (live) { S.front = 1; drawNinja(); S.front = 0; }                              // הנינג'ה – תמיד לפני העצים
     const B = S.ch;                                                                   // המסתער יוצא מבין העצים אל השביל
     if (B && B.x > viewL() - 25 && B.x < viewR() + 25) { const k = B.lift === undefined ? 1 : B.lift; drawBoarFig(B.x, lerp(GROUND + BOAR.deepY, GROUND + BOAR.frontDY + 2.2, k), BOAR.size * lerp(BOAR.deepS, 1.04, k), Object.assign({}, B, { dir: B.cdir })); }
     if (live) { drawBoarBars(S); drawSneakSign(S); drawFriendTalk(S); }
@@ -477,11 +490,7 @@ function drawForestFront(o, top, bottom) {
 function drawBoar(o) {
   const S = boarS && boarS.o === o ? boarS : o.lastS || null;
   if (!S) return;
-  for (const B of S.boars) {
-    if (B === S.ch || B.m === 'off' || B.x < viewL() - 25 || B.x > viewR() + 25) continue;
-    ctx.save(); ctx.filter = 'saturate(0.85) brightness(1.05)'; drawBoarFig(B.x, GROUND + BOAR.deepY, BOAR.size * BOAR.deepS, B); ctx.restore();   // מאחורי העצים – רחוק יותר ובהיר קצת
-  }
-  if (!(S.f.side === 'front' && S.f.np === 'hidden')) drawBoarFriend(S);
+  // החזירים מצוירים ב-drawForestBack (מאחורי כל העצים), הנינג'ות ב-drawForestFront (לפני העצים)
 }
 function drawBoarFriend(S) {
   const F = S.f, now = performance.now() / 1000;
