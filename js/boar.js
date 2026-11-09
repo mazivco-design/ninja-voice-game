@@ -15,9 +15,9 @@ const BOAR_TREES = [
   { dx: 104, kind: 'rock', w: 24 },
   { dx: 146, kind: 'tree', w: 10.5, col: '#826347', lean: -0.01, br: [[0.36, -1, 10], [0.58, 1, 9], [0.74, 1, 6]] }
 ];
-const BOAR = { size: 1.2, lead: 200, ramp: 70, edge: 110, tree0: 24, trees: BOAR_TREES.length, walkV: 14, duckT: 0.35,
-               bWalkV: 10, walkMin: 1.6, walkMax: 2.6, grazeMin: 2.6, grazeMax: 5.2, lookT: 1.5, pawT: 1.0, lostT: 1.3,
-               fallT: 1.1, knock: 7, passBy: 26, coins: 4, enter: 16, rockH: 15, tutor: 2, near: 24, deepY: -3.2, deepS: 0.8 };
+const BOAR = { size: 1.2, lead: 200, ramp: 70, edge: 110, tree0: 24, trees: BOAR_TREES.length, walkV: 16, duckT: 0.35,
+               bWalkV: 10, walkMin: 1.6, walkMax: 2.6, grazeMin: 3.0, grazeMax: 6.5, lookT: 1.5, pawT: 1.0, lostT: 1.3,
+               fallT: 1.1, knock: 7, passBy: 26, coins: 4, enter: 16, rockH: 15, tutor: 2, near: 24, deepY: -6.5, deepS: 0.78 };
 const BOAR_EARS = { easy: 2.0, medium: 1.5, hard: 1.15 };                         // כמה זמן יש להגיד HIDE מרגע שהאוזניים זזות
 const BOAR_GRAZE = { easy: 1.25, medium: 1, hard: 0.85 };                         // כמה זמן החזיר אוכל (פס ירוק)
 const BOAR_CHARGE = { easy: 2.8, medium: 2.2, hard: 1.7 };                           // כמה שניות לוקחת ההסתערות (אחרי הגריפה) – יש זמן להתחבא
@@ -55,16 +55,12 @@ function boarSpeed() {
 /* ---------- החזירים המסיירים ---------- */
 // dir -1: על השביל, הולך שמאלה (אל הנינג'ה). dir 1: מאחורי העצים, הולך ימינה. שניהם: הליכה → אוכל (פס ירוק) → אוזניים → מרים ראש → ממשיך
 function boarNew(dir, x, delay) { return { x, dir, m: delay ? 'off' : 'walk', t: 0, dur: delay || rnd(BOAR.walkMin, BOAR.walkMax), g: boarGrazeDur() }; }
-function boarDeep(B) { return B.dir === 1; }                                        // מאחורי העצים
-function boarPathOn() {                                                             // יש חזיר על השביל במסך (לפני הנינג'ה)
-  return !!boarS && boarS.boars.some(b => b.dir === -1 && b.m !== 'off' && b !== boarS.ch && b.x > boarNX() - 4 && b.x < viewR() + 4) || !!(boarS && boarS.ch && boarS.ch.cdir < 0 && boarS.ch.lift >= 1);
+function boarDeep(B) { return true; }                                               // כל החזירים מאחורי העצים
+function boarPathOn() { return false; }                                              // (אין יותר חזירים על השביל)
+function boarDanger(B) {                                                             // יכול לראות את הנינג'ה: במסך ולא בדיוק מאחורי המחסה שלו
+  return B.m !== 'off' && B.x < viewR() - 4 && B.x > viewL() + 4 && Math.abs(B.x - boarNX()) > 8;
 }
-function boarDanger(B) {                                                             // יכול לראות את הנינג'ה מאיפה שהוא
-  if (B.m === 'off' || B.x > viewR() - 4 || B.x < viewL() + 4) return false;
-  if (B.dir === -1) return B.x > boarNX() + BOAR.near;
-  return Math.abs(B.x - boarNX()) > 8 && !boarPathOn();                            // מאחורי העצים – רק כשאין חזיר על השביל (אי אפשר להתחבא מקדימה מולו)
-}
-function boarSideFor(B) { return boarDeep(B) && !boarPathOn() ? 'front' : 'back'; }   // באיזה צד של הגזע מתחבאים ממנו (כשיש חזיר על השביל – תמיד מאחור)
+function boarSideFor(B) { return 'front'; }                                        // תמיד בצד הקדמי של הגזע – הגזע בין הנינג'ה לחזיר
 function boarSafeFrom(B) { const S = boarS; return (S.np === 'hidden' || (S.np === 'duck' && S.nt > 0.15)) && S.side === boarSideFor(B); }
 function boarSees(B) { return boarDanger(B) && B.m === 'look' && !boarSafeFrom(B); }
 function boarThreat() {                                                              // החזיר שהכי קרוב להרים את הראש
@@ -76,7 +72,6 @@ function boarThreat() {                                                         
 function boarTimeToLook(B) {
   if (B === (boarS && boarS.ch)) return 0;
   if (B.m === 'off') return Math.max(0, B.dur - B.t) + 1.5 + B.g;
-  if (B.dir === -1 && B.x < boarNX() + BOAR.near) return Infinity;                  // עבר אותו
   if (B.m === 'look' || B.m === 'ears') return 0;
   if (B.m === 'graze') return Math.max(0, B.dur - B.t);
   if (B.m === 'walk') { const enter = B.dir === -1 ? Math.max(0, (B.x - (viewR() - 4)) / BOAR.bWalkV) : Math.max(0, ((viewL() + 4) - B.x) / BOAR.bWalkV); return Math.max(enter, B.dur - B.t) + B.g; }
@@ -85,15 +80,14 @@ function boarTimeToLook(B) {
 function boarPatrol(B, dt) {
   B.t += dt;
   const L = viewL() - BOAR.enter, R = viewR() + BOAR.enter;
-  if (B.dir === -1 && (B.m === 'graze' || B.m === 'ears' || B.m === 'look') && B.x < boarNX() + BOAR.near) { B.m = 'walk'; B.t = 0; B.dur = 99; }   // הנינג'ה התקרב – ממשיך ללכת ועובר
-  if (B.dir === 1 && (B.m === 'graze' || B.m === 'ears' || B.m === 'look') && !boarDanger(B)) { B.m = 'walk'; B.t = 0; B.dur = 99; }   // הגיע חזיר לשביל – זה שמאחור ממשיך ללכת
+  if ((B.m === 'graze' || B.m === 'ears' || B.m === 'look') && !boarDanger(B)) { B.m = 'walk'; B.t = 0; B.dur = 1; }   // בדיוק מאחורי המחסה של הנינג'ה – ממשיך ללכת
   switch (B.m) {
     case 'off': if (B.t >= B.dur) { B.m = 'walk'; B.t = 0; B.dur = rnd(BOAR.walkMin, BOAR.walkMax); B.x = B.dir === -1 ? R : L; } break;
     case 'walk':
       B.x += B.dir * BOAR.bWalkV * dt;
       if (B.dir === 1 && B.x > R) { B.dir = -1; B.m = 'off'; B.t = 0; B.dur = rnd(0.6, 2.0); B.g = boarGrazeDur(); B.stops = 0; }   // יצא מימין – מסתובב מחוץ למסך ועובר לשביל
       else if (B.dir === -1 && B.x < L) { B.dir = 1; B.m = 'off'; B.t = 0; B.dur = rnd(0.6, 2.0); B.g = boarGrazeDur(); B.stops = 0; }   // יצא משמאל – מסתובב מחוץ למסך ועובר אל מאחורי העצים
-      else if (B.t >= B.dur && boarDanger(B) && (B.stops || 0) < (B.dir === 1 ? 1 : 2)) { B.m = 'graze'; B.t = 0; B.dur = B.g; B.stops = (B.stops || 0) + 1; }   // עוצר לאכול (בעומק – פעם אחת במעבר)
+      else if (B.t >= B.dur && boarDanger(B) && (B.stops || 0) < 2) { B.m = 'graze'; B.t = 0; B.dur = B.g; B.stops = (B.stops || 0) + 1; }   // עוצר לאכול (בעומק – פעם אחת במעבר)
       break;
     case 'graze':
       if (B.t >= B.dur) {
@@ -121,7 +115,7 @@ function boarUpdate(dt, pb) {
     py = 0; vy = 0; duckT = 0; flyT = 0; act.run = 0; act.hide = 0;
     boarS = { o, np: 'stand', nt: 0, i: 0, side: 'back', miss: 0, fs: null, fsT: 0, ch: null, ox: o.x,
               f: { x: boarFriendX(o, 1), i: 1, np: 'stand', nt: 0, from: 0 },
-              boars: [boarNew(-1, viewR() + 6, 0), boarNew(1, viewL() - BOAR.enter, 5.5)] };
+              boars: [boarNew(-1, viewR() + 6, 0), boarNew(1, viewL() - BOAR.enter, 6)] };
     o.lastS = boarS;
     return;
   }
@@ -230,7 +224,7 @@ function boarTripT() { const S = boarS; if (!S) return 0; const tx = S.i >= BOAR
 function boarSneakGood() {
   const S = boarS; if (!S || S.ch) return false;
   const need = boarTripT();
-  return S.boars.every(b => boarTimeToLook(b) > need || (b.dir === 1 && b.x > boarNX() + 30 && b.m === 'walk'));
+  return S.boars.every(b => boarTimeToLook(b) > need);
 }
 function boarSneak() {                                                               // SNEAK פתוח תמיד – יוצאים למחסה הבא (מהאחרון – יוצאים מהיער)
   if (!boarS) return false;
@@ -460,11 +454,8 @@ function drawForestFront(o, top, bottom) {
   if (S) {
     if (S.f.side === 'front' && S.f.np === 'hidden') drawBoarFriend(S);               // החבר בצד הקדמי של המחסה
     if (live && S.side === 'front' && (S.np === 'hidden' || (S.np === 'duck' && S.nt > 0.12))) drawNinja();   // הנינג'ה בצד הקדמי – מעל הגזע
-    for (const B of S.boars) {                                                       // חזירים על השביל – לפני המחסות
-      if (B.m === 'off' || B.x < viewL() - 25 || B.x > viewR() + 25) continue;
-      if (B === S.ch) { const k = B.lift === undefined ? 1 : B.lift; drawBoarFig(B.x, lerp(GROUND + BOAR.deepY, GROUND + 2.2, k), BOAR.size * lerp(BOAR.deepS, 1.04, k), Object.assign({}, B, { dir: B.cdir })); }
-      else if (B.dir === -1) drawBoarFig(B.x, GROUND + 2.2, BOAR.size, B);
-    }
+    const B = S.ch;                                                                   // המסתער יוצא מבין העצים אל השביל
+    if (B && B.x > viewL() - 25 && B.x < viewR() + 25) { const k = B.lift === undefined ? 1 : B.lift; drawBoarFig(B.x, lerp(GROUND + BOAR.deepY, GROUND + 2.2, k), BOAR.size * lerp(BOAR.deepS, 1.04, k), Object.assign({}, B, { dir: B.cdir })); }
     if (live) { drawBoarBars(S); drawSneakSign(S); drawFriendTalk(S); }
   }
   const t = performance.now() / 1000, L = viewL(), R = viewR();
@@ -481,8 +472,8 @@ function drawBoar(o) {
   const S = boarS && boarS.o === o ? boarS : o.lastS || null;
   if (!S) return;
   for (const B of S.boars) {
-    if (B === S.ch || B.dir !== 1 || B.m === 'off' || B.x < viewL() - 25 || B.x > viewR() + 25) continue;
-    ctx.save(); ctx.globalAlpha *= 0.9; drawBoarFig(B.x, GROUND + BOAR.deepY, BOAR.size * BOAR.deepS, B); ctx.restore();
+    if (B === S.ch || B.m === 'off' || B.x < viewL() - 25 || B.x > viewR() + 25) continue;
+    ctx.save(); ctx.filter = 'saturate(0.85) brightness(1.05)'; drawBoarFig(B.x, GROUND + BOAR.deepY, BOAR.size * BOAR.deepS, B); ctx.restore();   // מאחורי העצים – רחוק יותר ובהיר קצת
   }
   if (!(S.f.side === 'front' && S.f.np === 'hidden')) drawBoarFriend(S);
 }
@@ -559,20 +550,46 @@ function drawBoarFig(x, y, s, B) {
   for (let i = NM; i >= 0; i--) { const u = i / NM; ctx.lineTo(-7.5 + u * 17, back(u) + 0.3 + 1.9 * (1 - u)); }
   ctx.closePath(); ctx.fill();
   ctx.strokeStyle = dark; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(9.8, -9); ctx.quadraticCurveTo(11.5, -10 + Math.sin(t * 6) * 0.6, 11, -7.5); ctx.stroke();   // זנב
-  ctx.save(); ctx.translate(-6, -9); ctx.rotate(ang); ctx.translate(6, 9);
-  ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(-6, -11); ctx.quadraticCurveTo(-11, -10, -14, -6.5); ctx.lineTo(-14.5, -4.2); ctx.quadraticCurveTo(-10, -2.5, -5, -4); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#8a5a4a'; ctx.beginPath(); ctx.ellipse(-14.4, -5.4, 0.9, 1.3, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#1a0f0a'; ctx.beginPath(); ctx.arc(-14.5, -5.8, 0.25, 0, Math.PI * 2); ctx.arc(-14.4, -4.9, 0.25, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#f5ecd7'; ctx.beginPath(); ctx.moveTo(-12.6, -4.2); ctx.quadraticCurveTo(-14, -5.5, -13.2, -7.2); ctx.lineTo(-12.7, -6.8); ctx.quadraticCurveTo(-13.1, -5.4, -12, -4.3); ctx.fill();   // ניב
-  if (head > 0.3 || running) {
-    ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.arc(-9.6, -8.4, 0.75, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(-9.8, -8.4, 0.38, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#111'; ctx.lineWidth = 0.4; ctx.beginPath(); ctx.moveTo(-11, -9.8); ctx.lineTo(-8.6, -9.2); ctx.stroke();
-  } else { ctx.strokeStyle = '#111'; ctx.lineWidth = 0.35; ctx.beginPath(); ctx.arc(-9.7, -8.6, 0.6, 0.2, Math.PI - 0.2); ctx.stroke(); }
-  ctx.save(); ctx.translate(-5.4, -10.8); ctx.rotate(ear);
-  ctx.fillStyle = dark; ctx.beginPath(); ctx.moveTo(-1.1, -0.2); ctx.lineTo(0, -3.2); ctx.lineTo(1, 0); ctx.fill(); ctx.restore();
+  const facing = m === 'ears' || m === 'look';                                          // חושד: מסובב את הראש אלינו ומרחרח בין העצים
+  if (facing) {
+    const k = m === 'ears' ? Math.min(1, B.t / 0.3) : 1, sn = Math.sin(t * 14) * (m === 'ears' ? 1 : 0.3);
+    ctx.save(); ctx.translate(-9.5, -8.6); ctx.scale(-1, 1);                        // הפנים מלפנים – סימטריות
+    ctx.fillStyle = dark; for (const e of [-1, 1]) { ctx.save(); ctx.translate(e * 3.4, -3.2); ctx.rotate(e * (0.5 + sn * 0.08)); ctx.beginPath(); ctx.moveTo(-1, 0.6); ctx.lineTo(0, -2.6); ctx.lineTo(1, 0.6); ctx.fill(); ctx.restore(); }   // אוזניים
+    ctx.fillStyle = body; ctx.beginPath(); ctx.ellipse(0, 0, 4.4, 4.0, 0, 0, Math.PI * 2); ctx.fill();   // ראש
+    ctx.fillStyle = '#16100b'; ctx.beginPath(); ctx.moveTo(-2.5, -3.6); ctx.quadraticCurveTo(0, -5.4, 2.5, -3.6); ctx.lineTo(0, -2.6); ctx.closePath(); ctx.fill();   // רעמה על המצח
+    const wide = m === 'look';
+    for (const e of [-1, 1]) {                                                        // עיניים
+      if (wide) { ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.arc(e * 1.7, -0.9, 0.85, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(e * 1.7, -0.8, 0.42, 0, Math.PI * 2); ctx.fill(); }
+      else { ctx.strokeStyle = '#111'; ctx.lineWidth = 0.4; ctx.beginPath(); ctx.moveTo(e * 2.5, -1.1); ctx.lineTo(e * 0.9, -0.7); ctx.stroke(); }   // מצמצם – חושד
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 0.4; ctx.beginPath(); ctx.moveTo(e * 2.8, -2.1); ctx.lineTo(e * 0.8, -1.5); ctx.stroke();   // גבות כועסות
+    }
+    const sx = 1 + sn * 0.06;                                                          // החוטם מתנועע – מרחרח
+    ctx.save(); ctx.translate(0, 2.1); ctx.scale(sx, 1 / sx);
+    ctx.fillStyle = '#8a5a4a'; ctx.beginPath(); ctx.ellipse(0, 0, 2.2, 1.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1a0f0a'; ctx.beginPath(); ctx.ellipse(-0.8, 0, 0.35, 0.5, 0, 0, Math.PI * 2); ctx.ellipse(0.8, 0, 0.35, 0.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#f5ecd7'; for (const e of [-1, 1]) { ctx.beginPath(); ctx.moveTo(e * 1.9, 3.0); ctx.quadraticCurveTo(e * 3.3, 2.6, e * 3.1, 0.9); ctx.lineTo(e * 2.6, 1.3); ctx.quadraticCurveTo(e * 2.6, 2.4, e * 1.6, 2.6); ctx.fill(); }   // ניבים
+    if (m === 'ears') for (let q = 0; q < 3; q++) {                                   // אדים מהאף
+      const ph = (t * 1.6 + q / 3) % 1, a = 1 - ph;
+      ctx.fillStyle = 'rgba(255,255,255,' + (0.55 * a) + ')'; ctx.beginPath(); ctx.arc((q - 1) * 0.9 + Math.sin(t * 3 + q) * 0.4, 3.6 + ph * 3.2, 0.5 + ph * 1.1, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  } else {
+    ctx.save(); ctx.translate(-6, -9); ctx.rotate(ang); ctx.translate(6, 9);
+    ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(-6, -11); ctx.quadraticCurveTo(-11, -10, -14, -6.5); ctx.lineTo(-14.5, -4.2); ctx.quadraticCurveTo(-10, -2.5, -5, -4); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#8a5a4a'; ctx.beginPath(); ctx.ellipse(-14.4, -5.4, 0.9, 1.3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1a0f0a'; ctx.beginPath(); ctx.arc(-14.5, -5.8, 0.25, 0, Math.PI * 2); ctx.arc(-14.4, -4.9, 0.25, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#f5ecd7'; ctx.beginPath(); ctx.moveTo(-12.6, -4.2); ctx.quadraticCurveTo(-14, -5.5, -13.2, -7.2); ctx.lineTo(-12.7, -6.8); ctx.quadraticCurveTo(-13.1, -5.4, -12, -4.3); ctx.fill();   // ניב
+    if (head > 0.3 || running) {
+      ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.arc(-9.6, -8.4, 0.75, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(-9.8, -8.4, 0.38, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 0.4; ctx.beginPath(); ctx.moveTo(-11, -9.8); ctx.lineTo(-8.6, -9.2); ctx.stroke();
+    } else { ctx.strokeStyle = '#111'; ctx.lineWidth = 0.35; ctx.beginPath(); ctx.arc(-9.7, -8.6, 0.6, 0.2, Math.PI - 0.2); ctx.stroke(); }
+    ctx.save(); ctx.translate(-5.4, -10.8); ctx.rotate(ear);
+    ctx.fillStyle = dark; ctx.beginPath(); ctx.moveTo(-1.1, -0.2); ctx.lineTo(0, -3.2); ctx.lineTo(1, 0); ctx.fill(); ctx.restore();
+    ctx.restore();
+  }
   ctx.restore();
-  ctx.restore();
-  if (m === 'ears') {                                                                 // קווקווים ליד האוזן
+  if (false) {                                                                 // קווקווים ליד האוזן
     ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 0.35;
     for (let k = 0; k < 3; k++) { const a = -2.2 + k * 0.45; ctx.beginPath(); ctx.moveTo(x - 5.4 * s + Math.cos(a) * 4, y - 13 * s + Math.sin(a) * 4); ctx.lineTo(x - 5.4 * s + Math.cos(a) * 5.5, y - 13 * s + Math.sin(a) * 5.5); ctx.stroke(); }
   }
