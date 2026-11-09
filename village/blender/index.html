@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>קטע עמק מבלנדר</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #bfe3f5; touch-action: none; -webkit-user-select: none; user-select: none; }
+  canvas { display: block; }
+  #hint { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); padding: 6px 14px; border-radius: 999px; background: rgba(15,23,42,.6);
+          color: #f8fafc; font: 15px system-ui, sans-serif; pointer-events: none; white-space: nowrap; }
+</style>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
+</head>
+<body>
+<div id="hint">קטע עמק שנבנה בבלנדר · גרירה – סיבוב · צביטה – זום</div>
+<script type="module">
+// מציג את valley.glb (נבנה ב־build_valley.py) כמו שהוא ייראה במשחק
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+const r = new THREE.WebGLRenderer({ antialias: true }); r.setPixelRatio(Math.min(devicePixelRatio, 2)); r.setSize(innerWidth, innerHeight);
+r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap; document.body.appendChild(r.domElement);
+const s = new THREE.Scene(); s.background = new THREE.Color(0xbfe3f5); s.fog = new THREE.Fog(0xbfe3f5, 60, 140);
+s.add(new THREE.HemisphereLight(0xe8f4ff, 0x6f7f52, 1.4));
+const sun = new THREE.DirectionalLight(0xfff1dc, 2.6); sun.position.set(-20, 40, 25); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -40, right: 40, top: 40, bottom: -40, near: 1, far: 120 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04; s.add(sun);
+const cam = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.3, 300);
+cam.position.set(-26, 9.5, 2); 
+const ctl = new OrbitControls(cam, r.domElement); ctl.target.set(7, 1.5, -6); ctl.enableDamping = true; ctl.maxPolarAngle = 1.45; ctl.update();
+addEventListener('resize', () => { r.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); });
+new GLTFLoader().load('valley.glb', g => {
+  g.scene.traverse(o => { if (o.isMesh) { o.castShadow = o.name !== 'Ground'; o.receiveShadow = true; if (o.material) o.material.flatShading = true; } });
+  s.add(g.scene); window.__ready = 1;
+});
+(function loop() { ctl.update(); r.render(s, cam); requestAnimationFrame(loop); })();
+</script>
+</body>
+</html>
