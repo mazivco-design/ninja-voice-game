@@ -18,7 +18,10 @@ const BOAR_TREES = [
 const BOAR = { size: 1.2, lead: 200, ramp: 70, edge: 110, tree0: 24, trees: BOAR_TREES.length, walkV: 16, duckT: 0.35,
                bWalkV: 10, walkMin: 1.6, walkMax: 2.6, grazeMin: 3.0, grazeMax: 6.5, lookT: 1.5, pawT: 1.0, lostT: 1.3,
                fallT: 1.1, knock: 7, passBy: 26, coins: 4, enter: 16, rockH: 15, tutor: 2, near: 24, deepY: -3.4, deepS: 0.74, frontDY: 8, ninjaDY: 4, friendDY: 0,
-               pressT: 3.2, pressR: 2.2, bushDX: 36, bushW: 30, bushH: 17, fbushDX: 24, fbushW: 26, fbushH: 13 };   // press: כמה הנינג'ות נצמדות לעץ / לסלע. bush: שיח גדול אחרי העץ האחרון – החזירים נעלמים ויוצאים מאחוריו   // frontDY: ביער הנינג'ה, החבר, העצים והסלע יורדים למטה (קרובים אלינו); החזירים על הקרקע מאחוריהם
+               pressT: 3.2, pressR: 2.2, bushDX: 36, bushW: 30, bushH: 17, fbushDX: 24, fbushW: 26, fbushH: 13,
+               // גושי השיחים (כל אחד נערך בנפרד בעורך): dx/dy ממרכז השיח, רוחב, גובה, סוג – wide רחב ונמוך, round עגול, tall גבוה וצפוף
+               bush: [{ dx: -9, dy: 0, w: 18.6, h: 9.4, k: 'wide' }, { dx: 8.4, dy: 0, w: 15, h: 12.2, k: 'round' }, { dx: -0.6, dy: 0, w: 13.8, h: 17, k: 'tall' }],
+               fbush: [{ dx: 7.8, dy: 0, w: 16.1, h: 7.2, k: 'wide' }, { dx: -7.3, dy: 0, w: 13, h: 9.4, k: 'round' }, { dx: 0.5, dy: 0, w: 12, h: 13, k: 'tall' }] };   // press: כמה הנינג'ות נצמדות לעץ / לסלע. bush: שיח גדול אחרי העץ האחרון – החזירים נעלמים ויוצאים מאחוריו   // frontDY: ביער הנינג'ה, החבר, העצים והסלע יורדים למטה (קרובים אלינו); החזירים על הקרקע מאחוריהם
 const BOAR_EARS = { easy: 2.0, medium: 1.5, hard: 1.15 };                         // כמה זמן יש להגיד HIDE מרגע שהאוזניים זזות
 const BOAR_GRAZE = { easy: 1.25, medium: 1, hard: 0.85 };                         // כמה זמן החזיר אוכל (פס ירוק)
 const BOAR_CHARGE = { easy: 2.8, medium: 2.2, hard: 1.7 };                           // כמה שניות לוקחת ההסתערות (אחרי הגריפה) – יש זמן להתחבא
@@ -425,7 +428,7 @@ function drawForestBack(o, top) {                                               
     if (B === S.ch || B.m === 'off' || B.x < viewL() - 25 || B.x > viewR() + 25) continue;
     ctx.save(); ctx.globalAlpha *= forestMask(o, B.x); drawBoarFig(B.x, GROUND + BOAR.deepY, BOAR.size * BOAR.deepS, B); ctx.restore();
   }
-  if (o && o.type === 'boar') drawBigBush(boarBushX(o), GROUND + BOAR.deepY + 1.5);   // השיח הגדול – לפני החזירים
+  if (o && o.type === 'boar') drawBigBush(boarBushX(o), GROUND + BOAR.deepY + 1.5, BOAR.bush);   // השיח הגדול – לפני החזירים
 }
 // שיח עלים: שילוב של שלושה גושים מחורצים (רחב ונמוך, גבוה וצפוף, עגול), בשלוש שכבות ירוק ועלים מוארים – בלי פרחים ופירות
 function bushLump(cx, y, w, h, seed, jag, shape) {
@@ -445,14 +448,13 @@ function bushLump(cx, y, w, h, seed, jag, shape) {
     ctx.fillStyle = i % 2 ? '#68ad5c' : '#579f50'; ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.6, w * 0.035), Math.max(0.3, w * 0.016), 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
 }
-function drawBigBush(x, y, w, h, flip) {                                            // השיח הגדול: גבוה באמצע, רחב-נמוך מצד אחד, עגול מהצד השני
-  w = w || BOAR.bushW; h = h || BOAR.bushH;
-  if (x < viewL() - w || x > viewR() + w) return;
-  const f = flip ? -1 : 1;
-  ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(x, y + 0.5, w * 0.6, 1.6, 0, 0, Math.PI * 2); ctx.fill();
-  bushLump(x - f * w * 0.3, y, w * 0.62, h * 0.55, 7, 0.22, t => 1 - 0.15 * Math.sin(Math.PI * t * 3) ** 2);   // רחב ונמוך
-  bushLump(x + f * w * 0.28, y, w * 0.5, h * 0.72, 1, 0.18, () => 1);                                         // עגול
-  bushLump(x - f * w * 0.02, y, w * 0.46, h, 21, 0.14, () => 1);                                               // גבוה וצפוף – באמצע
+const BUSH_KIND = { wide: [7, 0.22, t => 1 - 0.15 * Math.sin(Math.PI * t * 3) ** 2], round: [1, 0.18, () => 1], tall: [21, 0.14, () => 1] };
+function drawBigBush(x, y, lumps) {                                                 // שיח מכמה גושים (כל גוש: מקום, גודל וסוג משלו)
+  if (x < viewL() - 50 || x > viewR() + 50) return;
+  const L = lumps.reduce((a, l) => Math.min(a, l.dx - l.w / 2), 0), R = lumps.reduce((a, l) => Math.max(a, l.dx + l.w / 2), 0);
+  ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(x + (L + R) / 2, y + 0.5, (R - L) * 0.55, 1.6, 0, 0, Math.PI * 2); ctx.fill();
+  const order = lumps.map((l, i) => i).sort((a, b) => lumps[a].h - lumps[b].h);    // הנמוכים קודם, הגבוה מעליהם
+  for (const i of order) { const l = lumps[i], K = BUSH_KIND[l.k] || BUSH_KIND.round; bushLump(x + l.dx, y + (l.dy || 0), l.w, l.h, K[0] + i * 3, K[1], K[2]); }
 }
 function forestPass(o, top, part) {
   if (!forestCv) forestCv = document.createElement('canvas');
@@ -527,7 +529,7 @@ function drawForestFront(o, top, bottom) {
     if (x < viewL() - 20 || x > viewR() + 20) continue;
     if (T.kind === 'rock') drawRock(x, T.w); else bigTree(x, top - BOAR.frontDY, T, i);
   }
-  drawBigBush(boarFBushX(o), GROUND + 0.8, BOAR.fbushW, BOAR.fbushH, true);         // שיח נוסף במישור של העצים והסלע, בסוף השלב
+  drawBigBush(boarFBushX(o), GROUND + 0.8, BOAR.fbush);         // שיח נוסף במישור של העצים והסלע, בסוף השלב
   ctx.restore();
   if (!live && o === boarFrontO()) { boarDrawingFront = 1; drawNinja(); boarDrawingFront = 0; }   // בדרך לעץ הראשון / אחרי היציאה – גם לפני העצים
   if (S) {
