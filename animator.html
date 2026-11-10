@@ -70,6 +70,8 @@ h3 { font-size: 14px; color: #94a3b8; margin: 12px 0 6px; font-weight: 800; }
 
 #foot { display: flex; gap: 6px; padding: 8px; border-top: 1px solid #1f2937; flex-wrap: wrap; }
 #foot .b { flex: 1; font-size: 14px; padding: 10px 6px; }
+#draftBar { font-size: 12px; font-weight: 700; color: #a5b4fc; background: #1e1b4b; padding: 6px 10px; }
+.b.play { background: #0891b2; color: #fff; }
 #dirty { font-size: 12px; color: #f59e0b; padding: 0 10px 6px; min-height: 18px; }
 
 /* חלון ייבוא/ייצוא */
@@ -117,10 +119,13 @@ h3 { font-size: 14px; color: #94a3b8; margin: 12px 0 6px; font-weight: 800; }
       <button class="b" data-tab="layers">🧱 שכבות</button>
     </div>
     <div id="content"></div>
+    <div id="draftBar">📝 עובדים על <b>טיוטה</b> – המשחק לא מושפע עד "העבר למשחק"</div>
     <div id="dirty"></div>
     <div id="foot">
-      <button class="b go" id="save">✓ שמור</button>
+      <button class="b go" id="save">✓ שמור טיוטה</button>
       <button class="b" id="undo">↶ בטל שינויים</button>
+      <button class="b play" id="toGame">🎮 העבר למשחק</button>
+      <button class="b" id="fromGame">⟲ טען מהמשחק</button>
       <button class="b" id="share">📋 העתק / הדבק</button>
       <button class="b warn" id="resetAll">איפוס הכל</button>
     </div>
@@ -149,7 +154,14 @@ const canvas = $('c'), ctx = canvas.getContext('2d');
 /* ============================================================
    מצב העורך
    ============================================================ */
-let saved = JSON.stringify(RIG);          // מה ששמור כרגע ב-iPad
+// טיוטה: העורך עובד תמיד על עותק נפרד (DRAFT_KEY) שהמשחק לא קורא. המשחק משתנה רק ב"העבר למשחק"
+const DRAFT_KEY = 'ninjaVoice_rig_draft';
+function saveDraft(r) { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(r)); } catch (e) {} }
+(() => { try { const d = localStorage.getItem(DRAFT_KEY); RIG = d ? rigMerge(RIG_DEFAULT, JSON.parse(d)) : loadRig(); } catch (e) { RIG = loadRig(); } })();
+let liveRig = RIG;                         // הטיוטה הפעילה – אם לשונית אחרת שומרת הגדרות משחק, מחזירים אותה
+window.addEventListener('storage', e => { if (e.key === RIG_KEY) RIG = liveRig; });
+let saved = JSON.stringify(RIG);          // הטיוטה השמורה
+let gameJSON = JSON.stringify(loadRig());  // מה שהמשחק משתמש בו
 let char = 'ninja', move = 'run', tab = 'colors';
 let playing = true, speedMul = 0.5, skeleton = true, zoom = 1, t = 0, lastT = 0;
 let smartDrag = true;                     // גרירה חכמה: גוררים כף יד/רגל והמרפק/הברך מתכופפים לבד
@@ -412,17 +424,28 @@ function renderKeyPose(box) {
    שמירה, ביטול, העתקה
    ============================================================ */
 function markDirty() {
-  const dirty = JSON.stringify(RIG) !== saved;
-  $('dirty').textContent = dirty ? '● יש שינויים שלא נשמרו – המשחק עדיין משתמש בגרסה השמורה' : '';
+  const cur = JSON.stringify(RIG), dirty = cur !== saved;
+  $('dirty').textContent = dirty ? '● יש שינויים שלא נשמרו בטיוטה' : cur !== gameJSON ? 'הטיוטה שמורה · שונה ממה שבמשחק' : 'הטיוטה זהה למשחק';
 }
 $('save').onclick = () => {
-  saveRig(RIG); saved = JSON.stringify(RIG); markDirty();
-  $('dirty').textContent = '✓ נשמר – המשחק ישתמש בזה מעכשיו';
+  saveDraft(RIG); saved = JSON.stringify(RIG); markDirty();
+  $('dirty').textContent = '✓ הטיוטה נשמרה – המשחק לא השתנה';
   setTimeout(markDirty, 2500);
+};
+$('toGame').onclick = () => {
+  if (!confirm('להעביר את הטיוטה למשחק? המשחק באייפד הזה (גם הגרסה היציבה של הילדים) ישתמש בה מעכשיו.')) return;
+  saveDraft(RIG); saved = JSON.stringify(RIG);
+  saveRig(RIG); gameJSON = JSON.stringify(loadRig()); markDirty();
+  $('dirty').textContent = '✓ הועבר למשחק';
+  setTimeout(markDirty, 2500);
+};
+$('fromGame').onclick = () => {
+  if (!confirm('לטעון את ההגדרות שבמשחק? השינויים בטיוטה יוחלפו (ייכנס לתוקף בטיוטה רק אחרי "שמור טיוטה").')) return;
+  undoStack.push(JSON.stringify(RIG)); RIG = loadRig(); selKey = -1; renderBar(); renderPanel(); markDirty();
 };
 $('undo').onclick = () => { RIG = rigMerge(RIG_DEFAULT, JSON.parse(saved)); renderPanel(); markDirty(); };
 $('resetAll').onclick = () => {
-  if (!confirm('לאפס את כל ההגדרות לברירת המחדל? (ייכנס לתוקף רק אחרי "שמור")')) return;
+  if (!confirm('לאפס את כל ההגדרות לברירת המחדל? (ייכנס לתוקף בטיוטה רק אחרי "שמור טיוטה")')) return;
   RIG = rigClone(RIG_DEFAULT); renderPanel(); markDirty();
 };
 $('share').onclick = () => { $('json').value = JSON.stringify(RIG, null, 1); $('modalMsg').textContent = ''; $('modal').classList.add('show'); };
@@ -433,7 +456,7 @@ $('copy').onclick = async () => {
   catch (e) { $('json').value = txt; $('json').select(); $('modalMsg').textContent = 'סמן את הטקסט והעתק ידנית'; }
 };
 $('load').onclick = () => {
-  try { RIG = rigMerge(RIG_DEFAULT, JSON.parse($('json').value)); renderPanel(); markDirty(); $('modalMsg').textContent = '✓ נטען – לחץ "שמור" כדי שהמשחק ישתמש בזה'; }
+  try { RIG = rigMerge(RIG_DEFAULT, JSON.parse($('json').value)); renderPanel(); markDirty(); $('modalMsg').textContent = '✓ נטען לטיוטה – לחץ "שמור טיוטה", ו"העבר למשחק" כשתרצה שהמשחק ישתמש בזה'; }
   catch (e) { $('modalMsg').textContent = 'הטקסט לא תקין: ' + e.message; }
 };
 
@@ -463,6 +486,7 @@ window.addEventListener('scroll', () => { if (window.scrollY || window.scrollX) 
 function frame(ts) {
   const now = ts / 1000, dt = Math.min(0.05, lastT ? now - lastT : 0); lastT = now;
   if (playing) t += dt * speedMul;
+  liveRig = RIG;
   if (!cw) resize();
   // גודל יחידה: מספיק מקום גם לקפיצה ולתעופה, כדי שהדמות לא תצא מהמסך
   const need = 21 + (move === 'jump' ? 21 : move === 'fly' ? 15 : 0);
