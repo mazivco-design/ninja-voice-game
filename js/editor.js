@@ -8,21 +8,21 @@
 const ED_KEY = 'nvg-boar-layout';
 const ED_POSES = { cover: 'Next to tree', hug: 'In front of trunk', crouch: 'By the rock' };
 let boarPoseOv = {};                                                                // תנוחות ערוכות: { cover: {hipY, lean, legs, arms, ...}, ... }
-const ED = { on: false, mode: 'place', sel: null, pose: 'cover', drag: null, T: null };
+const ED = { on: false, mode: 'place', sel: null, pose: 'cover', who: 'n', drag: null, T: null };
 const BOAR_LAYOUT0 = boarLayoutGet();                                               // ברירת המחדל מהקוד (לאיפוס)
 
 function boarLayoutGet() {
   return {
     tree0: +BOAR.tree0.toFixed(1), frontDY: +BOAR.frontDY.toFixed(1), ninjaDY: +BOAR.ninjaDY.toFixed(1), deepY: +BOAR.deepY.toFixed(1), deepS: +BOAR.deepS.toFixed(2), rockH: +BOAR.rockH.toFixed(1),
-    pressT: +BOAR.pressT.toFixed(1), pressR: +BOAR.pressR.toFixed(1), bushDX: +BOAR.bushDX.toFixed(1), bushW: +BOAR.bushW.toFixed(1), bushH: +BOAR.bushH.toFixed(1),
-    covers: BOAR_TREES.map(T => ({ dx: +T.dx.toFixed(1), w: +T.w.toFixed(1) })),
+    friendDY: +BOAR.friendDY.toFixed(1), pressT: +BOAR.pressT.toFixed(1), pressR: +BOAR.pressR.toFixed(1), bushDX: +BOAR.bushDX.toFixed(1), bushW: +BOAR.bushW.toFixed(1), bushH: +BOAR.bushH.toFixed(1),
+    covers: BOAR_TREES.map(T => { const c = { dx: +T.dx.toFixed(1), w: +T.w.toFixed(1) }; if (typeof T.press === 'number') c.press = +T.press.toFixed(1); if (typeof T.fpress === 'number') c.fpress = +T.fpress.toFixed(1); return c; }),
     poses: JSON.parse(JSON.stringify(boarPoseOv, (k, v) => typeof v === 'number' ? +v.toFixed(2) : v))
   };
 }
 function boarLayoutApply(L) {
   if (!L) return;
-  for (const k of ['tree0', 'frontDY', 'ninjaDY', 'deepY', 'deepS', 'rockH', 'pressT', 'pressR', 'bushDX', 'bushW', 'bushH']) if (typeof L[k] === 'number') BOAR[k] = L[k];
-  if (Array.isArray(L.covers)) L.covers.forEach((c, i) => { if (BOAR_TREES[i] && c) { if (typeof c.dx === 'number') BOAR_TREES[i].dx = c.dx; if (typeof c.w === 'number') BOAR_TREES[i].w = c.w; } });
+  for (const k of ['tree0', 'frontDY', 'ninjaDY', 'friendDY', 'deepY', 'deepS', 'rockH', 'pressT', 'pressR', 'bushDX', 'bushW', 'bushH']) if (typeof L[k] === 'number') BOAR[k] = L[k];
+  if (Array.isArray(L.covers)) L.covers.forEach((c, i) => { if (BOAR_TREES[i] && c) { if (typeof c.dx === 'number') BOAR_TREES[i].dx = c.dx; if (typeof c.w === 'number') BOAR_TREES[i].w = c.w; for (const k of ['press', 'fpress']) { if (typeof c[k] === 'number') BOAR_TREES[i][k] = c[k]; else delete BOAR_TREES[i][k]; } } });
   boarPoseOv = L.poses && typeof L.poses === 'object' ? JSON.parse(JSON.stringify(L.poses)) : {};
   for (const o of obstacles) if (o.type === 'boar') boarSetup(o);
 }
@@ -30,7 +30,7 @@ try { const L = JSON.parse(localStorage.getItem(ED_KEY) || 'null'); if (L) boarL
 
 // תנוחה ערוכה (נקרא מ-boar.js אחרי שהתנוחה הרגילה נבנתה)
 function boarPoseApply(P, name) {
-  const o = boarPoseOv[name]; if (!o) return P;
+  const o = (boarWho && boarPoseOv[boarWho + '.' + name]) || boarPoseOv[name]; if (!o) return P;   // לחבר – תנוחה משלו אם נערכה
   for (const k of ['hipY', 'lean', 'spine', 'headTilt']) if (typeof o[k] === 'number') P[k] = o[k];
   if (o.legs) P.legs = o.legs.map(a => a.slice());
   if (o.arms) P.arms = o.arms.map(a => a.slice());
@@ -53,6 +53,8 @@ function edBuildUI() {
   const b = $('edBtn');                                                             // הכפתור בפס העליון, ליד Pause
   const p = document.createElement('div'); p.id = 'edPanel'; p.className = 'edHide'; document.body.appendChild(p);
   p.innerHTML = `<button data-a="place">📍 Places</button><button data-a="pose">🧍 Poses</button>
+    <button data-a="prev">◀ Prev</button><span class="lbl" id="edStation"></span><button data-a="next">Next ▶</button>
+    <button data-w="n">🔴 Ninja</button><button data-w="f">🔵 Friend</button>
     <span id="edPoses"><button data-p="cover">Next to tree</button><button data-p="hug">In front of trunk</button><button data-p="crouch">By the rock</button></span>
     <span class="lbl" id="edLbl">tap something</span>
     <button data-a="big">➕ Bigger</button><button data-a="small">➖ Smaller</button>
@@ -69,9 +71,11 @@ function edBuildUI() {
   p.onclick = e => {
     const t = e.target.closest('button'); if (!t) return;
     if (t.dataset.p) { ED.pose = t.dataset.p; ED.sel = null; edSync(); return; }
+    if (t.dataset.w) { ED.who = t.dataset.w; ED.sel = null; edSync(); return; }
     const a = t.dataset.a;
     if (a === 'place' || a === 'pose') { ED.mode = a; ED.sel = null; edSync(); }
     else if (a === 'big' || a === 'small') edResize(a === 'big' ? 1 : -1);
+    else if (a === 'prev' || a === 'next') edStation(a === 'next' ? 1 : -1);
     else if (a === 'save') { try { localStorage.setItem(ED_KEY, JSON.stringify(boarLayoutGet())); } catch (err) {} flash = { text: '💾 Saved', t: 1 }; }
     else if (a === 'copy') { const s = JSON.stringify(boarLayoutGet()); out.value = s; out.classList.remove('edHide'); out.select(); try { navigator.clipboard.writeText(s).catch(() => {}); } catch (err) {} flash = { text: '📋 Copied – paste it to Claude', t: 1.6 }; }
     else if (a === 'reset') { boarLayoutApply(BOAR_LAYOUT0); boarPoseOv = {}; try { localStorage.removeItem(ED_KEY); } catch (err) {} edSync(); }
@@ -88,11 +92,13 @@ function edSync() {
   if (!$('edPanel')) return;
   for (const b of $('edPanel').querySelectorAll('button[data-a="place"],button[data-a="pose"]')) b.classList.toggle('on', b.dataset.a === ED.mode);
   for (const b of $('edPanel').querySelectorAll('button[data-p]')) b.classList.toggle('on', b.dataset.p === ED.pose);
+  for (const b of $('edPanel').querySelectorAll('button[data-w]')) b.classList.toggle('on', b.dataset.w === ED.who);
+  if (boarS) $('edStation').textContent = 'Station ' + (boarS.i + 1) + '/' + BOAR.trees;
   $('edPoses').classList.toggle('edHide', ED.mode !== 'pose');
   const s = ED.sel;
   $('edLbl').textContent = !s ? (ED.mode === 'pose' ? 'drag the dots' : 'tap something') :
     s.k === 'cover' ? (BOAR_TREES[s.i].kind === 'rock' ? 'Rock' : 'Tree ' + (s.i + 1)) + ' – drag / size' :
-    s.k === 'ninja' ? 'Ninjas – drag (sides = how close)' : s.k === 'boar' ? 'Boars – drag up/down / size' : s.k === 'bush' ? 'Big bush – drag / size' : 'Pose: ' + s.k;
+    s.k === 'ninja' ? 'Ninja – drag (sides = how close)' : s.k === 'friend' ? 'Friend – drag (sides = how close)' : s.k === 'boar' ? 'Boars – drag up/down / size' : s.k === 'bush' ? 'Big bush – drag / size' : 'Pose: ' + s.k;
 }
 // נקרא כל פריים מ-draw: מראה את הכפתור רק במצב בודק בשלב החזיר
 function edTick() {
@@ -111,12 +117,25 @@ function edWorld(e) {
   return { x: p.x, y: p.y };
 }
 function edNinjaOrigin() { return { x: PLAYER.x + 4, y: GROUND + boarFrontDY() }; }
+function edFriendOrigin() { const F = boarS.f, hx = F.np === 'hidden' && F.i < BOAR.trees ? boarTreeX(boarS.o, F.i) : F.x; return { x: hx, y: GROUND + boarFrontDY() + BOAR.friendDY }; }
+function edStation(d) {                                                             // מעבר בין התחנות (המחסות) – הנינג'ה עומד שם והחבר במחסה שאחריו
+  const S = boarS; if (!S) return;
+  const k = Math.max(0, Math.min(BOAR.trees - 1, S.i + d));
+  S.i = k; S.np = 'stand'; S.nt = 0; S.walking = 0; S.atTrunk = 0; S.fs = null;
+  const pb = playerBox(), over = pb.r - boarStandR(S.o, k); ropeShiftBy(-over);
+  S.f.i = Math.min(BOAR.trees, k + 1); S.f.x = boarFriendX(S.o, S.f.i); S.f.np = 'stand'; S.f.nt = 0;
+  edSync();
+}
 function edPosePoints() {                                                          // הנקודות על הנינג'ה (במצב תנוחות)
-  const P = boarPose(poseIdle(0)), J = figureJoints(P), S = RIG.shape, O = edNinjaOrigin();
+  const fr = ED.who === 'f', now = performance.now() / 1000;
+  if (fr) boarWho = 'f';
+  const P = ED.pose === 'cover' ? poseCover(now, 'tree') : ED.pose === 'hug' ? poseTreeHug(now) : poseCrouchHide(now);
+  boarWho = '';
+  const J = figureJoints(P), S = RIG.shape, O = fr ? edFriendOrigin() : edNinjaOrigin(), sc = fr ? 0.92 : 1;
   const end = (a, l1, l2, ang) => [a[0] + Math.sin(ang[0]) * l1 + Math.sin(ang[1]) * l2, a[1] + Math.cos(ang[0]) * l1 + Math.cos(ang[1]) * l2];
-  const W = q => ({ x: O.x + q[0], y: O.y + q[1] });
+  const W = q => ({ x: O.x + q[0] * sc, y: O.y + q[1] * sc });
   return {
-    P, J, O,
+    P, J, O, sc,
     pts: [
       { k: 'handB', ...W(end(J.shB, S.upper, S.fore, P.arms[0])) }, { k: 'handF', ...W(end(J.shF, S.upper, S.fore, P.arms[1])) },
       { k: 'footB', ...W(end(J.hipB, S.thigh, S.shin, P.legs[0])) }, { k: 'footF', ...W(end(J.hipF, S.thigh, S.shin, P.legs[1])) },
@@ -133,6 +152,7 @@ function edPick(w) {
   const o = boarS.o, dy = BOAR.frontDY;
   const O = edNinjaOrigin();
   if (Math.abs(w.x - O.x) < 5 && w.y < O.y + 2 && w.y > O.y - 15) return { k: 'ninja' };
+  const FO = edFriendOrigin(); if (Math.abs(w.x - FO.x) < 5 && w.y < FO.y + 2 && w.y > FO.y - 14) return { k: 'friend' };
   for (let i = 0; i < BOAR.trees; i++) { const x = boarTreeX(o, i), T = BOAR_TREES[i]; if (Math.abs(w.x - x) < T.w / 2 + 1 && w.y < GROUND + dy + 2 && w.y > GROUND + dy - (T.kind === 'rock' ? BOAR.rockH + 2 : 60)) return { k: 'cover', i }; }
   { const bx = boarBushX(o); if (Math.abs(w.x - bx) < BOAR.bushW / 2 && w.y < GROUND + BOAR.deepY + 2 && w.y > GROUND + BOAR.deepY - BOAR.bushH - 2) return { k: 'bush' }; }
   for (const B of boarS.boars) if (B.m !== 'off' && Math.abs(w.x - B.x) < 12 && Math.abs(w.y - (GROUND + BOAR.deepY - 6)) < 9) return { k: 'boar' };
@@ -148,16 +168,20 @@ function edDragTo(w) {
       for (const o of obstacles) if (o.type === 'boar') boarSetup(o);
     } else if (s.k === 'ninja') {
       BOAR.ninjaDY = Math.max(-6, Math.min(16, d.v0.ninjaDY + dy));
-      const rock = BOAR_TREES[boarS.i].kind === 'rock', key = rock ? 'pressR' : 'pressT';   // ימינה = צמוד יותר למחסה
-      BOAR[key] = Math.max(-4, Math.min(BOAR_TREES[boarS.i].w / 2 + 3, d.v0[key] + dx));
+      const T = BOAR_TREES[boarS.i];                                                   // ימינה = צמוד יותר למחסה (לכל תחנה בנפרד)
+      T.press = Math.max(-4, Math.min(T.w / 2 + 3, d.v0.press + dx));
       if (boarS.np === 'stand') { const pb = playerBox(), over = pb.r - boarStandR(boarS.o, boarS.i); if (Math.abs(over) > 0.01) ropeShiftBy(-over); }   // הנינג'ה זז למקום החדש
+    }
+    else if (s.k === 'friend') {
+      BOAR.friendDY = Math.max(-8, Math.min(12, d.v0.friendDY + dy));
+      const fi = boarS.f.i; if (fi < BOAR.trees) { const T = BOAR_TREES[fi]; T.fpress = Math.max(-4, Math.min(T.w / 2 + 3, d.v0.fpress + dx)); boarS.f.x = boarFriendX(boarS.o, fi); }
     }
     else if (s.k === 'bush') BOAR.bushDX = Math.max(10, d.v0.bushDX + dx);
     else if (s.k === 'boar') BOAR.deepY = Math.max(-14, Math.min(8, d.v0.deepY + dy));
     return;
   }
   // תנוחות: היד / הרגל הולכות אחרי האצבע (עם מפרק שמתכופף באופן טבעי), האגן – גובה, הראש – הטיה
-  const { P, J, O } = edPosePoints(), S = RIG.shape, q = [w.x - O.x, w.y - O.y], ov = boarPoseOv[ED.pose] || (boarPoseOv[ED.pose] = {});
+  const { P, J, O, sc } = edPosePoints(), S = RIG.shape, q = [(w.x - O.x) / sc, (w.y - O.y) / sc], key = (ED.who === 'f' ? 'f.' : '') + ED.pose, ov = boarPoseOv[key] || (boarPoseOv[key] = {});
   const pick = (base, t, l1, l2, cur) => { const a = bkIK(base, t, l1, l2, 1), b = bkIK(base, t, l1, l2, -1); return Math.abs(a[0] - cur[0]) + Math.abs(a[1] - cur[1]) <= Math.abs(b[0] - cur[0]) + Math.abs(b[1] - cur[1]) ? a : b; };
   ov.arms = (ov.arms || P.arms).map(a => a.slice()); ov.legs = (ov.legs || P.legs).map(a => a.slice());
   if (s.k === 'handB') ov.arms[0] = pick(J.shB, q, S.upper, S.fore, P.arms[0]);
@@ -178,7 +202,7 @@ document.addEventListener('pointerdown', e => {
   e.preventDefault();
   const w = edWorld(e), s = edPick(w);
   ED.sel = s; edSync();
-  if (s) ED.drag = { x: w.x, y: w.y, v0: { tree0: BOAR.tree0, dx: s.k === 'cover' ? BOAR_TREES[s.i].dx : 0, frontDY: BOAR.frontDY, ninjaDY: BOAR.ninjaDY, deepY: BOAR.deepY, pressT: BOAR.pressT, pressR: BOAR.pressR, bushDX: BOAR.bushDX } };
+  if (s) ED.drag = { x: w.x, y: w.y, v0: { tree0: BOAR.tree0, dx: s.k === 'cover' ? BOAR_TREES[s.i].dx : 0, frontDY: BOAR.frontDY, ninjaDY: BOAR.ninjaDY, deepY: BOAR.deepY, press: boarPress(boarS.i), fpress: boarS.f.i < BOAR.trees ? boarFPress(boarS.f.i) : 0, friendDY: BOAR.friendDY, bushDX: BOAR.bushDX } };
 }, { capture: true });
 document.addEventListener('pointermove', e => { if (ED.on && ED.drag) { e.preventDefault(); edDragTo(edWorld(e)); } }, { capture: true });
 document.addEventListener('pointerup', () => { ED.drag = null; }, { capture: true });
@@ -200,6 +224,7 @@ function edDraw() {
     ctx.strokeStyle = 'rgba(250,204,21,.95)'; ctx.lineWidth = 0.4; ctx.setLineDash([1.2, 0.8]);
     if (s && s.k === 'cover') { const x = boarTreeX(o, s.i), T = BOAR_TREES[s.i], h = T.kind === 'rock' ? BOAR.rockH : 40; ctx.strokeRect(x - T.w / 2, GROUND + BOAR.frontDY - h, T.w, h); }
     if (s && s.k === 'ninja') { const O = edNinjaOrigin(); ctx.strokeRect(O.x - 4, O.y - 14, 8, 14); }
+    if (s && s.k === 'friend') { const O = edFriendOrigin(); ctx.strokeRect(O.x - 4, O.y - 13, 8, 13); }
     if (s && s.k === 'bush') { const bx = boarBushX(o); ctx.strokeRect(bx - BOAR.bushW / 2, GROUND + BOAR.deepY + 1.5 - BOAR.bushH * 1.1, BOAR.bushW, BOAR.bushH * 1.1); }
     if (s && s.k === 'boar') { ctx.beginPath(); ctx.moveTo(viewL(), GROUND + BOAR.deepY); ctx.lineTo(viewR(), GROUND + BOAR.deepY); ctx.stroke(); }
     ctx.setLineDash([]);
