@@ -120,7 +120,8 @@ def group(name, objs, loc=(0, 0, 0), rot=0, scale=1):
     e = bpy.data.objects.new(name, None); scene.collection.objects.link(e)
     for o in objs: o.parent = e
     e.location = loc; e.rotation_euler.z = rot; e.scale = (scale,) * 3; return e
-def ground_z(x, y): return height(x, y)
+LINEUP = False
+def ground_z(x, y): return 0.0 if LINEUP else height(x, y)
 
 # ---------- בית יפני ----------
 def roof_mesh(name, w, d, h, over, lift):
@@ -159,27 +160,118 @@ def house(x, y, rot):
     return group('House', parts, (x, y, z), rot)
 
 # ---------- עצים ----------
+# כל עץ = שני גופים: עץ (גזע וענפים כצינורות חלקים) ועלווה (עננים של כדורים קטנים וחלקים,
+# צבועים לפי הכיוון: למעלה בהיר, למטה כהה – נראה כמו אור וצל טבעיים).
+LEAF = mat('LeafV', None, 0.9, vcol=True)
+from mathutils import Matrix
+
+def tube(bm, pts, radii, seg=8):
+    """צינור חלק לאורך רשימת נקודות (גזע/ענף)."""
+    rings = []; prev_a = None
+    for i, p in enumerate(pts):
+        d = (pts[min(i + 1, len(pts) - 1)] - pts[max(i - 1, 0)]).normalized()
+        if prev_a is None:
+            up = Vector((0, 0, 1)) if abs(d.z) < 0.9 else Vector((1, 0, 0))
+            a = d.cross(up).normalized()
+        else:
+            a = (prev_a - d * prev_a.dot(d)).normalized()            # בלי "סיבוב" של הטבעות
+        bb = d.cross(a).normalized(); prev_a = a
+        rings.append([bm.verts.new(p + (a * math.cos(t) + bb * math.sin(t)) * radii[i]) for t in (2 * math.pi * k / seg for k in range(seg))])
+    for i in range(len(rings) - 1):
+        for k in range(seg):
+            bm.faces.new((rings[i][k], rings[i][(k + 1) % seg], rings[i + 1][(k + 1) % seg], rings[i + 1][k]))
+
+def curve(p0, p1, bend, n=6, sag=0.0):
+    """נקודות בעיקול רך מ־p0 ל־p1 (bend = הסטה צידית, sag = שקיעה/עלייה באמצע)."""
+    out = []
+    for i in range(n):
+        t = i / (n - 1); w = math.sin(math.pi * t)
+        out.append(p0.lerp(p1, t) + bend * w + Vector((0, 0, sag * w)))
+    return out
+
+def cloud(bm, center, r, flat, n, sub=2):
+    """גוש עלווה: הרבה כדורים קטנים וחלקים סביב מרכז, פחוסים לגובה."""
+    for _ in range(n):
+        ang = random.uniform(0, 6.283); rr = r * math.sqrt(random.random()) * 0.75
+        off = Vector((math.cos(ang) * rr, math.sin(ang) * rr, random.uniform(-0.25, 0.35) * r * flat))
+        sr = r * random.uniform(0.38, 0.6)
+        res = bmesh.ops.create_icosphere(bm, subdivisions=sub, radius=sr, matrix=Matrix.Translation(center + off))
+        for v in res['verts']:
+            v.co.z = (center + off).z + (v.co.z - (center + off).z) * (0.55 + 0.45 * flat)
+            v.co += (v.co - (center + off)).normalized() * random.uniform(-0.05, 0.05) * sr
+
+def tree_objects(name, bark, leaf, dark, light, x, y, z):
+    """מכין את שני הגופים, צובע את העלווה, ומקבץ."""
+    leaf.normal_update(); col = leaf.loops.layers.color.new('Col')
+    D, Lc = srgb(dark), srgb(light)
+    zs = [v.co.z for v in leaf.verts]; z0, z1 = min(zs), max(zs)
+    for f in leaf.faces:
+        for l in f.loops:
+            v = l.vert; k = 0.55 * (0.5 + 0.5 * v.normal.z) + 0.45 * ((v.co.z - z0) / max(0.01, z1 - z0))
+            k = max(0, min(1, k + random.uniform(-0.04, 0.04)))
+            l[col] = (*tuple(D[i] * (1 - k) + Lc[i] * k for i in range(3)), 1)
+    ob = obj_from_bm(name + 'Wood', bark, M['bark'], smooth=True)
+    ol = obj_from_bm(name + 'Leaves', leaf, LEAF, smooth=True)
+    return group(name, [ob, ol], (x, y, z), random.uniform(0, 6.28))
+
+def roots(bm, s):
+    for k in range(3):
+        a = k * 2.09 + random.uniform(-0.4, 0.4)
+        tube(bm, curve(Vector((0, 0, 0.35 * s)), Vector((math.cos(a) * 0.65 * s, math.sin(a) * 0.65 * s, -0.15)), Vector((0, 0, 0)), 4, 0.05), [0.16 * s, 0.13 * s, 0.09 * s, 0.04 * s], 6)
+
 def pine(x, y, s=1.0):
-    z = ground_z(x, y) - 0.1; parts = []; lean = random.uniform(-0.25, 0.25)
-    h = 3.6 * s
-    t = cyl('Trunk', 0.28 * s, 0.14 * s, h, (0, 0, 0), M['bark'], 6); t.rotation_euler.y = lean * 0.4; parts.append(t)
-    for k in range(4):                                             # "כריות" עלווה שטוחות – אורן יפני
-        hk = h * (0.45 + k * 0.17); off = (math.sin(k * 2.1) * 0.9 * s, math.cos(k * 1.7) * 0.7 * s)
-        rr = (1.6 - k * 0.3) * s
-        parts.append(blob('Pad', rr, (off[0] + lean * hk * 0.4, off[1], hk), M['pine' if k % 2 else 'pineLight'], (1.15, 1.0, 0.42), 1, 0.12))
-    return group('Pine', parts, (x, y, z), random.uniform(0, 6.28))
+    """אורן יפני: גזע מתפתל ונוטה, ענפים כמעט אופקיים, ושכבות עלווה שטוחות בקצותיהם."""
+    bark, leaf = bmesh.new(), bmesh.new()
+    H = random.uniform(3.8, 5.0) * s; la = random.uniform(0, 6.28); lean = random.uniform(0.2, 0.55)
+    tp = [Vector((math.cos(la) * lean * H * (t ** 1.6) + 0.25 * s * math.sin(t * 5 + la), math.sin(la) * lean * H * (t ** 1.6), t * H)) for t in (i / 8 for i in range(9))]
+    tube(bark, tp, [0.34 * s * (1 - 0.75 * i / 8) for i in range(9)], 9); roots(bark, s)
+    nb = random.randint(4, 6)
+    for i in range(nb):
+        t = 0.42 + 0.5 * i / nb; base = tp[round(t * 8)]
+        a = random.uniform(0, 6.28) if i else la + math.pi
+        L = (0.9 + (1 - t) * 1.8) * s
+        end = base + Vector((math.cos(a) * L, math.sin(a) * L, L * random.uniform(0.05, 0.3)))
+        tube(bark, curve(base, end, Vector((0, 0, 0)), 5, -0.15 * L), [0.13 * s, 0.1 * s, 0.08 * s, 0.06 * s, 0.04 * s], 6)
+        cloud(leaf, end + Vector((0, 0, 0.15 * s)), (0.85 + (1 - t) * 0.8) * s, 0.42, random.randint(6, 9))
+    cloud(leaf, tp[-1] + Vector((0, 0, 0.2 * s)), 0.95 * s, 0.5, 8)
+    return tree_objects('Pine', bark, leaf, '22462a', '5f9c4c', x, y, ground_z(x, y) - 0.15)
+
+def broadleaf(x, y, s=1.0):
+    """עץ עלים: גזע שמתפצל לכמה ענפים, וכיפה עגולה ומלאה."""
+    bark, leaf = bmesh.new(), bmesh.new()
+    H = random.uniform(2.2, 2.8) * s; la = random.uniform(0, 6.28)
+    top = Vector((math.cos(la) * 0.3 * s, math.sin(la) * 0.3 * s, H))
+    tube(bark, curve(Vector((0, 0, 0)), top, Vector((0.12 * s, 0, 0)), 6), [0.32 * s, 0.27 * s, 0.24 * s, 0.22 * s, 0.2 * s, 0.18 * s], 9); roots(bark, s)
+    nb = random.randint(3, 4); ends = []
+    for i in range(nb):
+        a = la + i * 6.283 / nb + random.uniform(-0.4, 0.4); L = random.uniform(1.3, 1.9) * s
+        end = top + Vector((math.cos(a) * L * 0.75, math.sin(a) * L * 0.75, L * 0.85))
+        tube(bark, curve(top, end, Vector((0, 0, 0)), 5, 0.1 * L), [0.17 * s, 0.13 * s, 0.1 * s, 0.07 * s, 0.05 * s], 6); ends.append(end)
+    for e in ends: cloud(leaf, e, 1.25 * s, 0.85, 9)
+    cloud(leaf, top + Vector((0, 0, 2.2 * s)), 1.3 * s, 0.85, 9)
+    return tree_objects('Tree', bark, leaf, '3d6e2c', '9ccc5e', x, y, ground_z(x, y) - 0.15)
 
 def cherry(x, y, s=1.0):
-    z = ground_z(x, y) - 0.1; parts = [cyl('Trunk', 0.3 * s, 0.18 * s, 2.4 * s, (0, 0, 0), M['bark'], 6)]
-    for k in range(5):
-        a = k * 1.26; parts.append(blob('Bloom', 1.25 * s, (math.cos(a) * 0.9 * s, math.sin(a) * 0.9 * s, 2.8 * s + (k % 2) * 0.5 * s), M['blossom'], (1, 1, 0.75), 1, 0.15))
-    return group('Cherry', parts, (x, y, z), random.uniform(0, 6.28))
+    """עץ דובדבן: ענפים דקים ומתפשטים לצדדים, ענני פריחה ורודים."""
+    bark, leaf = bmesh.new(), bmesh.new()
+    H = 1.9 * s; top = Vector((0.2 * s, 0, H))
+    tube(bark, curve(Vector((0, 0, 0)), top, Vector((0.15 * s, 0.1 * s, 0)), 6), [0.3 * s, 0.26 * s, 0.22 * s, 0.2 * s, 0.18 * s, 0.16 * s], 9); roots(bark, s)
+    for i in range(5):
+        a = i * 1.257 + random.uniform(-0.3, 0.3); L = random.uniform(1.6, 2.3) * s
+        end = top + Vector((math.cos(a) * L, math.sin(a) * L, L * 0.5))
+        mid = top.lerp(end, 0.55) + Vector((0, 0, 0.35 * s))
+        tube(bark, curve(top, end, Vector((0, 0, 0)), 6, 0.35 * s), [0.14 * s, 0.11 * s, 0.09 * s, 0.07 * s, 0.05 * s, 0.03 * s], 6)
+        cloud(leaf, end, 1.0 * s, 0.7, 7); cloud(leaf, mid, 0.7 * s, 0.7, 4)
+    return tree_objects('Cherry', bark, leaf, 'd78aa6', 'fbd7e3', x, y, ground_z(x, y) - 0.15)
 
 def bush(x, y, s=1.0):
-    return group('Bush', [blob('Bush', 0.9 * s, (0, 0, 0.4 * s), M['leaf'], (1.2, 1, 0.75), 1, 0.2)], (x, y, ground_z(x, y)))
+    bark, leaf = bmesh.new(), bmesh.new()
+    cloud(leaf, Vector((0, 0, 0.35 * s)), 0.85 * s, 0.7, 6)
+    return tree_objects('Bush', bark, leaf, '3f7430', '8fc35a', x, y, ground_z(x, y))
 
 def rock(x, y, s=1.0):
-    o = blob('Rock', 0.8 * s, (x, y, ground_z(x, y) + 0.1 * s), M['stone' if random.random() < 0.5 else 'stoneDark'], (1.3, 1, 0.7), 1, 0.25)
+    o = blob('Rock', 0.8 * s, (x, y, ground_z(x, y) + 0.1 * s), M['stone' if random.random() < 0.5 else 'stoneDark'], (1.3, 1, 0.7), 2, 0.12)
+    for p in o.data.polygons: p.use_smooth = True                     # סלע מעוגל – מתאים לעצים הרכים
     o.rotation_euler.z = random.uniform(0, 6.28); return o
 
 def lantern(x, y):
@@ -194,12 +286,16 @@ def lantern(x, y):
 hx = HX; hy = path_y(hx) + HOFF
 house(hx, hy, 0)                                    # החזית (הדלת) פונה לשביל
 lantern(hx - 3.0, hy - 3.6)
-cherry(hx + 5.2, hy - 0.5, 1.0)
-for _ in range(70):                                                # אורנים על המדרונות
+cherry(hx + 4.6, hy - 3.6, 0.8); cherry(hx - 5.8, hy + 1.5, 0.7)
+placed = []
+for _ in range(400):                                               # אורנים ועצי עלים על המדרונות
+    if len(placed) >= 46: break
     x = random.uniform(-W / 2 + 2, W / 2 - 2); side = random.choice((-1, 1))
-    y = path_y(x) + side * random.uniform(6.5, 18)
-    if abs(y) > D / 2 - 2 or (abs(x - hx) < 8 and abs(y - hy) < 6): continue
-    pine(x, y, random.uniform(0.7, 1.15))
+    y = path_y(x) + side * random.uniform(7.5, 18)
+    if abs(y) > D / 2 - 2 or math.hypot(x - hx, y - hy) < 9: continue
+    if any(math.hypot(x - a, y - b) < 3.6 for a, b in placed): continue   # לא צפוף מדי
+    placed.append((x, y))
+    (pine if random.random() < 0.7 else broadleaf)(x, y, random.uniform(0.65, 1.0))
 for _ in range(14): x = random.uniform(-W / 2 + 2, W / 2 - 2); bush(x, path_y(x) + random.choice((-1, 1)) * random.uniform(2.2, 4.5), random.uniform(0.6, 1.1))
 for _ in range(16): x = random.uniform(-W / 2 + 2, W / 2 - 2); rock(x, path_y(x) + random.choice((-1, 1)) * random.uniform(2.2, 9), random.uniform(0.5, 1.4))
 
@@ -224,5 +320,20 @@ scene.cycles.use_denoising = True
 scene.render.resolution_x, scene.render.resolution_y = 1600, 1000
 scene.view_settings.view_transform = 'Standard'
 scene.render.filepath = os.path.join(OUT, 'valley.png')
+bpy.ops.render.render(write_still=True)
+
+# ---------- תמונת תקריב: שלושת סוגי העצים (רק לתמונה, לא נשמר בקבצים) ----------
+LINEUP = True; random.seed(3)
+for o in list(scene.objects):
+    if o.type in ('MESH', 'EMPTY'): o.hide_render = True
+LX = 200
+fl = box('Floor', (40, 20, 0.1), (LX, 0, -0.05), M['ground']); fl.hide_render = False
+fl.data.color_attributes.new('Col', 'BYTE_COLOR', 'CORNER')
+for d in fl.data.color_attributes['Col'].data: d.color = (*srgb('86b84e'), 1)
+for o in (pine(LX - 7, 0, 1.0), broadleaf(LX, 0, 1.0), cherry(LX + 7, 0, 1.0)):
+    o.rotation_euler.z = 0.4
+cam.location = (LX, -17, 4.2); cam.rotation_euler = (Vector((LX, 0, 2.6)) - cam.location).to_track_quat('-Z', 'Y').to_euler()
+scene.render.resolution_x, scene.render.resolution_y = 1600, 700
+scene.render.filepath = os.path.join(OUT, 'trees.png')
 bpy.ops.render.render(write_still=True)
 print('DONE', OUT)

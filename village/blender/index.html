@@ -19,6 +19,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';   // הקובץ דחוס (gltf-transform meshopt)
 const r = new THREE.WebGLRenderer({ antialias: true }); r.setPixelRatio(Math.min(devicePixelRatio, 2)); r.setSize(innerWidth, innerHeight);
 r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap; document.body.appendChild(r.domElement);
 const s = new THREE.Scene(); s.background = new THREE.Color(0xbfe3f5); s.fog = new THREE.Fog(0xbfe3f5, 60, 140);
@@ -29,8 +30,8 @@ const cam = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.3, 300);
 cam.position.set(-26, 9.5, 2); 
 const ctl = new OrbitControls(cam, r.domElement); ctl.target.set(7, 1.5, -6); ctl.enableDamping = true; ctl.maxPolarAngle = 1.45; ctl.update();
 addEventListener('resize', () => { r.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); });
-new GLTFLoader().load('valley.glb', g => {
-  g.scene.traverse(o => { if (o.isMesh) { o.castShadow = o.name !== 'Ground'; o.receiveShadow = true; if (o.material) o.material.flatShading = true; } });
+new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load('valley.glb', g => {
+  g.scene.traverse(o => { if (o.isMesh) { o.castShadow = o.name !== 'Ground'; o.receiveShadow = true; } });
   s.add(g.scene); window.__ready = 1;
 });
 (function loop() { ctl.update(); r.render(s, cam); requestAnimationFrame(loop); })();
