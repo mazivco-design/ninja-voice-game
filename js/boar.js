@@ -17,7 +17,8 @@ const BOAR_TREES = [
 ];
 const BOAR = { size: 1.2, lead: 200, ramp: 70, edge: 110, tree0: 24, trees: BOAR_TREES.length, walkV: 16, duckT: 0.35,
                bWalkV: 10, walkMin: 1.6, walkMax: 2.6, grazeMin: 3.0, grazeMax: 6.5, lookT: 1.5, pawT: 1.0, lostT: 1.3,
-               fallT: 1.1, knock: 7, passBy: 26, coins: 4, enter: 16, rockH: 15, tutor: 2, near: 24, deepY: -3.4, deepS: 0.74, frontDY: 8, ninjaDY: 4 };   // frontDY: ביער הנינג'ה, החבר, העצים והסלע יורדים למטה (קרובים אלינו); החזירים על הקרקע מאחוריהם
+               fallT: 1.1, knock: 7, passBy: 26, coins: 4, enter: 16, rockH: 15, tutor: 2, near: 24, deepY: -3.4, deepS: 0.74, frontDY: 8, ninjaDY: 4,
+               pressT: 3.2, pressR: 2.2, bushDX: 36, bushW: 30, bushH: 17 };   // press: כמה הנינג'ות נצמדות לעץ / לסלע. bush: שיח גדול אחרי העץ האחרון – החזירים נעלמים ויוצאים מאחוריו   // frontDY: ביער הנינג'ה, החבר, העצים והסלע יורדים למטה (קרובים אלינו); החזירים על הקרקע מאחוריהם
 const BOAR_EARS = { easy: 2.0, medium: 1.5, hard: 1.15 };                         // כמה זמן יש להגיד HIDE מרגע שהאוזניים זזות
 const BOAR_GRAZE = { easy: 1.25, medium: 1, hard: 0.85 };                         // כמה זמן החזיר אוכל (פס ירוק)
 const BOAR_CHARGE = { easy: 2.8, medium: 2.2, hard: 1.7 };                           // כמה שניות לוקחת ההסתערות (אחרי הגריפה) – יש זמן להתחבא
@@ -29,7 +30,8 @@ function fo(o) { return o.x + (o.lead || BOAR.lead); }                          
 function fw(o) { return o.w - (o.lead || BOAR.lead); }                             // אורך היער
 function boarTreeX(o, i) { return fo(o) + BOAR.tree0 + BOAR_TREES[i].dx; }          // מרכז המחסה
 function forestFull() { return mode === 'stage' && playWords.includes('boar'); }
-function boarStandGap(i) { return BOAR_TREES[i].w / 2 - (BOAR_TREES[i].kind === 'rock' ? 0.6 : 1.4); }   // צמוד למחסה
+function boarStandGap(i) { return BOAR_TREES[i].w / 2 - (BOAR_TREES[i].kind === 'rock' ? BOAR.pressR : BOAR.pressT); }   // צמוד למחסה
+function boarBushX(o) { return boarTreeX(o, BOAR.trees - 1) + BOAR.bushDX; }
 function boarStandR(o, i) { return boarTreeX(o, i) - boarStandGap(i); }          // הקצה הימני של הנינג'ה כשהוא עומד ליד המחסה
 function boarHideDX() { return boarStandGap(boarS ? boarS.i : 0) + PLAYER.w / 2; }   // כמה זזים כדי להיות בדיוק מול / מאחורי המחסה
 function boarEarsT() { return BOAR_EARS[diffKey] || 1.6; }
@@ -83,7 +85,7 @@ function boarTimeToLook(B) {
 }
 function boarPatrol(B, dt) {
   B.t += dt;
-  const L = viewL() - BOAR.enter, R = viewR() + BOAR.enter;
+  const L = viewL() - BOAR.enter, R = boarS ? Math.min(viewR() + BOAR.enter, boarBushX(boarS.o) - 3) : viewR() + BOAR.enter;   // מימין – מאחורי השיח הגדול (או קצה המסך)
   if ((B.m === 'graze' || B.m === 'ears' || B.m === 'look') && !boarDanger(B)) { B.m = 'walk'; B.t = 0; B.dur = 1; }   // בדיוק מאחורי המחסה של הנינג'ה – ממשיך ללכת
   switch (B.m) {
     case 'off': if (B.t >= B.dur) { B.m = 'walk'; B.t = 0; B.dur = rnd(BOAR.walkMin, BOAR.walkMax); B.x = B.dir === -1 ? R : L; } break;
@@ -404,6 +406,18 @@ function drawForestBack(o, top) {                                               
     if (B === S.ch || B.m === 'off' || B.x < viewL() - 25 || B.x > viewR() + 25) continue;
     ctx.save(); ctx.globalAlpha *= forestMask(o, B.x); drawBoarFig(B.x, GROUND + BOAR.deepY, BOAR.size * BOAR.deepS, B); ctx.restore();
   }
+  if (o && o.type === 'boar') drawBigBush(boarBushX(o), GROUND + BOAR.deepY + 1.5);   // השיח הגדול – לפני החזירים
+}
+function drawBigBush(x, y) {                                                        // שיח עבות: כמה עיגולים ירוקים, כהה למטה ובהיר למעלה
+  if (x < viewL() - 40 || x > viewR() + 40) return;
+  const w = BOAR.bushW, h = BOAR.bushH, t = performance.now() / 1000;
+  const blobs = [[-0.42, 0.5, 0.3], [-0.2, 0.75, 0.36], [0.05, 0.9, 0.4], [0.3, 0.72, 0.35], [0.45, 0.45, 0.28], [-0.05, 0.45, 0.45], [0.2, 0.4, 0.4]];
+  ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(x, y + 0.5, w * 0.55, 1.6, 0, 0, Math.PI * 2); ctx.fill();
+  for (const [col, dy] of [['#2f6b34', 0], ['#3f8a3f', -1.2], ['#57a64f', -2.4]]) {
+    ctx.fillStyle = col;
+    for (const [bx, by, r] of blobs) { const sway = Math.sin(t * 1.3 + bx * 4) * 0.3; ctx.beginPath(); ctx.arc(x + bx * w + sway, y - by * h + dy * (by), r * h * (dy ? 0.82 : 1), 0, Math.PI * 2); ctx.fill(); }
+  }
+  ctx.fillStyle = 'rgba(255,255,255,.08)'; for (let i = 0; i < 9; i++) { ctx.beginPath(); ctx.ellipse(x + (boarRnd(i + 700) - 0.5) * w * 0.8, y - h * (0.3 + boarRnd(i + 710) * 0.6), 0.9, 0.5, 0.6, 0, Math.PI * 2); ctx.fill(); }   // עלים מוארים
 }
 function forestPass(o, top, part) {
   if (!forestCv) forestCv = document.createElement('canvas');
