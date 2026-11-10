@@ -517,7 +517,7 @@ function drawForestFront(o, top, bottom) {
     if (live) { boarDrawingFront = 1; drawNinja(); boarDrawingFront = 0; }            // הנינג'ה – תמיד לפני העצים
     const B = S.ch;                                                                   // המסתער יוצא מבין העצים אל השביל
     if (B && B.x > viewL() - 25 && B.x < viewR() + 25) { const k = B.lift === undefined ? 1 : B.lift; drawBoarFig(B.x, lerp(GROUND + BOAR.deepY, GROUND + BOAR.frontDY + 2.2, k), BOAR.size * lerp(BOAR.deepS, 1.04, k), Object.assign({}, B, { dir: B.cdir })); }
-    if (live) { drawBoarBars(S); drawSneakSign(S); drawFriendTalk(S); edDraw(); }
+    if (live) { drawSneakSign(S); drawFriendTalk(S); edDraw(); }
   }
   const t = performance.now() / 1000, L = viewL(), R = viewR();
   ctx.fillStyle = '#c98a2e';                                                           // עלים נושרים
