@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Ninja Animator</title>
-<script src="ninja-figure.js?v=20261011a"></script>
+<script src="ninja-figure.js?v=20261110p"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { position: fixed; inset: 0; height: 100%; overflow: hidden; overscroll-behavior: none; background: #0f172a; color: #e2e8f0; font-family: -apple-system, system-ui, Arial, sans-serif; }
@@ -319,6 +319,8 @@ function renderShape(box) {
   SHAPE_FIELDS.forEach(([k, lbl, mn, mx, st]) => slider(box, lbl, RIG.shape[k], mn, mx, st, v => v.toFixed(2), v => RIG.shape[k] = v));
   smallBtn(box, '↺ איפוס הצורה', () => { RIG.shape = rigClone(RIG_DEFAULT.shape); });
 
+  renderParts(box);
+
   head(box, 'נקודות חיבור', 'איפה כל יד, רגל והראש מתחברים לגוף. "קדימה" = לכיוון שהדמות מסתכלת, "למעלה" = לאורך הגוף. ' +
        'אפשר גם לגרור אותן ישר על הדמות במצב 🔩 Attach.');
   Object.keys(ATTACH_LABEL).forEach(k => {
@@ -327,6 +329,47 @@ function renderShape(box) {
     slider(box, ATTACH_LABEL[k] + ' – למעלה', a[1], -4, 4, 0.05, v => v.toFixed(2), v => a[1] = v);
   });
   smallBtn(box, '↺ איפוס נקודות החיבור', () => { RIG.attach = rigClone(RIG_DEFAULT.attach); });
+}
+
+/* ---------- חלקים: נעל וכף יד ---------- */
+function choice(box, label, opts, cur, onPick) {
+  const row = document.createElement('div'); row.className = 'row'; row.style.gridTemplateColumns = '1fr 2.6fr';
+  const l = document.createElement('label'); l.textContent = label; row.appendChild(l);
+  const g = document.createElement('div'); g.style.display = 'flex'; g.style.gap = '4px'; g.style.flexWrap = 'wrap';
+  opts.forEach(([v, t]) => { const bt = document.createElement('button'); bt.className = 'b' + (v === cur ? ' on' : ''); bt.textContent = t;
+    bt.style.fontSize = '13px'; bt.onclick = () => { onPick(v); markDirty(); renderPanel(); }; g.appendChild(bt); });
+  row.appendChild(g); box.appendChild(row);
+}
+function colorPick(box, label, cur, defLabel, onSet) {
+  const lab = document.createElement('label'); lab.className = 'chk';
+  lab.innerHTML = '<input type="checkbox"> '; lab.appendChild(document.createTextNode(label + ': ' + defLabel));
+  const cb = lab.querySelector('input'); cb.checked = !cur;
+  cb.onchange = () => { onSet(cb.checked ? '' : '#334155'); markDirty(); renderPanel(); };
+  box.appendChild(lab);
+  if (cur) {
+    const row = document.createElement('div'); row.className = 'crow';
+    row.innerHTML = '<label></label><input type="color"><span class="val"></span>';
+    row.querySelector('label').textContent = label;
+    const inp = row.querySelector('input'), val = row.querySelector('.val');
+    inp.value = cur; val.textContent = cur;
+    inp.oninput = () => { onSet(inp.value); val.textContent = inp.value; markDirty(); };
+    box.appendChild(row);
+  }
+}
+function renderParts(box) {
+  const PT = RIG.parts = RIG.parts || rigClone(RIG_DEFAULT.parts), SH = PT.shoe, HD = PT.hand;
+  head(box, '👟 חלקים – נעל', 'משותף לכל הדמויות. כבוי = כמו תמיד. מומלץ לבחור תנועת RUN ולראות איך זה נראה בריצה.');
+  choice(box, 'נעל', [[false, 'כבוי'], [true, 'דלוק']], !!SH.on, v => SH.on = v);
+  if (SH.on) {
+    choice(box, 'סוג', [['tabi', 'טאבי (בוהן נפרדת)'], ['boot', 'מגף']], SH.style, v => SH.style = v);
+    slider(box, 'אורך הנעל', SH.len, 1, 4, 0.05, v => v.toFixed(2), v => SH.len = v);
+    slider(box, 'גובה הקרסול', SH.cuff, 0, 2.5, 0.05, v => v.toFixed(2), v => SH.cuff = v);
+    colorPick(box, 'צבע הנעל', SH.color, 'כמו הקו הכהה של הדמות', v => SH.color = v);
+  }
+  head(box, '✋ חלקים – כף יד');
+  choice(box, 'סוג', [['ball', 'עיגול'], ['mitten', 'כפפה עם אגודל'], ['fist', 'אגרוף']], HD.style, v => HD.style = v);
+  colorPick(box, 'צבע כף היד', HD.color, 'צבע השחקן (כמו תמיד)', v => HD.color = v);
+  smallBtn(box, '↺ איפוס החלקים', () => { RIG.parts = rigClone(RIG_DEFAULT.parts); });
 }
 
 /* ---------- שכבות ---------- */

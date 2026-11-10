@@ -45,6 +45,11 @@ const RIG_DEFAULT = {
     ink: 0,             // קו מתאר כהה דק סביב כל חלק (0 = בלי)
     shade: 0            // עוצמת ההצללה (0 = בלי)
   },
+  // חלקים נוספים (כבויים כברירת מחדל – הדמות נראית כמו תמיד). color ריק = צבע ברירת המחדל
+  parts: {
+    shoe: { on: false, style: 'tabi', color: '', len: 1.9, cuff: 0.6 },   // style: tabi (בוהן נפרדת) | boot (מגף)
+    hand: { style: 'ball', color: '' }                                     // style: ball (עיגול) | mitten (כפפה עם אגודל) | fist (אגרוף)
+  },
   run: { legSwing: 0.85, kneeBend: 1.0, armSwing: 1.15, elbowBend: 1.55, lean: 0.18, bob: 0.6, cadence: 1.0 },
   layers: { order: ELEMENTS.slice(), perMove: {} },   // perMove: { kick: [...], ... }
   elements: {
@@ -326,7 +331,48 @@ function drawFigure(F) {
     const sh = P.legs[i][1], a = sh + Math.PI / 2 * (Math.cos(sh) + 1) / 2 + ((P.feet && P.feet[i]) || 0), e = q[2];
     return [endOf(e[0], e[1], a, -0.5), endOf(e[0], e[1], a, footL)];
   };
-  const foot = (q, i, ex, col, base) => { if (footL <= 0) return; line(footPts(q, i), S.legW * 0.95 + ex, col || base); };
+  const PT = RIG.parts || {}, SH = PT.shoe || {}, HD = PT.hand || {};
+  const foot = (q, i, ex, col, base) => {
+    if (SH.on) return shoe(q, i, ex, col);
+    if (footL <= 0) return; line(footPts(q, i), S.legW * 0.95 + ex, col || base);
+  };
+  // נעל: צורה סביב הקרסול, בכיוון כף הרגל. s = לאורך כף הרגל (קדימה), h = כלפי מעלה מהסוליה
+  const shoe = (q, i, ex, col) => {
+    const sh = P.legs[i][1], a = sh + Math.PI / 2 * (Math.cos(sh) + 1) / 2 + ((P.feet && P.feet[i]) || 0), e = q[2];
+    const f = [Math.sin(a), Math.cos(a)], n = [f[1], -f[0]];
+    const w = S.legW * taper, len = SH.len || 2.2, boot = SH.style === 'boot', cuff = (SH.cuff || 1) * (boot ? 1.9 : 1);
+    const at = (s, h) => [e[0] + f[0] * s + n[0] * h, e[1] + f[1] * s + n[1] * h];
+    const sole = -w * 0.5, back = -w * 0.5;
+    const P0 = [at(back, sole), at(len, sole), at(len, sole + w * 0.42), at(len * 0.5, w * 0.12), at(w * 0.5, cuff), at(back, cuff)];
+    const c = col || SH.color || C.edge;
+    ctx.fillStyle = c; ctx.strokeStyle = c; ctx.lineWidth = 0.5 + ex;
+    ctx.beginPath(); ctx.moveTo(P0[0][0], P0[0][1]); P0.slice(1).forEach(p => ctx.lineTo(p[0], p[1])); ctx.closePath(); ctx.fill(); ctx.stroke();
+    if (col) return;
+    ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 0.22;
+    if (SH.style !== 'boot') { const a1 = at(len - 0.1, sole + w * 0.22), a2 = at(len - 0.8, sole + w * 0.18); ctx.beginPath(); ctx.moveTo(a1[0], a1[1]); ctx.lineTo(a2[0], a2[1]); ctx.stroke(); }   // הבוהן הנפרדת של הטאבי
+    else { const b1 = at(back, cuff - 0.35), b2 = at(w * 0.5, cuff - 0.35); ctx.beginPath(); ctx.moveTo(b1[0], b1[1]); ctx.lineTo(b2[0], b2[1]); ctx.stroke(); }  // שפת המגף
+  };
+  // כף יד: עיגול (כמו תמיד), כפפה עם אגודל או אגרוף – מסובבת לפי כיוון האמה
+  const hand = (q, r, ex, col, fill) => {
+    const e = q[2], k = q[1], style = HD.style || 'ball';
+    ctx.fillStyle = col || fill;
+    if (style === 'ball') { circle(e[0], e[1], r + ex / 2); return; }
+    let d = [e[0] - k[0], e[1] - k[1]]; const L = Math.hypot(d[0], d[1]) || 1; d = [d[0] / L, d[1] / L];
+    const nn = [d[1], -d[0]];                         // ניצב לאמה – הצד של האגודל
+    const c = [e[0] + d[0] * r * 0.35, e[1] + d[1] * r * 0.35];
+    ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(Math.atan2(d[1], d[0]));
+    if (style === 'fist') { roundRect(-r - ex / 2, -r * 0.95 - ex / 2, r * 2.1 + ex, r * 1.9 + ex, r * 0.55); ctx.fill(); }
+    else { ctx.beginPath(); ctx.ellipse(0, 0, r * 1.2 + ex / 2, r * 0.92 + ex / 2, 0, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+    const tr = r * (style === 'fist' ? 0.42 : 0.48) + ex / 2;     // אגודל
+    const tc = [c[0] + nn[0] * r * 0.85 - d[0] * r * 0.15, c[1] + nn[1] * r * 0.85 - d[1] * r * 0.15];
+    ctx.fillStyle = col || fill; circle(tc[0], tc[1], tr);
+    if (!col && style === 'fist') {                  // קווי מפרקים
+      ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 0.18;
+      for (const m of [-0.45, 0.15]) { const p1 = [c[0] + d[0] * r * 0.5 + nn[0] * r * m, c[1] + d[1] * r * 0.5 + nn[1] * r * m];
+        ctx.beginPath(); ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p1[0] + d[0] * r * 0.55, p1[1] + d[1] * r * 0.55); ctx.stroke(); }
+    }
+  };
   // הצללה: פס בהיר לאורך הצד הקדמי של הגוף, וצל על הצד האחורי
   const shadeLine = (q, w) => { if (!shade) return; const f = J.fw; const d = w * 0.22;
     line(q.map(([x, y]) => [x + f[0] * d, y + f[1] * d]), w * 0.42, lite); line(q.map(([x, y]) => [x - f[0] * d, y - f[1] * d]), w * 0.3, dark); };
@@ -343,7 +389,7 @@ function drawFigure(F) {
       if (!col && P.kickFoot) { const e = pts.legF[2]; ctx.fillStyle = accent; circle(e[0], e[1], 1.35); }
     },
     armF: (ex, col) => limb(pts.armF, S.armW, ex, col || C.front),
-    handB: (ex, col) => { const e = pts.armB[2]; ctx.fillStyle = col || accent; circle(e[0], e[1], S.handR + ex / 2); },
+    handB: (ex, col) => hand(pts.armB, S.handR, ex, col, HD.color || accent),
     handF: (ex, col) => {
       const e = pts.armF[2];
       if (style === 'samurai' && !P.shield) {            // חרב: ממשיכה את כיוון האמה
@@ -354,7 +400,7 @@ function drawFigure(F) {
         line([e, [e[0] + bx / bl * 8, e[1] + by / bl * 8]], 0.7 + ex, col || '#e5e7eb');                    // להב
         if (!col) { ctx.fillStyle = accent; circle(e[0] + bx / bl * 0.4, e[1] + by / bl * 0.4, 0.75); }     // מגן יד
       }
-      ctx.fillStyle = col || accent; circle(e[0], e[1], gloveR() + ex / 2);
+      hand(pts.armF, gloveR(), ex, col, HD.color || accent);
       if (!col && shade) { ctx.fillStyle = lite; circle(e[0] - 0.25, e[1] - 0.3, gloveR() * 0.4); }
       if (style === 'guard' && !F.friendly) {            // פנס נייר תלוי מהיד (לא לסוחר)
         const lx = e[0], ly = e[1] + 2.2;
