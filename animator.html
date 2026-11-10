@@ -99,6 +99,8 @@ h3 { font-size: 14px; color: #94a3b8; margin: 12px 0 6px; font-weight: 800; }
       <div class="grp">
         <button class="b" id="skel">Skeleton</button>
         <span class="grp" id="drag"></span>
+        <button class="b" id="smart">🎯 גרירה חכמה</button>
+        <button class="b" id="stepBack">↶ צעד אחורה</button>
         <button class="b" id="zoomOut">−</button><button class="b" id="zoomIn">+</button>
       </div>
     </div>
@@ -150,6 +152,8 @@ const canvas = $('c'), ctx = canvas.getContext('2d');
 let saved = JSON.stringify(RIG);          // מה ששמור כרגע ב-iPad
 let char = 'ninja', move = 'run', tab = 'colors';
 let playing = true, speedMul = 0.5, skeleton = true, zoom = 1, t = 0, lastT = 0;
+let smartDrag = true;                     // גרירה חכמה: גוררים כף יד/רגל והמרפק/הברך מתכופפים לבד
+const undoStack = [];                       // צעדים אחורה – תמונת מצב לפני כל גרירה
 let dragMode = 'off';                     // off | pose (מסובבים מפרקים) | attach (מזיזים נקודות חיבור)
 const PREVIEW_PLAYER_COLOR = (() => {     // צבע של שחקן אמיתי, אם יש
   try { const ps = JSON.parse(localStorage.getItem('ninjaVoice_players') || '[]'); return ps[0] ? ps[0].color : '#2563eb'; } catch (e) { return '#2563eb'; }
@@ -208,10 +212,19 @@ function renderBar() {
   btnRow($('speeds'), [0.1, 0.25, 0.5, 1], speedMul, v => v + '×', v => { speedMul = v; renderBar(); });
   $('play').textContent = playing ? '⏸' : '▶';
   $('skel').classList.toggle('on', skeleton);
+  $('smart').classList.toggle('on', smartDrag);
+  $('stepBack').disabled = !undoStack.length; $('stepBack').style.opacity = undoStack.length ? 1 : 0.4;
 }
 $('play').onclick = () => { playing = !playing; renderBar(); };
 $('step').onclick = () => { playing = false; t += 1 / 30; renderBar(); };
 $('skel').onclick = () => { skeleton = !skeleton; renderBar(); };
+$('smart').onclick = () => { smartDrag = !smartDrag; renderBar(); showTip(); };
+$('stepBack').onclick = () => {
+  if (!undoStack.length) return;
+  RIG = rigMerge(RIG_DEFAULT, JSON.parse(undoStack.pop()));
+  const k = RIG.keys && RIG.keys[move]; if (!k || !k.frames || selKey >= k.frames.length) selKey = -1;
+  renderBar(); renderPanel(); markDirty();
+};
 $('zoomIn').onclick = () => { zoom = Math.min(2.2, zoom * 1.2); };
 $('zoomOut').onclick = () => { zoom = Math.max(0.5, zoom / 1.2); };
 
@@ -503,7 +516,8 @@ function handles() {
       H.push({ kind: 'limb', n, idx: 1, at: pts[n][2], pivot: pts[n][1], side, end: true });
     });
     H.push({ kind: 'hipY', at: J.hip });
-    H.push({ kind: 'lean', at: J.neck, pivot: J.hip });
+    H.push({ kind: 'lean', at: J.waist, pivot: J.hip });      // הטיית כל הגוף (מהאגן)
+    H.push({ kind: 'spine', at: J.neck, pivot: J.waist });    // כיפוף החזה בלבד
     const th = P.lean + (P.headTilt || 0), r = RIG.shape.headR * 1.25;
     H.push({ kind: 'head', at: [J.head[0] + Math.cos(th) * r, J.head[1] + Math.sin(th) * r], pivot: J.head });
   } else {
@@ -517,7 +531,7 @@ function drawHandles() {
   ctx.lineWidth = 2;
   H.forEach(h => {
     const [x, y] = toScreen(h.at), active = drag && drag.h.kind === h.kind && drag.h.n === h.n && drag.h.idx === h.idx && drag.h.key === h.key;
-    const col = h.kind === 'head' ? '#a855f7' : (h.kind === 'lean' || h.kind === 'hipY') ? '#ef4444' : h.side === 'f' ? '#22c55e' : h.side === 'b' ? '#f59e0b' : '#3b82f6';
+    const col = h.kind === 'head' ? '#a855f7' : h.kind === 'spine' ? '#ec4899' : (h.kind === 'lean' || h.kind === 'hipY') ? '#ef4444' : h.side === 'f' ? '#22c55e' : h.side === 'b' ? '#f59e0b' : '#3b82f6';
     ctx.fillStyle = active ? '#fff' : col; ctx.strokeStyle = active ? col : '#fff';
     ctx.beginPath();
     if (h.kind === 'attach') { ctx.rect(x - 8, y - 8, 16, 16); }
@@ -531,6 +545,7 @@ function offsetsFor(m) { return RIG.offsets[m] = RIG.offsets[m] || {}; }
 function getOff(o, h) {
   if (h.kind === 'limb') return (o[h.n] || [0, 0])[h.idx] || 0;
   if (h.kind === 'lean') return o.lean || 0;
+  if (h.kind === 'spine') return o.spine || 0;
   if (h.kind === 'head') return o.head || 0;
   if (h.kind === 'hipY') return o.hipY || 0;
 }
@@ -538,6 +553,25 @@ function setOff(o, h, v) {
   if (h.kind === 'limb') { o[h.n] = o[h.n] || [0, 0]; o[h.n][h.idx] = v; }
   else o[h.kind === 'head' ? 'head' : h.kind] = v;
 }
+
+// גרירה חכמה (IK): מוצאים זוויות לכתף/ירך ולמרפק/ברך כך שכף היד/הרגל תגיע לנקודה T.
+// מבין שני הפתרונות בוחרים את זה שהמרפק/הברך שלו הכי קרובים למקום הקודם – כך הכיפוף לא "קופץ" לצד השני
+function solveIK(root, T, l1, l2, kneeRef) {
+  const dx = T[0] - root[0], dy = T[1] - root[1];
+  const d = Math.max(Math.abs(l1 - l2) + 1e-3, Math.min(l1 + l2 - 1e-3, Math.hypot(dx, dy)));
+  const base = Math.atan2(dx, dy);
+  const alpha = Math.acos(Math.max(-1, Math.min(1, (l1 * l1 + d * d - l2 * l2) / (2 * l1 * d))));
+  let best = null;
+  [1, -1].forEach(sg => {
+    const a1 = base + sg * alpha, K = endOf(root[0], root[1], a1, l1);
+    const end = endOf(root[0], root[1], base, d);
+    const a2 = Math.atan2(end[0] - K[0], end[1] - K[1]);
+    const dist = Math.hypot(K[0] - kneeRef[0], K[1] - kneeRef[1]);
+    if (!best || dist < best.dist) best = { a1, a2, K, dist };
+  });
+  return best;
+}
+const LIMB_IDX = { legB: ['legs', 0], legF: ['legs', 1], armB: ['arms', 0], armF: ['arms', 1] };
 
 canvas.addEventListener('pointerdown', e => {
   if (dragMode === 'off' || !view) return;
@@ -549,7 +583,11 @@ canvas.addEventListener('pointerdown', e => {
   playing = false; renderBar();                // עוצרים כדי שהתנוחה לא תזוז מתחת לאצבע
   canvas.setPointerCapture(e.pointerId);
   const L = toLocal(sx, sy), { J, P } = view.out;
-  drag = { h: best, L0: L };
+  drag = { h: best, L0: L, snap: JSON.stringify(RIG) };
+  if (smartDrag && best.kind === 'limb' && best.end) {
+    const q = view.out.pts[best.n];
+    drag.ik = { root: q[0], l1: Math.hypot(q[1][0] - q[0][0], q[1][1] - q[0][1]), l2: Math.hypot(q[2][0] - q[1][0], q[2][1] - q[1][1]), knee: q[1] };
+  }
   if (best.kind === 'attach') {
     drag.base = best.key === 'head' ? J.head0 : best.key.startsWith('sh') ? J.sh : J.hip;
     drag.up = J.up; drag.fw = J.fw;
@@ -565,8 +603,9 @@ canvas.addEventListener('pointerdown', e => {
     drag.move = P.move || move;
     const o = offsetsFor(drag.move);
     drag.off0 = getOff(o, best);
+    if (drag.ik) { const [arr, i] = LIMB_IDX[best.n]; drag.ik.cur0 = P[arr][i].slice(); drag.ik.o0 = (o[best.n] || [0, 0]).slice(); }
     if (best.kind === 'limb') drag.a0 = angDown(best.pivot, best.at);
-    if (best.kind === 'lean') drag.a0 = Math.atan2(best.at[0] - best.pivot[0], -(best.at[1] - best.pivot[1]));
+    if (best.kind === 'lean' || best.kind === 'spine') drag.a0 = Math.atan2(best.at[0] - best.pivot[0], -(best.at[1] - best.pivot[1]));
     if (best.kind === 'head') drag.a0 = Math.atan2(best.at[1] - best.pivot[1], best.at[0] - best.pivot[0]);
     drag.pivot = best.pivot;
   }
@@ -578,9 +617,18 @@ canvas.addEventListener('pointermove', e => {
     const d = [L[0] - drag.base[0], L[1] - drag.base[1]];
     const v = [d[0] * drag.fw[0] + d[1] * drag.fw[1], d[0] * drag.up[0] + d[1] * drag.up[1]];
     RIG.attach[h.key] = [Math.round(v[0] * 20) / 20, Math.round(v[1] * 20) / 20];
+  } else if (drag.ik) {
+    const r = solveIK(drag.ik.root, L, drag.ik.l1, drag.ik.l2, drag.ik.knee);
+    drag.ik.knee = r.K;
+    if (drag.key) drag.key[h.n] = [r.a1, r.a2];
+    else {
+      const o = offsetsFor(drag.move), c = drag.ik.cur0, o0 = drag.ik.o0;
+      o[h.n] = [o0[0] + wrap(r.a1 - c[0]), o0[1] + wrap(r.a2 - c[1])];
+    }
   } else if (drag.key) {
     const f = drag.key;
     if (h.kind === 'limb') f[h.n][h.idx] = angDown(drag.pivot, L);
+    if (h.kind === 'spine') f.spine = Math.atan2(L[0] - drag.pivot[0], -(L[1] - drag.pivot[1])) - f.lean;
     if (h.kind === 'lean') f.lean = Math.atan2(L[0] - drag.pivot[0], -(L[1] - drag.pivot[1]));
     if (h.kind === 'head') f.headTilt = Math.atan2(L[1] - drag.pivot[1], L[0] - drag.pivot[0]) - f.lean;
     if (h.kind === 'hipY') f.hipY = drag.hip0 + (L[1] - drag.L0[1]);
@@ -588,20 +636,24 @@ canvas.addEventListener('pointermove', e => {
     const o = offsetsFor(drag.move);
     let a;
     if (h.kind === 'limb') a = angDown(drag.pivot, L);
-    if (h.kind === 'lean') a = Math.atan2(L[0] - drag.pivot[0], -(L[1] - drag.pivot[1]));
+    if (h.kind === 'lean' || h.kind === 'spine') a = Math.atan2(L[0] - drag.pivot[0], -(L[1] - drag.pivot[1]));
     if (h.kind === 'head') a = Math.atan2(L[1] - drag.pivot[1], L[0] - drag.pivot[0]);
     const v = h.kind === 'hipY' ? drag.off0 + (L[1] - drag.L0[1]) : drag.off0 + wrap(a - drag.a0);
     setOff(o, h, v);
   }
   markDirty();
 });
-const endDrag = () => { if (!drag) return; drag = null; if (tab === 'pose' || tab === 'shape') renderPanel(); markDirty(); };
+const endDrag = () => {
+  if (!drag) return;
+  if (drag.snap !== JSON.stringify(RIG)) { undoStack.push(drag.snap); if (undoStack.length > 60) undoStack.shift(); renderBar(); }
+  drag = null; if (tab === 'pose' || tab === 'shape') renderPanel(); markDirty(); };
 canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
 
 function showTip() {
   const tip = $('tip');
-  const txt = dragMode === 'pose' ? 'גוררים את הנקודות: ירוק = קדמי, כתום = אחורי, אדום = גוף, סגול = ראש. הגרירה עוצרת את האנימציה ומשנה רק את התנועה שמוצגת.'
+  const txt = dragMode === 'pose' ? 'גוררים את הנקודות: ירוק = קדמי, כתום = אחורי, אדום = גוף (הטיה וגובה), ורוד = חזה, סגול = ראש. ' +
+              (smartDrag ? 'גרירה חכמה: גוררים כף יד/רגל והמרפק/הברך מתכופפים לבד.' : 'גרירה רגילה: כף יד/רגל מסתובבת סביב המרפק/הברך.') + ' ↶ צעד אחורה מבטל את הגרירה האחרונה.'
             : dragMode === 'attach' ? 'גוררים את הריבועים כדי להזיז איפה הכתפיים, הירכיים והראש מתחברים לגוף. זה משפיע על כל התנועות.' : '';
   tip.textContent = txt; tip.classList.toggle('show', !!txt);
   clearTimeout(showTip.t); if (txt) showTip.t = setTimeout(() => tip.classList.remove('show'), 6000);
