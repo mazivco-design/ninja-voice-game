@@ -39,9 +39,9 @@ function edPoseName() { return ED.on && ED.mode === 'pose' ? ED.pose : null; }
 
 /* ---------- הכפתורים ---------- */
 function edBuildUI() {
-  if ($('edBtn')) return;
+  if ($('edPanel')) return;
   const css = document.createElement('style');
-  css.textContent = `#edBtn{position:absolute;left:12px;top:30%;z-index:60;font:700 18px system-ui;padding:10px 14px;border-radius:14px;border:3px solid #fff;background:#7c3aed;color:#fff}
+  css.textContent = `#edBtn{background:#7c3aed!important;color:#fff!important}
 #edPanel{position:absolute;left:8px;right:8px;bottom:8px;z-index:61;background:rgba(15,23,42,.88);color:#fff;border-radius:16px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font:600 15px system-ui;direction:ltr}
 #edPanel button{font:700 15px system-ui;padding:9px 12px;border-radius:10px;border:0;background:#334155;color:#fff}
 #edPanel button.on{background:#f59e0b;color:#111}
@@ -49,7 +49,7 @@ function edBuildUI() {
 #edOut{position:absolute;left:8px;right:8px;bottom:120px;height:120px;z-index:62;font:12px monospace;direction:ltr}
 .edHide{display:none!important}`;
   document.head.appendChild(css);
-  const b = document.createElement('button'); b.id = 'edBtn'; b.textContent = '✏️ Editor'; b.className = 'edHide'; document.body.appendChild(b);
+  const b = $('edBtn');                                                             // הכפתור בפס העליון, ליד Pause
   const p = document.createElement('div'); p.id = 'edPanel'; p.className = 'edHide'; document.body.appendChild(p);
   p.innerHTML = `<button data-a="place">📍 Places</button><button data-a="pose">🧍 Poses</button>
     <span id="edPoses"><button data-p="cover">Next to tree</button><button data-p="hug">In front of trunk</button><button data-p="crouch">By the rock</button></span>
@@ -57,7 +57,13 @@ function edBuildUI() {
     <button data-a="big">➕ Bigger</button><button data-a="small">➖ Smaller</button>
     <button data-a="save">💾 Save</button><button data-a="copy">📋 Copy</button><button data-a="reset">↺ Reset</button><button data-a="close">✕ Close</button>`;
   const out = document.createElement('textarea'); out.id = 'edOut'; out.className = 'edHide'; out.readOnly = true; document.body.appendChild(out);
-  b.onclick = () => edOpen(true);
+  b.onclick = () => {
+    if (state === 'intro') { try { finishIntro(); } catch (err) {} }
+    if (state !== 'play' && state !== 'paused') return;
+    if (state === 'paused') { $('pause').classList.remove('show'); state = 'play'; }
+    for (let n = 0; !boarS && n < 60 * 40 && state === 'play'; n++) update(1 / 60);   // עוד לא הגיע ליער – מקדמים עד העץ הראשון
+    if (boarS) edOpen(true);
+  };
   p.addEventListener('pointerdown', e => e.stopPropagation());
   p.onclick = e => {
     const t = e.target.closest('button'); if (!t) return;
@@ -89,9 +95,10 @@ function edSync() {
 }
 // נקרא כל פריים מ-draw: מראה את הכפתור רק במצב בודק בשלב החזיר
 function edTick() {
-  if (!$('edBtn')) { if (typeof document === 'undefined') return; edBuildUI(); }
-  const can = typeof isTester === 'function' && isTester() && !!boarS && (state === 'play' || state === 'paused');
-  $('edBtn').classList.toggle('edHide', !can || ED.on);
+  if (!$('edPanel')) edBuildUI();
+  const boarHere = !!boarS || obstacles.some(o => o.type === 'boar' && !o.passed) || (typeof playWords !== 'undefined' && playWords.includes('boar'));
+  const can = typeof isTester === 'function' && isTester() && boarHere && (state === 'play' || state === 'paused' || state === 'intro');
+  $('edBtn').classList.toggle('hide', !can || ED.on);   // במצב בודק, בכל שלב שיש בו חזיר
   if (ED.on && !boarS) edOpen(false);
 }
 function edPaused() { return ED.on; }
