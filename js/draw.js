@@ -1406,7 +1406,7 @@ function drawNinja() {                                           // הנינג'�
 function drawNinjaBody() {
   if (drawGustNinja()) return;                                                    // בטורנדו: מחזיק בקנה / עף
   if (ropeHanging()) return;
-  if (boarS && !boarS.front) return;                                              // ביער – הנינג'ה מצויר מעל העצים (drawForestFront ב-boar.js)
+  if (!boarDrawingFront && boarFrontO()) return;                                  // ביער (גם בדרך לעץ הראשון וביציאה) – הנינג'ה מצויר מעל העצים (drawForestFront ב-boar.js)
   if (bkDrawNinja()) return;                                                      // על האופניים – הנינג'ה והאופניים יחד (bike.js)
   if (cartRiding()) return;                                                       // יושב בעגלה – מצויר בתוכה (cart.js)                                                      // תלוי על החבל – מצויר ב-drawRopeSwing
   const pb = playerBox();

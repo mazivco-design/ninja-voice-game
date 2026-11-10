@@ -64,6 +64,11 @@ function boarFrontDY() {                                                        
   const o = (boarS && boarS.o) || obstacles.find(o => o.type === 'boar' && forestOn(o));
   return o ? (BOAR.frontDY + BOAR.ninjaDY) * forestMask(o, boarNX()) : 0;   // הנינג'ות עוד קצת יותר למטה מהעצים
 }
+let boarDrawingFront = 0;
+function boarFrontO() {                                                              // היער שהנינג'ה נמצא בו עכשיו (אז הוא מצויר לפני העצים)
+  if (boarS) return boarS.o;
+  return obstacles.find(o => o.type === 'boar' && forestOn(o) && forestMask(o, boarNX()) > 0) || null;
+}
 function boarPathOn() { return false; }                                              // (אין יותר חזירים על השביל)
 function boarDanger(B) {                                                             // יכול לראות את הנינג'ה: במסך ולא בדיוק מאחורי המחסה שלו
   return B.m !== 'off' && B.x < viewR() - 4 && B.x > viewL() + 4 && Math.abs(B.x - boarNX()) > 8;
@@ -506,9 +511,10 @@ function drawForestFront(o, top, bottom) {
     if (T.kind === 'rock') drawRock(x, T.w); else bigTree(x, top - BOAR.frontDY, T, i);
   }
   ctx.restore();
+  if (!live && o === boarFrontO()) { boarDrawingFront = 1; drawNinja(); boarDrawingFront = 0; }   // בדרך לעץ הראשון / אחרי היציאה – גם לפני העצים
   if (S) {
     drawBoarFriend(S);                                                                // החבר – תמיד לפני העצים
-    if (live) { S.front = 1; drawNinja(); S.front = 0; }                              // הנינג'ה – תמיד לפני העצים
+    if (live) { boarDrawingFront = 1; drawNinja(); boarDrawingFront = 0; }            // הנינג'ה – תמיד לפני העצים
     const B = S.ch;                                                                   // המסתער יוצא מבין העצים אל השביל
     if (B && B.x > viewL() - 25 && B.x < viewR() + 25) { const k = B.lift === undefined ? 1 : B.lift; drawBoarFig(B.x, lerp(GROUND + BOAR.deepY, GROUND + BOAR.frontDY + 2.2, k), BOAR.size * lerp(BOAR.deepS, 1.04, k), Object.assign({}, B, { dir: B.cdir })); }
     if (live) { drawBoarBars(S); drawSneakSign(S); drawFriendTalk(S); edDraw(); }
