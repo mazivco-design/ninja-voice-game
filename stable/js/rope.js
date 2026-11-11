@@ -18,7 +18,7 @@ function terrainLift(x) {
     if (x > c) return CHASM.h * ease((d - x) / CHASM.slope);
     return CHASM.h;                                              // על הצוקים ומעל התהום
   }
-  return 0;
+  return typeof cartHillLift === 'function' ? cartHillLift(x) : 0;   // גבעת העגלה (cart.js)
 }
 
 function ropeAnchor(o) { return [o.x + o.w / 2, GROUND - CHASM.h - ROPE.anchorH]; }

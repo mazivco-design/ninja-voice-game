@@ -23,6 +23,17 @@ async function play(m, idx) {
   listenWords = words.includes('fly') && !words.includes('jump') ? [...words, 'jump'] : [...words];   // FLY צריך גם JUMP
   if (words.includes('want')) listenWords.push('i', ...ITEM_WORDS);
   if (words.includes('let go') && !words.includes('catch')) listenWords.push('catch');
+  if (words.includes('pick up') || words.includes('put down')) for (const w of ['pick up', 'put down', 'jump', 'throw', 'pull']) if (!listenWords.includes(w)) listenWords.push(w);   // PICK UP → PUT DOWN → JUMP
+  if (words.includes('help')) { for (const w of ['catch', 'hold']) if (!listenWords.includes(w)) listenWords.push(w); listenWords = listenWords.filter(w => w !== 'help'); }   // HELP: בינתיים המשחק אומר HELP, הילד אומר CATCH ו-HOLD
+  if (words.includes('push together') || words.includes('push on three') || words.includes('fishing')) listenWords.push('jump in');   // בסירה ובעגלה אפשר להגיד JUMP IN
+  if (words.includes('push together') || words.includes('push on three')) { for (const w of ['push', 'jump', 'yes']) if (!listenWords.includes(w)) listenWords.push(w); }   // סירה / עגלה: PUSH ואז JUMP
+  if (words.includes('fishing')) { for (const w of ['jump', 'throw', 'pull', 'swim']) if (!listenWords.includes(w)) listenWords.push(w); }   // דייג: JUMP, THROW, PULL, SWIM (נפל למים)
+  if (words.includes('jetpack')) for (const w of ['pick up', 'put on', 'fly', 'up', 'down', 'crawl']) if (!listenWords.includes(w)) listenWords.push(w);
+  if (words.includes('wolves')) for (const w of ['catch', 'hold', 'climb', 'jump']) if (!listenWords.includes(w)) listenWords.push(w);   // זאבים: CATCH / HOLD / LET GO   // תרמיל סילון
+  if (words.includes('bike')) for (const w of ['ride', 'ring', 'jump', 'brake', 'stop', 'get off']) if (!listenWords.includes(w)) listenWords.push(w);   // אופניים
+  if (words.includes('boar')) for (const w of ['hide', 'sneak', 'climb']) if (!listenWords.includes(w)) listenWords.push(w);   // חזיר בר: SNEAK, HIDE ו-CLIMB
+  listenWords = listenWords.filter(w => w !== 'push together' && w !== 'push on three' && w !== 'fishing' && w !== 'boar' && w !== 'jetpack' && w !== 'wolves' && w !== 'bike');
+  if (m !== 'demo') for (const w of powerWordsOwned()) if (!listenWords.includes(w)) listenWords.push(w);   // SHIELD / JET – אם יש מנות
   if (words.includes('ride')) for (const w of ['up', 'down', 'fire']) if (!listenWords.includes(w)) listenWords.push(w);   // RIDE: בשמיים צריך UP / DOWN / FIRE   // LET GO צריך גם CATCH                              // I WANT + שמות החפצים
   stopAudio();                      // מתחילים מחדש עם רשימת המילים של המשחק הזה
   const ok = await ensureAudio();   // נקרא ישירות מהלחיצה
@@ -35,9 +46,9 @@ function startGame(m, idx) {
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
   world = m === 'stage' ? (STAGES[idx || 0].world ?? PAIR_WORLD[Math.floor((idx || 0) / 3)]) : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
-  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; gust = null; windLevel = 0; windStreaks = []; particles = []; flag = null;
+  learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = null; liftIdx = 0; ptIdx = 0; merchNext = 'key'; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; cart = null; bikeS = null; boarS = null; jetS = null; wolfS = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
-  py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
+  earlyWord = null; py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
   if (mode === 'journey') { jStation = stageIdx; startJourneySegment(true); }
   banner = mode === 'stage' ? { text: '🥋 ' + STAGES[stageIdx].name, sub: STAGES[stageIdx].hint, t: 3 }
@@ -67,14 +78,15 @@ function renderHud() {
   $('score').textContent = score;
   $('caught').textContent = caught + picked - coinsFlying;      // מטבע שעוד עף – נספר כשהוא מגיע
   if (mode === 'stage') $('progressBar').style.width = (100 * Math.min(1, done / STAGES[stageIdx].count)) + '%';
-  if (mode === 'journey') $('progressBar').style.width = (100 * Math.min(1, done / segLen(jStation))) + '%';
+  if (mode === 'journey') $('progressBar').style.width = (100 * Math.min(1, done / jSegN)) + '%';
   if (!isFinite(lives)) $('lives').textContent = '';
-  else $('lives').textContent = '❤️'.repeat(Math.max(0, lives)) + '🤍'.repeat(Math.max(0, cfg.lives - lives));
+  else { const f = Math.max(0, Math.floor(lives)), h = lives - f >= 0.5 ? 1 : 0; $('lives').textContent = '❤️'.repeat(f) + '💔'.repeat(h) + '🤍'.repeat(Math.max(0, cfg.lives - f - h)); }   // 💔 = חצי לב
+  renderPowerHud();
 }
 
 // חלון סיום – משותף לכל המצבים
 function showOver(title, big, sub, primaryLabel, primaryAction, starsStyle) {
-  state = 'over';
+  state = 'over'; renderPowerHud();
   renderTester();
   $('board').innerHTML = '';
   $('altBtn').classList.add('hide');
@@ -164,7 +176,17 @@ function obstacleValue(type) {
 }
 
 // בוחר את המכשול הבא. לא יותר מ-3 מאותו סוג ברצף
+// מכשולים שמתבלבלים ביניהם (PUSH / PULL) – לא אחד אחרי השני
+const CLASH = { boulder: ['gate'], gate: ['boulder'], boat: ['cart'], cart: ['boat'] };   // + סירה ועגלה (שתיהן דחיפה עם חבר)
 function pickType() {
+  const prev = obstacles.length ? obstacles[obstacles.length - 1].type : null;
+  if (mode === 'journey' && jDeck.length) {                                     // במסע: קודם כל מכשול לפחות פעם אחת (journey.js)
+    const i = jDeck.findIndex(t => !(CLASH[prev] || []).includes(t));
+    return i > 0 ? jDeck.splice(i, 1)[0] : jDeck.shift();
+  }
+  for (let k = 0; k < 6; k++) { const t = pickType0(); if (!(CLASH[prev] || []).includes(t) || k === 5) return t; }
+}
+function pickType0() {
   let w = playWords[Math.floor(Math.random() * playWords.length)];
   const last = obstacles.slice(-3).map(o => o.type);
   if (playWords.length > 1 && last.length === 3 && last.every(t => t === WORD_OBSTACLE[w])) {
@@ -174,6 +196,14 @@ function pickType() {
   return WORD_OBSTACLE[w];
 }
 
+// הציפור שמעל האגם: עפה הלוך ושוב מעל המים, בגובה של קפיצה
+const BIRD = { y: GROUND - 13, span: 0.32, speed: 0.75 };
+function birdPath(o) {                                                         // המסלול הרגיל: הלוך ושוב מעל המים
+  const t = o.bird ? o.bird.t : 0, a = Math.sin(t * BIRD.speed);
+  return [o.w * (0.5 + BIRD.span * a), BIRD.y + Math.sin(t * 2.2) * 1.6];
+}
+function birdPos(o) { const bd = o.bird; if (!bd || bd.rx === undefined) { const [rx, y] = birdPath(o); return [o.x + rx, y]; } return [o.x + bd.rx, bd.y]; }
+
 function riverWidth() {
   const airtime = 2 * cfg.jumpV / cfg.gravity;   // כמה זמן קפיצה רגילה באוויר
   return speed * airtime * RIVER_FACTOR;         // רחב מדי לקפיצה בלבד
@@ -181,17 +211,27 @@ function riverWidth() {
 
 function spawn() {
   if (mode === 'free') world = Math.floor(spawned / 12) % RUN_WORLDS;   // ב-Free Play העולם מתחלף כל 12 מכשולים
-  const type = nextType;
-  const o = { type, x: W + 2, passed: false, hit: false };
+  let type = nextType, fishMode = false;
+  if (type === 'fishboat') { type = 'boat'; fishMode = true; }                  // FISHING: אותה סירה, במצב דייג
+  const o = { type, x: viewR() + 2, passed: false, hit: false };
+  if (fishMode) o.mode = 'fish';
   if (type === 'river') o.w = riverWidth();
   if (type === 'chasm') o.w = CHASM.w;
   if (type === 'dragon') o.w = DRAGON.w;
   if (type === 'duel') o.w = 8;
   if (type === 'gust') o.w = GUST.stalks[2] + 4;
+  if (type === 'lift') liftSetup(o);
+  if (type === 'mud') o.w = MUD.w + MUD.stand + 8;
+  if (type === 'boat') boatSetup(o);
+  if (type === 'cart') cartSetup(o);
+  if (type === 'boar') boarSetup(o);
+  if (type === 'wolfden') wfSetup(o);
+  if (type === 'bikeway') bkSetup(o);   // אופניים (bike.js)   // זאבים וכדור פורח (wolves.js)
+  if (type === 'jetgap') jsSetup(o);   // תרמיל סילון מעל תהום (jetstage.js)   // HIDE ביער: שלושה עצים וחזיר בר רועה (boar.js)   // PUSH TOGETHER: חוף, סירה ונהר (boat.js)     // HELP: שלולית בוץ, והמקום שבו החבר עומד (mud.js)
   if (type === 'lake') o.w = speed * LAKE.factor;        // רחב מדי לקפיצה
   if (type === 'bridge') o.w = speed * BRIDGE.factor;    // רחב מדי לקפיצה, ארוך מדי להליכה
-  if (type === 'pond') o.w = Math.max(40, speed * POND.factor);   // הרשת באמצע
-  if (type === 'bramble') o.w = BRAMBLE.ramp + Math.max(30, speed * BRAMBLE.factor) + BRAMBLE.exit;   // כניסה שהולכת ונעשית צרה + החלק הנמוך + יציאה
+  if (type === 'pond') o.w = Math.max(54, speed * POND.factor);   // הרשת באמצע
+  if (type === 'bramble') o.w = tunnelW();                // CRAWL: מחילה מתחת לסלע ענק (tunnel.js)
   if (type === 'coin') coins++;
   o.pts = obstacleValue(type);
   obstacles.push(o);
@@ -203,9 +243,12 @@ function spawn() {
   nextGap = speed * rand(cfg.gapT[0], cfg.gapT[1]) + (o.w || 0);
   if (type === 'river') nextGap += speed * FLY.time * 0.8;   // זמן לנחות מהגלישה לפני המכשול הבא
   if (type === 'bridge') nextGap += speed * 1.0;             // אחרי RUN העולם מהיר – עוד מרווח
-  if (type === 'door') nextGap += speed * 0.6;
+  if (type === 'door') { doorSetup(o); nextGap += speed * 0.6 + o.w; }   // o.w נקבע כאן (צוק / מערה ארוכה) – הרווח עד המכשול הבא כולל אותו
   if (type === 'duel') nextGap += speed * 0.4;
   if (type === 'gust') nextGap += speed * 0.4;
+  if (type === 'lift') nextGap += speed * 0.6;
+  if (type === 'mud') nextGap += speed * 0.8;
+  if (type === 'boat' || type === 'cart' || type === 'boar' || type === 'jetgap' || type === 'wolfden' || type === 'bikeway') nextGap += speed * 0.8;
   if (type === 'chasm') nextGap += speed * 0.8 + CHASM.top + CHASM.slope;   // מקום לרדת מהגבעה
   if (nextType === 'chasm') nextGap += CHASM.top + CHASM.slope;                  // מקום לעלות על הגבעה לפני התהום
   if (mode === 'journey') addPickups(o);
@@ -233,9 +276,17 @@ function obstacleBox(o) {
     case 'beam':  return { l: o.x, r: o.x + BEAM.w, t: -1e6, b: GROUND - BEAM.clear };
     case 'wall':  return { l: o.x, r: o.x + WALL.w, t: GROUND - WALL.h, b: GROUND };
     case 'ice':   return { l: o.x, r: o.x + ICE.w, t: GROUND - ICE.h, b: GROUND };
-    case 'door':  return { l: o.x, r: o.x + DOOR.w, t: GROUND - DOOR.h, b: GROUND };
-    case 'skyrock': case 'storm': return skyBox(o);
+    case 'door':  return { l: o.x, r: o.x + (o.w || DOOR.w), t: GROUND - DOOR.h, b: GROUND };
+    case 'skyrock': case 'bat': return skyBox(o);
     case 'dragon': return { l: o.x, r: o.x + o.w, t: GROUND - 10, b: GROUND };
+    case 'cart': return { l: o.x, r: o.x + o.w, t: GROUND - 2, b: GROUND };
+    case 'boar': return { l: o.x, r: o.x + o.w, t: GROUND - 2, b: GROUND };
+    case 'jetgap': return { l: o.x, r: o.x + o.w, t: GROUND - 2, b: GROUND };
+    case 'wolfden': return { l: o.x, r: o.x + o.w, t: GROUND - 2, b: GROUND };
+    case 'bikeway': return { l: o.x, r: o.x + o.w, t: GROUND - 2, b: GROUND };
+    case 'boat': return { l: o.x, r: o.x + o.w, t: GROUND - 2, b: GROUND };
+    case 'mud': return { l: o.x, r: o.x + MUD.w, t: GROUND - 2, b: GROUND };
+    case 'lift': return { l: o.x, r: o.x + o.w, t: GROUND - LIFT.wallH, b: GROUND };
     case 'gust': return { l: o.x, r: o.x + GUST.stalks[2] + 4, t: GROUND - GUST.h, b: GROUND };   // כל החורשה
     case 'duel': return { l: o.x - 4, r: o.x + 4, t: GROUND - 16, b: GROUND };
     case 'chasm': return { l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 40 };
@@ -254,7 +305,7 @@ function obstacleBox(o) {
     case 'arrows':  return { l: o.x, r: o.x + ARROWS.w, t: GROUND - 23, b: GROUND - 2 };
     case 'window':  return { l: o.x, r: o.x + WINDOW.w, t: -1e6, b: GROUND };
     case 'pond':    return { l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 20 };
-    case 'bramble': return { l: o.x, r: o.x + o.w, t: -1e6, b: GROUND - BRAMBLE.gap };
+    case 'bramble': return { l: o.x, r: o.x + o.w, t: GROUND - TUN.rockH, b: GROUND };
   }
 }
 function rockY(o) {   // הסלע נופל בתאוצה מהחבל עד הקרקע
@@ -266,7 +317,8 @@ function rockY(o) {   // הסלע נופל בתאוצה מהחבל עד הקרק
 // ברמה הקלה (forgive) מכווצים את אזור הפגיעה – נגיעה בקצה לא נחשבת
 function collides(o, pb) {
   if (o.demo || o.type === 'coin' || o.broken || o.defeated) return false;
-  if (o.climbed || o.pushed || o.open || o.deflected || o.landed || o.unlocked || o.type === 'chasm' || o.type === 'dragon' || o.type === 'duel' || o.type === 'gust') return false;   // תהום: העולם עוצר לפניה, הנפילה מטופלת ב-rope.js
+  if (jetSafe()) return false;                                // עף עם תרמיל הסילון – מעל הכול
+  if (o.climbed || o.pushed || o.open || o.deflected || o.landed || o.unlocked || o.type === 'chasm' || o.type === 'dragon' || o.type === 'duel' || o.type === 'gust' || o.type === 'lift' || o.type === 'mud' || o.type === 'boat' || o.type === 'cart' || o.type === 'boar' || o.type === 'jetgap' || o.type === 'wolfden' || o.type === 'bikeway') return false;   // תהום: העולם עוצר לפניה, הנפילה מטופלת ב-rope.js
   if (o.type === 'rock' && o.fallK === undefined) return false;
   if (o.type === 'guard' && hidingFrom === o) return false;   // מתכופף מאחורי הסלעים – השומרים לא רואים
   const m = cfg.forgive || 0;
@@ -277,10 +329,7 @@ function collides(o, pb) {
   if (o.type === 'window')  // רק החלון פתוח: חלק עליון וחלק תחתון של הקיר
     { const ovw = b => pb.l < b.r && pb.r > b.l && pb.t < b.b && pb.b > b.t;   // בלי מרווח סלחנות – רק זינוק עובר בחלון
       return ovw({ l: o.x, r: o.x + WINDOW.w, t: -1e6, b: WINDOW.top }) || ovw({ l: o.x, r: o.x + WINDOW.w, t: WINDOW.bot, b: GROUND + 1 }); }
-  if (o.type === 'bramble') {  // מערה: התקרה יורדת בהדרגה. רק זחילה עוברת בחלק הנמוך (גם התכופפות גבוהה מדי)
-    for (let k = 0; k <= 6; k++) { const xx = pb.l + m + (pb.r - pb.l - 2 * m) * k / 6; if (pb.t < caveCeiling(o, xx)) return true; }
-    return false;
-  }
+  if (o.type === 'bramble') return false;   // מחילה: בלי CRAWL הנינג'ה פשוט נעצר בפתח (tunnel.js) – אין פסילה
   if (o.type === 'pond') { const nx = netX(o); return ov({ l: nx, r: nx + POND.net, t: -1e6, b: GROUND + POND.deep + 1 }); }   // הרשת יורדת עמוק לתוך המים
   if (o.type === 'river') {
     const cx = (pb.l + pb.r) / 2;
@@ -290,6 +339,62 @@ function collides(o, pb) {
   return pb.l < b.r - m && pb.r > b.l + m && pb.t < b.b - m && pb.b > b.t + m;
 }
 
+// אחרי פגיעה: בפעם הראשונה – בלי לעצור: המילה נשמעת מיד, ואותו מכשול חוזר (עם קצת יותר מרווח, כדי לשמוע).
+// כישלון שני ברצף באותו מכשול – כשהמכשול כבר מאחורי הנינג'ה, הריצה עוצרת לרגע, והמילה מופיעה בגדול ונשמעת. הצלחה מאפסת
+const LEARN = { pause: 1.5, gap: 0.7 };
+let learnT = 0, learnWait = null, missCount = {};
+const LEARN_SAY = { river: ['jump', 'fly'], chasm: ['let go'], door: ['want'], bat: ['fire'] };
+function learnWords(o) { return o.type === 'skyrock' ? [o.lane ? 'down' : 'up'] : (LEARN_SAY[o.type] || (OBSTACLE_WORDS[o.type] || []).slice(0, 1)); }
+// רמז במכשול שמחכה לשחקן: במסע – שמיעת המילה עולה חצי לב (פעם אחת לכל מכשול, גם אם הרמז חוזר)
+const hintPaid = new WeakSet();
+function hintPenalty(key) {
+  if (!key || mode !== 'journey' || !isFinite(lives) || state !== 'play' || hintPaid.has(key)) return;
+  hintPaid.add(key); lives = Math.max(0, lives - 0.5); renderHud();
+  if (lives <= 0) journeyOver(false);
+}
+function sayWords(say, t, key) {
+  if (key) hintPenalty(key);
+  speak(say[0]);
+  if (say[1]) setTimeout(() => { if (state === 'play') speak(say[1]); }, 750);
+  flash = { text: say.map(w => ((w === 'push' && (boat || cart) ? '🫸' : WORD_ICON[w] || WORD_ICON[w.split(' ')[0]]) || '') + ' ' + w.toUpperCase()).join('  →  ') + '!', t };   // בסירה ובעגלה – יד דוחפת, לא סלע
+}
+function learnAfterHit(o) {
+  const say = learnWords(o);
+  if (!say.length) return;
+  missCount[o.type] = (missCount[o.type] || 0) + 1;
+  const canStop = !SKY_TYPES.includes(o.type) && o.type !== 'gust' && o.type !== 'chasm';   // בשמיים / בטורנדו / בתהום – העולם כבר עומד או שאי אפשר לעצור
+  const requeued = learnRequeue(o);
+  if (missCount[o.type] >= 2 && canStop) { learnWait = { o, say, t: 0 }; return; }          // עוצרים רק אחרי שהמכשול עבר
+  sayWords(say, 1.4);
+  if (!requeued) nextGap += speed * LEARN.gap;                                               // זמן לשמוע לפני שהמכשול חוזר
+}
+// אם המכשול הבא כבר יצא לדרך – הוא נעלם בענן, ואותו מכשול שנכשלו בו מגיע מיד אחריו (ולא אחרי עוד מכשול אחר)
+const LEARN_KEEP = ['chasm', 'dragon', 'duel', 'gust', 'door', 'bridge', 'lift', 'mud', 'boat', 'cart'];
+function learnRequeue(o) {
+  if (SKY_TYPES.includes(o.type) || LEARN_KEEP.includes(o.type)) return false;
+  const ahead = obstacles.filter(a => a !== o && !a.hit && !a.passed && a.x > o.x);
+  if (!ahead.length || ahead.some(a => LEARN_KEEP.includes(a.type) || SKY_TYPES.includes(a.type))) return false;
+  if (mode === 'journey') { jDeck.unshift(...ahead.map(a => a.type === 'boat' && a.mode === 'fish' ? 'fishboat' : a.type), nextType); jSegN++; }   // מה שנעלם חוזר לחפיסה, והחזרה על המכשול לא באה על חשבון אחר
+  for (const a of ahead) {
+    obstacles.splice(obstacles.indexOf(a), 1); spawned--;
+    if (a.type === 'coin') coins--;
+    if (a.x < W) for (let i = 0; i < 10; i++) particles.push({ x: a.x + 3 + (Math.random() - 0.5) * 6, y: GROUND - 6 - Math.random() * 10, vx: (Math.random() - 0.5) * 16, vy: -6 - Math.random() * 10, g: -4, life: 0.5, color: i % 2 ? '#e2e8f0' : '#cbd5e1', size: 1.6 });
+  }
+  nextType = o.type;
+  distSinceSpawn = (viewR() + 2) - o.x;                                                            // כאילו המכשול הבא נבחר עכשיו, מיד אחרי זה שנכשלו בו
+  nextGap = speed * (rand(cfg.gapT[0], cfg.gapT[1]) + LEARN.gap) + (o.w || 0);
+  return true;
+}
+function learnUpdate(dt) {
+  if (learnT > 0) learnT -= dt;
+  if (!learnWait) return;
+  const w = learnWait; w.t += dt;
+  const gone = !obstacles.includes(w.o), b = gone ? null : obstacleBox(w.o);
+  if (gone || b.r < PLAYER.x - 3 || w.t > 1.2) {                                             // המכשול כבר מאחור – עוצרים ואומרים
+    learnWait = null; learnT = LEARN.pause; sayWords(w.say, LEARN.pause + 0.3);
+  }
+}
+
 function onHit(o) {
   o.hit = true;
   shakeT = 0.3; sfx('hit');
@@ -297,11 +402,13 @@ function onHit(o) {
   if (state === 'demo' || state === 'intro') {   // בהדגמה – בלי עונש
     flash = { text: HIT_WORD[o.type], t: 1.2 }; invulnT = INVULN_TIME; return;
   }
+  if (shieldSave()) { invulnT = INVULN_TIME; sinkT = 0; o.pts = 0; cleared(o); return; }   // בועת המגן ספגה את הפגיעה
   if (dragonSave()) { invulnT = INVULN_TIME; sinkT = 0; o.pts = 0; cleared(o); return; }   // הדרקון חוסם את הפגיעה – בלי לאבד לב
   hits++; done++;
   if (typeof voiceMark === 'function') voiceMark('hit');
-  if (mode === 'journey' && !SKY_TYPES.includes(o.type)) nextType = o.type;     // במסע: מכשול שפספסו חוזר מיד
+  if (!SKY_TYPES.includes(o.type)) nextType = o.type;                            // מכשול שפספסו חוזר מיד – לנסות שוב עם המילה ששמע
   flash = { text: HIT_WORD[o.type], t: 1.2 };   // מראה את המילה הנכונה
+  learnAfterHit(o);                              // עוצר לרגע ואומר את המילה בקול
   invulnT = INVULN_TIME;
   if (isFinite(lives)) {
     lives--;
@@ -319,6 +426,7 @@ function cleared(o) {
   if (typeof voiceMark === 'function') voiceMark('ok');
   const v = o.pts === undefined ? 1 : o.pts;
   o.passed = true; done++; score += v;
+  if (missCount[o.type]) missCount[o.type] = 0;                // הצליח – מאפסים את ספירת הכישלונות של המכשול הזה
   if (mode === 'journey' && state === 'play' && v > 0) floatText(PLAYER.x + 4, GROUND - 24, '+' + v, '#7c3aed');
   if (o.type !== 'coin') sfx('clear');
   if (mode === 'free' && state === 'play') endlessProgress();
@@ -392,7 +500,16 @@ function update(dt) {
 
   // הנינג'ה
   const wasAir = py > 0;
-  if (rideCtl()) { py = ride.py; vy = 0; flyT = 0; }   // על הדרקון – הגובה נקבע ב-dragon.js
+  if (jetPhysics(dt)) {}
+  else if (liftPhysics(dt)) {}
+  else if (boatPhysics(dt)) {}
+  else if (cartPhysics(dt)) {}
+  else if (boarPhysics(dt)) {}
+  else if (wfPhysics(dt)) {}
+  else if (bkPhysics(dt)) {}                           // אופניים: על הגבעה / ברמפה                           // זאבים: על הסלע / תלוי בחבל / על הגבעה
+  else if (jsPhysics(dt)) {}                           // תרמיל סילון: הגובה לפי הנתיב                         // ביער: נהדף כשהחזיר מסתער                         // סירה: קופץ פנימה / יושב / קופץ לגדה
+  else if (merchPhysics(dt)) {}                        // I WANT: מטפס על הצוק / יורד ממנו                         // PICK UP: עולה על הסלע / קופץ ממנו (lift.js)                                // תרמיל סילון – עף מעל הכול (power.js)
+  else if (rideCtl()) { py = ride.py; vy = 0; flyT = 0; }   // על הדרקון – הגובה נקבע ב-dragon.js
   else if (act.climb > 0) {                     // מטפס על הסולם – עולה ומתקדם באלכסון
     climbK = Math.min(1, climbK + dt / CLIFF.time);
     py = CLIFF.h * climbK; vy = 0;
@@ -428,6 +545,7 @@ function update(dt) {
   if (act.fireCd > 0) act.fireCd -= dt;
   for (const k of ['stop', 'run', 'swim', 'climbWant', 'push', 'pull', 'pullWant', 'hide', 'block', 'leapWant', 'dive', 'crawl', 'crawlWant', 'roll']) if (act[k] > 0) act[k] = Math.max(0, act[k] - dt);
   if (flash && (flash.t -= dt) <= 0) flash = null;
+  learnUpdate(dt);
   if (heard && (heard.t -= dt) <= 0) heard = null;
   if (banner && (banner.t -= dt) <= 0) banner = null;
 
@@ -436,8 +554,8 @@ function update(dt) {
   bgX += dx;
   distSinceSpawn += dx;
   if (state === 'play' && distSinceSpawn >= nextGap && !rideBusy()) {
-    if (mode === 'free' || spawned < (mode === 'journey' ? segLen(jStation) : STAGES[stageIdx].count)) spawn();
-    else if (!flag) flag = { x: W + 2 };
+    if (mode === 'free' || spawned < (mode === 'journey' ? jSegN : STAGES[stageIdx].count)) spawn();
+    else if (!flag) flag = { x: viewR() + 2 };
   }
 
   const pb = playerBox();
@@ -446,6 +564,18 @@ function update(dt) {
   rideUpdate(dt, pb);
   duelUpdate(dt, pb);
   gustUpdate(dt, pb);
+  skyPrizesUpdate(dt);
+  liftUpdate(dt, pb);
+  tunnelUpdate(dt, pb);
+  mudUpdate(dt, pb);
+  boatUpdate(dt, pb);
+  cartUpdate(dt, pb);
+  boarUpdate(dt, pb);
+  jsUpdate(dt, pb);
+  earlyUpdate(dt);                                   // מילה נכונה שנאמרה מוקדם – מופעלת כשמגיעים למכשול
+  wfUpdate(dt, pb);
+  bkUpdate(dt, pb);
+  powerTick(dt);
   if (state === 'play' && testerMode === 'auto' && isTester()) testerAuto(pb, dt);   // מצב בודק: משחק אוטומטי
   if (state === 'demo' || state === 'intro') demoAuto(pb, dt);
   if (state === 'intro' && (introT -= dt) <= 0) introNext();
@@ -464,16 +594,15 @@ function update(dt) {
       }
     }
   }
-  shurikens = shurikens.filter(s => !s.dead && s.x < W + 10);
+  shurikens = shurikens.filter(s => !s.dead && s.x < viewR() + 10);
   for (const f of fireballs) {                                              // כדורי אש – מנפצים קיר קרח
     f.x += FIREBALL.speed * dt; f.t += dt;
     if (Math.random() < 0.7) particles.push({ x: f.x - 2, y: f.y + (Math.random() - 0.5) * 2, vx: -20, vy: -4, g: -6, life: 0.35, color: Math.random() < 0.5 ? '#fb923c' : '#fde047', size: 0.9 });
     for (const o of obstacles) {
-      if ((o.type !== 'ice' && o.type !== 'storm') || o.broken) continue;
-      if (o.type === 'storm' && f.x + 2 >= o.x) {                       // ענן סערה – האש מפזרת אותו
-        o.broken = true; f.dead = true; sfx('hit');
-        for (let i = 0; i < 18; i++) particles.push({ x: o.x + Math.random() * o.w, y: GROUND - 8 - Math.random() * 54, vx: 10 + Math.random() * 30, vy: (Math.random() - 0.5) * 20, g: 0, life: 0.7 + Math.random() * 0.4, color: ['#64748b', '#94a3b8', '#cbd5e1'][i % 3], size: 2 + Math.random() * 2 });
-        burst(o.x + 3, f.y, '#fb923c', 10); cleared(o); break;
+      if ((o.type !== 'ice' && o.type !== 'bat') || o.broken) continue;
+      if (o.type === 'bat' && f.x + 2 >= o.x) {                         // עטלף – האש מבהילה אותו והוא בורח למעלה (בכל גובה – לא צריך לכוון)
+        o.broken = true; o.ft = 0; f.dead = true; sfx('squawk');
+        burst(o.x + o.w / 2, laneY(o.lane), '#fb923c', 10); cleared(o); break;
       }
       if (o.type === 'ice' && f.x + 2 >= o.x && f.x - 2 <= o.x + ICE.w) {
         o.broken = true; f.dead = true; sfx('hit');
@@ -485,7 +614,7 @@ function update(dt) {
       }
     }
   }
-  fireballs = fireballs.filter(f => !f.dead && f.x < W + 10);
+  fireballs = fireballs.filter(f => !f.dead && f.x < viewR() + 10);
   for (const c of pickups) {                                                // מטבעות קטנים – נאספים בנגיעה
     c.x -= curSpeed() * dt;
     if (hasGear('owl') && !c.got && c.x - pb.r < 16 && c.x > pb.l - 2) { c.x += (pb.r - 2 - c.x) * 0.2; c.y += (pb.t + 6 - c.y) * 0.2; }   // הינשוף מושך מטבעות
@@ -500,6 +629,7 @@ function update(dt) {
   for (const o of obstacles) {
     o.x -= dx;
     if (o.type === 'enemy' && !o.defeated) o.x -= speed * ENEMY.extra * dt;   // אויב רץ לקראתך
+    if (o.type === 'bat') { if (o.broken) o.ft = (o.ft || 0) + dt; else o.x -= BAT.fly * dt; }   // עטלף עף לקראתך / בורח
     if (o.type === 'guard') {
       if (o.rx === undefined) {                                          // הסלע: מגיע לנינג'ה כשהשומרים עוד 25 יחידות מאחוריו
         const vv = Math.max(v, 0.001);
@@ -507,7 +637,8 @@ function update(dt) {
         o.rx += dx;
       }
       o.rx -= dx;
-      o.x -= (hidingFrom === o ? GUARD_PASS : GUARD.walk) * dt;          // שומרים הולכים לקראתך (ועוברים מהר כשמתחבאים)
+      if (hidingFrom === o) o.x -= GUARD_PASS * dt;                      // עוברים מהר מאחורי הסלעים
+      else if (v > 0 || o.rx === undefined) o.x -= GUARD.walk * dt;      // הולכים לקראתך. כשהעולם עומד (מתחבאים מזוג אחר) – מחכים, כדי שלא יקדימו את הסלע שלהם
     }
     if (o.type === 'arrows' && !o.deflected) o.x -= ARROWS.speed * dt;       // חיצים עפים
     if (o.pushed) { o.x += (v + 60) * dt; o.rot = (o.rot || 0) + dt * 6; }   // סלע שנדחף מתגלגל קדימה
@@ -580,6 +711,23 @@ function update(dt) {
     }
     // SWIM: במים בלי לשחות – שוקעים לאט. SWIM בזמן הזה מציל. מי שכבר שוחה – ממשיך עד הסוף
     if (o.type === 'lake') {
+      // ציפור מעל האגם: מי שקופץ במקום לשחות – נתקל בה (פגיעה), והיא בורחת
+      const bd = o.bird || (o.bird = { t: Math.random() * 6 });
+      bd.t += dt; if (bd.hitT !== undefined) bd.hitT += dt;
+      if (bd.rx === undefined) { const [rx, y] = birdPath(o); bd.rx = rx; bd.y = y; }
+      let [tx, ty] = birdPath(o);
+      if (bd.hitT === undefined && py > 2 && cx > o.x - 25 && cx < o.x + o.w - 4) { tx = cx + 2 - o.x; ty = pb.t + 5; bd.chase = true; }   // קפץ לכיוון המים – השחף צולל אליו
+      const sp = (bd.chase ? 95 : 40) * dt, dx = tx - bd.rx, dy = ty - bd.y, dd = Math.hypot(dx, dy) || 1;
+      bd.rx += dx * Math.min(1, sp / dd); bd.y += dy * Math.min(1, sp / dd);
+      if (py <= 0) bd.chase = false;
+      if (bd.hitT === undefined && !o.hit && !o.demo && py > 2 && !jetSafe()) {
+        const [bx, by] = birdPos(o);
+        if (pb.r > bx - 4.5 && pb.l < bx + 4.5 && pb.t < by + 2.5 && pb.b > by - 2.5) {
+          bd.hitT = 0; sfx('squawk'); burst(bx, by, '#ffffff', 12, 26); burst(bx, by, '#e2e8f0', 6, 18);
+          vy = Math.min(vy, -20);                                                   // נופל למים
+          if (invulnT <= 0) { onHit(o); if (state === 'over') return; }
+        }
+      }
       const inside = py <= 0 && cx > o.x + 2 && cx < o.x + o.w - 2;
       if (inside) o.wet = true;
       if (inside && act.swim > 0) { act.swim = Math.max(act.swim, 0.2); o.swam = true; o.drown = Math.max(0, (o.drown || 0) - dt * 3); }
@@ -615,13 +763,13 @@ function update(dt) {
     if (!o.hit && !o.passed && invulnT <= 0 && collides(o, pb)) { onHit(o); if (state === 'over') return; }
     const ob = obstacleBox(o);
     if (!o.passed && !o.hit && ob.r < pb.l) {
-      if (o.type === 'coin') { onHit(o); if (state === 'over') return; }   // מטבע שהוחמץ – מאבדים לב (CATCH צריך לתפוס)
+      if (o.type === 'coin' && !jetSafe()) { onHit(o); if (state === 'over') return; }   // מטבע שהוחמץ – מאבדים לב (CATCH צריך לתפוס)
       else cleared(o);                                                     // עבר את המכשול בשלום
     }
   }
   obstacles = obstacles.filter(o => {
     const r = o.w ? o.x + o.w : Math.max(o.x, o.rx === undefined ? -1e9 : o.rx) + 25;
-    return r > -10 && o.x < W + 40 && !(o.caught && o.ct > 0.35);
+    return r > viewL() - 10 && o.x < viewR() + 40 && !(o.caught && o.ct > 0.35);
   });
 
   if (flag) {

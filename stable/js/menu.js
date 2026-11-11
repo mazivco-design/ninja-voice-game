@@ -25,21 +25,14 @@ function renderMenu() {
   document.querySelectorAll('.diff').forEach(b => b.classList.toggle('sel', b.dataset.diff === diffKey));
   if (!player) return;
   const st = getStation(), learned = getLearned(), pend = pendingWord();
-  // המסע: שורת תחנות. כל תחנה = מילה. ירוק = נלמדה, צהוב = נפתחה ומחכה לשיעור, אפור = עוד לא הגענו
-  const tr = $('jTrack'); tr.innerHTML = '';
-  WORDS.forEach((w, i) => {
-    const d = document.createElement('div');
-    const cls = i > st ? 'far' : learned.includes(w) ? 'done' : 'wait';
-    d.className = 'jNode ' + cls + (i === st ? ' cur' : '') + (i < st ? ' passed' : '');
-    d.innerHTML = (i < WORDS.length - 1 ? '<i class="jLine"></i>' : '') +
-                  '<div class="jCircle">' + (i > st ? '🔒' : WORD_ICON[w]) +
-                  (i === st ? '<div class="jNinja">' + ninjaIcon(player ? player.color : '#dc2626', (shopItem(getEquip().suit) || {}).swatch) + '</div>' : '') + '</div><b>' + (i === WORDS.length - 1 ? '🏁' : i) + '</b>';
-    d.title = w.toUpperCase();
-    tr.appendChild(d);
-  });
-  $('jSt').textContent = '🚩 ' + st + ' / ' + (WORDS.length - 1) + '  ·  Record ' + pLoad('jbest_' + diffKey, 0);
+  // המסע: התחנות על הר פוג'י (fujimenu.js). אדום = נלמדה, זהב = נפתחה ומחכה לשיעור, נייר = עוד לא הגענו
+  applyMenuLayout();
+  renderFujiScene({ st, learned, color: player ? player.color : '#dc2626', suit: (shopItem(getEquip().suit) || {}).swatch });
+  placeSideBoard();
+  requestAnimationFrame(() => { renderFujiScene(); placeSideBoard(); });      // שוב אחרי שהמסך מוצג – במידות האמיתיות
+  $('jSt').textContent = 'Station ' + st + ' of ' + (WORDS.length - 1) + ' · Record ' + pLoad('jbest_' + diffKey, 0);
   $('jMsg').textContent = pend ? '🔓 ' + pend.toUpperCase() + ' is waiting for you in training!' : st >= WORDS.length - 1 ? 'All words unlocked – how far can you go?' : 'Next station unlocks ' + WORDS[st + 1].toUpperCase();
-  $('jGo').textContent = pend ? '🥋 Learn ' + pend.toUpperCase() : st > 0 ? '▶ Continue from 🚩' + st : '▶ Start the journey';
+  $('jGo').textContent = pend ? 'Learn ' + pend.toUpperCase() : st >= WORDS.length - 1 ? 'Climb again' : st > 0 ? 'Climb to station ' + (st + 1) : 'Start the climb';
   $('jGo').disabled = !model;
   $('jRestart').classList.toggle('hide', st === 0 || !!pend);
   $('jRestart').disabled = !model;
@@ -53,17 +46,19 @@ function renderMenu() {
     const b = document.createElement('button');
     b.className = 'stage' + (unlocked ? '' : ' locked') + (w === pend ? ' pend' : '');
     b.disabled = !model || !unlocked;
-    b.innerHTML = '<div class="num">' + (unlocked ? WORD_ICON[w] : '🔒') + '</div>' +
+    b.innerHTML = '<span class="stNo">' + WORDS.indexOf(w) + '</span>' +                // מספר התחנה במסלול על ההר
+                  '<div class="num">' + (unlocked ? WORD_ICON[w] : '🔒') + '</div>' +
                   '<div class="info"><div class="name">' + w.toUpperCase() + '</div>' +
                   '<div class="stars">' + (unlocked ? '★'.repeat(got) + '☆'.repeat(3 - got) : '&nbsp;') + '</div></div>';
     b.onclick = () => play('stage', i);
     box.appendChild(b);
   });
-  $('hintTgl').textContent = hintsOn() ? '💡 Hints: ON' : '💡 Hints: OFF';
+  $('hintTgl').textContent = hintsOn() ? 'Hints: ON' : 'Hints: OFF';
   $('hintTgl').classList.toggle('off', !hintsOn());
   $('freeBtn').disabled = !model;
   $('shopBtnCoins').textContent = isTester() ? '∞' : coinsNow();
   $('orderBtn').classList.toggle('hide', !isTester());
+  $('coinAdmBtn').classList.toggle('hide', !isTester());
 }
 $('jGo').onclick = continueJourney;
 $('jRestart').onclick = () => play('journey', 0);

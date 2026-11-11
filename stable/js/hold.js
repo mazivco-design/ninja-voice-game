@@ -16,52 +16,75 @@ function stalkX(o, i) { return o.x + GUST.stalks[i]; }
 
 // עוצמת הרוח עכשיו (0..1) – לבמבוק ברקע ולאפקטים
 let windLevel = 0;
+let gustApproach = 0;   // 0..1 – כמה קרוב לחורשה (הרוח מאטה את הריצה בהדרגה)
+let walkPh = 0;         // שלב הצעדים בהליכה נגד הרוח
+let gustAdv = 0;        // כמה הנינג'ה התקדם על המסך בזמן ההאטה – כדי שהמאבק יהיה קרוב יותר למרכז
+const GUST_ADV = 24;
 function windNow() { return windLevel; }
 let tornado = null;   // { x, k (גודל), a (שקיפות) }
 
 function gustUpdate(dt, pb) {
-  const grove = obstacles.find(o => o.type === 'gust' && !o.passed && !o.hit && stalkX(o, 2) - pb.r <= GUST.near && stalkX(o, 0) > pb.l - 40);
+  const grove = obstacles.find(o => o.type === 'gust' && !o.passed && !o.hit && stalkX(o, 2) - pb.r <= GUST.near + GUST_ADV && stalkX(o, 0) > pb.l - 40);
   let target = 0;
-  if (grove && !gust) {                                                          // מתקרבים: הטורנדו מופיע רחוק מימין
-    const q = 1 - Math.max(0, stalkX(grove, 2) - pb.r - GUST.stopAt) / (GUST.near - GUST.stopAt);
-    target = 0.25 * q;
+  gustApproach = 0;
+  if (!gust) gustAdv = Math.max(0, gustAdv - dt * 30);
+  if (grove && !gust) {                                                          // מתקרבים: הטורנדו מופיע רחוק מימין, והרוח מאטה את הנינג'ה בהדרגה
+    const q = 1 - Math.max(0, stalkX(grove, 2) - pb.r - GUST_ADV - GUST.stopAt) / (GUST.near - GUST.stopAt);
+    gustApproach = q;
+    gustAdv = GUST_ADV * q * q * (3 - 2 * q);                                   // העולם מאט – והנינג'ה ממשיך לצעוד קדימה על המסך
+    target = 0.3 * q;
+    walkPh += dt * (6 + 4 * (1 - q));
     if (!tornado) tornado = { x: W + 22, k: 0.55, a: 0 };
     tornado.a = Math.min(1, tornado.a + dt * 1.5);
+    tornado.x = lerp(W + 22, W - 22, q);                                         // הטורנדו נכנס מקצה המסך בזמן ההתקרבות
   }
   if (gust) target = gust.k;
   windLevel += (target - windLevel) * Math.min(1, dt * 4);
   if (windLevel < 0.003) windLevel = 0;
+  windSound(windLevel);                                                          // רעש רוח שמתחזק עם הרוח
   gustEffects(dt);
   if (!gust) {
-    if (grove && stalkX(grove, 2) - pb.r <= GUST.stopAt) {
-      gust = { o: grove, phase: 'storm', t: 0, k: 0.25, gx: 0, vx: 0, lift: 0, held: null, want: grove.holdWant ? GUST.want : 0, ang: 0 };
+    if (grove && stalkX(grove, 2) - (pb.r + gustAdv) <= GUST.stopAt) {
+      gust = { o: grove, phase: 'storm', t: 0, k: 0.25, gx: gustAdv, vx: 0, lift: 0, held: null, want: grove.holdWant ? GUST.want : 0, ang: 0 };
       if (!tornado) tornado = { x: W + 22, k: 0.55, a: 1 };
-      duckT = 0; sfx('wind');
+      gustAdv = 0;                                                              // מכאן ההתקדמות על המסך נשמרת ב-gust.gx (בלי לספור אותה פעמיים)
+      duckT = 0;
     } else if (!grove && tornado) { tornado.a -= dt * 2; if (tornado.a <= 0) tornado = null; }
     return;
   }
   const g = gust, o = g.o, B = gustBuild(); g.t += dt;
   if (!obstacles.includes(o)) { gust = null; tornado = null; return; }
   if (g.want > 0) g.want -= dt;
+  if (g.snap) { g.snap *= Math.exp(-dt * 10); if (Math.abs(g.snap) < 0.02) g.snap = 0; }   // הידיים מחליקות אל הקנה (בלי קפיצה)
   if (g.phase === 'storm') {
     const total = B + GUST.peak;
     g.k = g.t < B ? 0.3 + 0.7 * (g.t / B) : 1;
     tornado.x = lerp(tornado.x, PLAYER.x + 58, Math.min(1, dt * 1.2));          // הטורנדו מתקרב ונעצר מימין לנינג'ה
     tornado.k = Math.min(1, tornado.k + dt * 0.4);
     if (g.held === null) {
-      const push = Math.max(0, g.k - 0.45) / 0.55;                              // מתחיל להיסחף כשהרוח חזקה
-      g.vx = -GUST.push * push * push;
-      g.gx += g.vx * dt;
-      g.lift = Math.max(0, (push - 0.55) * 22);                                 // ברוח החזקה – מתרומם מהקרקע
+      if (g.t < B) {                                                            // מנסה ללכת מכופף נגד הרוח – ובכל זאת נדחף אחורה לאט
+        const gp = Math.pow(Math.max(0, Math.sin(g.t * 4.6 - 0.8)), 2);       // משבים: רגעי שקט לסירוגין עם דחיפות חזקות
+        const base = 4 + 19 * g.k * g.k;
+        g.gp = gp;
+        g.vx = -base * (0.3 + 1.7 * gp) + 3.5 * (1 - gp) * (1 - 0.6 * g.k);       // בשקט – מצליח להתקדם קצת; במשב – נזרק אחורה
+        g.lift = 0;
+        walkPh += dt * (7 + 7 * gp);                                            // במשב הרגליים מדשדשות מהר יותר
+        if (gp > 0.45 && Math.random() < dt * 22)                              // אבק מתחת לרגליים שמחליקות אחורה
+          particles.push({ x: PLAYER.x + 4 + g.gx + (Math.random() - 0.5) * 3, y: GROUND - 0.4, vx: -25 - 30 * gp, vy: -4 - Math.random() * 5, g: 10, life: 0.5, color: 'rgba(214,211,209,.85)', size: 0.9 + Math.random() * 0.8 });
+      } else {                                                                  // המשב החזק: מתרומם ועף אחורה
+        const e = Math.min(1, (g.t - B) / 0.5);
+        g.vx = -GUST.push * (0.35 + 0.65 * e); g.lift = Math.min(10, (g.t - B) * 18);
+      }
+      g.gx = Math.min(GUST_ADV + 3, g.gx + g.vx * dt);                                    // בשקט מתקדם קצת, אבל לא עובר את החורשה
       if (g.want > 0) {                                                         // HOLD: נתפס בקנה שבהישג יד
         const hand = PLAYER.x + 4 + g.gx + 3;
         let best = null;
         GUST.stalks.forEach((_, i) => { const d = Math.abs(stalkX(o, i) - hand); if (d <= GUST.reach && (best === null || d < best.d)) best = { i, d }; });
-        if (best) { g.held = best.i; g.want = 0; g.vx = 0; sfx('coin'); burst(stalkX(o, best.i), GROUND - GUST.grip, '#a3e635', 6, 16); }
+        if (best) { g.snap = (PLAYER.x + 4 + g.gx) - (stalkX(o, best.i) - 0.8); g.held = best.i; g.want = 0; g.vx = 0; sfx('coin'); burst(stalkX(o, best.i), GROUND - GUST.grip, '#a3e635', 6, 16); }
       }
       if (PLAYER.x + 4 + g.gx < -8) {                                           // עף מהמסך – פגיעה
         g.phase = 'lost'; g.t = 0;
-        if (o.demo) { flash = { text: HIT_WORD.gust, t: 1.2 }; o.hit = true; } else onHit(o);
+        if (o.demo) { flash = { text: HIT_WORD.gust, t: 1.2 }; o.hit = true; } else onHit(o);   // onHit אומר HOLD בקול
         return;
       }
     }
@@ -78,12 +101,12 @@ function gustUpdate(dt, pb) {
     if (g.t >= GUST.calm) {
       tornado = null; g.k = 0;
       if (!o.demo) cleared(o); else o.passed = true;
-      g.phase = 'back'; g.t = 0; g.from = g.held !== null ? stalkX(o, g.held) - (PLAYER.x + 4) - 3 : g.gx; g.held = null; g.lift = 0;
+      g.phase = 'back'; g.t = 0; g.from = g.held !== null ? stalkX(o, g.held) - (PLAYER.x + 4) - 1.5 : g.gx; g.gx = g.from; g.held = null; g.lift = 0;   // ממשיך בדיוק מהמקום שבו עמד
     }
   } else if (g.phase === 'lost') {                                              // מחוץ למסך – מחכים שהסערה תיגמר
     g.k = g.t < 1.0 ? 1 : Math.max(0, 1 - (g.t - 1.0) / 0.7);
     tornado.a = Math.min(1, g.k + 0.1); tornado.k = Math.max(0.3, g.k);
-    if (g.t >= 1.7) { tornado = null; g.phase = 'back'; g.t = 0; g.from = -PLAYER.x - 14; g.lift = 0; g.k = 0; }
+    if (g.t >= 1.7) { tornado = null; g.phase = 'back'; g.t = 0; g.from = -PLAYER.x - 14; g.gx = g.from; g.lift = 0; g.k = 0; }
   } else if (g.phase === 'back') {                                              // רץ חזרה למקום הרגיל
     const e = Math.min(1, g.t / GUST.back);
     g.gx = g.from * (1 - e);
@@ -96,12 +119,12 @@ function gustUpdate(dt, pb) {
 function holdCmd() {                                                            // HOLD: נתפס בקנה הקרוב (או יתפס ברגע הקרוב, כשיגיע לקנה)
   if (gust) { if (gustActive()) gust.want = GUST.want; return; }
   const pb = playerBox();
-  const o = obstacles.find(o => o.type === 'gust' && !o.passed && !o.hit && stalkX(o, 2) - pb.r <= 48 && stalkX(o, 0) > pb.l - 40);
+  const o = obstacles.find(o => o.type === 'gust' && !o.passed && !o.hit && stalkX(o, 2) - (pb.r + gustAdv) <= 48 && stalkX(o, 0) > pb.l - 40);
   if (o) o.holdWant = true;
 }
 
 function gustOff() {                                                            // כמה הנינג'ה זז מהמקום הרגיל (נסחף אחורה / רץ חזרה)
-  if (!gust) return 0;
+  if (!gust) return gustAdv;
   if (gust.held !== null && gust.phase !== 'back') return 0;                    // מחזיק – מצויר מהקנה
   return gust.gx;
 }
@@ -199,12 +222,26 @@ function drawGustBamboo(o) {
 }
 
 /* ---------- הנינג'ה בסערה ---------- */
+// הליכה מכופפת נגד הרוח. k = חוזק הרוח, gp = משב עכשיו (0..1): בשקט נשען קדימה, במשב הגוף נדחף לאחור והיד מכסה את הפנים
+function poseStruggle(k, gp) {
+  const R = poseRun(walkPh);
+  R.lean = 0.45 + 0.35 * k - 0.35 * gp; R.spine = 0.3 - 0.15 * gp; R.headTilt = -0.4 + 0.25 * gp;
+  R.bob = (R.bob || 0) * 0.5;
+  R.arms = [[-0.9 - 0.6 * gp, -0.4 - 0.4 * gp], [1.75 + 0.2 * gp, 2.9]];
+  R.eyes = gp > 0.5 || k > 0.8 ? 'wide' : 'squint';
+  return R;
+}
+function gustSlow() { return gust ? 1 : 1 - 0.72 * gustApproach * gustApproach; }   // מהירות העולם כשמתקרבים לטורנדו
+
 function gustPlayerPose(P, now) {
+  if (!gust && gustApproach > 0.4) return poseStruggle(0.6 * gustApproach, 0);   // עוד לפני העצירה – עובר מריצה להליכה מאומצת
   if (!gust || gust.held !== null) return P;
   const g = gust;
   if (g.phase === 'back') { const R = poseRun(now * 14); R.lean = 0.3; return R; }   // רץ חזרה
   if (g.phase === 'storm' && g.lift > 1) { const F = poseFly(now * 3); F.lean = -0.7; F.eyes = 'wide'; F.headTilt = 0.4; return F; }   // עף אחורה
-  if (g.phase === 'storm') { P.lean = (P.lean || 0) + 0.35 * g.k; P.eyes = g.k > 0.6 ? 'wide' : 'squint'; }   // נאבק ברוח
+  if (g.phase === 'storm') {                                                    // הולך מכופף נגד הרוח: צעדים איטיים, ראש למטה, יד מגינה על הפנים
+    return poseStruggle(g.k, g.gp || 0);
+  }
   return P;
 }
 // מצייר את הנינג'ה כשהוא מחזיק בקנה (רק הידיים על הקנה, הגוף באוויר) או עף. מחזיר true אם צויר כאן
@@ -218,7 +255,7 @@ function drawGustNinja() {
                        arms: [[Math.PI - 0.08, Math.PI - 0.05], [Math.PI + 0.06, Math.PI + 0.04]],          // שתי ידיים ישרות מעל הראש – על הקנה
                        legs: [[-0.2 + Math.sin(now * 15) * 0.35 * g.ang, -0.1], [0.15 - Math.sin(now * 15 + 1.5) * 0.35 * g.ang, 0.05]] });   // רגליים מתנופפות
     const [lx, ly] = handAt(0, 0, 1, 1, P);                                     // איפה הידיים ביחס לכפות הרגליים
-    const hx = stalkX(g.o, g.held) - 0.8, hy = GROUND + ly;                     // הידיים על הקנה, בגובה שבו הרגליים נוגעות בקרקע כשעומדים
+    const hx = stalkX(g.o, g.held) - 0.8 + (g.snap || 0), hy = GROUND + ly;                     // הידיים על הקנה, בגובה שבו הרגליים נוגעות בקרקע כשעומדים
     ctx.save(); ctx.translate(hx, hy); ctx.rotate(g.ang + flap);              // הגוף נמשך שמאלה עם הרוח – עד שהוא אופקי באוויר
     drawFigure({ fx: -lx, fy: -ly, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
     ctx.restore();

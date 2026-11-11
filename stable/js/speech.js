@@ -77,10 +77,10 @@ async function ensureAudio() {
 // מילה אחרת מחכה לתוצאה הסופית, שמגיעה עם ציון ביטחון: ציון גבוה – מופעלת (וזו טעות, כמו היום). ציון נמוך – כנראה בלבול עם מילה דומה, מתעלמים.
 // אם Vosk "מתקן" את המילה האחרונה (שמע down ואז הבין שזה jump) – מטפלים במילה המתוקנת.
 function handleText(text, isFinal, detail) {
-  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up';
+  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'yes' || w === 'sneak' || w === 'put down' || w === 'put on' || w === 'ring' || w === 'brake' || w === 'get off' || POWER_WORDS.includes(w);
   const { words, confs } = tokenize(text, detail);
-  const exp = expectedWords();
   for (let i = 0; i < words.length; i++) {
+    const exp = expectedWords();                                   // מחושב לכל מילה – "I WANT KEY": אחרי WANT מצפים כבר לשם החפץ
     const w = words[i], conf = confs ? confs[i] : undefined, fresh = i >= seenWords.length || (i === words.length - 1 && w !== seenWords[i].w);
     if (!isFinal) {
       if (!fresh) continue;
@@ -108,22 +108,34 @@ function handleText(text, isFinal, detail) {
 
 // מפרק את הטקסט למילים של המשחק. "let go" (שתי מילים אצל Vosk) הופך למילה אחת 'let go', עם הציון הנמוך מבין השתיים
 function tokenize(text, detail) {
-  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up';
+  const ok = w => WORDS.includes(w) || ITEM_WORDS.includes(w) || w === 'up' || w === 'yes' || w === 'sneak' || w === 'put down' || w === 'put on' || w === 'ring' || w === 'brake' || w === 'get off' || POWER_WORDS.includes(w);
   const toks = (text || '').toLowerCase().split(/\s+/).filter(Boolean);
   const dconf = detail && detail.length ? detail.map(d => d.conf) : null;
   const words = [], confs = [];
   for (let i = 0; i < toks.length; i++) {
-    if (toks[i] === 'let' && toks[i + 1] === 'go') { words.push('let go'); confs.push(dconf ? Math.min(dconf[i], dconf[i + 1]) : undefined); i++; }
+    const pair = toks[i] + ' ' + toks[i + 1];
+    if (pair === 'jump in') { words.push('jump'); confs.push(dconf ? Math.max(dconf[i], dconf[i + 1]) : undefined); i++; }   // JUMP IN (סירה / עגלה) = JUMP
+    else if (pair === 'let go' || pair === 'pick up' || pair === 'put down' || pair === 'put on' || pair === 'get off') { words.push(pair); confs.push(dconf ? Math.min(dconf[i], dconf[i + 1]) : undefined); i++; }
     else if (ok(toks[i])) { words.push(toks[i]); confs.push(dconf ? dconf[i] : undefined); }
   }
   return { words, confs: dconf ? confs : null };
 }
 
 // המילים שמתאימות למכשולים שעל המסך לפני הנינג'ה (ולסוחר). אם אין כלום – כל המילים של השלב
-function expectedWords() {
-  if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? ['want'] : merchant.phase === 'choose' ? [...ITEM_WORDS] : [];
+function expectedWords() { return [...expectedWords0(), ...powerWordsOwned()]; }   // SHIELD / JET – תמיד מופעלות מיד
+function expectedWords0(strict) {                                              // strict – בלי ברירת המחדל "כל המילים"
+  if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? (merchant.t >= MERCH.askAt ? ['want'] : []) : merchant.phase === 'choose' ? (merchant.t >= MERCH.pickAt ? [...ITEM_WORDS] : []) : [];
   if (duelActive()) return ['fight'];
+  const me = mudExpected(); if (me) return me;
+  const be = boatExpected(); if (be) return be;
+  const ce = cartExpected(); if (ce) return ce;
+  const bre = boarExpected(); if (bre) return bre;
+  const bke = bkExpected(); if (bke) return bke;
+  const wfe = wfExpected(); if (wfe) return wfe;
+  const jse = jsExpected(); if (jse) return jse;
   if (gustActive()) return ['hold'];
+  const le = liftExpected(); if (le) return le;
+  if (tunnelWait) return ['crawl'];
   if (ride && ride.phase === 'wait') return ['ride'];
   if (ride && (ride.phase === 'mount' || ride.phase === 'takeoff')) return ['up', 'down', 'fire'];
   if (rope && rope.phase !== 'done') return rope.phase === 'wait' ? ['catch'] : rope.phase === 'hang' ? ['let go'] : [];
@@ -132,14 +144,50 @@ function expectedWords() {
     if (o.passed || o.hit || o.caught || o.x + (o.w || 0) < pb.l || o.x > W + 10) continue;
     for (const w of OBSTACLE_WORDS[o.type] || []) if (!out.includes(w)) out.push(w);
   }
-  return out.length ? out : [...listenWords];
+  return out.length || strict ? out : [...listenWords];
 }
 
+// מילה נכונה שנאמרה מוקדם מדי: לא נפסלים על זה – שומרים אותה ומפעילים בדיוק כשמגיעים למכשול
+const EARLY_TYPES = ['box', 'beam', 'wall', 'cliff', 'boulder', 'gate', 'window', 'tramp', 'bramble', 'lake', 'bridge', 'river', 'pond'];
+let earlyWord = null;   // { o, w }
+let okBadge = null;     // { w, t } – תג ירוק קצר: המילה הנכונה נקלטה
+function nextObstacle() {
+  const pb = playerBox(); let next = null;
+  for (const o of obstacles) if (!o.passed && !o.hit && !o.caught && o.x + (o.w || 0) > pb.l && (!next || o.x < next.x)) next = o;
+  return next;
+}
+function earlyHold(w) {
+  const o = nextObstacle();
+  if (!o || !EARLY_TYPES.includes(o.type) || !(OBSTACLE_WORDS[o.type] || []).includes(w)) return false;
+  if (o.type === 'river' && w === 'fly') {                                      // JUMP + FLY מוקדם: FLY מחכה לקפיצה
+    if (earlyWord && earlyWord.o === o) { earlyWord.then = 'fly'; return true; }
+    return false;
+  }
+  if (typeof autoFireNow === 'function' && autoFireNow(o, playerBox())) return false;   // כבר בטווח – מפעילים עכשיו
+  earlyWord = { o, w }; return true;
+}
+function earlyUpdate(dt) {
+  if (okBadge && (okBadge.t -= dt) <= 0) okBadge = null;
+  const e = earlyWord; if (!e) return;
+  if (e.o.passed || e.o.hit || !obstacles.includes(e.o) || state !== 'play') { earlyWord = null; return; }
+  if (e.flyAt !== undefined) { if ((e.flyAt -= dt) <= 0) { earlyWord = null; command('fly', 'early'); } return; }
+  if (autoFireNow(e.o, playerBox())) {
+    command(e.w, 'early');
+    if (e.then === 'fly') { e.flyAt = 0.3; e.w = 'fly'; } else earlyWord = null;
+  }
+}
+// מילה "תועה": המכשול הבא בדרך (גם אם עוד רחוק) לא צריך אותה – למשל RUN ששמענו בטעות לפני קיר, שהיה מאיץ את הנינג'ה לתוכו
+function strayWord(w) {
+  const pb = playerBox(); let next = null;
+  for (const o of obstacles) if (!o.passed && !o.hit && !o.caught && o.x + (o.w || 0) > pb.l && (!next || o.x < next.x)) next = o;
+  return !!next && !(OBSTACLE_WORDS[next.type] || []).includes(w);
+}
 // בזמן שהמילון מקריא מילה, המיקרופון שומע אותה – לא מפעילים אותה פעמיים
-let ignoreVoiceUntil = 0, lastLoudT = -1e9;
+let ignoreVoiceUntil = 0, lastLoudT = -1e9, voiceSaid = '';
 let listenWords = [...WORDS];          // המילים שהזיהוי מקשיב להן במשחק הנוכחי
 function voiceCommand(w, how, conf, text) {
-  if (performance.now() < ignoreVoiceUntil) { dbg('heard', w + ' (ignored – speaker)'); voiceLog(w, 'speaker', conf, text); return; }
+  // רק מילה שהמשחק עצמו אומר עכשיו נחשבת הד מהרמקול – מילה אחרת של הילד עוברת
+  if (performance.now() < ignoreVoiceUntil && new RegExp('(^|[^a-z])' + w + '([^a-z]|$)').test(voiceSaid)) { dbg('heard', w + ' (ignored – speaker)'); voiceLog(w, 'speaker', conf, text); return; }
   if (!listenWords.includes(w)) { dbg('heard', w + ' (ignored – not in this stage)'); voiceLog(w, 'off', conf, text); return; }
   // מילה מתקבלת רק אם המיקרופון קלט קול ברור בשנייה וחצי האחרונות – לא רעש חלש ברקע
   if (performance.now() - lastLoudT > 2500) { dbg('heard', w + ' (ignored – too quiet)'); voiceLog(w, 'quiet', conf, text); return; }
@@ -232,28 +280,44 @@ function updateMic() {
    ============================================================ */
 function command(word, source) {
   dbg('command', word + ' (' + source + ')');
+  if (state === 'sushi') { if (word === 'catch') sushiCatch(); return; }   // בונוס סושי
   if (state !== 'play' && !((state === 'demo' || state === 'intro') && source === 'demo')) return;   // במילון ובהדגמה – רק ההדגמה מזיזה את הנינג'ה
   heard = { text: word.toUpperCase(), t: 0.8 };
+  if (bkCmd(word)) return;                 // אופניים: RIDE / RING / JUMP / BRAKE / STOP / GET OFF
+  if (wfCmd(word)) return;                 // זאבים: CATCH / HOLD / LET GO
+  if (jsCmd(word)) return;                 // שלב תרמיל הסילון: PICK UP / PUT ON / FLY / UP / DOWN
+  if ((source === 'voice' || source === 'tap') && state === 'play' && expectedWords0(true).includes(word)) okBadge = { w: word, t: 1.0 };   // פידבק: נקלט נכון
+  if ((source === 'voice' || source === 'tap') && earlyHold(word)) { okBadge = null; return; }   // מילה נכונה שנאמרה מוקדם – נשמרת ומופעלת כשמגיעים למכשול
 
   if (word === 'jump') {
+    if (mudBusy()) return;                 // תקוע בבוץ – אי אפשר לקפוץ
+    if (boatJump()) return;                // קופץ לתוך הסירה
+    if (cartJump()) return;                // קופץ לתוך העגלה
+    if (liftJump()) return;                // על הסלע – קופץ מעל הקיר / אל הכוכב
     if (py === 0) { vy = cfg.jumpV; py = 0.001; duckT = 0; sfx('jump'); }   // קופץ גם מתוך התכופפות
   } else if (word === 'up') { rideLane(true); }                       // UP – הדרקון עולה לגובה העליון
   else if (word === 'ride') { rideCmd(); }                             // RIDE – עולים על הדרקון
   else if (word === 'down') {
     if (rideLane(false)) return;           // על הדרקון – יורדים לגובה התחתון
+    if (strayWord('down')) return;         // DOWN ששמענו בטעות – המכשול הבא צריך מילה אחרת: לא עושים כלום (שלא יפיל באמצע קפיצה / טיסה)
     duckT = DUCK_TIME;                     // כל "down" נוסף מאריך את ההתכופפות
+    const bm = obstacles.find(o => o.type === 'beam' && !o.passed && !o.hit && o.x + (o.w || 0) > playerBox().l);   // אמר DOWN מוקדם לפני קורה – נשאר כפוף עד שעוברים אותה
+    if (bm && curSpeed() > 0) duckT = Math.max(DUCK_TIME, Math.min(3, (bm.x + (bm.w || 0) - playerBox().l) / curSpeed() + 0.15));
     flyT = 0;
     if (py > 0) vy = Math.min(vy, -60);    // באוויר – נוחת מהר
   } else if (word === 'kick') {
     kickT = KICK.time;                     // בעיטה – שוברת קיר שקרוב מספיק
     duckT = 0;
   } else if (word === 'throw') {
+    if (boatThrow()) return;               // FISHING: זורק את החכה
+    if (liftThrow()) return;               // PICK UP: זורק את החבל לבור (להצלת הגור)
     if (throwCd <= 0) {                    // זורק שוריקן קדימה
       const pb = playerBox();
       shurikens.push({ x: pb.r, y: pb.t + 5, rot: 0 });
       throwCd = SHURIKEN.cooldown; throwT = 0.25;
     }
   } else if (word === 'catch') {
+    if (mudCatch()) return;                // תופס את החבל שהחבר זרק לבוץ
     if (ropeCatch()) return;               // תופס את החבל מעל התהום
     catchT = 0.4;                          // תופס מטבע שקרוב מספיק
     const s = obstacles.find(o => o.type === 'coin' && !o.caught && !o.passed &&
@@ -265,11 +329,19 @@ function command(word, source) {
       burst(PLAYER.x + 4, GROUND - py - 16, '#f8fafc', 6);
     }
   } else if (word === 'stop') { act.stop = STOP_TIME; act.run = 0; }       // העולם עוצר
-  else if (word === 'run')   { act.run = RUN_BOOST.time; act.stop = 0; }   // דוהר מהר
+  else if (word === 'run')   { if (strayWord('run')) return; act.run = RUN_BOOST.time; act.stop = 0; }   // דוהר מהר – אבל RUN ששמענו בטעות ליד מכשול אחר לא מאיץ אל תוכו
+  else if (word === 'swim' && boatSwim()) {}                             // FISHING: נפל מהסירה – שוחה חזרה
   else if (word === 'swim')  { act.swim = SWIM_TIME; duckT = 0; }
-  else if (word === 'climb') { act.climbWant = 0.8; }                     // מטפס כשהנינג'ה מגיע לסולם (אם זה קורה בשנייה הקרובה)
+  else if (word === 'climb' && boarClimb()) {}                          // ביער – מטפס על העץ עם הענפים
+  else if (word === 'climb') { act.climbWant = 2.5; }                     // מטפס כשהנינג'ה מגיע לסולם (ההתקרבות איטית – ה-CLIMB לא פג בדרך)
+  else if (word === 'yes' && (boatYes() || cartYes())) {}                                         // YES – עונים לחבר בסירה
+  else if (word === 'push' && (boatPush() || cartPush())) {}                            // דוחפים את הסירה עם החבר
   else if (word === 'push')  { act.push = 0.6; duckT = 0; }
+  else if (word === 'pull' && boatPull()) {}                             // FISHING: מושך את הדג
+  else if (word === 'pull' && liftPull()) {}                             // מושך את הגור מהבור
   else if (word === 'pull')  { act.pull = 0.6; act.pullWant = GATE.want; duckT = 0; }   // מושך כשמגיעים לחבל
+  else if (word === 'sneak' && boarSneak()) {}                           // ביער – מתגנבים לעץ הבא
+  else if (word === 'hide' && boarHide()) {}                             // ביער – מאחורי העץ
   else if (word === 'hide')  { act.hide = HIDE_TIME; duckT = 0; }
   else if (word === 'block') { act.block = BLOCK_TIME; }
   else if (word === 'leap') {                                             // זינוק: אם יש חלון קרוב – מזנק כשמגיעים אליו
@@ -283,7 +355,11 @@ function command(word, source) {
   else if (word === 'fire') {                                            // כדור אש קדימה – שובר קיר קרח
     if (!(act.fireCd > 0)) { const pb = playerBox(); fireballs.push(rideCtl() ? { x: PLAYER.x + 23, y: GROUND - ride.py - 4, t: 0 } : { x: pb.r + 1, y: pb.t + 5, t: 0 }); act.fireCd = FIREBALL.cooldown; throwT = 0.25; duckT = 0; sfx('jump'); }
   }
-  else if (word === 'hold') holdCmd();                                    // HOLD – נתפס בגזע הבמבוק
+  else if (word === 'shield') shieldCmd();                                // SHIELD – בועת מגן (מהחנות)
+  else if (word === 'jet') jetCmd();                                      // JET – תרמיל סילון (מהחנות)
+  else if (word === 'hold') { if (!mudHold()) holdCmd(); }                                                  // HOLD – נתפס בגזע הבמבוק
+  else if (word === 'pick up') liftPick();                               // PICK UP – מרים את הסלע
+  else if (word === 'put down') liftPut();                               // PUT DOWN – מניח אותו
   else if (word === 'fight') fightCmd();                                  // FIGHT – הנפת חרב
   else if (word === 'let go') ropeLetGo();                               // LET GO – משחררים את החבל
   else if (word === 'want') merchantWant();                              // I WANT – הסוחר שואל: איזה?
@@ -293,7 +369,7 @@ function command(word, source) {
 
 // מקלדת – לבדיקה במחשב
 const KEYS = { KeyX: 'crawl', KeyA: 'leap', KeyV: 'dive', Space: 'jump', ArrowUp: 'jump', ArrowDown: 'down', KeyK: 'kick', KeyT: 'throw', KeyC: 'catch', KeyF: 'fly',
-               KeyS: 'stop', KeyR: 'run', KeyW: 'swim', KeyL: 'climb', KeyO: 'push', KeyU: 'pull', KeyH: 'hide', KeyB: 'block', KeyE: 'fire', KeyG: 'let go', KeyD: 'ride', KeyQ: 'up', KeyZ: 'fight', KeyY: 'hold' };
+               KeyS: 'stop', KeyR: 'run', KeyW: 'swim', KeyL: 'climb', KeyO: 'push', KeyU: 'pull', KeyH: 'hide', KeyB: 'block', KeyE: 'fire', KeyG: 'let go', KeyD: 'ride', KeyQ: 'up', KeyZ: 'fight', KeyY: 'hold', KeyI: 'shield', KeyJ: 'jet', KeyM: 'pick up', KeyN: 'put down' };
 window.addEventListener('keydown', e => {
   const tag = e.target && e.target.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;      // כותבים שם – לא מפעילים פקודות

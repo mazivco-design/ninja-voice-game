@@ -29,10 +29,45 @@ function resetAct() { for (const k in act) act[k] = 0; climbK = 0; leapWin = nul
 let hideT = 0;               // כמה זמן הנינג'ה כבר בשיח (לאנימציה)
 // מהירות העולם בפועל: STOP ו-CLIMB עוצרים אותו, RUN מאיץ
 function curSpeed() {
-  if (merchant && merchant.phase === 'walk') return speed * MERCHANT_WALK;   // עם המפתח ביד – הולכים לאט אל הדלת
+  const ls = liftSpeed(); if (ls !== null) return ls;
+  const mds = mudSpeed(); if (mds !== null) return mds;
+  const bts = boatSpeed(); if (bts !== null) return bts;
+  const cts = cartSpeed(); if (cts !== null) return cts;
+  const bos = boarSpeed(); if (bos !== null) return bos;
+  const bks = bkSpeed(); if (bks !== null) return bks;                     // אופניים
+  const wfs = wfSpeed(); if (wfs !== null) return wfs;                     // זאבים: עומדים על הסלע / עפים עם הכדור הפורח
+  const jss = jsSpeed(); if (jss !== null) return jss;                     // תרמיל סילון                   // ביער: הולכים מעץ לעץ / נצמדים לגזע                   // עגלה: דוחפים במעלה / דוהרים במורד                   // סירה: דוחפים / חותרים                   // HELP: תקוע בבוץ / נשלף החוצה
+  if (tunnelHolds()) return 0;                                            // CRAWL: עומד בפתח המחילה ומחכה
+  if (state !== 'play' && obstacles.some(o => o.type === 'bramble' && o.inTunnel)) return (runSpeed || cfg.speed) * BRAMBLE.slow;   // בהדגמה – זוחל לאורך המחילה                     // PICK UP: עומדים ליד הסלע / הולכים איתו לאט / על הסלע
+  const ms = merchSpeed(); if (ms !== null) return ms;                    // I WANT: הולכים עם החפץ / מטפסים על הצוק / עוברים במערה
   if (act.climb > 0) return CLIFF.ladder / CLIFF.time;         // על הסולם – מתקדמים לאט באלכסון
-  if (act.stop > 0 || act.pulling > 0 || act.hiding > 0 || (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') || (rope && rope.phase !== 'done') || rideHolds() || duelHolds() || gustHolds()) return 0;   // …או עומדים ליד הסוחר   // עוצרים / מושכים בחבל / מתחבאים בשיח
-  return speed * (act.run > 0 ? RUN_BOOST.mult : 1) * (crawling() ? BRAMBLE.slow : 1);
+  if (act.stop > 0 || act.pulling > 0 || act.hiding > 0 || (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') || (rope && rope.phase !== 'done') || rideHolds() || duelHolds() || gustHolds() || learnT > 0) return 0;   // learnT: עצירה קצרה אחרי פגיעה   // …או עומדים ליד הסוחר   // עוצרים / מושכים בחבל / מתחבאים בשיח
+  return speed * (act.run > 0 ? RUN_BOOST.mult : 1) * (crawling() ? BRAMBLE.slow : 1) * gustSlow() * approachSlow();   // approachSlow: מאט ומתקרב בהליכה לחבר בסירה / לילד בעגלה   // gustSlow: הרוח מאטה לפני הטורנדו
+}
+// מתקרבים לחבר בסירה / לילד עם העגלה / לדוכן הסוחר: מאטים בהדרגה ומגיעים בהליכה, לא בריצה שנעצרת בבת אחת
+const APPROACH = { from: 42, to: 8, walk: 9 };   // מתחילים להאט 42 יחידות לפני, ומ-8 לפני הולכים במהירות 9
+function approachDist() {
+  if (boat || cart || merchant || boarS || jetS || wolfS || bikeS || typeof obstacles === 'undefined') return Infinity;
+  const r = PLAYER.x + PLAYER.w; let d = Infinity;
+  for (const o of obstacles) {
+    if (o.passed || o.waving) continue;
+    if (o.type === 'boat') d = Math.min(d, boatStern(o) - BOAT.stepDX - r);
+    else if (o.type === 'cart') d = Math.min(d, o.x + o.cp - CART.stepDX - CART.watch - r);
+    else if (o.type === 'jetgap' && !o.passed) d = Math.min(d, o.x + JS.stop - r);
+    else if (o.type === 'bikeway' && !o.passed) d = Math.min(d, o.x + BK.stop - 5 + PLAYER.w / 2 - r);   // האופניים ליד העץ
+    else if (o.type === 'wolfden' && !o.passed) d = Math.min(d, o.x + WF.stop - r);   // הסלע הקטן מול הזאבים   // התרמיל ליד התהום
+    else if (o.type === 'boar' && !o.passed) d = Math.min(d, boarStandR(o, 0) - r);   // העץ הראשון ביער
+    else if (o.type === 'cliff' && !o.climbed && !o.hit) d = Math.min(d, o.x - CLIFF.ladder - CLIFF.range - r);   // הצוק עם הסולם: מאטים ומגיעים בהליכה
+    else if (o.type === 'gate' && !o.open && !o.lifting && !o.hit) d = Math.min(d, o.x - GATE.rope - r);   // השער עם החבל: מאטים לפני – יותר זמן להגיד PULL
+    else if (o.type === 'door' && !o.unlocked && !o.hit) d = Math.min(d, o.x - DOOR.stopAt - r);   // הדוכן של הסוחר
+  }
+  return d < -2 ? Infinity : d;
+}
+function approachSlow() {
+  const d = approachDist(); if (d >= APPROACH.from || !(speed > 0)) return 1;
+  const k = Math.max(0, Math.min(1, (d - APPROACH.to) / (APPROACH.from - APPROACH.to)));
+  const walk = Math.min(1, APPROACH.walk / speed);
+  return walk + (1 - walk) * k * k * (3 - 2 * k);
 }
 let bgX = 0, lastT = 0;
 let world = 0, shakeT = 0;
@@ -50,7 +85,15 @@ function dbg(key, val) {
 function renderDebug() {
   const esc = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   const rows = (typeof voiceLogRows !== 'undefined' ? voiceLogRows : []).slice(-25).reverse();
-  $('debug').innerHTML = '<div class="dbgText">' + esc(Object.entries(dbgLines).map(([k, v]) => k + ': ' + v).join('\n')) + '</div>' +
+  // גודל המסך כפי שהדפדפן מדווח – כדי להבין מתי הדף "נחתך" (למשל בכרום באייפד אחרי מעבר בין אפליקציות)
+  const vv = window.visualViewport, app = $('app'), r = n => Math.round(n);
+  const screenInfo = 'Screen: window ' + innerWidth + '×' + innerHeight +
+    ' · visible ' + (vv ? r(vv.width) + '×' + r(vv.height) + ' @' + r(vv.offsetLeft) + ',' + r(vv.offsetTop) + ' zoom ' + vv.scale.toFixed(2) : '–') +
+    ' · page ' + document.documentElement.clientWidth + '×' + document.documentElement.clientHeight +
+    ' · game ' + (app ? app.clientWidth + '×' + app.clientHeight : '–') +
+    ' · device ' + screen.width + '×' + screen.height + ' dpr ' + devicePixelRatio +
+    ' · ' + (/CriOS/.test(navigator.userAgent) ? 'Chrome' : /FxiOS/.test(navigator.userAgent) ? 'Firefox' : navigator.standalone ? 'Home screen' : 'Safari/other');
+  $('debug').innerHTML = '<div class="dbgText">' + esc(screenInfo) + '</div>' + '<div class="dbgText">' + esc(Object.entries(dbgLines).map(([k, v]) => k + ': ' + v).join('\n')) + '</div>' +
     '<div class="dbgHead">Heard log · ' + (typeof voiceLogRows !== 'undefined' ? voiceLogRows.length : 0) + ' <button id="vlogShare">Share</button><button id="vlogCopy">Copy</button><button id="vlogClear">Clear</button></div>' +
     '<div class="dbgText">' + (rows.length ? rows.map(r => esc(r.t + ' ' + r.st + ' @' + r.ob + '  ' + r.w + ' → ' + r.how + (r.c ? ' ' + r.c : '') + (r.res ? ' · ' + r.res : ''))).join('\n') : '(nothing yet)') + '</div>';
   $('vlogShare').onclick = () => voiceLogShare();

@@ -110,11 +110,17 @@ canvas { display: block; width: 100%; height: 100%; }
 .pcard .band { position: absolute; left: 0; right: 0; top: 10px; height: 6px; }
 .pcard .pname { font-weight: 900; font-size: clamp(16px, 2.4vh, 20px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pcard .pstats { font-size: 13px; color: #64748b; margin-top: 2px; }
-/* כניסה נסתרת לבודק: כפתור קטן ושקוף בפינה, צריך להחזיק אותו שנייה */
-.testerBtn { position: absolute; left: 12px; bottom: max(12px, env(safe-area-inset-bottom)); width: 46px; height: 46px; border: 0; border-radius: 50%;
-             background: rgba(255,255,255,.25); font-size: 22px; opacity: .5; -webkit-user-select: none; user-select: none;
-             -webkit-touch-callout: none; transition: opacity .2s, transform .2s; }
-.testerBtn.holding { opacity: .9; transform: scale(1.25); transition: opacity 1s, transform 1s; }
+/* כניסה לבודק: מסילה בתוך חלון השחקנים (מתחת ל-Manage players) ובחלון הוספת שחקן, גוררים את הידית עם 🧪 עד הקצה (קשה לעשות בטעות) */
+.testerSlide { position: relative; flex: none; margin-top: 12px; width: 170px; height: 48px; border-radius: 24px;
+               background: rgba(250,243,227,.82); border: 2px solid rgba(44,74,124,.35); box-shadow: 0 3px 0 rgba(44,74,124,.25);
+               -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; overflow: hidden; }
+.testerSlide .tsLabel { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; padding-right: 20px;
+               font: 700 16px "Zen Kaku Gothic New", system-ui, sans-serif; color: #2c4a7c; opacity: .75; letter-spacing: .04em; pointer-events: none; }
+.testerSlide .tsKnob { position: absolute; left: 3px; top: 3px; width: 38px; height: 38px; border-radius: 50%; background: #2c4a7c; color: #fff;
+               display: flex; align-items: center; justify-content: center; font-size: 19px; box-shadow: 0 2px 0 rgba(0,0,0,.25); cursor: grab;
+               transition: transform .25s ease-out; }
+.testerSlide.dragging .tsKnob { transition: none; cursor: grabbing; }
+.testerSlide.done .tsKnob { background: #e9b949; }
 .pcard .edit { position: absolute; top: 6px; right: 8px; font-size: 18px; display: none; }
 .managing .pcard .edit { display: block; }
 .managing .pcard { outline: 2px dashed #94a3b8; }
@@ -165,7 +171,7 @@ canvas { display: block; width: 100%; height: 100%; }
 /* חלונית דיבאג */
 #debug { position: absolute; left: 10px; bottom: 10px; max-width: min(440px, calc(100% - 20px)); background: rgba(15,23,42,.88);
          color: #e2e8f0; font: 12px/1.55 ui-monospace, Menlo, monospace; padding: 10px 12px; border-radius: 10px;
-         display: none; max-height: calc(100% - 80px); overflow: auto; }
+         display: none; z-index: 50; max-height: calc(100% - 80px); overflow: auto; }
 #debug.show { display: block; }
 #debug .dbgText { white-space: pre-wrap; }
 #debug .dbgHead { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.2); color: #fde047; display: flex; gap: 6px; align-items: center; }
@@ -196,7 +202,7 @@ canvas { display: block; width: 100%; height: 100%; }
 .trainLbl { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .hintTgl { border: 0; border-radius: 999px; padding: 3px 10px; font-weight: 800; font-size: clamp(11px, 1.6vh, 13px); background: #fef3c7; color: #92400e; text-transform: none; letter-spacing: 0; }
 .hintTgl.off { background: #e2e8f0; color: #64748b; }
-.stages.lessons { grid-template-columns: repeat(9, 1fr); }
+.stages.lessons { grid-template-columns: repeat(10, 1fr); }   /* 10 בשורה – שלוש שורות גם כשיש 28 שלבים */
 .stages.lessons .stage { background: #4f46e5; }
 .stages.lessons .stage.locked { background: #cbd5e1; }
 .stages.lessons .stage.pend { background: #f59e0b; animation: pulse 1.2s infinite; }
@@ -280,7 +286,7 @@ canvas { display: block; width: 100%; height: 100%; }
 }
 .jTrack { --c: clamp(26px, 4.2vh, 34px); }
 @media (max-aspect-ratio: 1/1) {
-  .stages.lessons { grid-template-columns: repeat(9, 1fr); }
+  .stages.lessons { grid-template-columns: repeat(10, 1fr); }   /* 10 בשורה – שלוש שורות גם כשיש 28 שלבים */
   .jTrack { row-gap: calc(var(--n) * 0.75); }
   .sideBoard { max-height: 21vh; }
   #menu .panel { max-height: calc(100% - 21vh - 14px); }
@@ -370,10 +376,25 @@ canvas { display: block; width: 100%; height: 100%; }
 
 /* 🧭 סדר התחנות (tester) */
 #orderList { display: flex; flex-direction: column; gap: 4px; max-height: min(56vh, 520px); overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior: contain; margin: 8px 0; }
-#orderList .orow { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background: #eef2ff; font-weight: 800; color: #1e293b; }
+#orderList .orow, #coinAdmList .orow { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background: #eef2ff; font-weight: 800; color: #1e293b; }
 #orderList .orow.lock { background: #f1f5f9; color: #94a3b8; }
 #orderList .orow .n { width: 26px; text-align: right; color: #64748b; font-variant-numeric: tabular-nums; }
-#orderList .orow .w { flex: 1; }
-#orderList .orow button { border: 0; border-radius: 8px; background: #c7d2fe; color: #1e293b; font: 800 15px system-ui; width: 38px; height: 32px; }
+#orderList .orow .w, #coinAdmList .orow .w { flex: 1; }
+#orderList .orow button, #coinAdmList .orow button { border: 0; border-radius: 8px; background: #c7d2fe; color: #1e293b; font: 800 15px system-ui; width: 38px; height: 32px; }
 #orderList .orow button:disabled { opacity: .25; }
+#coinAdmList { display: flex; flex-direction: column; gap: 4px; max-height: min(56vh, 520px); overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; margin: 8px 0; }
+#coinAdmList .orow .c { min-width: 54px; text-align: right; font-variant-numeric: tabular-nums; }
+#coinAdmList .orow button { width: auto; padding: 0 10px; }
+#coinAdmList .orow .w { text-align: left; }
 .free.order { background: linear-gradient(135deg, #64748b, #334155); color: #fff; }
+
+/* פריטים חד-פעמיים (SHIELD / JET): מונה קטן בפינה השמאלית התחתונה */
+#powerHud { position: absolute; z-index: 10; left: max(16px, env(safe-area-inset-left)); bottom: max(16px, env(safe-area-inset-bottom)); display: flex; gap: 8px; pointer-events: none; }
+#powerHud.hide { display: none; }
+#powerHud .pw { background: rgba(15,23,42,.55); color: #fff; border-radius: 999px; padding: 4px 12px; font-size: clamp(13px, 2vh, 17px); font-weight: 800; }
+#powerHud .pw b { font-weight: 900; letter-spacing: .04em; }
+#powerHud .pw.on { background: #0ea5e9; box-shadow: 0 0 0 3px rgba(255,255,255,.6); }
+.shopCount { font-size: clamp(11px, 1.6vh, 14px); font-weight: 800; color: #0f766e; }
+
+/* שורת הכפתורים (Free mix / Shop / Words) נשארת תמיד גלויה בתחתית התפריט, גם כשצריך לגלול */
+#menu .menuRow { position: sticky; bottom: 0; background: #fff; padding-top: 8px; padding-bottom: 2px; z-index: 2; }

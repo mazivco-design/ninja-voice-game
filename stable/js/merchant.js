@@ -1,50 +1,78 @@
 /* ninja-voice-game – merchant.js
-   I WANT: לפני דלת נעולה עומד סוחר עם עגלה. הוא שואל "What do you want?" ומציג את החפצים בקול ובהצבעה.
-   הילד אומר I WANT (העגלה נפתחת) ואז את שם החפץ. המפתח פותח את הדלת.
+   I WANT: לפני דלת נעולה עומד סוחר עם עגלה. הוא שואל פעם אחת "What would you like?" (בבועת קומיקס), והחפצים מוצגים עם השמות שלהם.
+   כשהוא מסיים לשאול – בועה מעל הנינג'ה עם מיקרופון מהבהב: תורך. בשני שלבים: I WANT – הסוחר שואל "Which one?" – ואז KEY. משפט שלם ונכון (I WANT A KEY) נקלט מיד.
+   אחרי שתיקה – המשחק אומר את המשפט בקול ומדגיש את החפץ הנכון.
+   מה שעומד אחרי הדוכן קובע מה לבקש (לסירוגין): דלת נעולה → KEY · צוק גבוה → ROPE (זורק חבל עם וו ומטפס) · מערה חשוכה → TORCH (לפיד שמאיר את הדרך).
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-let merchant = null;          // { o, phase: 'ask' | 'choose' | 'give' | 'walk' | 'open' | 'done', t, hi, bubble, item, said }
+let merchant = null;          // { o, phase: 'ask' | 'choose' | 'give' | 'walk' | 'open' | 'hook' | 'climb' | 'top' | 'down' | 'cave' | 'done', t, hi, bubble, item, said }
+const GATES = { key: { w: 15 }, rope: { w: 22, h: 38 }, torch: { w: 150, h: 24 } };   // הצוק / המערה
+let merchNext = 'key';
+function doorSetup(o) { o.need = merchNext; merchNext = { key: 'rope', rope: 'torch', torch: 'key' }[merchNext]; o.w = GATES[o.need].w; }
+function needOf(o) { return (o && o.need) || 'key'; }
 const MERCHANT_WALK = 0.4;    // מהירות ההליכה אל הדלת (חלק מהמהירות הרגילה)
 const KEY_HAND = { dx: 6, dy: 9 };   // איפה המפתח ביד הנינג'ה
 const MERCHANT_OFFER = ['key', 'rope', 'torch'];
-const SAY_ASK = [[0.3, -1, 'What do you want?'], [2.0, 0, 'I have ' + ITEMS.key.say], [3.3, 1, ITEMS.rope.say], [4.6, 2, 'and ' + ITEMS.torch.say], [5.9, -1, 'What do you want?']];
+// קודם אומרים שלום זה לזה (הסוחר מנופף, הנינג'ה מנופף בחזרה), ורק אז הסוחר שואל
+// ואז מציג בקול כל חפץ, לאט וברור, והחפץ נדלק בזמן שהוא אומר אותו
+const SAY_ASK = [[0.3, -1, 'merchant: hi there!'], [1.3, -1, 'ninja: hi!'], [2.4, -1, 'What would you like?'], [4.0, 0, 'merchant: i have a key'], [5.4, 1, 'merchant: a rope'], [6.8, 2, 'merchant: and a torch']];
+const GATE_CLIMB = 1.6;
+const MERCH = { pickAt: 0, askAt: 2.4, whichAt: 0.6, giveT: 2.0, thankT: 0.95, turn: 8.0, hint: 11.5, hintEvery: 7, choiceHint: 4 };   // turn: מתי מופיעה בועת "תורך" (אחרי שהשאלה נגמרה)
 
-function cartX(o) { return o.x - 32; }                        // העגלה עומדת לפני הדלת, והסוחר בינה לבין הדלת
+function cartX(o) { return o.x - 46; }                        // העגלה עומדת לפני הדלת, והסוחר בינה לבין הדלת
 const ITEM_GAP = 7;
 
 function merchantUpdate(dt, pb) {
   if (!merchant) {
     const d = obstacles.find(o => o.type === 'door' && !o.unlocked && !o.hit && o.x - pb.r <= DOOR.stopAt && o.x > pb.l);
-    if (d) { merchant = { o: d, phase: 'ask', t: 0, hi: -1, bubble: '', said: 0 }; duckT = 0; }
+    if (d) { merchant = { o: d, phase: 'ask', t: 0, hi: -1, bubble: '', said: 0, hinted: 0, bT: 0 }; duckT = 0; }
     return;
   }
-  const m = merchant; m.t += dt;
+  const m = merchant; m.t += dt; m.bT += dt;
   if (!obstacles.includes(m.o)) { merchant = null; return; }
-  if (m.phase === 'ask') {                                      // שואל ומציג את החפצים אחד אחרי השני
+  if (m.phase === 'ask') {                                      // שואל פעם אחת, ואז מחכה. החפצים מהבהבים בתורם (בלי קול) – רואים מה יש
     while (m.said < SAY_ASK.length && m.t >= SAY_ASK[m.said][0]) {
-      const [, hi, text] = SAY_ASK[m.said++]; m.hi = hi; m.bubble = text; speak(text);
+      const [, hi, text] = SAY_ASK[m.said++]; m.hi = hi; setBubble(m, text); speak(text);
     }
-    if (m.t > 14) { m.t = 0; m.said = 0; }                      // אם הילד שותק – שואל שוב
-  } else if (m.phase === 'give') {                              // החפץ עף מהעגלה לנינג'ה
-    if (m.t > 0.7) { m.phase = 'walk'; m.t = 0; }
-  } else if (m.phase === 'walk') {                              // הנינג'ה הולך עם המפתח עד הדלת
-    if (m.o.x - pb.r <= 1.5 || m.t > 6) { m.phase = 'open'; m.t = 0; }
-  } else if (m.phase === 'open') {                              // המפתח נכנס למנעול והדלת נפתחת
+    if (m.t > MERCH.turn && m.hinted === 0) m.hi = Math.floor((m.t - MERCH.turn) / 0.9) % MERCHANT_OFFER.length;
+    if (m.t >= MERCH.hint + m.hinted * MERCH.hintEvery && state === 'play') {   // שתיקה – המשחק אומר את המשפט ומדגיש את המפתח
+      m.hinted++; speak('want'); flash = { text: '🙋 I WANT…', t: 2 };       // קודם רק I WANT – את החפץ בוחרים אחרי שהסוחר שואל
+    }
+  } else if (m.phase === 'choose') {
+    const nd = needOf(m.o);
+    if (!m.asked && m.t >= MERCH.whichAt) { m.asked = 1; speak('which one?'); }
+    if (m.t >= MERCH.choiceHint + m.hinted * MERCH.hintEvery && state === 'play') { m.hinted++; m.hi = MERCHANT_OFFER.indexOf(nd); const ph = 'a ' + nd + ', please'; speak(VOICE_CLIPS[ph] ? ph : nd); flash = { text: ITEMS[nd].icon + ' A ' + nd.toUpperCase() + ', PLEASE!', t: 1.8 }; }   // מלמדים תשובה מנומסת (עד שיש הקלטה – רק שם החפץ)
+  } else if (m.phase === 'give') {                              // החפץ עף מהעגלה לנינג'ה, והנינג'ה מודה לסוחר בקידה קטנה
+    if (m.t > MERCH.thankT && !m.thanked) { m.thanked = 1; speak('ninja: thank you!'); }
+    if (m.t > MERCH.giveT) { m.phase = 'walk'; m.t = 0; }
+  } else if (m.phase === 'walk') {                              // הנינג'ה הולך עם החפץ עד הדלת / הצוק / המערה
+    if (m.o.x - pb.r <= 1.5 || m.t > 6) {
+      const over = pb.r - (m.o.x - 1.5); if (over > 0) ropeShiftBy(-over);
+      const nd = needOf(m.o); m.t = 0;
+      if (nd === 'key') m.phase = 'open';
+      else if (nd === 'rope') { m.phase = 'hook'; m.o.unlocked = true; sfx('swish'); }
+      else { m.phase = 'cave'; m.o.unlocked = true; sfx('clear'); }
+    }
+  } else if (m.phase === 'hook' && m.t > 0.7) { m.phase = 'climb'; m.t = 0; sfx('coin'); }   // הוו נתפס בקצה – מטפסים
+  else if (m.phase === 'climb' && m.t > GATE_CLIMB) { m.phase = 'top'; m.t = 0; }
+  else if (m.phase === 'top' && PLAYER.x > m.o.x + m.o.w - 1) { m.phase = 'down'; m.t = 0; vy = cfg.jumpV * 0.3; sfx('jump'); }   // קופץ מהצוק למטה
+  else if (m.phase === 'cave' && PLAYER.x > m.o.x + m.o.w + 1) { cleared(m.o); m.phase = 'done'; m.t = 0; m.hi = -1; } else if (m.phase === 'open') {                              // המפתח נכנס למנעול והדלת נפתחת
     if (m.t > 0.35 && !m.o.unlocked) { m.o.unlocked = true; m.o.uT = 0; sfx('clear'); burst(m.o.x + 2, GROUND - 14, '#facc15', 12, 30); cleared(m.o); }
-    if (m.t > 1.0) { m.phase = 'done'; m.bubble = 'Good luck!'; m.hi = -1; }
+    if (m.t > 1.0) { m.phase = 'done'; setBubble(m, 'Good luck!'); m.hi = -1; }
   }
   if (m.o.unlocked) m.o.uT = (m.o.uT || 0) + dt;
 }
 
 function merchantWant() {
-  const m = merchant; if (!m || m.phase !== 'ask') return;
-  m.phase = 'choose'; m.t = 0; m.hi = -1; m.bubble = 'Which one?'; speak('Which one?');
+  const m = merchant; if (!m || m.phase !== 'ask' || m.t < MERCH.askAt) return;   // עוד אומרים שלום
+  m.phase = 'choose'; m.t = 0; m.hi = -1; m.hinted = 0; m.asked = 0; setBubble(m, 'Which one?');   // "Which one?" נשמע רק אם החפץ לא נאמר כבר באותו משפט
 }
 function merchantItem(w) {
-  const m = merchant; if (!m || m.phase !== 'choose') return;  // צריך קודם להגיד I WANT
+  const m = merchant; if (!m || m.phase !== 'choose' || m.t < MERCH.pickAt) return;  // צריך קודם להגיד I WANT, ולחכות לשאלה "Which one?"
   m.hi = MERCHANT_OFFER.indexOf(w);
-  if (w === DOOR.needs) { m.phase = 'give'; m.t = 0; m.item = w; m.bubble = 'Here you go!'; speak('Here you go!'); sfx('coin'); return; }
-  m.bubble = 'Hmm… a ' + w + ' won\'t open the door!'; speak('Hmm, that won\'t open the door.');   // חפץ לא מתאים – מנסים שוב
+  if (w === needOf(m.o)) { m.phase = 'give'; m.t = 0; m.item = w; setBubble(m, 'Here you go!'); speak('Here you go!'); sfx('coin'); return; }
+  if (needOf(m.o) === 'key') { setBubble(m, 'Hmm… a ' + w + ' won\'t open the door!'); speak('Hmm, that won\'t open the door.'); }   // חפץ לא מתאים – מנסים שוב
+  else { setBubble(m, 'Hmm… a ' + w + ' won\'t help here!'); speak('Hmm, that won\'t help here.'); }
   shakeT = 0.2;
   if (state === 'play') hits++;
 }
@@ -53,6 +81,7 @@ function merchantItem(w) {
 // חפץ במרכז (x, y): חבל מצויר בקוד, השאר אמוג'י
 function drawItem(w, x, y) {
   if (w === 'rope') return drawRope(x, y);
+  if (w === 'torch') return drawTorchItem(x, y);
   ctx.font = '5.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = '#000'; ctx.fillText(ITEMS[w].icon, x, y);       // צבע אטום – אחרת האמוג'י יוצא שקוף
 }
@@ -101,20 +130,33 @@ function ropeStroke(pts, w, fill, line) {
   }
   ctx.stroke();
 }
-function drawBubble(text, x, y) {                               // בועת דיבור עם זנב למטה
-  ctx.font = '800 3.4px -apple-system, system-ui, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const w = ctx.measureText(text).width + 4, h = 6;
-  ctx.fillStyle = '#fff'; ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 0.35;
-  roundRect(x - w / 2, y - h, w, h, 2); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x + 1, y - 0.2); ctx.lineTo(x + 3.5, y + 2.2); ctx.lineTo(x + 3.6, y - 0.2); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#1e293b'; ctx.fillText(text, x, y - h / 2 + 0.2);
+function setBubble(m, text) { if (m.bubble !== text) { m.bubble = text; m.bT = 0; } }
+// בועת קומיקס: לבנה עם קו מתאר עבה, פינות עגולות, זנב משולש אל הדובר, ו"קפיצה" קטנה כשהיא מופיעה. tail: 1 = הזנב ימינה-למטה, -1 = שמאלה-למטה
+const BUBBLES = false;   // בועות הדיבור כבויות בכל המשחק (הקולות נשארים)
+function drawBubble(text, x, y, opt) {
+  if (!BUBBLES) return;
+  const o = opt || {}, size = (o.size || 4.2) * 0.88, pop = o.age === undefined ? 1 : Math.min(1, o.age / 0.18), sc = 0.6 + 0.4 * pop + Math.sin(Math.min(1, pop) * Math.PI) * 0.08;
+  ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc);
+  ctx.font = '800 ' + size + 'px -apple-system, system-ui, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = ctx.measureText(text).width + size * 1.6, h = size * 2, tail = o.tail || 1, tx = tail * Math.min(w / 2 - 2.5, 4);
+  ctx.lineJoin = 'round'; ctx.lineWidth = 0.32; ctx.strokeStyle = 'rgba(51,65,85,.75)'; ctx.fillStyle = o.fill || 'rgba(255,255,255,.96)';
+  ctx.shadowColor = 'rgba(15,23,42,.18)'; ctx.shadowBlur = 1.2; ctx.shadowOffsetY = 0.4;   // צל רך במקום קו עבה
+  ctx.beginPath();                                                // גוף הבועה + הזנב בצורה אחת – בלי קו באמצע
+  const r = h / 2.2, L = -w / 2, R = w / 2, T = -h - 2.4, B = -2.4;
+  ctx.moveTo(L + r, T); ctx.lineTo(R - r, T); ctx.quadraticCurveTo(R, T, R, T + r); ctx.lineTo(R, B - r); ctx.quadraticCurveTo(R, B, R - r, B);
+  ctx.lineTo(tx + 1.6 * tail, B); ctx.lineTo(tx + 2.8 * tail, 0.6); ctx.lineTo(tx - 0.4 * tail, B);   // הזנב
+  ctx.lineTo(L + r, B); ctx.quadraticCurveTo(L, B, L, B - r); ctx.lineTo(L, T + r); ctx.quadraticCurveTo(L, T, L + r, T); ctx.closePath();
+  ctx.fill(); ctx.shadowColor = 'transparent'; ctx.stroke();
+  ctx.fillStyle = o.color || '#111827'; ctx.fillText(text, 0, (T + B) / 2 + 0.2);
+  ctx.restore();
 }
 
 function drawMerchant(o) {
   const x = cartX(o), now = performance.now() / 1000, m = merchant && merchant.o === o ? merchant : null;
   // הסוחר עומד ליד העגלה, פונה אל הנינג'ה ומצביע על החפץ שהוא מדבר עליו
   const mx = x + 25.5, P = poseIdle(now);
-  if (m && m.hi >= 0 && m.phase !== 'done') P.arms[1] = [1.75 + (2 - m.hi) * 0.05, 1.85 + (2 - m.hi) * 0.05];   // יד מושטת לעבר החפץ
+  if (m && m.phase === 'ask' && m.t >= 0.25 && m.t < 1.3) P.arms[1] = waveArm(now);   // "Hi there!" – מנופף לנינג'ה
+  else if (m && m.hi >= 0 && m.phase !== 'done') P.arms[1] = [1.75 + (2 - m.hi) * 0.05, 1.85 + (2 - m.hi) * 0.05];   // יד מושטת לעבר החפץ
   ctx.fillStyle = '#7f1d1d'; ctx.fillRect(x + 0.5, GROUND - 22, 0.8, 22); ctx.fillRect(x + 19.7, GROUND - 22, 0.8, 22);   // עמודי הסוכך
   for (let k = 0; k < 7; k++) {                                // סוכך מפוספס
     ctx.fillStyle = k % 2 ? '#fef3c7' : '#dc2626';
@@ -145,20 +187,24 @@ function drawMerchant(o) {
     ctx.font = '900 2px -apple-system, system-ui, Arial, sans-serif'; ctx.fillStyle = lit ? '#fde047' : '#fff';
     ctx.fillText(w.toUpperCase(), ix, GROUND - 6.2);
   });
-  if (m && m.item && m.phase === 'give') {                      // החפץ עף לנינג'ה
-    const k = Math.min(1, m.t / 0.7), sx = x + 3.5 + MERCHANT_OFFER.indexOf(m.item) * ITEM_GAP, sy = GROUND - 13.4, ex = PLAYER.x + KEY_HAND.dx, ey = GROUND - KEY_HAND.dy;
+  if (m && m.item && m.phase === 'give' && m.t < 0.7) {         // החפץ עף לנינג'ה – אל כף היד
+    const k = Math.min(1, m.t / 0.7), sx = x + 3.5 + MERCHANT_OFFER.indexOf(m.item) * ITEM_GAP, sy = GROUND - 13.4, ex = playerHand[0], ey = playerHand[1];
     ctx.font = '4.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     drawItem(m.item, sx + (ex - sx) * k, sy + (ey - sy) * k - Math.sin(Math.PI * k) * 10);
   }
-  if (m && m.item && m.phase === 'walk') drawItem(m.item, PLAYER.x + KEY_HAND.dx, GROUND - KEY_HAND.dy - Math.abs(Math.sin(now * 9)) * 0.5);   // המפתח ביד בזמן ההליכה
   if (m && m.item && m.phase === 'open') {                      // המפתח טס אל המנעול
-    const k = Math.min(1, m.t / 0.35), sx = PLAYER.x + KEY_HAND.dx, sy = GROUND - KEY_HAND.dy, ex = o.x + 2, ey = GROUND - 14;
+    const k = Math.min(1, m.t / 0.35), sx = playerHand[0], sy = playerHand[1], ex = o.x + 2, ey = GROUND - 14;
     if (k < 1) { ctx.font = '4.4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; drawItem(m.item, sx + (ex - sx) * k, sy + (ey - sy) * k); }
   }
   // הסוחר מצויר אחרי העגלה – כדי שהיד המצביעה תיראה מעל הדוכן
   drawFigure({ fx: mx, fy: GROUND, facing: -1, scale: 1.15, kind: 'guard', friendly: true, pose: P,
                suit: { body: '#166534', back: '#14532d', front: '#15803d', edge: '#052e16' } });
-  if (m && m.bubble) drawBubble(m.bubble, mx - 4, GROUND - 26);
+  const myTurn = m && ((m.phase === 'ask' && m.t > MERCH.turn) || (m.phase === 'choose' && m.t > 1.1));   // תור הילד – הבועה של הסוחר נעלמת
+  if (m && m.bubble && !myTurn) drawBubble(m.bubble, mx - 4, GROUND - 25, { age: m.bT, tail: 1 });   // הסוחר מדבר
+  if (myTurn) {   // תורך! בועה מעל הנינג'ה עם מיקרופון מהבהב
+    const blink = Math.floor(now * 3) % 2, txt = (blink ? '🎤 ' : '🎙️ ') + (m.phase === 'ask' ? 'I WANT…' : 'KEY? ROPE? TORCH?');
+    drawBubble(txt, PLAYER.x + 9, GROUND - 22, { age: m.phase === 'ask' ? m.t - MERCH.turn : m.t - 1.1, tail: -1, fill: '#fef9c3', color: '#1d4ed8', size: 3.8 });
+  }
   if (!m && !o.unlocked && labelsVisible()) label('I WANT', x + 8, GROUND - 28, 4, '#fde047', '#1e293b');
 }
 
@@ -186,4 +232,237 @@ function drawDoor(o) {                                          // דלת עץ �
     ctx.fillStyle = '#facc15'; roundRect(x + 0.2, GROUND - 15.6, 3.6, 3.4, 0.6); ctx.fill();
     ctx.fillStyle = '#78350f'; circle(x + 2, GROUND - 14.3, 0.45); ctx.fillRect(x + 1.8, GROUND - 14.2, 0.4, 1);
   }
+}
+
+// חומת אבן גבוהה שהדלת בתוכה – מצוירת אחרי הנינג'ה. הפתח (הדלת) שקוף, כך שרואים אותו עובר בתוך הפתח
+const DOOR_WALL = { left: 0, right: 7, top: 62 };   // החומה מתחילה במסגרת הדלת – הנינג'ה שעומד לפני הדלת לא מוסתר
+function drawDoorWall(o) {
+  const x = o.x, w = DOOR.w, h = DOOR.h, dTop = GROUND - h - 3, top = GROUND - DOOR_WALL.top, L = x - 2 - DOOR_WALL.left, R = x + w + 2 + DOOR_WALL.right;
+  ctx.save();
+  ctx.beginPath();                                              // החומה כולה פחות הפתח
+  ctx.rect(L, top, R - L, GROUND - top); ctx.rect(x + w, dTop + 3, -w, h);   // מלבן הפתח בכיוון הפוך – "חור"
+  const g = ctx.createLinearGradient(L, 0, R, 0);
+  g.addColorStop(0, '#8b8178'); g.addColorStop(0.5, '#a39a90'); g.addColorStop(1, '#7d746b');
+  ctx.fillStyle = g; ctx.fill('evenodd'); ctx.clip('evenodd');
+  ctx.strokeStyle = 'rgba(60,52,45,.45)'; ctx.lineWidth = 0.4;  // שורות אבנים
+  for (let y = top + 4, r = 0; y < GROUND; y += 4, r++) {
+    ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(R, y); ctx.stroke();
+    for (let bx = L + (r % 2 ? 3.5 : 0); bx < R; bx += 7) { ctx.beginPath(); ctx.moveTo(bx, y - 4); ctx.lineTo(bx, y); ctx.stroke(); }
+  }
+  ctx.fillStyle = 'rgba(255,255,255,.08)'; for (let y = top + 0.5; y < GROUND; y += 8) ctx.fillRect(L, y, R - L, 1.2);
+  ctx.restore();
+  ctx.fillStyle = '#6b625a';                                    // שיניים בראש החומה
+  for (let bx = L; bx < R - 0.5; bx += 6) ctx.fillRect(bx, top - 3.5, 3.6, 3.6);
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(L, top, R - L, 0.8);
+  ctx.fillStyle = '#57534e'; ctx.fillRect(x - 2, dTop, w + 4, 3.2);   // משקוף מעל הפתח
+  ctx.fillRect(x - 2, dTop, 2, h + 3); ctx.fillRect(x + w, dTop, 2, h + 3);   // מסגרת
+  ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(x, dTop + 3, 1.2, h);           // צל בתוך הפתח
+}
+
+/* ---------- הצוק (ROPE) והמערה (TORCH) ---------- */
+// גובה הנינג'ה בזמן הטיפוס / ההליכה על הצוק / הירידה. מחזיר true כשהוא בשליטה כאן
+function merchPhysics(dt) {
+  const m = merchant; if (!m) return false;
+  const H = GATES.rope.h;
+  if (m.phase === 'hook') { py = 0; vy = 0; return true; }
+  if (m.phase === 'climb') { const k = Math.min(1, m.t / GATE_CLIMB); py = H * k; vy = 0; return true; }
+  if (m.phase === 'top') { py = H; vy = 0; return true; }
+  if (m.phase === 'down') {
+    vy -= cfg.gravity * dt; py += vy * dt;
+    if (py <= 0) { py = 0; vy = 0; burst(PLAYER.x + 4, GROUND - 0.5, WORLDS[world].dust, 8, 16); cleared(m.o); m.phase = 'done'; m.t = 0; m.hi = -1; }
+    return true;
+  }
+  return false;
+}
+function merchSpeed() {                                          // null = לא בשליטה כאן
+  const m = merchant; if (!m) return null;
+  if (m.phase === 'walk') return speed * MERCHANT_WALK;
+  if (m.phase === 'top' || m.phase === 'down') return speed * 0.7;
+  if (m.phase === 'cave') return speed * 0.8;                   // הולכים בזהירות בחושך
+  if (m.phase === 'done') return null;
+  return 0;
+}
+let playerHand = [PLAYER.x + 6, GROUND - 9];                     // כף היד הקדמית של הנינג'ה (מתעדכן בכל פריים בציור הנינג'ה)
+// לפיד אחוז ביד: היד סוגרת על המקל, הלהבה למעלה
+function heldTorch(hx, hy, t) {
+  const fl = Math.sin(t * 14) * 0.4;
+  ctx.save(); ctx.translate(hx, hy); ctx.rotate(0.12);
+  ctx.fillStyle = '#7c2d12'; ctx.fillRect(-0.4, -3.2, 0.8, 5.2);                 // המקל – עובר דרך כף היד
+  ctx.fillStyle = '#a16207'; ctx.fillRect(-0.7, -3.6, 1.4, 0.8);
+  ctx.fillStyle = '#fb923c'; ctx.beginPath(); ctx.ellipse(0, -4.8 + fl * 0.3, 1.2, 1.9 + fl, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.ellipse(0, -4.4, 0.6, 1.05, 0, 0, Math.PI * 2); ctx.fill();
+  fist(0, 0);                                                                     // האגרוף סגור על המקל
+  ctx.restore();
+}
+// החפץ ביד הנינג'ה – מצויר אחרי הנינג'ה, צמוד לכף היד
+function drawMerchHeld() {
+  const m = merchant; if (!m || !m.item) return;
+  const [hx, hy] = playerHand, t = performance.now() / 1000;
+  const holding = m.phase === 'walk' || (m.phase === 'give' && m.t >= 0.7) || (m.phase === 'open' && m.t < 0.02) || (m.phase === 'hook' && m.item === 'rope' && m.t < 0.05);
+  if (!holding) return;
+  if (m.item === 'torch') { if (m.phase !== 'cave') heldTorch(hx, hy, t); return; }   // במערה – הלפיד מצויר מעל החושך
+  if (m.item === 'rope') {                                                          // סליל החבל תלוי מהיד
+    ctx.save(); ctx.translate(hx, hy + 2.2); ctx.scale(0.8, 0.8); drawRope(0, 0); ctx.restore();
+    fist(hx, hy); return;
+  }
+  ctx.save(); ctx.translate(hx + 1.1, hy - 0.4); ctx.rotate(-0.5);                  // המפתח – הראש בתוך האגרוף, הלשון קדימה
+  ctx.font = '4px -apple-system, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#000'; ctx.fillText(ITEMS.key.icon, 0, 0); ctx.restore();
+  fist(hx, hy);
+}
+function fist(x, y) { ctx.fillStyle = playerColor(); ctx.beginPath(); ctx.arc(x, y, RIG.shape.handR || 0.95, 0, Math.PI * 2); ctx.fill(); }   // הכפפה מעל החפץ – נראה שהיד סוגרת עליו
+function merchPose(P) {
+  const m = merchant; if (!m) return P;
+  if (m.phase === 'climb') { P = poseClimb(performance.now() / 1000); P.lean = 0.1; }
+  if (m.phase === 'hook') { P.arms = [P.arms[0], [2.6 - Math.min(1, m.t / 0.3) * 0.8, 2.9]]; }   // זורק את הוו למעלה
+  if (m.phase === 'cave') { P.arms = [P.arms[0], [1.9, 2.5]]; }   // מחזיק את הלפיד גבוה
+  if (m.phase === 'ask' && m.t >= 1.25 && m.t < 2.3) P.arms = [P.arms[0], waveArm(performance.now() / 1000)];   // "Hi!" – מנופף בחזרה
+  if (m.phase === 'give' && m.t >= 0.7 && m.item) {                                   // מחזיק את החפץ ומודה – קידה קטנה לסוחר
+    const b = Math.sin(Math.PI * Math.max(0, Math.min(1, (m.t - MERCH.thankT) / 0.8)));
+    P.arms = [P.arms[0], m.item === 'torch' ? [1.9, 2.5] : [1.15, 1.55]]; P.lean = (P.lean || 0) + 0.32 * b; P.headTilt = 0.3 * b;
+  }
+  if (m.phase === 'walk' && m.item) P.arms = [P.arms[0], m.item === 'torch' ? [1.9, 2.5] : [1.15, 1.55]];   // נושא את החפץ קדימה ביד
+  return P;
+}
+function drawGate(o) {                                          // מה שעומד אחרי הדוכן
+  const nd = needOf(o);
+  if (nd === 'key') return drawDoor(o);
+  if (nd === 'rope') return drawRopeCliff(o);
+  drawCave(o);
+}
+function drawGateFront(o) {                                     // מעל הנינג'ה
+  const nd = needOf(o);
+  if (nd === 'key') return drawDoorWall(o);
+  if (nd === 'torch') return drawCaveDark(o);
+  if (nd === 'rope') drawClimbRope(o);
+}
+function drawRopeCliff(o) {                                     // צוק סלע גבוה עם ראש שטוח
+  const x = o.x, w = o.w, H = GATES.rope.h, top = GROUND - H;
+  const g = ctx.createLinearGradient(x, 0, x + w, 0); g.addColorStop(0, '#8a7a68'); g.addColorStop(0.5, '#a08f7b'); g.addColorStop(1, '#6b5d50');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x, GROUND);
+  for (let k = 0; k <= 8; k++) ctx.lineTo(x - 0.8 + hash(k * 3.3 + 1) * 1.6, GROUND - H * k / 8);
+  ctx.lineTo(x + w * 0.5, top - 1); for (let k = 8; k >= 0; k--) ctx.lineTo(x + w + 0.8 - hash(k * 2.1 + 5) * 1.6, GROUND - H * k / 8);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.22)'; ctx.lineWidth = 0.4;
+  for (let k = 1; k < 8; k++) { ctx.beginPath(); ctx.moveTo(x + 1, GROUND - H * k / 8); ctx.lineTo(x + w * (0.4 + hash(k) * 0.5), GROUND - H * k / 8 + 0.8); ctx.stroke(); }
+  const Gs = (typeof GROUND_STYLE !== 'undefined' && GROUND_STYLE[world]) || null;
+  ctx.fillStyle = Gs && Gs.grass ? Gs.grass[1] : WORLDS[world].top; ctx.fillRect(x - 0.5, top - 1.2, w + 1, 1.8);   // דשא על הראש
+  if (!o.unlocked && labelsVisible() && !merchant) label('ROPE', x + w / 2, top - 6, 4, '#fde047', '#1e293b');
+}
+function drawClimbRope(o) {                                     // החבל עם הוו: נזרק למעלה, נתפס בקצה, והנינג'ה מטפס עליו
+  const m = merchant; if (!m || m.o !== o || !['hook', 'climb', 'top', 'down', 'done'].includes(m.phase)) { if (!(o.unlocked)) return; }
+  const H = GATES.rope.h, ex = o.x + 1.2, ey = GROUND - H + 0.5;
+  let hx = ex, hy = ey;
+  if (m && m.o === o && m.phase === 'hook') { const k = Math.min(1, m.t / 0.6); hx = lerp(PLAYER.x + 7, ex, k); hy = lerp(GROUND - 10, ey, k) - Math.sin(Math.PI * k) * 8; }
+  ctx.save(); ctx.strokeStyle = '#a16207'; ctx.lineWidth = 0.8; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx - 0.6, m && m.o === o && m.phase === 'hook' ? GROUND - 9 : GROUND); ctx.stroke();
+  ctx.strokeStyle = '#475569'; ctx.lineWidth = 0.7;                // הוו
+  ctx.beginPath(); ctx.arc(hx + 0.8, hy - 0.8, 1.1, Math.PI * 0.5, Math.PI * 1.9); ctx.stroke();
+  ctx.restore();
+}
+function drawCave(o) {                                          // הקיר האחורי של המערה (מאחורי הנינג'ה) – בפנים רואים סלע, לא את הנוף שבחוץ
+  const x = o.x, w = o.w, ceil = GROUND - GATES.torch.h;
+  const g = ctx.createLinearGradient(0, ceil, 0, GROUND); g.addColorStop(0, '#3a332d'); g.addColorStop(1, '#5a4f45');
+  ctx.fillStyle = g; ctx.beginPath(); pathPts(caveShape(o).hollow); ctx.fill();   // החלל מתחת לתקרה – עד הקצוות
+  ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 0.5;        // שכבות וסדקים בקיר
+  for (let k = 0; k < Math.floor(w / 6); k++) { const cx = x + k * 6 + hash(k * 1.9) * 4, cy = ceil + 3 + hash(k * 3.7) * (GATES.torch.h - 6); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 2.5 + hash(k) * 2, cy + 1.2); ctx.stroke(); }
+  ctx.fillStyle = 'rgba(255,255,255,.05)'; for (let k = 0; k < Math.floor(w / 11); k++) { const bx = x + k * 11 + hash(k * 2.2) * 5; ctx.beginPath(); ctx.ellipse(bx, ceil + 6 + hash(k * 4.4) * 12, 3 + hash(k) * 2, 1.6, 0, 0, Math.PI * 2); ctx.fill(); }
+}
+// מערה ארוכה בתוך הר: מעל הפתח סלע עד ראש המסך (אין שמיים בפנים). החושך מתחזק בהדרגה בכניסה ונחלש ביציאה.
+// בפנים – רק עיגול האור של הלפיד מאיר (נטיפים ואבני חן נראים רק לידו)
+const CAVE = { fade: 34, dark: 0.95, top: -140, bottom: 160 };
+let caveCv = null;
+function caveLayer(w, h) { if (!caveCv) caveCv = document.createElement('canvas'); if (caveCv.width !== w || caveCv.height !== h) { caveCv.width = w; caveCv.height = h; } return caveCv; }
+function pathPts(pts, open) { pts.forEach(([px, py2], i) => i ? ctx.lineTo(px, py2) : ctx.moveTo(px, py2)); if (!open) ctx.closePath(); }
+// צורת ההר והפתח – נקודות עם רעש קבוע (hash), כך שהקו נראה כמו סלע שבור ולא זז בין פריימים
+function caveShape(o) {
+  const x = o.x, w = o.w, n = (k, a) => (hash(k * 7.3 + 11) - 0.5) * a;
+  if (o._cave && o._cave.x === x) return o._cave;
+  const L = x - 7, R = x + w + 7, span = R - L;
+  // התקרה: נמוכה בפתחים, ובפנים עולה ויורדת – אולמות ומעברים צרים, עם בליטות סלע (לא צינור ישר)
+  const roof = [];
+  for (let k = 0, N = Math.floor(span / 3.5); k <= N; k++) {
+    const q = k / N, mid = Math.pow(Math.sin(Math.PI * q), 0.6);
+    const h = 21 + mid * (7 + 5 * Math.sin(q * 11 + 1.3) + 3 * Math.sin(q * 23 + 0.4)) + n(k + 160, 2.4);
+    roof.push([L + span * q, GROUND - Math.max(20, h)]);
+  }
+  const leftEdge = [], rightEdge = [];                            // פני ההר מעל הפתחים – שבורים, נוטים קצת החוצה למטה
+  for (let k = 0; k <= 10; k++) { const y = CAVE.top + (roof[0][1] - CAVE.top) * k / 10, lean = k / 10 * 3;
+    leftEdge.push([L + 1 - lean + n(k, 4), y]); rightEdge.push([R - 1 + lean + n(k + 40, 4), CAVE.top + (roof[roof.length - 1][1] - CAVE.top) * k / 10]); }
+  // שפות הפתח: סלעים לא אחידים מהתקרה עד הקרקע (בלי קו ישר), ובבסיס – אבן בולטת
+  const mouth = (side, x0, seed) => { const pts = [], y0 = (side < 0 ? roof[0] : roof[roof.length - 1])[1];
+    for (let k = 0; k <= 7; k++) { const q = k / 7, y = y0 + (GROUND - y0) * q, base = q > 0.7 ? (q - 0.7) / 0.3 * 2.5 : 0;
+      pts.push([x0 - side * (1.5 + base + Math.abs(n(k + seed, 4)) + (k % 2) * 0.8), y]); }
+    return pts; };
+  const mouthL = mouth(-1, L, 300), mouthR = mouth(1, R, 340);
+  const outL = [L - 3 + n(1, 2), GROUND], outR = [R + 3 + n(2, 2), GROUND];   // פני ההר יורדים עד הקרקע מחוץ לפתח
+  const rock = [[leftEdge[0][0], CAVE.top], ...leftEdge, outL, ...mouthL.slice().reverse(), ...roof, ...mouthR, outR, ...rightEdge.slice().reverse()];   // הסלע: מעל התקרה ושפה סלעית צרה בצדי הפתח
+  const hollow = [...mouthL.slice().reverse(), ...roof, ...mouthR];   // החלל: בין שפות הפתח ומתחת לתקרה (כולל קצות התקרה – בלי חור לשמיים)
+  const lumps = []; for (const [ex, sgn] of [[L, 1], [R, -1]]) for (let k = 0; k < 4; k++) lumps.push([ex + sgn * (3 + n(k + 200, 5)), roof[0][1] - 5 - k * 9 + n(k + 210, 3), 4 + hash(k + 220) * 3]);
+  o._cave = { x, L, R, rock, hollow, roof, leftEdge, rightEdge, lumps, mouthL, mouthR, outL, outR };
+  return o._cave;
+}
+function drawCaveDark(o) {
+  const x = o.x, w = o.w, CH = GATES.torch.h, ceil = GROUND - CH, m = merchant && merchant.o === o ? merchant : null, t = performance.now() / 1000;
+  const inCave = m && m.phase === 'cave';
+  // ההר: גוש סלע עם קו מתאר שבור (לא ישר), ופתח מערה שבור בכניסה וביציאה
+  const P = caveShape(o);
+  const rg = ctx.createLinearGradient(0, CAVE.top, 0, GROUND); rg.addColorStop(0, '#57534e'); rg.addColorStop(1, '#8a817a');
+  ctx.fillStyle = rg; ctx.beginPath(); pathPts(P.rock); ctx.fill();
+  ctx.fillStyle = '#3f3833';                                      // שפות הפתח – סלע בצל (לא פס בהיר)
+  for (const [mo, top, out] of [[P.mouthL, P.leftEdge[P.leftEdge.length - 1], P.outL], [P.mouthR, P.rightEdge[P.rightEdge.length - 1], P.outR]]) {
+    ctx.beginPath(); pathPts([top, out, ...mo.slice().reverse()]); ctx.fill();
+  }
+  ctx.strokeStyle = 'rgba(40,34,28,.55)'; ctx.lineWidth = 0.6; ctx.lineJoin = 'round';   // קו מתאר כהה – כמו שפת סלע
+  ctx.beginPath(); pathPts([...P.mouthL.slice().reverse(), ...P.roof, ...P.mouthR], true); ctx.stroke();
+  ctx.beginPath(); pathPts(P.leftEdge, true); ctx.stroke(); ctx.beginPath(); pathPts(P.rightEdge, true); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.07)';                        // פאות מוארות על הסלעים שליד הפתח
+  for (const [bx, by, r] of P.lumps) { ctx.beginPath(); ctx.ellipse(bx, by, r, r * 0.7, -0.4, Math.PI, Math.PI * 1.9); ctx.fill(); }
+  ctx.strokeStyle = 'rgba(0,0,0,.2)'; ctx.lineWidth = 0.5;        // סדקים ושכבות
+  for (let k = 0; k < 14; k++) { const cx = x + hash(k * 2.3 + 1) * w, cy = ceil - 6 - hash(k * 4.1) * 50; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 3 + hash(k) * 3, cy + 2); ctx.stroke(); }
+  ctx.fillStyle = '#44403c';                                      // נטיפים מהתקרה – תלויים מהתקרה הלא אחידה
+  P.roof.forEach(([sx, sy], k) => { if (k % 3 || k < 2 || k > P.roof.length - 3) return; ctx.beginPath(); ctx.moveTo(sx - 1.4, sy - 0.5); ctx.lineTo(sx + 0.3, sy + 2.5 + hash(k * 1.7) * 3.5); ctx.lineTo(sx + 1.6, sy - 0.5); ctx.fill(); });
+  for (let k = 0; k < Math.floor(w / 14); k++) {                  // אבני חן קטנות בקירות
+    const gx = x + 8 + k * 14 + hash(k * 3.1) * 5, gy = GROUND - 3 - hash(k * 5.3) * 14;
+    ctx.fillStyle = 'rgba(125,211,252,' + (0.55 + 0.35 * Math.sin(t * 3 + k)) + ')'; ctx.beginPath(); ctx.moveTo(gx, gy - 1.2); ctx.lineTo(gx + 0.7, gy); ctx.lineTo(gx, gy + 1.2); ctx.lineTo(gx - 0.7, gy); ctx.fill();
+  }
+  // החושך: מתחזק בהדרגה מהכניסה, חזק באמצע, ונחלש לקראת היציאה. בכל הגובה – גם על הסלע והקרקע
+  const DL = P.L, DW = P.R - P.L, f = Math.min(0.45, CAVE.fade / DW), dk = 'rgba(8,6,4,', e0 = 0.3;   // בפתח כבר צל, ובפנים חושך
+  const dg = ctx.createLinearGradient(DL, 0, DL + DW, 0);
+  dg.addColorStop(0, dk + (e0 * CAVE.dark) + ')'); dg.addColorStop(f, dk + CAVE.dark + ')'); dg.addColorStop(1 - f, dk + CAVE.dark + ')'); dg.addColorStop(1, dk + (e0 * CAVE.dark) + ')');
+  const lx = playerHand[0], ly = playerHand[1] - 3, R = 16 + Math.sin(t * 11) * 0.5;   // האור יוצא מהלהבה שביד
+  const darkAt = xx => { const r = (xx - DL) / DW; return CAVE.dark * (e0 + (1 - e0) * Math.max(0, Math.min(1, Math.min(r, 1 - r) / f))); };
+  const og = ctx.createLinearGradient(DL, 0, DL + DW, 0);         // מסביב לחלל: מתחיל מאפס בקצוות – בלי קו חד על הקרקע ועל ההר
+  og.addColorStop(0, dk + '0)'); og.addColorStop(f * 1.4, dk + CAVE.dark + ')'); og.addColorStop(1 - f * 1.4, dk + CAVE.dark + ')'); og.addColorStop(1, dk + '0)');
+  ctx.save(); ctx.globalAlpha = 0.85; ctx.fillStyle = og; ctx.beginPath(); ctx.rect(DL, CAVE.top, DW, CAVE.bottom - CAVE.top); pathPts(P.hollow); ctx.fill('evenodd'); ctx.restore();   // ההר והקרקע מסביב – כהים, קצת פחות מהחלל
+  // החושך בתוך החלל מצויר על שכבה נפרדת, והאור "מוחק" ממנה בעדינות (destination-out) – בלי טבעת ובלי גבול חד
+  const T = ctx.getTransform(), cv = ctx.canvas, oc = caveLayer(cv.width, cv.height), oct = oc.getContext('2d');
+  oct.setTransform(1, 0, 0, 1, 0, 0); oct.clearRect(0, 0, oc.width, oc.height); oct.save(); oct.setTransform(T);   // save/restore – כדי שה-clip לא יצטבר בין פריימים
+  oct.beginPath(); P.hollow.forEach(([px, py2], i) => i ? oct.lineTo(px, py2) : oct.moveTo(px, py2)); oct.closePath(); oct.clip();   // רק בתוך החלל: לא באדמה ולא בסלע
+  oct.fillStyle = dg; oct.fillRect(DL - 2, CAVE.top, DW + 4, CAVE.bottom - CAVE.top);
+  if (inCave) {
+    const g = oct.createRadialGradient(lx, ly, 1, lx, ly, R * 1.15);
+    g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.4, 'rgba(0,0,0,.95)'); g.addColorStop(0.75, 'rgba(0,0,0,.45)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    oct.globalCompositeOperation = 'destination-out'; oct.fillStyle = g; oct.beginPath(); oct.arc(lx, ly, R * 1.15, 0, Math.PI * 2); oct.fill();
+    oct.globalCompositeOperation = 'source-over';
+  }
+  oct.restore();
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(oc, 0, 0); ctx.restore();
+  ctx.save(); ctx.beginPath(); pathPts(P.hollow); ctx.clip();
+  if (inCave) {                                                   // הילה חמה ובהירה סביב הלהבה – רק בתוך החלל
+    const warm = ctx.createRadialGradient(lx, ly - 1, 0.5, lx, ly, R * 0.85);
+    warm.addColorStop(0, 'rgba(253,186,116,.26)'); warm.addColorStop(1, 'rgba(253,186,116,0)');
+    ctx.fillStyle = warm; ctx.beginPath(); ctx.arc(lx, ly, R * 0.85, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+  if (inCave) heldTorch(playerHand[0], playerHand[1], t);         // הלפיד ביד – מעל החושך
+  if (!o.unlocked && labelsVisible() && !merchant) label('TORCH', x + 12, P.roof[0][1] - 6, 4, '#fde047', '#1e293b');
+}
+function drawTorchItem(x, y) {                                  // לפיד: מקל עם להבה (אמריקאית – torch זה לפיד, לא פנס)
+  const f = Math.sin(performance.now() / 80) * 0.3;
+  ctx.fillStyle = '#78350f'; ctx.save(); ctx.translate(x, y); ctx.rotate(0.25);
+  ctx.fillRect(-0.5, -1, 1, 4.6); ctx.fillStyle = '#a16207'; ctx.fillRect(-0.8, -1.4, 1.6, 1);
+  ctx.fillStyle = '#fb923c'; ctx.beginPath(); ctx.ellipse(0, -2.8 + f * 0.3, 1.3, 1.9 + f, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.ellipse(0, -2.4, 0.6, 1, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
 }

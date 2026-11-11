@@ -43,11 +43,22 @@ function journeyBest(p, d) { return p ? load('p' + p.id + '_jbest_' + d, 0) : pL
 function journeyWords(st) { return WORDS.slice(0, Math.min(WORDS.length, st + 1)).filter(w => isLearned(w)); }
 
 let jStation = 0;          // התחנה שממנה יצאנו לקטע הנוכחי
+let jDeck = [], jSegN = 0; // חפיסת המכשולים של הקטע (כל מכשול לפחות פעם אחת), ואורך הקטע
+
+// חפיסה מעורבבת: כל מכשול שנלמד פעם אחת – ובקטע האחרון (אחרי התחנה האחרונה) פעמיים
+function journeyDeck(st) {
+  const types = [...new Set(journeyWords(st).map(w => WORD_OBSTACLE[w]))];
+  const shuf = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  let d = shuf(types.slice());
+  if (st >= WORDS.length - 1) { let e = shuf(types.slice()); if (e[0] === d[d.length - 1] && e.length > 1) e.push(e.shift()); d = d.concat(e); }
+  return d;
+}
 
 function startJourneySegment(first) {
   playWords = journeyWords(jStation);
   world = jStation % RUN_WORLDS;
   speed = cfg.speed * (1 + Math.min(JOURNEY.speedMax, jStation * JOURNEY.speedStep));
+  jDeck = journeyDeck(jStation); jSegN = Math.max(segLen(jStation), jDeck.length);
   spawned = 0; done = 0; flag = null; segStart = caught + picked; segSettled = false; distSinceSpawn = 0; nextType = pickType(); nextGap = speed * (first ? 2.4 : 1.6);
   $('stageName').textContent = '🚩 ' + jStation + ' → ' + (jStation + 1);
 }
@@ -182,6 +193,26 @@ function applyOrder(ord) {                                       // משנים �
   closeOrder();
 }
 $('orderBtn').onclick = openOrder;
+
+// מצב בודק: הוספת מטבעות לקופה של כל שחקן
+function renderCoinAdm() {
+  const box = $('coinAdmList'); box.innerHTML = '';
+  players.forEach(p => {
+    const key = 'p' + p.id + '_coins', r = document.createElement('div');
+    r.className = 'orow';
+    r.innerHTML = '<span class="dot" style="background:' + p.color + ';width:12px;height:12px;border-radius:50%;display:inline-block"></span><span class="w"></span><span class="c">🟡 ' + load(key, 0) + '</span>';
+    r.querySelector('.w').textContent = p.name;
+    for (const n of [10, 50, 100]) {
+      const b = document.createElement('button'); b.textContent = '+' + n;
+      b.onclick = () => { store(key, load(key, 0) + n); sfx('coin'); renderCoinAdm(); };
+      r.appendChild(b);
+    }
+    box.appendChild(r);
+  });
+  if (!players.length) box.textContent = 'No players yet.';
+}
+$('coinAdmBtn').onclick = () => { renderCoinAdm(); hideAllOverlays(); $('coinAdm').classList.add('show'); };
+$('coinAdmBack').onclick = closeOrder;
 $('orderBack').onclick = closeOrder;
 $('orderSave').onclick = () => applyOrder(orderDraft);
 $('orderReset').onclick = () => {                                // חזרה לסדר המקורי – רק אם החלק הנעול זהה

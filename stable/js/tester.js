@@ -19,10 +19,18 @@ $('tapBtn').addEventListener('pointerdown', e => { e.preventDefault(); testerTap
 // 👆 – המילה של המכשול הקרוב ביותר (או של הסוחר)
 function testerTap() {
   if (state !== 'play') return;
-  if (merchant && merchant.phase === 'ask') return command('want', 'tap');
-  if (merchant && merchant.phase === 'choose') return command(DOOR.needs, 'tap');
+  if (merchant && merchant.phase === 'ask' && merchant.t >= MERCH.askAt) return command('want', 'tap');
+  if (merchant && merchant.phase === 'choose') return command(needOf(merchant.o), 'tap');
   if (duelActive()) return command('fight', 'tap');
   if (gustActive()) return command('hold', 'tap');
+  if (lift) { const w = liftExpected()[0]; if (w) command(w, 'tap'); return; }
+  if (mud) { const w = mudExpected()[0]; if (w) command(w, 'tap'); return; }
+  if (boat) { const w = boatExpected()[0]; if (w) command(w, 'tap'); return; }
+  if (cart) { const w = cartExpected()[0]; if (w) command(w, 'tap'); return; }
+  if (jetS) { const w = jsExpected()[0]; if (w) command(w, 'tap'); return; }
+  if (wolfS) { const w = wfExpected()[0]; if (w) command(w, 'tap'); return; }
+  if (bikeS) { const w = bkExpected()[0]; if (w) command(w, 'tap'); return; }
+  if (boarS) { const w = (boarExpected() || [])[0]; if (w) command(w, 'tap'); return; }
   if (ride && ride.phase === 'wait') return command('ride', 'tap');
   if (rope && rope.phase === 'wait') return command('catch', 'tap');
   if (rope && rope.phase === 'hang') return command('let go', 'tap');
@@ -42,25 +50,41 @@ function testerAuto(pb, dt) {
   const t = autoSt.t;
   for (const o of obstacles) {
     if (o.passed || o.hit || o._a) continue;
-    const dd = o.x - pb.r;
-    const fire = {
-      box: dd <= speed * 0.2, beam: dd <= speed * 0.3, wall: dd <= KICK.range + speed * 0.2, enemy: dd <= 70, coin: o.x <= PLAYER.x + 25,
-      river: dd <= speed * 0.05, rock: dd <= speed * 1.6 && dd > 0, bridge: dd <= speed * 0.35, lake: dd <= speed * 0.4,
-      cliff: dd <= CLIFF.ladder + CLIFF.range + speed * 0.3, boulder: dd <= BOULDER.range + speed * 0.2, gate: dd <= GATE.rope + speed * 0.5,
-      window: dd <= WINDOW.range + speed * 0.5, tramp: dd <= speed * 0.5, bramble: dd <= speed * 0.3, ice: dd <= 55,
-      pond: (netX(o) - pb.r) <= speed * 0.4, guard: dd <= (speed + GUARD.walk) * 0.9, arrows: dd <= (curSpeed() + ARROWS.speed) * 0.35,
-      skyrock: dd <= speed * 0.7, storm: dd <= 55
-    }[o.type];
+    const fire = autoFireNow(o, pb);
     if (!fire) continue;
     o._a = 1;
     if (o.type === 'river') { command('jump', 'auto'); autoSt.flyAt = t + 0.35; }
     else if (o.type === 'skyrock') command(o.lane ? 'down' : 'up', 'auto');
     else if (o.type !== 'door' && o.type !== 'chasm' && o.type !== 'dragon') command((OBSTACLE_WORDS[o.type] || ['jump'])[0], 'auto');
   }
+  testerAutoScenes(t);
+}
+// לכל מכשול – מאיזה מרחק המילה שלו עובדת (משמש גם את השחקן האוטומטי וגם את "מילה מוקדמת" ב-speech.js)
+function autoFireNow(o, pb) {
+    const dd = o.x - pb.r;
+    return {
+      box: dd <= speed * 0.2, beam: dd <= speed * 0.3, wall: dd <= KICK.range + speed * 0.2, enemy: dd <= 70, coin: o.x <= PLAYER.x + 25,
+      river: dd <= speed * 0.05, rock: dd <= speed * 1.6 && dd > 0, bridge: dd <= speed * 0.35, lake: dd <= speed * 0.4,
+      cliff: dd <= CLIFF.ladder + CLIFF.range + speed * 0.3, boulder: dd <= BOULDER.range + speed * 0.2, gate: dd <= GATE.rope + speed * 0.5,
+      window: dd <= WINDOW.range + speed * 0.5, tramp: dd <= speed * 0.5, bramble: dd <= speed * 0.3, ice: dd <= 55,
+      pond: (netX(o) - pb.r) <= speed * 0.4, guard: dd <= (speed + GUARD.walk) * 0.9, arrows: dd <= (curSpeed() + ARROWS.speed) * 0.35,
+      skyrock: dd <= speed * 0.7, bat: dd <= 55
+    }[o.type];
+}
+function testerAutoScenes(t) {
   if (ride && ride.phase === 'wait') command('ride', 'auto');
   if (duel && duel.phase === 'face' && duel.t > 0.35) command('fight', 'auto');
-  if (gust && gust.phase === 'storm' && gust.held === null && gust.gx < -2) command('hold', 'auto');
+  liftAuto();
+  mudAuto();
+  boatAuto();
+  cartAuto();
+  boarAuto();
+  jsAuto();
+  wfAuto();
+  bkAuto();
+  if (tunnelWait && tunnelWait.idle > 0.3) command('crawl', 'auto');
+  if (gust && gust.phase === 'storm' && gust.held === null && gust.t > 1.0) command('hold', 'auto');
   if (rope && rope.phase === 'wait') command('catch', 'auto'); else if (rope && rope.phase === 'hang' && rope.theta >= ROPE.amp * ROPE.farAt) command('let go', 'auto');
-  if (merchant && merchant.t > 1) { if (merchant.phase === 'ask') command('want', 'auto'); else if (merchant.phase === 'choose') command(DOOR.needs, 'auto'); }
+  if (merchant && merchant.t > 1) { if (merchant.phase === 'ask' && merchant.t > MERCH.askAt + 0.6) command('want', 'auto'); else if (merchant.phase === 'choose' && merchant.t > MERCH.pickAt) command(needOf(merchant.o), 'auto'); }
   if (autoSt.flyAt !== null && t >= autoSt.flyAt) { command('fly', 'auto'); autoSt.flyAt = null; }
 }

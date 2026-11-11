@@ -9,10 +9,13 @@ function loop(t) {
   const now = t / 1000;
   const dt = Math.min(0.05, lastT ? now - lastT : 0);
   lastT = now;
-  if (state === 'play' || state === 'demo' || state === 'intro') update(dt);
+  if ((state === 'play' || state === 'demo' || state === 'intro') && !edPaused()) update(dt);   // העורך עוצר את המשחק
   updateEffects(dt);
   updateMic();
-  if (state === 'lab') drawLab(dt); else if (state === 'studio') drawStudio(dt); else draw();
+  if (state === 'sushi') updateSushi(dt);
+  if (state === 'lab') drawLab(dt); else if (state === 'studio') drawStudio(dt); else if (state === 'sushi') drawSushi(); else draw();
+  edTick();                                                   // כפתור העורך (בודק, שלב החזיר)
+  $('sushiBtn').classList.toggle('hide', state !== 'menu');   // 🍣 בונוס סושי (אב-טיפוס) – רק בתפריט
   $('introBar').classList.toggle('hide', state !== 'intro');   // כפתורי Again / START רק בתחילת שלב
   requestAnimationFrame(loop);
 }
@@ -30,7 +33,7 @@ function toMenu() {
   $('pauseBtn').classList.add('hide');
   renderTester();
   $('dict').classList.remove('show');
-  try { speechSynthesis.cancel(); } catch (e) {}
+  stopSpeak();
   $('over').classList.remove('show');
   $('endBtn').classList.add('hide');
   $('hudFree').classList.remove('hide');
@@ -38,7 +41,7 @@ function toMenu() {
   $('progress').classList.add('hide');
   $('catchHud').classList.add('hide');
   $('lives').textContent = '';
-  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; gust = null; windLevel = 0; windStreaks = []; particles = []; flag = null;
+  obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; cart = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; resetAct();
   renderMenu();
   if (model) setStatus('Ready!');
@@ -46,7 +49,7 @@ function toMenu() {
 }
 $('menuBtn').onclick = toMenu;
 $('endBtn').onclick = () => {
-  if (state === 'intro') { try { speechSynthesis.cancel(); } catch (e) {} toMenu(); return; }
+  if (state === 'intro') { stopSpeak(); toMenu(); return; }
   if (state !== 'play') return;
   if (mode === 'free') endFree(true); else if (mode === 'journey') journeyOver(true); else { bankCoins(); toMenu(); }
 };

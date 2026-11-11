@@ -5,7 +5,7 @@
 /* ============================================================
    ציור
    ============================================================ */
-let cw = 0, ch = 0, scale = 1, ox = 0, oy = 0;
+let cw = 0, ch = 0, scale = 1, ox = 0, oy = 0, camDY = 0;   // camDY – הורדת המצלמה (יותר שמיים) בשלבים שצריכים מקום למעלה
 
 // מצמידים את המשחק בדיוק לשטח שרואים (Safari מזיז אותו לפעמים מתחת לשורת הכתובת)
 function fitApp() {
@@ -17,6 +17,7 @@ function fitApp() {
 function resize() {
   const dpr = window.devicePixelRatio || 1;
   fitApp();
+  lastVp = vpKey();
   const r = $('app').getBoundingClientRect();          // הגודל שבאמת רואים (בלי שורת הכתובת של Safari)
   cw = r.width || window.innerWidth; ch = r.height || window.innerHeight;
   window.scrollTo(0, 0);
@@ -27,10 +28,32 @@ function resize() {
   oy = (ch - H * scale) * 0.75;   // במצב לאורך – יותר שמיים, פחות אדמה
 }
 window.addEventListener('resize', resize);
+// מה שרואים בפועל ביחידות העולם. במסך רחב (יחס רחב מ-160:100) רואים גם משמאל ל-0 ומימין ל-W –
+// המכשולים מצוירים, נכנסים ויוצאים לפי הקצוות האמיתיים, כדי שלא ייחתכו באמצע המסך
+function playerFacing() { if (typeof boat !== 'undefined' && boat && boat.phase === 'farewell' && boat.t > 0.3) return -1; return typeof cart !== 'undefined' && cart && KID_OUT.includes(cart.phase) ? -1 : 1; }   // נפרד מהילד מהעגלה / מהחבר בסירה – פונה אחורה   // נפרד מהילד מהעגלה – פונה אחורה אליו
+function viewL() { return scale ? Math.min(0, -ox / scale) : 0; }
+function viewR() { return scale ? Math.max(W, (cw - ox) / scale) : W; }
 window.addEventListener('orientationchange', () => setTimeout(resize, 300));
+// חזרה לדפדפן: לפעמים הדפדפן מדווח רגע על גודל קטן (במעבר בין אפליקציות) ואחר כך לא מודיע שחזר לגודל המלא – והמשחק נשאר "חתוך".
+// לכן: מחשבים שוב כשחוזרים, ובודקים כל חצי שנייה אם גודל המסך השתנה בלי הודעה
+let lastVp = '';
+function vpKey() { const vv = window.visualViewport; return [innerWidth, innerHeight, vv ? Math.round(vv.width) : 0, vv ? Math.round(vv.height) : 0, vv ? Math.round(vv.offsetTop) : 0, vv ? Math.round(vv.offsetLeft) : 0].join('x'); }
+const resizeSoon = () => { resize(); setTimeout(resize, 250); setTimeout(resize, 900); };
+document.addEventListener('visibilitychange', () => { if (!document.hidden) resizeSoon(); });
+window.addEventListener('pageshow', resizeSoon);
+window.addEventListener('focus', resizeSoon);
+setInterval(() => { if (vpKey() !== lastVp) resize(); }, 500);
 if (window.visualViewport) { window.visualViewport.addEventListener('resize', resize); window.visualViewport.addEventListener('scroll', resize); }
 // אין גלילה של הדף: גרירה עובדת רק בתוך רשימות שבאמת צריך לגלול (רשימת שחקנים)
-document.addEventListener('touchmove', e => { if (!e.target.closest('.playerGrid, #orderList')) e.preventDefault(); }, { passive: false });
+// גלילה במגע: חוסמים גרירה של הדף, אבל מאפשרים לכל רשימה שיש בה מה לגלול (אימון, לוח ניקוד, חנות, מילים…)
+function canScroll(el) {
+  for (; el && el !== document.body; el = el.parentElement) {
+    const st = getComputedStyle(el);
+    if ((/(auto|scroll)/.test(st.overflowY) && el.scrollHeight > el.clientHeight + 1) || (/(auto|scroll)/.test(st.overflowX) && el.scrollWidth > el.clientWidth + 1)) return true;
+  }
+  return false;
+}
+document.addEventListener('touchmove', e => { if (!canScroll(e.target)) e.preventDefault(); }, { passive: false });
 window.addEventListener('scroll', () => { if (window.scrollY || window.scrollX) window.scrollTo(0, 0); });
 resize();
 
@@ -91,7 +114,7 @@ function drawPoints(o) {
   const b = obstacleBox(o), wide = o.w && o.type !== 'bramble';
   let cx = (b.l + b.r) / 2, cy = b.b - 3.2;
   if (wide) { cx = o.x + 5; cy = GROUND + 4; }                         // לבה / אגם / שדה אש / בריכה – בתוך פני השטח
-  else if (o.type === 'bramble') { cx = o.x + 6; cy = GROUND - 3.2; }
+  else if (o.type === 'bramble') { const R = tunnelRock(o); cx = (R.l + R.r) / 2; cy = GROUND - 4; }
   else if (o.type === 'beam') cy = b.b - BEAM.thick / 2;               // על המוט
   else if (o.type === 'rock') cy = (b.t + b.b) / 2;
   else if (o.type === 'boulder') cy = GROUND - BOULDER.r;
@@ -329,10 +352,11 @@ function drawWorld(left, right, top, bottom) {
     clouds(left, right, 0.75);
     hills(left, right, 0.04, 34, '#c6f0d4', 0);                                            // רחוק: הרים בהירים
     hills(left, right, 0.09, 22, '#9fe0b4', 2);
-    repeat(left, right, 0.16, 22, (x, i) => { if (hash(i + 40) > 0.4) bamboo(x + hash(i + 45) * 6, 20 + hash(i + 49) * 22, hash(i + 43), true); });   // במבוק רחוק ודהוי
+    repeat(left, right, 0.16, 22, (x, i) => { if (hash(i + 40) > 0.4) thinOut(x, hash(i + 77), () => bamboo(x + hash(i + 45) * 6, 20 + hash(i + 49) * 22, hash(i + 43), true)); });   // במבוק רחוק ודהוי (מידלדל ליד היער)
     hills(left, right, 0.22, 9, '#86efac', 5);                                              // גבעה קרובה – בהירה, כדי שהמכשולים יבלטו עליה
-    repeat(left, right, 0.35, 19, (x, i) => { if (hash(i) > 0.35) bamboo(x + hash(i + 5) * 6, 34 + hash(i + 9) * 40, hash(i + 3)); });
+    repeat(left, right, 0.35, 19, (x, i) => { if (hash(i) > 0.35) thinOut(x, hash(i + 78), () => bamboo(x + hash(i + 5) * 6, 34 + hash(i + 9) * 40, hash(i + 3))); });
     haze('rgba(236,254,255,A)', 40);                                                        // ערפל על כל הרקע, גם הבמבוק הקרוב – רק המכשולים והנינג'ה נשארים חדים
+    edgeBushes(left, right);                                                                // לפני היער: שיחים שהולכים ומתרבים (boar.js)
   } else if (world === 1) {
     for (let i = 0; i < 45; i++) {                              // כוכבים מנצנצים
       const sx = left + hash(i) * (right - left), sy = top + hash(i + 50) * (GROUND - 35 - top);
@@ -371,7 +395,7 @@ function drawWorld(left, right, top, bottom) {
   }
 
   // קרקע – עם "חורים" במקום של תהומות, כדי שרואים דרכן את הנוף שמאחור
-  const gaps = obstacles.filter(o => o.type === 'chasm');
+  const gaps = obstacles.filter(o => o.type === 'chasm').concat(obstacles.filter(o => o.type === 'jetgap').map(jsHole));
   if (gaps.length) { ctx.save(); ctx.beginPath(); ctx.rect(left, GROUND - 1, right - left, bottom - GROUND + 2); for (const o of gaps) ctx.rect(o.x + o.w, GROUND - 1, -o.w, bottom - GROUND + 2); ctx.clip('evenodd'); }
   drawGroundOnly(left, right, bottom, wd);
   if (gaps.length) ctx.restore();
@@ -434,16 +458,16 @@ function playerPose() {
   else if (act.hiding > 0) P = poseHide(now);                 // כורע מכווץ מאחורי הסלעים
   else if (act.climb > 0) P = poseClimb(now);
   else if (act.leap > 0) P = poseLeap();
-  else if (diving()) P = poseDive(now);
-  else if (crawling()) P = poseCrawl(now);
+  else if (diveShown()) { P = poseDive(now); P.lean += diveFit(PLAYER.x + 3).tilt; }
+  else if (crawling()) { P = poseCrawl(now); const tn = tunnelHere(); if (tn) P.lean += tunnelSlope(tn, PLAYER.x + 3); }
   else if (act.pulling > 0) P = posePull(now);
-  else if (swimmingNow()) P = poseSwim(now);
+  else if (swimShown()) P = poseSwim(now);
   else if (duckT > 0) P = poseDuck();
   else if (flyT > 0) P = poseFly(now);
   else if (py > 0 && !(py >= CLIFF.h - 0.5 && vy === 0 && cliffTop())) P = poseAir(vy > 0, Math.max(0, Math.min(1, 0.5 - vy / (2 * cfg.jumpV))));
   else if (act.push > 0) P = posePush();
   else if (act.pull > 0) P = posePull(now);
-  else if (state === 'play' && curSpeed() > 0) P = poseRun(bgX * 0.42 * RIG.run.cadence);
+  else if (state === 'play' && curSpeed() > 0) P = approachSlow() < 0.6 || (merchant && merchant.phase === 'walk') ? poseWalk(bgX * 0.42 * RIG.run.cadence * 1.6) : poseRun(bgX * 0.42 * RIG.run.cadence);   // ליד החבר / הילד – הולך
   else if (act.run > 0) P = poseRun(now * 24);       // בהדגמה – רץ במקום
   else P = poseIdle(now);
   if (act.run > 0 && py <= 0 && duckT <= 0) P.lean = 0.38;
@@ -453,7 +477,16 @@ function playerPose() {
   if (act.block > 0) applyBlock(P);
   if (act.stop > STOP_TIME - 0.8) applyStop(P);
   P = gustPlayerPose(P, now);                     // רוח: נצמד לבמבוק / עף אחורה
-  P = duelPlayerPose(P, now);                     // קרב: עמידה עם חרב והנפות
+  P = duelPlayerPose(P, now);
+  P = liftPose(P);
+  P = mudPose(P);
+  P = boatPose(P);
+  P = cartPose(P);
+  P = boarPose(P);
+  P = wfPose(P);                                   // זאבים: על הסלע / תלוי בחבל
+  P = jsPose(P);                                   // תרמיל סילון: מרים / לובש / עף                                 // ביער: הולך / נצמד לגזע / נהדף                                 // עגלה: דוחף / מחכה לשלוש                                 // סירה: דוחף / יושב וחותר                                  // HELP: תקוע בבוץ / אוחז בחבל
+  P = merchPose(P);                                // PICK UP: הסלע מעל הראש
+  P = jetPose(P);                                 // תרמיל סילון – עף קדימה                     // קרב: עמידה עם חרב והנפות
   return P;
 }
 
@@ -464,6 +497,9 @@ function draw() {
   g.addColorStop(0, wd.sky[0]); g.addColorStop(1, wd.sky[1]);
   ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
 
+  const camT = typeof wfCamLift === 'function' ? wfCamLift() : 0;            // שלב הזאבים: הקרקע יורדת – מקום לכדור הפורח
+  camDY += (camT - camDY) * 0.05; if (Math.abs(camT - camDY) < 0.01) camDY = camT;
+  const oyIn = oy; oy += camDY * scale;                                       // רק בזמן הציור (מוחזר בסוף)
   ctx.save();
   ctx.translate(ox, oy); ctx.scale(scale, scale);
   if (shakeT > 0) ctx.translate((Math.random() - 0.5) * 2.4 * shakeT * 3, (Math.random() - 0.5) * 2.4 * shakeT * 3);
@@ -483,10 +519,13 @@ function draw() {
 
   // מכאן – רק בתוך שטח העולם
   ctx.save();
-  ctx.beginPath(); ctx.rect(0, top, W, bottom - top); ctx.clip();
+  ctx.beginPath(); ctx.rect(viewL() - 1, top, viewR() - viewL() + 2, bottom - top); ctx.clip();
 
-  const WIDE = { river: drawRiver, lake: drawLake, bridge: drawBridge, pond: drawPond, chasm: drawChasm };
+  const WIDE = { river: drawRiver, lake: drawLake, bridge: drawBridge, pond: drawPond, chasm: drawChasm, jetgap: drawJetGap };
+  drawCliffScenes(top);                                                        // נוף צוקים בשלב הג'ט (jetstage.js)
+  drawForestScenes(top);                                                       // היער ברקע – לפני כל השאר (boar.js)
   for (const o of obstacles) if (WIDE[o.type]) WIDE[o.type](o, bottom);
+  for (const o of obstacles) if (o.type === 'jetgap') drawJetStage(o);         // התרמיל, מטבעות, אבני חן וציפורים מעל התהום
   for (const o of obstacles) if (!WIDE[o.type]) drawObstacle(o, top);
   const tc = performance.now() / 1000;
   if (sk < 0.3) for (const c of pickups) {                                    // מטבעות קטנים מסתובבים (בשמיים – לא רואים אותם)
@@ -496,6 +535,7 @@ function draw() {
     ctx.fillStyle = '#fef9c3'; ctx.fillRect(-0.9, -1, 0.5, 0.9);
     ctx.restore();
   }
+  if (sk > 0.3) drawSkyPrizes();                                              // מטבעות וכוכבים בשמיים (דרקון)
   if (mode === 'journey' && (state === 'play' || state === 'paused')) for (const o of obstacles) if (!o.passed && !o.hit && o.pts) drawPoints(o);
 
   // דגל סיום
@@ -510,13 +550,18 @@ function draw() {
   for (const o of obstacles) if (o.type === 'guard' && o.rx !== undefined) drawHideRock(o);   // הסלעים: לפני השומרים, מאחורי הנינג'ה
   drawTornado();
   drawNinja();
+  for (const o of obstacles) if (o.type === 'boar') drawForestFront(o, top, bottom);   // הגזעים מעל הנינג'ה – מתחבא מאחוריהם
   drawDuelFx();
   drawWind();
   for (const o of obstacles) if (o.type === 'chasm') drawRopeSwing(o);        // החבל (והנינג'ה התלוי עליו) – לפני הכול
-  for (const o of obstacles) if (o.type === 'window') drawFireRing(o, true);   // החצי הקדמי של הטבעת – מעל הנינג'ה, נראה שהוא עובר דרכה
+  for (const o of obstacles) if (o.type === 'window') drawFireRing(o, true);
+  for (const o of obstacles) if (o.type === 'door') drawGateFront(o);           // החומה סביב הדלת – מעל הנינג'ה: הוא עובר דרך הפתח, לא לפני הדלת   // החצי הקדמי של הטבעת – מעל הנינג'ה, נראה שהוא עובר דרכה
   for (const o of obstacles) if (o.type === 'bridge') drawFieldSmoke(o);
+  for (const o of obstacles) if (o.type === 'mud') drawMudFront(o);
+  for (const o of obstacles) if (o.type === 'boat') drawBoatFront(o);
+  for (const o of obstacles) if (o.type === 'cart') drawCartFront(o);          // הדופן הקרובה של הסירה מעל היושבים            // הבוץ מעל הרגליים, החבל והבועות
   for (const o of obstacles) if (o.type === 'lake' || o.type === 'pond') {   // מים מעל השחיין – נראה חצי שקוע / צולל
-    ctx.fillStyle = o.type === 'lake' ? 'rgba(20,184,166,.55)' : 'rgba(14,116,144,.6)'; ctx.fillRect(o.x, GROUND + 0.3, o.w, bottom - GROUND);
+    ctx.fillStyle = o.type === 'lake' ? 'rgba(20,184,166,.55)' : 'rgba(14,116,144,.6)'; waterPath(o, bottom); ctx.fill();
     if (o.type === 'pond') drawNet(o, true);                                  // הרשת לפני הצולל
   }
   for (const s of shurikens) star4(s.x, s.y, hasGear('goldstar') ? 2.6 : 2, s.rot, hasGear('goldstar') ? '#facc15' : '#475569');
@@ -550,7 +595,7 @@ function draw() {
 
   // המילה הנכונה אחרי פגיעה / כותרת פתיחה
   if (state === 'play' || state === 'demo' || state === 'intro') {
-    if (flash) bigText(flash.text, 40, 14, '#dc2626');
+    if (flash) bigText(flash.text, flash.size ? 30 : 40, flash.size || 14, '#dc2626');   // size – הודעה קטנה (למשל בשלב הג'ט)
     else if (banner) {
       bigText(banner.text, 32, 9, '#4f46e5');
       if (banner.sub) bigText(banner.sub, 43, 5, '#1e293b');
@@ -560,16 +605,25 @@ function draw() {
 
   // הבזק אדום בפגיעה
   if (shakeT > 0) { ctx.fillStyle = 'rgba(220,38,38,' + (shakeT * 0.6) + ')'; ctx.fillRect(0, 0, cw, ch); }
+  oy = oyIn;
 }
 
 function drawObstacle(o, top) {
   const x = o.x;
+  if (o.type === 'boar') { drawBoar(o); return; }
+  if (o.type === 'wolfden') { drawWolves(o); return; }
+  if (o.type === 'bikeway') { drawBikeWay(o); return; }
   if (o.type === 'dragon') { drawDragon(o.x + DRAGON.saddle, GROUND - DRAGON.lie, ride && ride.o === o && ride.phase === 'mount' ? 'stand' : 'lie'); return; }
   if (SKY_TYPES.includes(o.type)) { drawSky(o); return; }
   if (o.type === 'duel') { drawDuelEnemy(o); return; }
   if (o.type === 'gust') { drawGustBamboo(o); return; }
+  if (o.type === 'lift') { drawLiftObstacle(o); return; }
+  if (o.type === 'mud') { drawMudBack(o); return; }
+  if (o.type === 'boat') { drawBoatBack(o); return; }
+  if (o.type === 'cart') { drawCartBack(o); return; }
+  if (o.type === 'bramble') { drawTunnel(o); return; }   // CRAWL: סלע ענק ומחילה מתחתיו (tunnel.js)
   if (artDraw(o)) return;                        // יש ציור SVG מהסטודיו – הוא מחליף את הציור הרגיל
-  if (o.type === 'door') { drawDoor(o); drawMerchant(o); return; }   // I WANT: סוחר ודלת נעולה
+  if (o.type === 'door') { drawGate(o); drawMerchant(o); return; }   // I WANT: סוחר ודלת נעולה
   if (o.type === 'box') {                       // ארגז עץ
     const y = GROUND - BOX.h;
     ctx.fillStyle = '#c2410c'; ctx.fillRect(x, y, BOX.w, BOX.h);
@@ -785,19 +839,142 @@ function drawObstacle(o, top) {
   }
 }
 
+// מים טבעיים: במקום מלבן עם קירות ישרים – אגן. הקרקע יורדת בשיפוע מעוגל לתוך המים משני הצדדים, והקרקעית מעמיקה באמצע
+const SHORE = { slope: 15, run: 15, bowl: 0.16, drop: 1.7 };   // run = כמה רחוק הגדה נכנסת – גדול = שיפוע מתון
+function bankOff(o, y) {                                                       // כמה המים "נכנסים" פנימה מהקצה בגובה y
+  const d = y - GROUND, run = Math.min(SHORE.run, o.w * 0.2);
+  if (d <= 0) return 0;
+  const s = Math.min(1, d / SHORE.slope), deep = Math.max(0, d - SHORE.slope);
+  const bumpy = Math.sin(d * 0.9 + o.w) * 0.5 + Math.sin(d * 2.3) * 0.25;          // שפה לא ישרה לגמרי – כמו אדמה אמיתית
+  return run * Math.pow(s, 0.75) + deep * deep * SHORE.bowl + bumpy * s;            // deep*deep: למטה הדפנות מתעגלות פנימה, כמו קערה            // למטה הקרקעית מתעגלת (קערה, לא V)
+}
+function basinPath(o, bottom, y0) {                                            // צורת האגן מגובה y0 ומטה (בין שתי הגדות)
+  const x = o.x, w = o.w;
+  ctx.beginPath(); ctx.moveTo(x + bankOff(o, y0) - (y0 <= GROUND ? 1.2 : 0), y0); ctx.lineTo(x + w - bankOff(o, y0) + (y0 <= GROUND ? 1.2 : 0), y0);
+  for (let y = y0; y <= bottom; y += 1.5) ctx.lineTo(x + w - Math.min(w / 2 - 1, bankOff(o, y)), y);
+  for (let y = bottom; y >= y0; y -= 1.5) ctx.lineTo(x + Math.min(w / 2 - 1, bankOff(o, y)), y);
+  ctx.closePath();
+}
+const waterY = () => GROUND + SHORE.drop;                                       // פני המים – קצת מתחת לקרקע
+// כמה עמוק אפשר לצלול: ליד הגדות האגן רדוד (שיפוע), אז הצולל עולה איתו ומטה את הגוף – ראש למטה בכניסה, ראש למעלה ביציאה
+function diveDepthAt(o, x) {                                                    // הכי עמוק שאפשר בנקודה x (מחוץ לאגן – על הקרקע)
+  const full = GROUND + POND.deep + 7;
+  let y = GROUND - 1.5;
+  for (let yy = waterY(); yy <= full; yy += 0.5) { const b = bankOff(o, yy + 2) + 1.5; if (x < o.x + b || x > o.x + o.w - b) break; y = yy; }
+  return y;
+}
+function swimShown() {                                                         // שוחה רק כשכל הגוף מעל מים עמוקים מספיק – בשפה עוד הולך בתוך המים
+  if (!swimmingNow()) return false;
+  const pb = playerBox(), cx = (pb.l + pb.r) / 2, o = obstacles.find(o => (o.type === 'lake' || o.type === 'pond') && cx > o.x && cx < o.x + o.w);
+  if (!o) return true;
+  const b = bankOff(o, GROUND + 4) + 1;
+  return pb.l - 3 > o.x + b && pb.r + 3 < o.x + o.w - b;
+}
+function wadeY(fx) {                                                            // הרגליים על קרקעית השיפוע (ככה הוא נכנס לאט למים ויוצא מהם)
+  const o = obstacles.find(o => (o.type === 'lake' || o.type === 'pond') && fx > o.x && fx < o.x + o.w); if (!o) return GROUND;
+  return GROUND + Math.max(0, Math.min(6, diveDepthAt(o, fx) - GROUND));
+}
+function diveShown() { return diving() && diveFit(PLAYER.x + 3).y >= GROUND + 4; }   // ממש בשפה – עוד רץ/יוצא, לא שוכב על הקרקע
+function diveFit(fx) {
+  const o = inPond(); if (!o) return { y: GROUND + POND.deep + 7, tilt: 0 };
+  const yB = Math.min(diveDepthAt(o, fx - 7), diveDepthAt(o, fx - 4)), yF = Math.min(diveDepthAt(o, fx + 4), diveDepthAt(o, fx + 7));
+  return { y: (yB + yF) / 2, tilt: Math.atan2(yF - yB, 12) };
+}
+function waterPath(o, bottom) { basinPath(o, bottom, waterY()); }
+function drawBasinWall(o, bottom) {                                             // מעל המים: הדופן הרחוקה של הגדה – בהירה, עם צמחים שגולשים מלמעלה (או שלג וקרח)
+  const G = (typeof GROUND_STYLE !== 'undefined' && GROUND_STYLE[world]) || null, wd = WORLDS[world], snow = world === 2;
+  const x0 = o.x + bankOff(o, GROUND) - 1.2, x1 = o.x + o.w - bankOff(o, GROUND) + 1.2, wy = waterY();
+  ctx.save(); basinPath(o, wy + 1, GROUND - 0.2); ctx.clip();               // באותו גובה כמו פני הקרקע מסביב – בלי לבלוט מעליה
+  if (G) {                                                                      // אותו דשא כמו הקרקע מסביב (פס עליון בהיר, ומתחתיו ירוק)
+    ctx.fillStyle = G.grass[1]; ctx.fillRect(o.x - 2, GROUND - 0.2, o.w + 4, SHORE.drop + 2);
+    ctx.fillStyle = G.grass[0]; ctx.fillRect(o.x - 2, GROUND - 0.2, o.w + 4, 1.1);
+  } else {
+    ctx.fillStyle = snow ? '#c9d4e2' : wd.ground; ctx.fillRect(o.x - 2, GROUND - 0.2, o.w + 4, SHORE.drop + 2);
+    ctx.fillStyle = snow ? '#f8fafc' : wd.top; ctx.fillRect(o.x - 2, GROUND - 0.2, o.w + 4, 1.0);
+  }
+  const wg = ctx.createLinearGradient(0, GROUND + 0.6, 0, wy + 0.5);           // צל עדין ממש מעל המים
+  wg.addColorStop(0, 'rgba(0,0,0,0)'); wg.addColorStop(1, 'rgba(0,0,0,.14)');
+  ctx.fillStyle = wg; ctx.fillRect(o.x - 2, GROUND + 0.6, o.w + 4, SHORE.drop + 1);
+  ctx.restore();
+  // הקצה העליון: לא קו ישר – קבוצות צמחים (או שלג) בגדלים שונים, עם רווחים ביניהן
+  for (let k = 0, xx = x0 + 1; xx < x1 - 1; k++) {
+    const r = hash(k * 3.1 + o.w * 0.37), r2 = hash(k * 5.7 + 11);
+    xx += 2 + r2 * 5.5;
+    if (r < 0.3 || xx > x1 - 1) continue;                                       // רווח – אין כלום כאן
+    if (snow) {
+      const sz = 0.8 + r * 1.6;
+      ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.ellipse(xx, GROUND - 0.2, sz * 1.3, sz * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+      if (r > 0.7) { ctx.beginPath(); ctx.ellipse(xx + sz * 0.6, GROUND - 0.6, sz * 0.7, sz * 0.4, 0, 0, Math.PI * 2); ctx.fill(); }
+      if (r2 > 0.55) { ctx.fillStyle = 'rgba(224,242,254,.9)'; ctx.beginPath(); ctx.moveTo(xx - 0.35, GROUND + 0.1); ctx.lineTo(xx + 0.35, GROUND + 0.1); ctx.lineTo(xx, GROUND + 0.6 + r2 * 1.2); ctx.closePath(); ctx.fill(); }   // נטיף קרח
+      continue;
+    }
+    const blades = 1 + Math.floor(r * 4), tall = 0.8 + r2 * 2.2;
+    ctx.fillStyle = r2 > 0.5 ? wd.top : '#16a34a';                               // גוש דשא
+    ctx.beginPath(); ctx.ellipse(xx, GROUND - 0.15, 0.7 + blades * 0.45, 0.55, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = r > 0.65 ? '#15803d' : '#22a04b'; ctx.lineWidth = 0.32; ctx.lineCap = 'round';
+    for (let b = 0; b < blades; b++) {                                          // עלי דשא בגבהים וכיוונים שונים
+      const bx = xx + (b - (blades - 1) / 2) * 0.7, h = tall * (0.6 + hash(k + b * 9) * 0.6), lean = (hash(k * 2 + b) - 0.5) * 1.4;
+      ctx.beginPath(); ctx.moveTo(bx, GROUND - 0.3); ctx.quadraticCurveTo(bx + lean * 0.3, GROUND - h * 0.6, bx + lean, GROUND - h); ctx.stroke();
+    }
+    if (r > 0.72) {                                                            // לפעמים: צמח שגולש על הדופן לכיוון המים
+      const len = 0.8 + r2 * (SHORE.drop - 0.3);
+      ctx.strokeStyle = '#4d7c0f'; ctx.lineWidth = 0.4;
+      ctx.beginPath(); ctx.moveTo(xx, GROUND); ctx.quadraticCurveTo(xx + 0.9, GROUND + len * 0.5, xx + 0.3, GROUND + len); ctx.stroke();
+      ctx.fillStyle = '#65a30d'; ctx.beginPath(); ctx.ellipse(xx + 0.55, GROUND + len * 0.55, 0.55, 0.3, 0.8, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(xx + 0.2, GROUND + len, 0.5, 0.28, -0.6, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+}
+function drawShore(o) {                                                        // שפת המים: רצועה רטובה, אבנים, ודשא (או שלג) שנוטה מעל המים
+  const x = o.x, w = o.w, wd = WORLDS[world], snow = world === 2;
+  for (const [dir, ex] of [[1, x], [-1, x + w]]) {
+    ctx.strokeStyle = snow ? 'rgba(148,163,184,.75)' : 'rgba(92,64,38,.6)'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+    ctx.beginPath(); for (let y = waterY(); y <= GROUND + SHORE.slope + 6; y += 1) ctx.lineTo(ex + dir * (bankOff(o, y) - 0.6), y); ctx.stroke();
+    ctx.strokeStyle = snow ? 'rgba(226,232,240,.6)' : 'rgba(214,180,120,.55)'; ctx.lineWidth = 0.6;       // חול / קרח בשפה
+    ctx.beginPath(); for (let y = waterY(); y <= GROUND + SHORE.slope; y += 1) ctx.lineTo(ex + dir * (bankOff(o, y) - 1.4), y); ctx.stroke();
+    ctx.fillStyle = snow ? '#94a3b8' : '#78716c';                                                        // אבנים בקו המים
+    ctx.beginPath(); ctx.ellipse(ex + dir * (bankOff(o, waterY()) + 0.4), waterY() + 0.4, 1.6, 0.9, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = snow ? '#cbd5e1' : '#a8a29e'; ctx.beginPath(); ctx.ellipse(ex - dir * 2.2, GROUND + 0.2, 1.1, 0.7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = snow ? '#f8fafc' : wd.top;                                                           // לשון דשא/שלג מעוגלת שנוטה מעל המים
+    ctx.beginPath(); ctx.ellipse(ex - dir * 0.6, GROUND - 0.1, 2.6, 0.9, dir * 0.12, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 0.4;                                          // קצף קטן בנקודות המפגש
+  for (const ex of [x + bankOff(o, waterY()) + 1.2, x + w - bankOff(o, waterY()) - 1.2]) { ctx.beginPath(); ctx.ellipse(ex, waterY() + 0.4, 1.8, 0.4, 0, 0, Math.PI * 2); ctx.stroke(); }
+}
+function drawLakeBird(o) {                                                    // שחף לבן שעף הלוך ושוב מעל המים
+  const bd = o.bird; if (!bd) return;
+  let [bx, by] = birdPos(o), dir = Math.cos(bd.t * BIRD.speed) >= 0 ? 1 : -1, flapSp = 9;
+  if (bd.hitT !== undefined) { if (bd.hitT > 2) return; bx += bd.hitT * 28 * dir; by -= bd.hitT * bd.hitT * 22 + bd.hitT * 10; flapSp = 22; }   // בורח למעלה
+  const f = Math.sin(bd.t * flapSp), now = performance.now() / 1000;
+  ctx.fillStyle = 'rgba(15,23,42,.10)'; ctx.beginPath(); ctx.ellipse(bx, waterY() + 0.6, 3.2, 0.5, 0, 0, Math.PI * 2); ctx.fill();   // צל על המים
+  ctx.save(); ctx.translate(bx, by); ctx.scale(dir * 1.35, 1.35);              // קצת גדול מהנינג'ה – שיבלוט
+  const wing = (dy, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(-0.6, 0); ctx.quadraticCurveTo(-1.5, dy * 0.6 - 0.6, -3.6, dy); ctx.quadraticCurveTo(-1.6, dy * 0.3 + 0.2, 0.6, 0.3); ctx.closePath(); ctx.fill(); };
+  wing(-2.6 - f * 1.8, '#cbd5e1');                                                // כנף רחוקה
+  ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.ellipse(0, 0.2, 2.4, 1.05, -0.05, 0, Math.PI * 2); ctx.fill();   // גוף
+  ctx.beginPath(); ctx.moveTo(-2.2, 0); ctx.lineTo(-3.4, -0.5); ctx.lineTo(-3.2, 0.6); ctx.closePath(); ctx.fill();   // זנב
+  ctx.beginPath(); ctx.arc(2.1, -0.5, 0.9, 0, Math.PI * 2); ctx.fill();         // ראש
+  ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.moveTo(2.8, -0.55); ctx.lineTo(4.0, -0.3); ctx.lineTo(2.8, -0.15); ctx.closePath(); ctx.fill();   // מקור
+  ctx.fillStyle = '#111827'; circle(2.4, -0.75, bd.hitT !== undefined ? 0.32 : 0.2);   // עין (פעורה כשנבהל)
+  wing(-2.2 - f * 2.2, '#ffffff');                                                // כנף קרובה
+  ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.arc(-3.4, -2.2 - f * 2.2, 0.35, 0, Math.PI * 2); ctx.fill();   // קצה כנף כהה
+  ctx.restore();
+}
 function drawLake(o, bottom) {
   const x = o.x, w = o.w, t = performance.now() / 400;
   const g = ctx.createLinearGradient(0, GROUND, 0, bottom);
   g.addColorStop(0, '#2dd4bf'); g.addColorStop(1, '#134e4a');
-  ctx.fillStyle = g; ctx.fillRect(x, GROUND + 0.5, w, bottom - GROUND);
+  drawBasinWall(o, bottom);
+  ctx.fillStyle = g; waterPath(o, bottom); ctx.fill();
+  drawShore(o);
   ctx.fillStyle = '#15803d';                                                     // עלי לוטוס
-  for (let i = 6; i < w - 6; i += 14) { ctx.beginPath(); ctx.ellipse(x + i + Math.sin(t + i) * 0.8, GROUND + 1.2, 2.6, 0.9, 0, 0, Math.PI * 2); ctx.fill(); }
-  ctx.fillStyle = '#f9a8d4'; circle(x + w * 0.62, GROUND + 0.4, 0.9);
+  for (let i = 12; i < w - 12; i += 14) { ctx.beginPath(); ctx.ellipse(x + i + Math.sin(t + i) * 0.8, waterY() + 0.9, 2.6, 0.9, 0, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = '#f9a8d4'; circle(x + w * 0.62, waterY() + 0.1, 0.9);
   ctx.strokeStyle = '#65a30d'; ctx.lineWidth = 0.45;                                // קני סוף בשפות האגם
-  for (const ex of [x + 1, x + w - 3]) for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(ex + k, GROUND + 1); ctx.lineTo(ex + k + 0.4 * Math.sin(t + k), GROUND - 4 - k); ctx.stroke(); }
+  for (const ex of [x + bankOff(o, waterY()) + 1, x + w - bankOff(o, waterY()) - 4]) for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(ex + k, waterY() + 0.6); ctx.lineTo(ex + k + 0.4 * Math.sin(t + k), GROUND - 4 - k); ctx.stroke(); }
   ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 0.35;                 // אדוות רגועות
-  for (let i = 4; i < w - 6; i += 11) { ctx.beginPath(); ctx.ellipse(x + i, GROUND + 3 + (i % 3), 2.4 + Math.sin(t + i) * 0.4, 0.5, 0, 0, Math.PI * 2); ctx.stroke(); }
+  for (let i = 4; i < w - 6; i += 11) { ctx.beginPath(); ctx.ellipse(x + i, waterY() + 2.5 + (i % 3), 2.4 + Math.sin(t + i) * 0.4, 0.5, 0, 0, Math.PI * 2); ctx.stroke(); }
   label('SWIM', x + w / 2, GROUND - 6, 4, '#fde047', '#1e293b');
+  drawLakeBird(o);
 }
 
 const CAVE_PAD = 10;
@@ -1143,9 +1320,11 @@ function drawPond(o, bottom) {                   // DIVE: מים עמוקים �
   const x = o.x, w = o.w, t = performance.now() / 400;
   const g = ctx.createLinearGradient(0, GROUND, 0, bottom);
   g.addColorStop(0, '#0ea5e9'); g.addColorStop(1, '#0c4a6e');
-  ctx.fillStyle = g; ctx.fillRect(x, GROUND + 0.5, w, bottom - GROUND);
+  drawBasinWall(o, bottom);
+  ctx.fillStyle = g; waterPath(o, bottom); ctx.fill();
+  drawShore(o);
   ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 0.35;
-  for (let i = 3; i < w - 4; i += 9) { ctx.beginPath(); ctx.moveTo(x + i, GROUND + 1.2 + Math.sin(t + i) * 0.3); ctx.quadraticCurveTo(x + i + 2, GROUND + 0.6, x + i + 4, GROUND + 1.2); ctx.stroke(); }
+  for (let i = 10; i < w - 12; i += 9) { ctx.beginPath(); ctx.moveTo(x + i, waterY() + 1.0 + Math.sin(t + i) * 0.3); ctx.quadraticCurveTo(x + i + 2, waterY() + 0.4, x + i + 4, waterY() + 1.0); ctx.stroke(); }
   ctx.fillStyle = 'rgba(255,255,255,.35)';                                      // בועות מהעומק
   for (let i = 0; i < 4; i++) { const ph = (t * 0.3 + i * 0.27) % 1; circle(x + 5 + ((i * 29) % Math.max(6, w - 8)), GROUND + 12 - ph * 10, 0.5); }
 }
@@ -1159,7 +1338,7 @@ function drawNet(o) {                            // רשת במבוק תלויה
   for (let k = 0; k <= 4; k++) { ctx.beginPath(); ctx.moveTo(lx + k * nw / 4, top); ctx.lineTo(lx + k * nw / 4, bot); ctx.stroke(); }
   ctx.fillStyle = '#57534e'; for (let k = 0; k <= 2; k++) { ctx.beginPath(); ctx.ellipse(lx + k * nw / 2, bot, 0.9, 0.6, 0, 0, Math.PI * 2); ctx.fill(); }   // משקולות בתחתית
   for (let y = top + 2.5; y < bot; y += 2.5) { ctx.beginPath(); ctx.moveTo(lx, y); ctx.lineTo(lx + nw, y); ctx.stroke(); }
-  for (let k = 0; k < 3; k++) { ctx.fillStyle = k % 2 ? '#fff' : '#ef4444'; circle(lx + k * nw / 2, GROUND + 0.9, 0.8); }
+  for (let k = 0; k < 3; k++) { ctx.fillStyle = k % 2 ? '#fff' : '#ef4444'; circle(lx + k * nw / 2, waterY() + 0.5, 0.8); }
   if (!o.passed) label('DIVE', lx + nw / 2, top - 6, 4, '#fde047', '#1e293b');
 }
 
@@ -1226,14 +1405,19 @@ function drawNinja() {                                           // הנינג'�
 }
 function drawNinjaBody() {
   if (drawGustNinja()) return;                                                    // בטורנדו: מחזיק בקנה / עף
-  if (ropeHanging()) return;                                                      // תלוי על החבל – מצויר ב-drawRopeSwing
+  if (ropeHanging()) return;
+  if (!boarDrawingFront && boarFrontO()) return;                                  // ביער (גם בדרך לעץ הראשון וביציאה) – הנינג'ה מצויר מעל העצים (drawForestFront ב-boar.js)
+  if (bkDrawNinja()) return;                                                      // על האופניים – הנינג'ה והאופניים יחד (bike.js)
+  if (cartRiding()) return;                                                       // יושב בעגלה – מצויר בתוכה (cart.js)                                                      // תלוי על החבל – מצויר ב-drawRopeSwing
   const pb = playerBox();
-  const swim = swimmingNow();
+  const swim = swimShown();
   const drowning = drownK > 0 && !swim && py <= 0 && sinkT <= 0;     // במים בלי SWIM – שוקע
-  const dive = diving(), leap = act.leap > 0, crawl = crawling() && !swim;
+  const dive = diveShown(), leap = act.leap > 0, crawl = crawling() && !swim;
+  const wading = swimmingNow() && !swim && !dive && py <= 0;
+  const tunO = crawl ? tunnelHere() : null;                                     // זוחל בתוך המחילה – על הרצפה שלה                     // בשפה של הבריכה: הולך בתוך המים הרדודים, על השיפוע
   const riding = rideCtl() && ride.phase !== 'mount';
-  const duck = duckT > 0, fx = riding ? PLAYER.x + 4 : rope && rope.phase === 'fall' && rope.fallX !== undefined ? rope.fallX : leap || dive || crawl ? PLAYER.x + 3 : pb.l + (duck ? 5.5 : swim ? 3 : 4);
-  const fy = riding ? GROUND - py : dive ? GROUND + POND.deep + 7 : leap ? GROUND - py : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : pb.b;
+  const duck = duckT > 0, fx = riding ? PLAYER.x + 4 : rope && rope.phase === 'fall' && rope.fallX !== undefined ? rope.fallX : leap || dive || crawl ? PLAYER.x + 3 : pb.l + (duck ? 5.5 : swim ? 3 : 4) + boatDX();   // boatDX – בדייג: נגרר לחרטום / נופל למים
+  const fy = riding ? GROUND - py : dive ? diveFit(fx).y : leap ? GROUND - py : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : wading ? wadeY(fx) : tunO ? tunnelFloor(tunO, fx) : pb.b + mudSink(fx) + boatSink() + boarFrontDY();   // בבוץ – שקוע עד המותניים. ביער – קרוב יותר אלינו (boarFrontDY)
   const now = performance.now() / 1000;
   if (sinkT > 0 && sinkType === 'burn') {                                       // נשרף בשדה האש – מושחר ועשן עולה
     const k = 1 - sinkT / SINK_TIME;
@@ -1260,10 +1444,11 @@ function drawNinjaBody() {
     for (let k = 0; k < 3; k++) { const yy = fy - 4 - k * 3.5, o2 = ((now * 60 + k * 7) % 10); ctx.beginPath(); ctx.moveTo(fx - 6 - o2, yy); ctx.lineTo(fx - 13 - o2, yy); ctx.stroke(); }
   }
   // צל על הקרקע
-  if (!swim && !drowning && !dive && !(act.hiding > 0)) ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';   // כשכורעים – בלי צל (הברך על הקרקע)
+  if (!swim && !drowning && !dive && !tunO && !(act.hiding > 0) && mudSink(fx) < 0.3 && !(boat && (['board', 'row', 'land'].includes(boat.phase) || FISHING.includes(boat.phase)))) ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.05, 0.22 - py * 0.006) + ')';   // כשכורעים – בלי צל (הברך על הקרקע)
   else ctx.fillStyle = 'rgba(0,0,0,0)';
   if (riding) ctx.fillStyle = 'rgba(0,0,0,0)';                       // על הדרקון – בלי צל על הקרקע
-  ctx.beginPath(); ctx.ellipse(fx + 0.5, GROUND + 0.6, Math.max(1.5, 4.5 - py * 0.08), 0.9, 0, 0, Math.PI * 2); ctx.fill();
+  if (jetS && (jsFlying() || JS_ISLE_P.includes(jetS.p) || ['perchDown', 'perch'].includes(jetS.p))) ctx.fillStyle = 'rgba(0,0,0,0)';   // מעל התהום / על הצוק – אין קרקע מתחת
+  if (!boarFrontDY()) { ctx.beginPath(); ctx.ellipse(fx + 0.5, GROUND + 0.6, Math.max(1.5, 4.5 - py * 0.08), 0.9, 0, 0, Math.PI * 2); ctx.fill(); }   // ביער – בלי צל
   if (invulnT > 0 && Math.floor(invulnT * 10) % 2 === 0) return;   // הבהוב אחרי פגיעה
 
   // גלשן מעל הראש בזמן FLY
@@ -1286,11 +1471,22 @@ function drawNinjaBody() {
     return;
   }
   const P = drowning ? poseFly(now * 4) : playerPose();          // שוקע – מנופף בידיים
-  P.eyes = invulnT > 0 || drowning ? 'wide' : (py > 0 || kickT > 0 || act.push > 0 || act.pulling > 0 || act.leap > 0) ? 'squint' : null;   // הבעה: בהלה אחרי פגיעה, מאמץ בפעולה
+  P.eyes = invulnT > 0 || drowning || (mud && !['tug', 'pull', 'thanks'].includes(mud.phase)) ? 'wide' : mud && mud.phase === 'tug' ? 'squint' : (py > 0 || kickT > 0 || act.push > 0 || act.pulling > 0 || act.leap > 0) ? 'squint' : null;   // הבעה: בהלה אחרי פגיעה, מאמץ בפעולה
   if (riding) drawRideDragon(fx, fy);                            // הדרקון מתחת לנינג'ה
-  if (hasGear('katana') && P.swordA === undefined) drawKatana(fx, fy, P);   // קטאנה על הגב – מאחורי הגוף (בקרב היא ביד)
-  drawFigure({ fx, fy, facing: 1, scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
+  drawPowerBack(fx, fy, P);                                       // תרמיל הסילון על הגב
+  if (hasGear('katana') && P.swordA === undefined && jetT <= 0) drawKatana(fx, fy, P);   // קטאנה על הגב – מאחורי הגוף (בקרב היא ביד)
+  if (P.backView) playerHand = drawNinjaBack({ fx: fx + 1, fy, scale: 1, accent: playerColor(), suit: playerSuit(), s: P.backS, hang: P.backHang, tilt: P.backTilt });   // מבט מאחור (טיפוס בחבל)
+  else {
+    drawFigure({ fx, fy, facing: playerFacing(), scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
+    playerHand = figHand(fx, fy, playerFacing(), 1, P, 1);         // איפה כף היד הקדמית – לחפצים שמחזיקים
+  }
+  drawMerchHeld();
+  drawJetHeld();
+  if (typeof drawWolvesFront === 'function') drawWolvesFront();   // זאבים: דופן הסל לפני הנינג'ה                                                  // תרמיל הסילון בידיים                                                // מפתח / חבל ביד (הלפיד – מעל החושך של המערה)
   drawPlayerSword(fx, fy, P);
+  drawPowerFront(fx, fy);                                         // בועת מגן / טיימר הסילון
+  drawLiftCarry(fx, fy);                                          // הסלע בידיים
+  drawJumpLight(fx, fy);                                          // נורה מעל הראש: מתי להגיד JUMP
   drawPet(fx, fy);
   if (drowning) {
     if (Math.random() < 0.25) particles.push({ x: fx + (Math.random() - 0.5) * 4, y: GROUND, vx: 0, vy: -8, g: 0, life: 0.5, color: '#e0f2fe', size: 0.9 });

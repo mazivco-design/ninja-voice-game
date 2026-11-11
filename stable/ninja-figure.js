@@ -45,6 +45,11 @@ const RIG_DEFAULT = {
     ink: 0,             // קו מתאר כהה דק סביב כל חלק (0 = בלי)
     shade: 0            // עוצמת ההצללה (0 = בלי)
   },
+  // חלקים נוספים (כבויים כברירת מחדל – הדמות נראית כמו תמיד). color ריק = צבע ברירת המחדל
+  parts: {
+    shoe: { on: false, style: 'tabi', color: '', len: 1.9, cuff: 0.6 },   // style: tabi (בוהן נפרדת) | boot (מגף)
+    hand: { style: 'ball', color: '' }                                     // style: ball (עיגול) | mitten (כפפה עם אגודל) | fist (אגרוף)
+  },
   run: { legSwing: 0.85, kneeBend: 1.0, armSwing: 1.15, elbowBend: 1.55, lean: 0.18, bob: 0.6, cadence: 1.0 },
   layers: { order: ELEMENTS.slice(), perMove: {} },   // perMove: { kick: [...], ... }
   elements: {
@@ -326,7 +331,48 @@ function drawFigure(F) {
     const sh = P.legs[i][1], a = sh + Math.PI / 2 * (Math.cos(sh) + 1) / 2 + ((P.feet && P.feet[i]) || 0), e = q[2];
     return [endOf(e[0], e[1], a, -0.5), endOf(e[0], e[1], a, footL)];
   };
-  const foot = (q, i, ex, col, base) => { if (footL <= 0) return; line(footPts(q, i), S.legW * 0.95 + ex, col || base); };
+  const PT = RIG.parts || {}, SH = PT.shoe || {}, HD = PT.hand || {};
+  const foot = (q, i, ex, col, base) => {
+    if (SH.on) return shoe(q, i, ex, col);
+    if (footL <= 0) return; line(footPts(q, i), S.legW * 0.95 + ex, col || base);
+  };
+  // נעל: צורה סביב הקרסול, בכיוון כף הרגל. s = לאורך כף הרגל (קדימה), h = כלפי מעלה מהסוליה
+  const shoe = (q, i, ex, col) => {
+    const sh = P.legs[i][1], a = sh + Math.PI / 2 * (Math.cos(sh) + 1) / 2 + ((P.feet && P.feet[i]) || 0), e = q[2];
+    const f = [Math.sin(a), Math.cos(a)], n = [f[1], -f[0]];
+    const w = S.legW * taper, len = SH.len || 2.2, boot = SH.style === 'boot', cuff = (SH.cuff || 1) * (boot ? 1.9 : 1);
+    const at = (s, h) => [e[0] + f[0] * s + n[0] * h, e[1] + f[1] * s + n[1] * h];
+    const sole = -w * 0.5, back = -w * 0.5;
+    const P0 = [at(back, sole), at(len, sole), at(len, sole + w * 0.42), at(len * 0.5, w * 0.12), at(w * 0.5, cuff), at(back, cuff)];
+    const c = col || SH.color || C.edge;
+    ctx.fillStyle = c; ctx.strokeStyle = c; ctx.lineWidth = 0.5 + ex;
+    ctx.beginPath(); ctx.moveTo(P0[0][0], P0[0][1]); P0.slice(1).forEach(p => ctx.lineTo(p[0], p[1])); ctx.closePath(); ctx.fill(); ctx.stroke();
+    if (col) return;
+    ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 0.22;
+    if (SH.style !== 'boot') { const a1 = at(len - 0.1, sole + w * 0.22), a2 = at(len - 0.8, sole + w * 0.18); ctx.beginPath(); ctx.moveTo(a1[0], a1[1]); ctx.lineTo(a2[0], a2[1]); ctx.stroke(); }   // הבוהן הנפרדת של הטאבי
+    else { const b1 = at(back, cuff - 0.35), b2 = at(w * 0.5, cuff - 0.35); ctx.beginPath(); ctx.moveTo(b1[0], b1[1]); ctx.lineTo(b2[0], b2[1]); ctx.stroke(); }  // שפת המגף
+  };
+  // כף יד: עיגול (כמו תמיד), כפפה עם אגודל או אגרוף – מסובבת לפי כיוון האמה
+  const hand = (q, r, ex, col, fill) => {
+    const e = q[2], k = q[1], style = HD.style || 'ball';
+    ctx.fillStyle = col || fill;
+    if (style === 'ball') { circle(e[0], e[1], r + ex / 2); return; }
+    let d = [e[0] - k[0], e[1] - k[1]]; const L = Math.hypot(d[0], d[1]) || 1; d = [d[0] / L, d[1] / L];
+    const nn = [d[1], -d[0]];                         // ניצב לאמה – הצד של האגודל
+    const c = [e[0] + d[0] * r * 0.35, e[1] + d[1] * r * 0.35];
+    ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(Math.atan2(d[1], d[0]));
+    if (style === 'fist') { roundRect(-r - ex / 2, -r * 0.95 - ex / 2, r * 2.1 + ex, r * 1.9 + ex, r * 0.55); ctx.fill(); }
+    else { ctx.beginPath(); ctx.ellipse(0, 0, r * 1.2 + ex / 2, r * 0.92 + ex / 2, 0, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+    const tr = r * (style === 'fist' ? 0.42 : 0.48) + ex / 2;     // אגודל
+    const tc = [c[0] + nn[0] * r * 0.85 - d[0] * r * 0.15, c[1] + nn[1] * r * 0.85 - d[1] * r * 0.15];
+    ctx.fillStyle = col || fill; circle(tc[0], tc[1], tr);
+    if (!col && style === 'fist') {                  // קווי מפרקים
+      ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 0.18;
+      for (const m of [-0.45, 0.15]) { const p1 = [c[0] + d[0] * r * 0.5 + nn[0] * r * m, c[1] + d[1] * r * 0.5 + nn[1] * r * m];
+        ctx.beginPath(); ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p1[0] + d[0] * r * 0.55, p1[1] + d[1] * r * 0.55); ctx.stroke(); }
+    }
+  };
   // הצללה: פס בהיר לאורך הצד הקדמי של הגוף, וצל על הצד האחורי
   const shadeLine = (q, w) => { if (!shade) return; const f = J.fw; const d = w * 0.22;
     line(q.map(([x, y]) => [x + f[0] * d, y + f[1] * d]), w * 0.42, lite); line(q.map(([x, y]) => [x - f[0] * d, y - f[1] * d]), w * 0.3, dark); };
@@ -343,7 +389,7 @@ function drawFigure(F) {
       if (!col && P.kickFoot) { const e = pts.legF[2]; ctx.fillStyle = accent; circle(e[0], e[1], 1.35); }
     },
     armF: (ex, col) => limb(pts.armF, S.armW, ex, col || C.front),
-    handB: (ex, col) => { const e = pts.armB[2]; ctx.fillStyle = col || accent; circle(e[0], e[1], S.handR + ex / 2); },
+    handB: (ex, col) => hand(pts.armB, S.handR, ex, col, HD.color || accent),
     handF: (ex, col) => {
       const e = pts.armF[2];
       if (style === 'samurai' && !P.shield) {            // חרב: ממשיכה את כיוון האמה
@@ -354,7 +400,7 @@ function drawFigure(F) {
         line([e, [e[0] + bx / bl * 8, e[1] + by / bl * 8]], 0.7 + ex, col || '#e5e7eb');                    // להב
         if (!col) { ctx.fillStyle = accent; circle(e[0] + bx / bl * 0.4, e[1] + by / bl * 0.4, 0.75); }     // מגן יד
       }
-      ctx.fillStyle = col || accent; circle(e[0], e[1], gloveR() + ex / 2);
+      hand(pts.armF, gloveR(), ex, col, HD.color || accent);
       if (!col && shade) { ctx.fillStyle = lite; circle(e[0] - 0.25, e[1] - 0.3, gloveR() * 0.4); }
       if (style === 'guard' && !F.friendly) {            // פנס נייר תלוי מהיד (לא לסוחר)
         const lx = e[0], ly = e[1] + 2.2;
@@ -395,6 +441,7 @@ function drawFigure(F) {
       ctx.restore();
     },
     face: (ex, col) => {
+      if (P.back) return;                                 // מבט מהגב (למשל טיפוס בחבל) – לא רואים פנים
       ctx.save(); ctx.translate(head[0], head[1]); ctx.rotate(headA); ctx.scale(hs, hs);
       const e = ex / 2 / hs;
       if (style === 'samurai') {                         // פנים גלויות, גבות כועסות, שפם
@@ -442,6 +489,14 @@ function drawFigure(F) {
         ctx.fillStyle = col || accent;
         ctx.beginPath(); ctx.moveTo(-5 - e, -1.0 + e); ctx.lineTo(0.3, -5.2 - e); ctx.lineTo(5.6 + e, -1.0 + e); ctx.closePath(); ctx.fill();
         if (!col) { ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 0.25; ctx.beginPath(); ctx.moveTo(0.3, -5.2); ctx.lineTo(-2.4, -1); ctx.moveTo(0.3, -5.2); ctx.lineTo(3, -1); ctx.stroke(); }
+        ctx.restore(); return;
+      }
+      if (P.back) {                                       // מהגב: הסרט מקיף את כל הראש, והקשר באמצע עם שני זנבות למטה
+        ctx.fillStyle = col || accent; ctx.fillRect(-3.3 - e, -1.7 - e, 6.6 + 2 * e, 1.0 + 2 * e);
+        circle(0, -1.2, 0.75 + e);
+        ctx.strokeStyle = col || accent; ctx.lineWidth = 0.75 + 2 * e;
+        ctx.beginPath(); ctx.moveTo(0, -1.1); ctx.quadraticCurveTo(-0.9 + wv * 0.4, 1.2, -1.6 + wv * 0.6, 3.4); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, -1.1); ctx.quadraticCurveTo(0.9 + wv * 0.4, 1.2, 1.3 + wv * 0.6, 3.2); ctx.stroke();
         ctx.restore(); return;
       }
       ctx.fillStyle = col || accent; ctx.fillRect(-2.9 - e, -2.3 - e, 5.7 + 2 * e, 0.95 + 2 * e);
@@ -531,4 +586,46 @@ function captureKeys(move, n) {
   }
   tune.raw = false;
   return out;
+}
+
+// נינג'ה במבט מאחור (טיפוס בחבל): גוף, ראש בלי פנים, סרט ראש עם קשר וזנבות על הגב, חגורה,
+// שתי ידיים למעלה ושתי רגליים. s (0..1) מחליף צד: יד אחת פרוסה למעלה + הרגל באותו צד מקופלת, ובצד השני להפך.
+// מחזיר את מיקום היד הגבוהה (לחבל).
+function drawNinjaBack(F) {
+  const C = F.suit ? Object.assign({}, RIG.colors.ninja, F.suit) : RIG.colors.ninja, acc = C.accent || F.accent || '#dc2626';
+  const S = RIG.shape, sc = F.scale || 1, s = F.s === undefined ? 0 : F.s, now = performance.now() / 1000;
+  const L = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+  const legLen = S.thigh + S.shin, hipY = -legLen, shY = hipY - S.torso - 0.3, headY = shY - 1.8, hr = S.headR * 0.82;
+  // לכל צד: יד פרוסה/מקופלת, רגל מקופלת/ישרה (k=0 – יד פרוסה ורגל מקופלת, k=1 – להפך)
+  const side = (d, k) => {
+    const sh = [d * 1.9, shY + 0.5], hip = [d * 1.1, hipY + 0.2];
+    const armOut = [[d * 2.6, shY - 2.9], [d * 2.1, shY - 7.6]], armBent = [[d * 4.3, shY - 1.6], [d * 1.9, headY - hr - 0.4]];   // פרוסה: גבוה מעל הראש; מקופלת: מרפק בצד, יד ליד קודקוד הראש
+    const legBent = [[d * 2.9, hipY + 2.0], [d * 1.7, hipY + 4.0]], legStr = [[d * 1.35, hipY + 2.5], [d * 1.25, 0.2]];
+    return { sh, hip, el: L(armOut[0], armBent[0], k), hand: L(armOut[1], armBent[1], k), kn: L(legBent[0], legStr[0], k), ft: L(legBent[1], legStr[1], k) };
+  };
+  const A = side(-1, s), B = side(1, 1 - s);
+  if (F.hang) {                                                                      // תלוי ביד אחת: היד השנייה למטה, הרגליים משתלשלות
+    A.el = [-1.95, shY - 3.4]; A.hand = [-1.95, shY - 7.6];                          // היד שתופסת – כמעט ישרה
+    B.el = [2.75, shY + 2.2]; B.hand = [2.8, shY + 4.8];                             // היד השנייה – למטה, לצד הגוף
+    A.kn = [-1.5, hipY + 2.4]; A.ft = [-1.0, hipY + 4.7]; B.kn = [1.7, hipY + 2.3]; B.ft = [1.5, hipY + 4.6];
+  }
+  ctx.save(); ctx.translate(F.fx, F.fy); ctx.scale(sc, sc); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const top = A.hand[1] < B.hand[1] ? A.hand : B.hand;
+  if (F.tilt) { ctx.translate(top[0], top[1]); ctx.rotate(F.tilt); ctx.translate(-top[0], -top[1]); }   // הגוף באלכסון – תלוי מהיד שלמעלה
+  const limb = (pts, w, col) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]); ctx.stroke(); };
+  [A, B].forEach(q => limb([q.hip, q.kn, q.ft], S.legW, C.body));                  // רגליים – הכול בצבע אחד, בלי קו מתאר
+  const down = F.hang ? B : null;                                                    // בתלייה: היד שלמטה – מאחורי הגוף (מצוירת לפניו, והגוף מכסה אותה)
+  if (down) { limb([down.sh, down.el, down.hand], S.armW, C.body); ctx.fillStyle = C.body; circle(down.hand[0], down.hand[1], S.handR); }
+  ctx.fillStyle = C.body; roundRect(-2.2, shY - 0.4, 4.4, hipY - shY + 1.0, 0.9); ctx.fill();   // גוף
+  ctx.fillStyle = acc; ctx.fillRect(-2.25, hipY - 1.4, 4.5, 1.1);                    // חגורה
+  ctx.fillStyle = C.body; circle(0, headY, hr);                                      // ראש מאחור – בלי פנים
+  [A, B].forEach(q => { if (q === down) return; limb([q.sh, q.el, q.hand], S.armW, C.body); ctx.fillStyle = acc; circle(q.hand[0], q.hand[1], S.handR); });   // ידיים
+  ctx.fillStyle = acc; ctx.fillRect(-hr, headY - 1.1, hr * 2, 1.0);                  // סרט ראש
+  circle(0, headY - 0.6, 0.7);
+  const wv = Math.sin(now * 7) * 0.35;
+  ctx.strokeStyle = acc; ctx.lineWidth = 0.75;                                       // זנבות הקשר על הגב
+  ctx.beginPath(); ctx.moveTo(0, headY - 0.5); ctx.quadraticCurveTo(-0.7 + wv, headY + 1.6, -1.3 + wv, headY + 3.6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, headY - 0.5); ctx.quadraticCurveTo(0.6 + wv, headY + 1.6, 0.9 + wv, headY + 3.4); ctx.stroke();
+  ctx.restore();
+  return [F.fx + top[0] * sc, F.fy + top[1] * sc];
 }

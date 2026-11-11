@@ -1,0 +1,165 @@
+/* ninja-voice-game – fuji.css
+   המסך הראשי בסגנון יפני (הר פוג'י): הנוף, התפריט בצד או למטה, ולוח הניקוד שזז ומתקפל.
+   הצבעים: אינדיגו #2c4a7c, אדום #c8372d, זהב #e9b949, נייר #faf3e3 */
+
+#menu.fuji { background: #f4c48e; padding: 0; }
+#menu.fuji.show { display: block; }
+#app:has(#menu.show) #hudFree { visibility: hidden; }          /* בתפריט לא צריך את הניקוד של המשחק */
+
+.fujiScene { position: absolute; inset: 0; }
+.fujiScene svg { display: block; width: 100%; height: 100%; }
+
+/* ---------- התפריט ---------- */
+#menu.fuji .menuPanel {
+  position: absolute; display: grid; gap: 12px; text-align: start; overflow: hidden; max-height: none; min-height: 0;
+  width: auto; padding: 16px; border-radius: 22px; background: #faf3e3; border: 3px solid #2c4a7c; box-shadow: 0 8px 0 #1f3a68;
+  color: #1f2a44; font-family: 'Zen Kaku Gothic New', -apple-system, system-ui, sans-serif;
+}
+#menu.fuji.mSide .menuPanel {                                  /* בצד */
+  right: 16px; top: 62px; bottom: 22px; width: var(--sideW, 380px);
+  grid-template-areas: "a" "go" "c" "btns"; grid-template-rows: auto auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr);
+}
+#menu.fuji.mBottom .menuPanel {                                /* לרוחב למטה */
+  left: 16px; right: 16px; bottom: 16px; height: var(--botH, 230px);
+  grid-template-columns: minmax(220px, 0.85fr) minmax(250px, 1fr) minmax(0, 2.2fr);
+  grid-template-areas: "a go c" "a btns c"; grid-template-rows: minmax(0, 1fr) auto;
+}
+@media (max-aspect-ratio: 1/1) {                               /* אייפד לאורך */
+  #menu.fuji.mBottom .menuPanel {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "a go" "a btns" "c c"; grid-template-rows: auto auto minmax(0, 1fr);
+  }
+}
+#menu.fuji .mpA { grid-area: a; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+#menu.fuji .mpGo { grid-area: go; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+#menu.fuji .mpC { grid-area: c; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+#menu.fuji .mpBtns { grid-area: btns; display: flex; gap: 8px; margin: 0; padding: 0; position: static; background: none; }
+
+#menu.fuji .mtop { display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: nowrap; }
+#menu.fuji .seal { width: 40px; height: 40px; flex: none; border-radius: 8px; background: #c8372d; color: #fbf5e6; transform: rotate(-4deg);
+  font-family: 'Shippori Mincho B1', serif; font-size: 24px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+#menu.fuji h1 { font-family: 'Shippori Mincho B1', serif; font-size: clamp(22px, 3.4vh, 30px); font-weight: 800; line-height: 1; margin: 0; color: #1f2a44; white-space: nowrap; }
+#menu.fuji .layoutBtn { margin-inline-start: auto; width: 38px; height: 38px; flex: none; border: 2px solid #2c4a7c; border-radius: 10px; background: transparent;
+  display: flex; align-items: center; justify-content: center; padding: 0; }
+#menu.fuji .layoutBtn svg { width: 20px; height: 20px; }
+#menu.fuji .prow { display: flex; align-items: center; gap: 10px; min-width: 0; }
+#menu.fuji .pchip { border-radius: 12px; background: #f3e7c9; color: #1f2a44; font-weight: 900; font-size: 15px; padding: 7px 12px; min-width: 0; max-width: 60%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#menu.fuji .jSt { font-size: 12.5px; font-weight: 700; color: #4b5574; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#menu.fuji .status { font-size: 12px; min-height: 0; margin: 0; color: #4b5574; }
+#menu.fuji .status:empty { display: none; }
+#menu.fuji .diffs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
+#menu.fuji .diff { max-width: none; opacity: 1; border: 2px solid #2c4a7c; border-radius: 10px; background: transparent; color: #2c4a7c; padding: 6px 4px;
+  font-family: inherit; font-size: 14px; font-weight: 700; }
+#menu.fuji .diff small { display: inline; font-size: .8em; }
+#menu.fuji .diff { white-space: nowrap; font-size: 13.5px; padding: 6px 2px; }
+#menu.fuji .diff.sel { background: #2c4a7c; color: #fbf5e6; }
+
+#menu.fuji .climb { width: 100%; min-height: 60px; flex: 1; border: 0; border-radius: 16px; background: #c8372d; color: #fbf5e6; box-shadow: 0 6px 0 #7f1d1d;
+  font-family: 'Shippori Mincho B1', serif; font-size: clamp(18px, 2.8vh, 23px); font-weight: 800; padding: 6px 14px; margin-bottom: 6px; }
+#menu.fuji .climb:disabled { opacity: .6; }
+#menu.fuji .climb:active { transform: translateY(3px); box-shadow: 0 3px 0 #7f1d1d; }
+#menu.fuji .goSub { display: flex; align-items: center; gap: 8px; min-width: 0; }
+#menu.fuji .jMsg { flex: 1; min-width: 0; font-size: 12.5px; font-weight: 700; color: #4b5574; line-height: 1.25; }
+#menu.fuji .restart { flex: none; border: 2px solid #2c4a7c; border-radius: 10px; background: transparent; color: #2c4a7c; font: 700 12.5px inherit; padding: 4px 9px; }
+#menu.fuji .restart:disabled { opacity: .5; }
+
+#menu.fuji .trainLbl { display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin: 0 0 6px; color: #1f2a44; text-transform: none; letter-spacing: 0;
+  font-family: 'Shippori Mincho B1', serif; font-size: 19px; font-weight: 800; }
+#menu.fuji .hintTgl { font-family: 'Zen Kaku Gothic New', sans-serif; border: 2px solid #c9944a; background: #f3e7c9; color: #6b4212; padding: 2px 9px; font-size: 12px; }
+#menu.fuji .hintTgl.off { border-color: #d6cbb0; background: transparent; color: #8a826e; }
+#menu.fuji .stages.lessons { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; align-content: start;
+  grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; padding: 2px 2px 6px; }
+#menu.fuji.mBottom .stages.lessons { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+@media (max-aspect-ratio: 1/1) { #menu.fuji.mBottom .stages.lessons { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+#menu.fuji .stage { border-radius: 10px; border: 2px solid #d6cbb0; background: #f3ecdc; color: #8a826e; padding: 5px 2px; min-height: 58px; box-shadow: none; animation: none; }
+#menu.fuji .stage:nth-child(4n+1):not(.locked) { background: #dde5f2; border-color: #2c4a7c; color: #1f3a68; }
+#menu.fuji .stage:nth-child(4n+2):not(.locked) { background: #f6dcd6; border-color: #c8372d; color: #7f1d1d; }
+#menu.fuji .stage:nth-child(4n+3):not(.locked) { background: #dbe7dd; border-color: #2f5a3d; color: #1f3d29; }
+#menu.fuji .stage:nth-child(4n+4):not(.locked) { background: #f3e2c4; border-color: #c9944a; color: #6b4212; }
+#menu.fuji .stage.pend { background: #e9b949 !important; border-color: #a07a22 !important; color: #4a2f0b !important; animation: pulse 1.2s infinite; }
+#menu.fuji .stage .num { font-size: 18px; }
+#menu.fuji .stage .name { font-size: 11px; font-weight: 900; letter-spacing: .02em; }
+#menu.fuji .stage .stars { color: #c9944a; font-size: 12px; }
+#menu.fuji .stage:disabled { opacity: 1; }
+#menu.fuji .stage.locked .num { opacity: .6; }
+
+#menu.fuji .free { flex: 1; min-width: 0; height: 52px; padding: 0 8px; border-radius: 12px; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 15px; font-weight: 900;
+  box-shadow: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+#menu.fuji .free.mix, #menu.fuji .free.words, #menu.fuji .free.order { background: transparent; border: 2px solid #2c4a7c; color: #2c4a7c; }
+#menu.fuji .free.shop { flex: 1.5; background: #e9b949; border: 0; color: #4a2f0b; box-shadow: 0 4px 0 #a07a22; font-size: 16px; }
+#menu.fuji .free.shop .stall { width: 28px; height: 26px; flex: none; }
+#menu.fuji .free.shop .coinIco { width: 1em; height: 1em; box-shadow: none; }
+#menu.fuji .free:disabled { opacity: .55; }
+
+/* ---------- לוח הניקוד: זז ומתקפל ---------- */
+#menu.fuji .sideBoard { position: absolute; left: 16px; top: 62px; width: 272px; max-height: min(62vh, 520px); z-index: 4; order: 0;
+  background: rgba(250,243,227,.96); border: 3px solid #2c4a7c; border-radius: 18px; box-shadow: 0 6px 0 #1f3a68; padding: 8px 12px 12px;
+  display: flex; flex-direction: column; font-family: 'Zen Kaku Gothic New', -apple-system, system-ui, sans-serif; }
+#menu.fuji .sbHead { display: flex; align-items: center; gap: 8px; height: 38px; flex: none; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+#menu.fuji .sbHead b { flex: 1; font-family: 'Shippori Mincho B1', serif; font-size: 18px; font-weight: 800; color: #1f2a44; }
+#menu.fuji .sbHead .grip { width: 18px; height: 18px; flex: none; }
+#menu.fuji .sbHead .grip svg, #menu.fuji .sbMin svg { display: block; width: 100%; height: 100%; }
+#menu.fuji .sbMin { width: 34px; height: 34px; flex: none; border: 2px solid #2c4a7c; border-radius: 10px; background: transparent; padding: 7px; }
+#menu.fuji .sbBody { display: flex; flex-direction: column; min-height: 0; margin-top: 6px; }
+#menu.fuji .sideBoard.closed .sbBody { display: none; }
+#menu.fuji .sbTabs { margin-bottom: 6px; }
+#menu.fuji .sbTab { border: 2px solid #2c4a7c; background: transparent; color: #2c4a7c; border-radius: 10px; font-family: inherit; }
+#menu.fuji .sbTab.sel { background: #2c4a7c; color: #fbf5e6; }
+#menu.fuji .sbR:nth-child(odd) { background: rgba(243,231,201,.7); }
+#menu.fuji .sbR.me { background: #f6e3b8; outline: 2px solid #e9b949; }
+#menu.fuji .sbR .st { color: #c8372d; }
+#menu.fuji .sbSub { color: #2c4a7c; opacity: .7; }
+
+/* ---------- מסך קבלת הפנים: מי משחק? + הוספה / עריכה של שחקן ---------- */
+#welcomeScene { display: none; }
+#app:has(#players.show) #welcomeScene, #app:has(#editP.show) #welcomeScene { display: block; }
+#app:has(#players.show) #hudFree, #app:has(#editP.show) #hudFree { visibility: hidden; }
+.overlay.fujiW { background: transparent; }
+.fujiW .panel { width: min(640px, 94%); background: #faf3e3; color: #1f2a44; border: 3px solid #2c4a7c; border-radius: 22px; box-shadow: 0 8px 0 #1f3a68;
+  font-family: 'Zen Kaku Gothic New', -apple-system, system-ui, sans-serif; }
+.fujiW .wTop { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.fujiW .seal { width: 46px; height: 46px; flex: none; border-radius: 9px; background: #c8372d; color: #fbf5e6; transform: rotate(-4deg);
+  font-family: 'Shippori Mincho B1', serif; font-size: 28px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.fujiW h1, .fujiW h2 { font-family: 'Shippori Mincho B1', serif; font-weight: 800; color: #1f2a44; margin: 0; }
+.fujiW h1 { font-size: clamp(28px, 4.6vh, 40px); }
+.fujiW p { color: #4b5574; font-weight: 700; margin: 6px 0 2px; }
+.fujiW .pcard { background: #f3ecdc; border: 2px solid #d6cbb0; border-radius: 14px; color: #1f2a44; padding: 10px 8px 12px; }
+.fujiW .pcard:nth-child(4n+1):not(.add) { background: #dde5f2; border-color: #2c4a7c; }
+.fujiW .pcard:nth-child(4n+2):not(.add) { background: #f6dcd6; border-color: #c8372d; }
+.fujiW .pcard:nth-child(4n+3):not(.add) { background: #dbe7dd; border-color: #2f5a3d; }
+.fujiW .pcard:nth-child(4n+4):not(.add) { background: #f3e2c4; border-color: #c9944a; }
+.fujiW .pcard .nj { width: 60px; height: 62px; margin: 0 auto 4px; }
+.fujiW .pcard .nj svg { display: block; width: 100%; height: 100%; }
+.fujiW .pcard .pstats { color: #4b5574; font-weight: 700; }
+.fujiW .pcard.add { background: transparent; border: 2px dashed #2c4a7c; color: #2c4a7c; }
+.fujiW .managing .pcard { outline: 2px dashed #c8372d; }
+.fujiW .free.manage { margin-top: 8px; background: transparent; border: 2px solid #2c4a7c; color: #2c4a7c; box-shadow: none; font-family: inherit; font-weight: 900; }
+.fujiW #pName { border-color: #2c4a7c; background: #fff; font-family: inherit; }
+.fujiW .btn { background: #c8372d; color: #fbf5e6; box-shadow: 0 5px 0 #7f1d1d; font-family: 'Shippori Mincho B1', serif; font-weight: 800; }
+.fujiW .btn.sec { background: transparent; color: #2c4a7c; border: 2px solid #2c4a7c; box-shadow: none; font-family: 'Zen Kaku Gothic New', sans-serif; }
+.fujiW .sw { border-color: #faf3e3; }
+
+/* חלון השחקנים: רחב ונמוך, בתחתית המסך – כדי שההר יישאר גלוי */
+#players.fujiW { align-items: flex-end; padding: 16px 16px max(26px, env(safe-area-inset-bottom)); }
+#players.fujiW .panel { width: min(1060px, 100%); display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; text-align: start;
+  grid-template-areas: "top grid" "sub grid" "manage grid" "tester grid"; gap: 4px 22px; padding: 16px 20px; }
+#players.fujiW .wTop { grid-area: top; justify-content: flex-start; }
+#players.fujiW .panel > p { grid-area: sub; margin: 0; }
+#players.fujiW .free.manage { grid-area: manage; justify-self: start; margin-top: 6px; }
+#players.fujiW .testerSlide { grid-area: tester; justify-self: start; margin-top: 8px; }   /* כניסת בודק – מתחת ל-Manage players */
+#editP .testerSlide { margin: 14px auto 0; }
+#players.fujiW .playerGrid { grid-area: grid; display: flex; flex-wrap: nowrap; gap: 10px; margin: 0; max-height: none; overflow-x: auto; overflow-y: hidden;
+  -webkit-overflow-scrolling: touch; padding: 2px 2px 6px; }
+#players.fujiW .pcard { flex: 0 0 124px; padding: 8px 6px 10px; }
+#players.fujiW .pcard.add { min-height: 0; align-self: stretch; }
+#players.fujiW .pcard .nj { width: 50px; height: 52px; }
+#players.fujiW { align-items: flex-start; padding-top: min(var(--wTop, 40vh), calc(100% - 230px)); }
+
+/* מספר התחנה על כרטיס האימון – כמו האריחים על ההר */
+#menu.fuji .stage { position: relative; }
+#menu.fuji .stage .stNo { position: absolute; top: 3px; left: 4px; min-width: 16px; height: 16px; padding: 0 3px; border-radius: 5px; box-sizing: border-box;
+  background: #2c4a7c; color: #fbf5e6; font: 800 10.5px/16px 'Shippori Mincho B1', serif; text-align: center; }
+#menu.fuji .stage.locked .stNo { background: #b9a97f; }
+/* בודק: אפשר ללחוץ על תחנה בהר */
+#menu.fuji.tester .fujiScene .stTile { cursor: pointer; }

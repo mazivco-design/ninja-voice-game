@@ -8,7 +8,7 @@
 const MODEL_URL = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz';
 
 // כל המילים שהמשחק מכיר
-const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive', 'crawl', 'fire', 'want', 'let go', 'ride', 'fight', 'hold'];
+const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive', 'crawl', 'fire', 'let go', 'ride', 'fight', 'hold', 'pick up', 'put down', 'help', 'push together', 'push on three', 'want', 'fishing', 'boar', 'jetpack', 'wolves', 'bike'];   // WANT עבר לסוף · FISHING – עולם השייט
 // סדר התחנות במסע – אפשר לשנות בעורך (tester → 🧭). נשמר ב-ninjaVoice_wordOrder (ומסתנכרן בין מכשירים)
 const WORDS_DEFAULT = WORDS.slice();
 (function applyWordOrder() {
@@ -21,8 +21,31 @@ const WORDS_DEFAULT = WORDS.slice();
     WORDS.splice(0, WORDS.length, ...known, ...rest);
   } catch (e) {}
 })();
+// WANT עבר לסוף המסע (פעם אחת בכל מכשיר): מי שכבר עבר אותו – התחנה שלו יורדת באחת,
+// כך שפתוחות לו בדיוק אותן מילים כמו קודם (חוץ מ-WANT, שנשאר אצלו "נלמד"). שום מילה חדשה לא נפתחת בלי שיעור.
+(function moveWantToEnd() {
+  try {
+    if (localStorage.getItem('ninjaVoice_mig_wantEnd')) return;
+    const saved = JSON.parse(localStorage.getItem('ninjaVoice_wordOrder') || 'null');
+    const OLD_DEFAULT = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive', 'crawl', 'fire', 'want', 'let go', 'ride', 'fight', 'hold', 'pick up', 'put down', 'help', 'push together', 'push on three'];
+    const old = Array.isArray(saved) && saved.includes('want') ? saved : OLD_DEFAULT;
+    const wi = old.indexOf('want');
+    const players = JSON.parse(localStorage.getItem('ninjaVoice_players') || '[]');
+    for (const p of players) {
+      if (!p || p.id === 'tester' || String(p.name || '').trim().toLowerCase() === 'tester') continue;
+      const k = 'ninjaVoice_p' + p.id + '_station', v = JSON.parse(localStorage.getItem(k) || 'null');
+      if (typeof v === 'number' && wi >= 0 && v >= wi) localStorage.setItem(k, JSON.stringify(Math.max(0, v - 1)));
+    }
+    if (Array.isArray(saved) && saved.includes('want')) {                      // סדר ששמרו בעורך – גם בו WANT עובר לסוף
+      const ord = saved.filter(w => w !== 'want').concat('want');
+      localStorage.setItem('ninjaVoice_wordOrder', JSON.stringify(ord));
+      const i = WORDS.indexOf('want'); if (i >= 0) { WORDS.splice(i, 1); WORDS.push('want'); }
+    }
+    localStorage.setItem('ninjaVoice_mig_wantEnd', '1');
+  } catch (e) {}
+})();
 const WORD_ICON = { jump: '⬆️', down: '⬇️', kick: '🦶', throw: '✴️', catch: '🟡', fly: '🪁',
-                    stop: '✋', run: '💨', swim: '🌊', climb: '🧗', push: '🪨', pull: '⛓️', hide: '🌿', block: '🛡️', leap: '🤸', dive: '🤿', crawl: '🐛', fire: '🔥', want: '🙋', 'let go': '🪢', ride: '🐉', fight: '⚔️', hold: '🎋' };
+                    stop: '✋', run: '💨', swim: '🌊', climb: '🧗', push: '🪨', pull: '⛓️', hide: '🌿', block: '🛡️', leap: '🤸', dive: '🤿', crawl: '🐛', fire: '🔥', want: '🙋', 'let go': '🪢', ride: '🐉', fight: '⚔️', hold: '🎋', 'pick up': '🏋️', 'put down': '🫳', help: '🆘', 'push together': '🚣', 'push on three': '🎃', fishing: '🎣', boar: '🐗', jetpack: '🚀', wolves: '🐺', bike: '🚲', ring: '🔔', brake: '🛑', 'get off': '🛬', yes: '👍' };
 
 // רמות קושי – קובעות מהירות, לבבות וקפיצה.
 // gapT = הזמן (בשניות) בין מכשול למכשול. מוגדר בזמן ולא במרחק,
@@ -61,14 +84,25 @@ const STAGES = [
   { name: 'LEAP',         words: ['leap'],           count: 4,  hint: 'Say LEAP to fly through the window' },
   { name: 'DIVE',         words: ['dive'],           count: 4,  hint: 'Say DIVE to swim under the net' },
   { name: 'LEAP + DIVE',  words: ['leap', 'dive'],   count: 10, hint: 'Read the word!' },
-  { name: 'CRAWL',        words: ['crawl'],          count: 4,  hint: 'Say CRAWL to go through the cave' },
+  { name: 'CRAWL',        words: ['crawl'],          count: 4,  hint: 'Say CRAWL to go under the big rock' },
   { name: 'FIRE',         words: ['fire'],           count: 4,  hint: 'Say FIRE to smash the ice wall' },
   { name: 'CRAWL + FIRE', words: ['crawl', 'fire'],  count: 10, hint: 'Read the word!' },
-  { name: 'I WANT',       words: ['want'],           count: 4,  hint: 'Say I WANT, then the thing you need' },
+  { name: 'I WANT',       words: ['want'],           count: 3,  hint: 'Say I WANT, then the thing you need' },
   { name: 'LET GO',       words: ['let go'],         count: 4,  hint: 'Say CATCH to grab the rope, then LET GO', world: 5 },
-  { name: 'RIDE',         words: ['ride'],           count: 8,  hint: 'RIDE the dragon · UP / DOWN past rocks · FIRE at storms', world: 2 },
+  { name: 'RIDE',         words: ['ride'],           count: 8,  hint: 'RIDE the dragon · UP / DOWN past rocks · FIRE at bats · grab the coins', world: 2 },
   { name: 'FIGHT',        words: ['fight'],          count: 4,  hint: 'Say FIGHT, FIGHT, FIGHT to win the duel', world: 4 },
-  { name: 'HOLD',         words: ['hold'],           count: 4,  hint: 'Say HOLD to grab the bamboo before the wind', world: 0 }
+  { name: 'HOLD',         words: ['hold'],           count: 4,  hint: 'Say HOLD to grab the bamboo before the wind', world: 0 },
+  { name: 'PICK UP',      words: ['pick up'],        count: 4,  hint: 'Say PICK UP to grab the treasure', world: 3 },
+  { name: 'PICK UP + PUT DOWN', words: ['put down'],  count: 4,  hint: 'PICK UP the rock · PUT DOWN · JUMP', world: 3 },
+  { name: 'PICK UP + THROW', words: ['pick up', 'throw'], count: 8, hint: 'PICK UP the rope · THROW · PULL', world: 3 },
+  { name: 'HELP',         words: ['help'],           count: 4,  hint: 'Stuck in the mud! Your friend throws a rope · CATCH · HOLD', world: 0 },
+  { name: 'PUSH TOGETHER', words: ['push together'], count: 1, hint: 'PUSH the boat with your friend · JUMP in', world: 0 },
+  { name: 'PUSH ON THREE', words: ['push on three'], count: 3, hint: 'Count with the kid · PUSH on THREE · JUMP in', world: 0 },
+  { name: 'FISHING', words: ['fishing'], count: 2, hint: 'JUMP in · THROW the line · PULL when the fish bites', world: 0 },
+  { name: 'WILD BOAR', words: ['boar'], count: 1, hint: 'SNEAK when the bar is green · HIDE when a boar\'s ears move', world: 0 },   // יער: מתחבאים מאחורי העצים (boar.js)   // הילד אומר PUSH ו-JUMP (boat.js)   // הילד עוד לא אומר HELP – רק CATCH ו-HOLD (mud.js)
+  { name: 'JET PACK', words: ['jetpack'], count: 1, hint: 'PICK UP · PUT ON · FLY · UP / DOWN · DOWN to land', world: 0 },   // תהום: לובשים תרמיל סילון ועפים (jetstage.js)
+  { name: 'WOLVES', words: ['wolves'], count: 1, hint: 'CATCH the rope · HOLD · CLIMB · JUMP onto the hill', world: 2 },   // זאבים ביער מושלג: כדור פורח מחלץ (wolves.js)
+  { name: 'BIKE', words: ['bike'], count: 1, hint: 'RIDE · RING the bell · JUMP · BRAKE · STOP · GET OFF', world: 0 }   // רכיבה על אופניים עם חבר (bike.js)
 ];
 // איזה עולם לכל זוג מילים (0 במבוק, 1 כפר בלילה, 2 שלג, 3 קניון, 4 מקדש)
 const PAIR_WORLD = [0, 1, 2, 3, 0, 4, 1, 2, 3, 0, 3];
@@ -76,18 +110,22 @@ const PAIR_WORLD = [0, 1, 2, 3, 0, 4, 1, 2, 3, 0, 3];
 // איזה מכשול מתאים לכל מילה
 const WORD_OBSTACLE = { jump: 'box', down: 'beam', kick: 'wall', throw: 'enemy', catch: 'coin', fly: 'river',
                         stop: 'rock', run: 'bridge', swim: 'lake', climb: 'cliff', push: 'boulder', pull: 'gate', hide: 'guard', block: 'arrows',
-                        leap: 'window', dive: 'pond', crawl: 'bramble', fire: 'ice', want: 'door', 'let go': 'chasm', ride: 'dragon', fight: 'duel', hold: 'gust' };
+                        leap: 'window', dive: 'pond', crawl: 'bramble', fire: 'ice', want: 'door', 'let go': 'chasm', ride: 'dragon', fight: 'duel', hold: 'gust', 'pick up': 'lift', 'put down': 'lift', help: 'mud', 'push together': 'boat', 'push on three': 'cart', fishing: 'fishboat', boar: 'boar', jetpack: 'jetgap', wolves: 'wolfden', bike: 'bikeway' };
 // זיהוי קולי: מילה שמתאימה למכשול שעל המסך מופעלת מיד. מילה אחרת מחכה לתוצאה הסופית, ומופעלת רק בביטחון גבוה
-const VOICE = { confMin: 0.8, waitMs: 350, logMax: 200 };   // waitMs: מילה שלא מתאימה למכשול הקרוב מחכה לכל היותר כך לציון, ואז מופעלת בכל מקרה
+const VOICE = { confMin: 0.8, waitMs: 350, logMax: 600 };   // waitMs: מילה שלא מתאימה למכשול הקרוב מחכה לכל היותר כך לציון, ואז מופעלת בכל מקרה
 // אילו מילים "מצופות" ליד כל מכשול (ההפך של WORD_OBSTACLE, ועוד מילים שעובדות יחד)
 const OBSTACLE_WORDS = Object.fromEntries(Object.entries(WORD_OBSTACLE).map(([w, t]) => [t, [w]]));
 OBSTACLE_WORDS.river = ['jump', 'fly'];
 OBSTACLE_WORDS.chasm = ['catch', 'let go'];
 OBSTACLE_WORDS.skyrock = ['up', 'down'];
-OBSTACLE_WORDS.storm = ['fire'];
+OBSTACLE_WORDS.bat = ['fire'];
+OBSTACLE_WORDS.lift = ['pick up', 'put down', 'jump'];
+OBSTACLE_WORDS.mud = ['catch', 'hold'];
+OBSTACLE_WORDS.boat = ['push', 'jump'];
+OBSTACLE_WORDS.cart = ['push', 'jump'];
 const HIT_WORD = { box: 'JUMP!', beam: 'DOWN!', wall: 'KICK!', enemy: 'THROW!', river: 'JUMP + FLY!',
                    rock: 'STOP!', bridge: 'RUN!', lake: 'SWIM!', cliff: 'CLIMB!', boulder: 'PUSH!', gate: 'PULL!', guard: 'HIDE!', arrows: 'BLOCK!',
-                   window: 'LEAP!', pond: 'DIVE!', coin: 'CATCH!', bramble: 'CRAWL!', ice: 'FIRE!', door: 'I WANT A KEY!', chasm: 'CATCH… LET GO!', dragon: 'RIDE!', duel: 'FIGHT!', gust: 'HOLD!', skyrock: 'UP or DOWN!', storm: 'FIRE!' };
+                   window: 'LEAP!', pond: 'DIVE!', coin: 'CATCH!', bramble: 'CRAWL!', ice: 'FIRE!', door: 'I WANT A KEY!', chasm: 'CATCH… LET GO!', dragon: 'RIDE!', duel: 'FIGHT!', gust: 'HOLD!', lift: 'PICK UP!', mud: 'CATCH… HOLD!', boat: 'PUSH… JUMP!', cart: 'PUSH on THREE!', skyrock: 'UP or DOWN!', bat: 'FIRE!' };
 
 // "העולם" של המשחק: 160 על 100 יחידות, מוגדל לגודל המסך
 const W = 160, H = 100, GROUND = 72;   // קרקע גבוהה יותר – מקום לעומק מתחתיה (בורות, צלילה, נתיב קדמי)
@@ -108,27 +146,27 @@ const ROCK = { size: 8, hangY: GROUND - 40, fall: 0.9, warn: 0.75 };   // STOP �
 const STOP_TIME = 1.6;                                               // העולם עוצר לשנייה וחצי
 const RUN_BOOST = { mult: 2.2, time: 2.0 };                          // RUN – מהירות כפולה לשתי שניות
 const BRIDGE = { factor: 4.0, delay: 0.3, chase: 1.7 };            // שדה אש ארוך: האש מתחילה בכניסה ורודפת – מהירה מהליכה (1), איטית מריצה (2.2)
-const LAKE = { factor: 2.2 }, SWIM_TIME = 1.2;                       // SWIM – אגם ארוך. שוחים עד הסוף
+const LAKE = { factor: 3.0 }, SWIM_TIME = 1.2;                       // SWIM – אגם ארוך. שוחים עד הסוף
 const DROWN = { easy: 1.1, other: 0.8 };                              // כמה זמן שוקעים במים לפני שנכשלים – אפשר עוד להציל עם SWIM
 const CLIFF = { w: 14, h: 40, range: 2.5, time: 1.3, ladder: 12 };  // CLIMB – צוק גבוה עם סולם נשען. מטפסים כשמגיעים לסולם
 const BOULDER = { r: 10, range: 25 };                                // PUSH – סלע עגול גדול, אפשר לדחוף מרחוק
-const GATE = { w: 5, rope: 4, lift: 38, time: 1.4, want: 0.9 };     // PULL – עוצרים ליד החבל ומושכים עד שהסורג עולה למעלה
+const GATE = { w: 5, rope: 4, lift: 38, time: 1.4, want: 2.5 };   // want ארוך – מתקרבים לאט (approachSlow), שה-PULL לא יפוג בדרך     // PULL – עוצרים ליד החבל ומושכים עד שהסורג עולה למעלה
 const GUARD = { w: 9, h: 18, walk: 14, gap: 5 }, HIDE_TIME = 1.8;    // HIDE – שני שומרים עם פנסים
 GUARD.span = GUARD.w * 2 + GUARD.gap;                                 // רוחב הזוג
 const HIDE_ROCK = { w: 34, h: 12, lead: 25 };                          // HIDE – ערימת סלעים: הנינג'ה מתכופף לפניה, השומרים עוברים מאחוריה (רואים אותם מעליה)
 const ARROWS = { w: 7, speed: 30 }, BLOCK_TIME = 0.8;                 // BLOCK – מטח חיצים בכל הגבהים
 const WINDOW = { w: 10, top: GROUND - 18, bot: GROUND - 5, range: 4 }; // LEAP – קיר עבה עם מעבר צר באמצע הגובה
 const LEAP = { y: 6.5, h: 5, w: 12, want: 0.9, free: 0.45, arc: 3, roll: 0.5 };   // אחרי הזינוק – גלגול על הקרקע   // זינוק בקשת קלה דרך טבעת האש
-const POND = { factor: 1.6, net: 3, deep: 8 }, DIVE_TIME = 1.2;        // DIVE – רשת שיורדת עמוק לתוך המים, צוללים מתחתיה
+const POND = { factor: 2.2, net: 3, deep: 8 }, DIVE_TIME = 1.2;        // DIVE – רשת שיורדת עמוק לתוך המים, צוללים מתחתיה
 let CAVE_STYLE = 'cave';       // מראה המערה: 'cave' = גוש סלע אחד עם קיר פנימי כהה, 'boulders' = סלעים גדולים, 'chunks' = הגושים הישנים
 const BRAMBLE = { factor: 1.3, gap: 6.5, want: 1.0, slow: 0.6, ramp: 46, exit: 14, mouth: 34 };   // CRAWL – מערה שהתקרה שלה יורדת בהדרגה עד שחייבים לזחוליה
 // ניקוד במסע: ערך בסיס לפי קושי הפעולה, ועוד נקודה כל 3 תחנות. המספר מופיע על המכשול
-const WORD_POINTS = { 'let go': 4, ride: 4, fight: 3, hold: 3, jump: 1, down: 1, catch: 1, kick: 2, throw: 2, stop: 2, push: 2, hide: 2,
+const WORD_POINTS = { jetpack: 3, wolves: 3, bike: 3, boar: 3, help: 4, 'push together': 3, 'push on three': 3, fishing: 3, 'pick up': 2, 'put down': 4, 'let go': 4, ride: 4, fight: 3, hold: 3, jump: 1, down: 1, catch: 1, kick: 2, throw: 2, stop: 2, push: 2, hide: 2,
                       fly: 3, run: 3, swim: 3, climb: 3, pull: 3, block: 3, crawl: 3, fire: 3, leap: 4, dive: 4, want: 4 };
 // I WANT: סוחר עם עגלה לפני דלת נעולה. אומרים I WANT ואז את שם החפץ
 const ITEMS = { key: { icon: '🔑', say: 'a key' }, rope: { icon: '🪢', say: 'a rope' }, torch: { icon: '🔦', say: 'a torch' } };
 const ITEM_WORDS = Object.keys(ITEMS);
-const DOOR = { w: 15, h: 30, stopAt: 40, needs: 'key' };
+const DOOR = { w: 15, h: 30, stopAt: 54, needs: 'key' };   // stopAt: איפה הנינג'ה נעצר מול הסוחר (רחוק מהשער)
 const ICE = { w: 13, h: 42 };                                          // FIRE – קיר קרח עבה. רק כדור אש שובר אותו (בעיטה לא)
 const FIREBALL = { speed: 95, cooldown: 0.5 };
 const ARROW_HEIGHTS = [GROUND - 3, GROUND - 8, GROUND - 13, GROUND - 18, GROUND - 22];   // גבוה מדי לקפוץ מעליו, נמוך מדי להתכופף
