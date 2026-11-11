@@ -166,7 +166,7 @@ function renderDict() {
 }
 
 function resetDemo() {
-  scenesReset(); obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; skyPrizes = []; particles = []; flag = null; banner = null; flash = null; heard = null;
+  scenesReset(); obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; particles = []; flag = null; banner = null; flash = null; heard = null;
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   demoSteps = []; demoClock = 0;
 }
@@ -306,7 +306,7 @@ let introWords = [], introT = 0, runSpeed = 0;
 
 // מציב חפץ קטן ליד הנינג'ה ומתזמן את הפעולה (משותף למילון ולהדגמה)
 function setupDemo(w) {
-  scenesReset(); obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; skyPrizes = []; flash = null; invulnT = 0;
+  scenesReset(); obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; flash = null; invulnT = 0;
   py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0; resetAct();
   demoSteps = []; demoClock = 0;
   const near = PLAYER.x + PLAYER.w;
@@ -324,7 +324,6 @@ function setupDemo(w) {
   if (w === 'block') obstacles.push({ type: 'arrows', x: near + 28 });
   if (w === 'fire')  obstacles.push({ type: 'ice', x: near + 30 });
   if (w === 'want')  obstacles.push({ type: 'door', x: near + DOOR.stopAt - 2 });
-  if (w === 'ride') obstacles.push({ type: 'dragon', x: near + DRAGON.stopAt - 1, w: DRAGON.w });
   if (w === 'let go') obstacles.push({ type: 'chasm', x: near + ROPE.stopAt - 2, w: CHASM.w });
   if (sceneIntro(w) && sceneIntro(w).demo) sceneIntro(w).demo();   // סצנות רשומות (scenes.js)
   obstacles.forEach(o => { o.passed = false; o.hit = false; o.demo = true; });   // בהדגמה – בלי פגיעות
@@ -332,7 +331,6 @@ function setupDemo(w) {
             : w === 'fly' ? [{ at: 0.9, w: 'jump' }, { at: 1.3, w: 'fly' }]
             : w === 'want' ? [{ at: 8.2, w: 'want' }, { at: 9.9, w: 'key' }]   // אחרי השלום
             : w === 'let go' ? [{ at: 0.9, w: 'catch' }, { at: 2.7, w: 'let go' }]
-            : w === 'ride' ? [{ at: 0.9, w: 'ride' }, { at: 2.9, w: 'up' }, { at: 3.8, w: 'down' }, { at: 4.6, w: 'fire' }]
             : w === 'swim' ? [{ at: 0.5, w }]
             : [{ at: 0.9, w }];
 }
@@ -359,12 +357,12 @@ function introNext() {
   setupDemo(w);
   if (!sceneLabel(w)) speak(w);                                                  // HELP: הנינג'ה עצמו צועק בסצנה
   banner = { text: (sceneIntro(w) && sceneIntro(w).banner) || 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
-  introT = sceneIntro(w) ? sceneIntro(w).time : w === 'fly' ? 4.6 : w === 'want' ? 12.8 : w === 'let go' ? 5 : w === 'ride' ? 6 : 2.8;
+  introT = sceneIntro(w) ? sceneIntro(w).time : w === 'fly' ? 4.6 : w === 'want' ? 12.8 : w === 'let go' ? 5 : 2.8;
 }
 
 function finishIntro() {
   if (state !== 'intro') return;
-  scenesReset(); obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; skyPrizes = []; demoSteps = []; flash = null; invulnT = 0;
+  scenesReset(); obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; demoSteps = []; flash = null; invulnT = 0;
   py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0; resetAct();
   speed = runSpeed; distSinceSpawn = 0; nextGap = speed * 2.4; liftKindNext = null; liftIdx = 0; ptIdx = 0; merchNext = 'key';   // PICK UP: הסצנות מתחילות מההתחלה
   seenWords = [];

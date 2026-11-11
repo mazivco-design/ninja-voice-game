@@ -257,3 +257,19 @@ function poseRide() {                                              // יושב �
   P.legs = [[1.05, 0.25], [1.25, 0.35]]; P.arms = [[1.25, 1.65], [1.4, 1.75]];
   return P;
 }
+
+// הרישום של הסצנה (scenes.js). סצנה ישנה – נשארו בבסיס: המילים RIDE / UP / DOWN / FIRE ב-speech.js (הסדר שם חשוב),
+// עצירת העולם (rideHolds ב-state.js), הגובה על הדרקון (rideCtl ב-game.js), התנוחה והציור ב-draw.js
+sceneAdd({
+  type: 'dragon', word: 'ride',
+  listen: ['up', 'down', 'fire'],                                                    // בשמיים צריך UP / DOWN / FIRE
+  active: () => !!ride && ride.phase === 'wait',                                    // מחכים ל-RIDE
+  reset: () => { ride = null; skyPrizes = []; },
+  setup: o => { o.w = DRAGON.w; }, noCollide: true,
+  box: o => ({ l: o.x, r: o.x + o.w, t: GROUND - 10, b: GROUND }),
+  update: (dt, pb) => { rideUpdate(dt, pb); skyPrizesUpdate(dt); },
+  expected: () => !ride ? null : ride.phase === 'wait' ? ['ride'] : ride.phase === 'mount' || ride.phase === 'takeoff' ? ['up', 'down', 'fire'] : null,
+  auto: () => { if (ride && ride.phase === 'wait') command('ride', 'auto'); },
+  intro: { time: 6, demo: () => { obstacles.push({ type: 'dragon', x: PLAYER.x + PLAYER.w + DRAGON.stopAt - 1, w: DRAGON.w }); },
+           steps: () => [{ at: 0.9, w: 'ride' }, { at: 2.9, w: 'up' }, { at: 3.8, w: 'down' }, { at: 4.6, w: 'fire' }] }
+});
