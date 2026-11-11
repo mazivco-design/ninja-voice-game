@@ -19,8 +19,6 @@ $('tapBtn').addEventListener('pointerdown', e => { e.preventDefault(); testerTap
 // 👆 – המילה של המכשול הקרוב ביותר (או של הסוחר)
 function testerTap() {
   if (state !== 'play') return;
-  if (merchant && merchant.phase === 'ask' && merchant.t >= MERCH.askAt) return command('want', 'tap');
-  if (merchant && merchant.phase === 'choose') return command(needOf(merchant.o), 'tap');
   if (scenesTap()) return;   // סצנות רשומות (scenes.js)
   const pb = playerBox();
   const o = obstacles.filter(o => !o.passed && !o.hit && !o.caught && o.x + (o.w || 0) >= pb.l).sort((a, b) => a.x - b.x)[0];
@@ -61,6 +59,5 @@ function autoFireNow(o, pb) {
 }
 function testerAutoScenes(t) {
   scenesAuto();   // סצנות רשומות (scenes.js)
-  if (merchant && merchant.t > 1) { if (merchant.phase === 'ask' && merchant.t > MERCH.askAt + 0.6) command('want', 'auto'); else if (merchant.phase === 'choose' && merchant.t > MERCH.pickAt) command(needOf(merchant.o), 'auto'); }
   if (autoSt.flyAt !== null && t >= autoSt.flyAt) { command('fly', 'auto'); autoSt.flyAt = null; }
 }

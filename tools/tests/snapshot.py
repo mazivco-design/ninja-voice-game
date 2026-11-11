@@ -1,7 +1,7 @@
 """צילום מצב ("טביעת אצבע") של כל שלב – ההוכחה שארגון מחדש של הקוד לא שינה התנהגות.
 מריץ כל שלב בכל רמה עם השחקן האוטומטי, בריצה דטרמיניסטית (ראו common.py), ושומר לכל אחד חתימה:
 משך, פגיעות, ניקוד, רצף הפאזות של הסצנות, וסיכום (hash) של מהלך הריצה. I WANT לא נכלל (כמו ב-all-stages.py).
-בנוסף, לכל שלב: חתימה של מסך הפתיחה (ההדגמה) ושל ריצה במצב 👆 Tap של הבודק.
+בנוסף: לכל שלב חתימה של מסך הפתיחה (ההדגמה) ושל ריצה במצב 👆 Tap של הבודק; מסע של כמה תחנות; ורשימת המילים שמאזינים להן.
   python3 tools/tests/snapshot.py            משווה לחתימות השמורות (tools/tests/snapshot.json). קוד יציאה 0 = זהה.
   python3 tools/tests/snapshot.py --update   שומר חתימות חדשות. רק כשהתנהגות השתנתה בכוונה (שלב חדש, תיקון באג) – ולציין ב-commit.
 הקובץ השמור שייך לגרסת הפיתוח; אין מה להשוות מול stable/."""
@@ -19,6 +19,19 @@ with open_game() as (pg, errs):
             pg.fresh()
             r = pg.evaluate("([i, d]) => T.run({ stage: i, diff: d })", [i, d])
             now[f'{d} / {name}'] = { 'end': r['title'], 'sec': r['sec'], 'hits': r['hits'], 'score': r['score'], 'hash': r['hash'], 'phases': ' > '.join(r['phases']) }
+    # מסע: כמה תחנות ברצף משלוש נקודות התחלה (כל המילים נלמדו) – מכסה גם את הסוחר (I WANT) ואת המעברים בין סצנות
+    last = pg.evaluate("() => WORDS.length - 1")
+    for start, n in [(0, 3), (last // 2, 2), (last - 3, 1)]:
+        for d in ['easy', 'medium', 'hard']:
+            pg.fresh()
+            r = pg.evaluate("""([st, n, d]) => T.run({ journey: st, diff: d, maxSec: 900,
+                 setup: () => { getLearned = () => WORDS.slice(); isLearned = () => true; }, tick: () => jStation >= st + n })""", [start, n, d])
+            now[f'journey {start}+{n} / {d}'] = { 'state': r['state'], 'station': r['station'], 'sec': r['sec'], 'hits': r['hits'], 'score': r['score'], 'hash': r['hash'], 'phases': ' > '.join(r['phases']) }
+    for d in ['easy', 'hard']:                                   # הקטע האחרון של המסע: כל הסצנות, כל אחת פעמיים – שש דקות משחק
+        pg.fresh()
+        r = pg.evaluate("""([st, d]) => T.run({ journey: st, diff: d, maxSec: 360,
+             setup: () => { getLearned = () => WORDS.slice(); isLearned = () => true; } })""", [last, d])
+        now[f'journey last / {d}'] = { 'state': r['state'], 'station': r['station'], 'sec': r['sec'], 'hits': r['hits'], 'score': r['score'], 'hash': r['hash'], 'phases': ' > '.join(r['phases']) }
     # המילים שמאזינים להן (listenWords) בכל שלב ובמסע – ממוינות, כי הסדר לא משנה למנוע הזיהוי
     pg.fresh()
     lw = pg.evaluate("""async () => { stopAudio = () => {}; ensureAudio = async () => false; const out = {};

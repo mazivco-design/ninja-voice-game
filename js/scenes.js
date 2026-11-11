@@ -17,7 +17,7 @@
      noCollide   true = אין פגיעה רגילה במכשול הזה (הסצנה מטפלת בעצמה)
      stopAt(o)   ה-x שלפניו הנינג'ה מאט ומגיע בהליכה (הקצה הימני שלו)
      update(dt, pb), physics(dt) → true אם טיפלה, speed() → מספר או null, pose(P) → P
-     expected() → רשימת מילים או null, auto() – השחקן האוטומטי
+     expected() → רשימת מילים או null, auto() – השחקן האוטומטי, tap() – רשות: המילה למצב 👆 (ברירת מחדל: הראשונה ב-expected)
      cmd(word)   → true אם המילה שייכת לסצנה. נקרא ראשון: בלי תג "נקלט" ובלי שמירת מילה מוקדמת
      act(word)   → true אם הסצנה ביצעה את המילה. נקרא אחרי תג ה"נקלט" ושמירת מילה מוקדמת, לפני הפעולה הרגילה של המילה
      intro       מסך הפתיחה של השלב: { time, demo() – מציב את הסצנה ליד הנינג'ה, banner – רשות (ברירת מחדל "Say X!"),
@@ -46,7 +46,7 @@ function scenesAuto() { for (const s of SCENES) if (s.auto) s.auto(); }
 // 👆 במצב בודק: המילה שהסצנה הפעילה מחכה לה. מחזיר true אם יש סצנה רשומה פעילה (גם אם כרגע אין מילה)
 function scenesTap() {
   const s = scenesActive(); if (!s) return false;
-  const w = ((s.expected && s.expected()) || [])[0]; if (w) command(w, 'tap');
+  const w = s.tap ? s.tap() : ((s.expected && s.expected()) || [])[0]; if (w) command(w, 'tap');
   return true;
 }
 // המילים שמאזינים להן: מוסיף ל-list את המילים של כל סצנה שהשלב שלה בין words

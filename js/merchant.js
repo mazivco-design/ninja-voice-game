@@ -466,3 +466,21 @@ function drawTorchItem(x, y) {                                  // לפיד: מ�
   ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.ellipse(0, -2.4, 0.6, 1, 0, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 }
+
+// הרישום של הסצנה (scenes.js). סצנה ישנה – נשארו בבסיס: המילים WANT ושמות החפצים ב-speech.js (בסוף שרשרת המילים),
+// doorSetup והרווח אחרי הדלת ב-spawn (game.js), עצירת העולם וההתקרבות (merchant ב-state.js), התנוחה והציור ב-draw.js
+sceneAdd({
+  type: 'door', word: 'want',
+  listen: ['i', ...ITEM_WORDS],
+  active: () => !!merchant && ((merchant.phase === 'ask' && merchant.t >= MERCH.askAt) || merchant.phase === 'choose'),   // מחכים לתשובה
+  tap: () => merchant.phase === 'ask' ? 'want' : needOf(merchant.o),
+  reset: () => { merchant = null; },
+  box: o => ({ l: o.x, r: o.x + (o.w || DOOR.w), t: GROUND - DOOR.h, b: GROUND }),
+  stopAt: o => !o.unlocked && !o.hit ? o.x - DOOR.stopAt : Infinity,                // הדוכן של הסוחר
+  update: merchantUpdate, physics: merchPhysics, speed: merchSpeed,
+  expected: () => merchant && merchant.phase !== 'done' && merchant.phase !== 'walk'
+    ? (merchant.phase === 'ask' ? (merchant.t >= MERCH.askAt ? ['want'] : []) : merchant.phase === 'choose' ? (merchant.t >= MERCH.pickAt ? [...ITEM_WORDS] : []) : []) : null,
+  auto: () => { if (merchant && merchant.t > 1) { if (merchant.phase === 'ask' && merchant.t > MERCH.askAt + 0.6) command('want', 'auto'); else if (merchant.phase === 'choose' && merchant.t > MERCH.pickAt) command(needOf(merchant.o), 'auto'); } },
+  intro: { time: 12.8, demo: () => { obstacles.push({ type: 'door', x: PLAYER.x + PLAYER.w + DOOR.stopAt - 2 }); },
+           steps: () => [{ at: 8.2, w: 'want' }, { at: 9.9, w: 'key' }] }                // אחרי השלום
+});

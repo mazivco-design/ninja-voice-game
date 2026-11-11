@@ -21,7 +21,6 @@ async function play(m, idx) {
   if (!model) return;
   const words = m === 'stage' ? STAGES[idx || 0].words : m === 'journey' ? journeyWords(WORDS.length) : freeWords();   // במסע מקשיבים לכל המילים שנלמדו
   listenWords = words.includes('fly') && !words.includes('jump') ? [...words, 'jump'] : [...words];   // FLY צריך גם JUMP
-  if (words.includes('want')) listenWords.push('i', ...ITEM_WORDS);
   scenesListen(words, listenWords);   // סצנות רשומות (scenes.js)
   listenWords = listenWords.filter(w => !sceneLabel(w));
   if (m !== 'demo') for (const w of powerWordsOwned()) if (!listenWords.includes(w)) listenWords.push(w);   // SHIELD / JET – אם יש מנות
@@ -36,7 +35,7 @@ function startGame(m, idx) {
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
   world = m === 'stage' ? (STAGES[idx || 0].world ?? PAIR_WORLD[Math.floor((idx || 0) / 3)]) : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
-  scenesReset(); learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = null; liftIdx = 0; ptIdx = 0; merchNext = 'key'; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; particles = []; flag = null;
+  scenesReset(); learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = null; liftIdx = 0; ptIdx = 0; merchNext = 'key'; obstacles = []; shurikens = []; fireballs = []; pickups = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   earlyWord = null; py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
@@ -251,7 +250,6 @@ function obstacleBox(o) {
     case 'beam':  return { l: o.x, r: o.x + BEAM.w, t: -1e6, b: GROUND - BEAM.clear };
     case 'wall':  return { l: o.x, r: o.x + WALL.w, t: GROUND - WALL.h, b: GROUND };
     case 'ice':   return { l: o.x, r: o.x + ICE.w, t: GROUND - ICE.h, b: GROUND };
-    case 'door':  return { l: o.x, r: o.x + (o.w || DOOR.w), t: GROUND - DOOR.h, b: GROUND };
     case 'skyrock': case 'bat': return skyBox(o);
     case 'enemy': return { l: o.x, r: o.x + ENEMY.w, t: GROUND - ENEMY.h, b: GROUND };
     case 'river': return { l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 20 };
@@ -464,7 +462,6 @@ function update(dt) {
   const wasAir = py > 0;
   if (jetPhysics(dt)) {}
   else if (scenesPhysics(dt)) {}                       // סצנות רשומות (scenes.js)
-  else if (merchPhysics(dt)) {}                        // I WANT: מטפס על הצוק / יורד ממנו                         // PICK UP: עולה על הסלע / קופץ ממנו (lift.js)                                // תרמיל סילון – עף מעל הכול (power.js)
   else if (rideCtl()) { py = ride.py; vy = 0; flyT = 0; }   // על הדרקון – הגובה נקבע ב-dragon.js
   else if (act.climb > 0) {                     // מטפס על הסולם – עולה ומתקדם באלכסון
     climbK = Math.min(1, climbK + dt / CLIFF.time);
@@ -515,7 +512,6 @@ function update(dt) {
   }
 
   const pb = playerBox();
-  merchantUpdate(dt, pb);
   earlyUpdate(dt);                                   // מילה נכונה שנאמרה מוקדם – מופעלת כשמגיעים למכשול
   scenesUpdate(dt, pb);                              // סצנות רשומות (scenes.js)
   powerTick(dt);

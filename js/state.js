@@ -30,7 +30,6 @@ let hideT = 0;               // כמה זמן הנינג'ה כבר בשיח (ל�
 // מהירות העולם בפועל: STOP ו-CLIMB עוצרים אותו, RUN מאיץ
 function curSpeed() {
   const scs = scenesSpeed(); if (scs !== null) return scs;                 // סצנות רשומות (scenes.js)
-  const ms = merchSpeed(); if (ms !== null) return ms;                    // I WANT: הולכים עם החפץ / מטפסים על הצוק / עוברים במערה
   if (act.climb > 0) return CLIFF.ladder / CLIFF.time;         // על הסולם – מתקדמים לאט באלכסון
   if (act.stop > 0 || act.pulling > 0 || act.hiding > 0 || (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') || (rope && rope.phase !== 'done') || rideHolds() || duelHolds() || gustHolds() || learnT > 0) return 0;   // learnT: עצירה קצרה אחרי פגיעה   // …או עומדים ליד הסוחר   // עוצרים / מושכים בחבל / מתחבאים בשיח
   return speed * (act.run > 0 ? RUN_BOOST.mult : 1) * (crawling() ? BRAMBLE.slow : 1) * gustSlow() * approachSlow();   // approachSlow: מאט ומתקרב בהליכה לחבר בסירה / לילד בעגלה   // gustSlow: הרוח מאטה לפני הטורנדו
@@ -46,7 +45,6 @@ function approachDist() {
     if (sc && sc.stopAt) d = Math.min(d, sc.stopAt(o) - r);   // סצנות רשומות (scenes.js)
     else if (o.type === 'cliff' && !o.climbed && !o.hit) d = Math.min(d, o.x - CLIFF.ladder - CLIFF.range - r);   // הצוק עם הסולם: מאטים ומגיעים בהליכה
     else if (o.type === 'gate' && !o.open && !o.lifting && !o.hit) d = Math.min(d, o.x - GATE.rope - r);   // השער עם החבל: מאטים לפני – יותר זמן להגיד PULL
-    else if (o.type === 'door' && !o.unlocked && !o.hit) d = Math.min(d, o.x - DOOR.stopAt - r);   // הדוכן של הסוחר
   }
   return d < -2 ? Infinity : d;
 }
