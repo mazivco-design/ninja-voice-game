@@ -32,7 +32,8 @@ async function play(m, idx) {
   if (words.includes('wolves')) for (const w of ['catch', 'hold', 'climb', 'jump']) if (!listenWords.includes(w)) listenWords.push(w);   // זאבים: CATCH / HOLD / LET GO   // תרמיל סילון
   if (words.includes('bike')) for (const w of ['ride', 'ring', 'jump', 'brake', 'stop', 'get off']) if (!listenWords.includes(w)) listenWords.push(w);   // אופניים
   if (words.includes('boar')) for (const w of ['hide', 'sneak', 'climb']) if (!listenWords.includes(w)) listenWords.push(w);   // חזיר בר: SNEAK, HIDE ו-CLIMB
-  listenWords = listenWords.filter(w => w !== 'push together' && w !== 'push on three' && w !== 'fishing' && w !== 'boar' && w !== 'jetpack' && w !== 'wolves' && w !== 'bike');
+  scenesListen(words, listenWords);   // סצנות רשומות (scenes.js)
+  listenWords = listenWords.filter(w => !sceneLabel(w) && w !== 'push together' && w !== 'push on three' && w !== 'fishing' && w !== 'boar' && w !== 'jetpack' && w !== 'wolves' && w !== 'bike');
   if (m !== 'demo') for (const w of powerWordsOwned()) if (!listenWords.includes(w)) listenWords.push(w);   // SHIELD / JET – אם יש מנות
   if (words.includes('ride')) for (const w of ['up', 'down', 'fire']) if (!listenWords.includes(w)) listenWords.push(w);   // RIDE: בשמיים צריך UP / DOWN / FIRE   // LET GO צריך גם CATCH                              // I WANT + שמות החפצים
   stopAudio();                      // מתחילים מחדש עם רשימת המילים של המשחק הזה
@@ -46,7 +47,7 @@ function startGame(m, idx) {
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
   world = m === 'stage' ? (STAGES[idx || 0].world ?? PAIR_WORLD[Math.floor((idx || 0) / 3)]) : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
-  learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = null; liftIdx = 0; ptIdx = 0; merchNext = 'key'; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; cart = null; bikeS = null; boarS = null; jetS = null; wolfS = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
+  scenesReset(); learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = null; liftIdx = 0; ptIdx = 0; merchNext = 'key'; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; cart = null; bikeS = null; boarS = null; jetS = null; wolfS = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   earlyWord = null; py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
@@ -226,6 +227,7 @@ function spawn() {
   if (type === 'cart') cartSetup(o);
   if (type === 'boar') boarSetup(o);
   if (type === 'wolfden') wfSetup(o);
+  { const sc = SCENE_BY_TYPE[type]; if (sc && sc.setup) sc.setup(o); }   // סצנות רשומות (scenes.js)
   if (type === 'bikeway') bkSetup(o);   // אופניים (bike.js)   // זאבים וכדור פורח (wolves.js)
   if (type === 'jetgap') jsSetup(o);   // תרמיל סילון מעל תהום (jetstage.js)   // HIDE ביער: שלושה עצים וחזיר בר רועה (boar.js)   // PUSH TOGETHER: חוף, סירה ונהר (boat.js)     // HELP: שלולית בוץ, והמקום שבו החבר עומד (mud.js)
   if (type === 'lake') o.w = speed * LAKE.factor;        // רחב מדי לקפיצה
@@ -249,6 +251,7 @@ function spawn() {
   if (type === 'lift') nextGap += speed * 0.6;
   if (type === 'mud') nextGap += speed * 0.8;
   if (type === 'boat' || type === 'cart' || type === 'boar' || type === 'jetgap' || type === 'wolfden' || type === 'bikeway') nextGap += speed * 0.8;
+  if (SCENE_BY_TYPE[type] && SCENE_BY_TYPE[type].afterGap) nextGap += speed * SCENE_BY_TYPE[type].afterGap;   // סצנות רשומות (scenes.js)
   if (type === 'chasm') nextGap += speed * 0.8 + CHASM.top + CHASM.slope;   // מקום לרדת מהגבעה
   if (nextType === 'chasm') nextGap += CHASM.top + CHASM.slope;                  // מקום לעלות על הגבעה לפני התהום
   if (mode === 'journey') addPickups(o);
@@ -271,6 +274,7 @@ function playerBox() {
 }
 
 function obstacleBox(o) {
+  const sc = SCENE_BY_TYPE[o.type]; if (sc && sc.box) return sc.box(o);   // סצנות רשומות (scenes.js)
   switch (o.type) {
     case 'box':   return { l: o.x, r: o.x + BOX.w, t: GROUND - BOX.h, b: GROUND };
     case 'beam':  return { l: o.x, r: o.x + BEAM.w, t: -1e6, b: GROUND - BEAM.clear };
@@ -318,6 +322,7 @@ function rockY(o) {   // הסלע נופל בתאוצה מהחבל עד הקרק
 function collides(o, pb) {
   if (o.demo || o.type === 'coin' || o.broken || o.defeated) return false;
   if (jetSafe()) return false;                                // עף עם תרמיל הסילון – מעל הכול
+  if (SCENE_BY_TYPE[o.type] && SCENE_BY_TYPE[o.type].noCollide) return false;   // סצנות רשומות (scenes.js)
   if (o.climbed || o.pushed || o.open || o.deflected || o.landed || o.unlocked || o.type === 'chasm' || o.type === 'dragon' || o.type === 'duel' || o.type === 'gust' || o.type === 'lift' || o.type === 'mud' || o.type === 'boat' || o.type === 'cart' || o.type === 'boar' || o.type === 'jetgap' || o.type === 'wolfden' || o.type === 'bikeway') return false;   // תהום: העולם עוצר לפניה, הנפילה מטופלת ב-rope.js
   if (o.type === 'rock' && o.fallK === undefined) return false;
   if (o.type === 'guard' && hidingFrom === o) return false;   // מתכופף מאחורי הסלעים – השומרים לא רואים
@@ -501,6 +506,7 @@ function update(dt) {
   // הנינג'ה
   const wasAir = py > 0;
   if (jetPhysics(dt)) {}
+  else if (scenesPhysics(dt)) {}                       // סצנות רשומות (scenes.js)
   else if (liftPhysics(dt)) {}
   else if (boatPhysics(dt)) {}
   else if (cartPhysics(dt)) {}
@@ -575,6 +581,7 @@ function update(dt) {
   earlyUpdate(dt);                                   // מילה נכונה שנאמרה מוקדם – מופעלת כשמגיעים למכשול
   wfUpdate(dt, pb);
   bkUpdate(dt, pb);
+  scenesUpdate(dt, pb);                              // סצנות רשומות (scenes.js)
   powerTick(dt);
   if (state === 'play' && testerMode === 'auto' && isTester()) testerAuto(pb, dt);   // מצב בודק: משחק אוטומטי
   if (state === 'demo' || state === 'intro') demoAuto(pb, dt);

@@ -23,6 +23,7 @@ function testerTap() {
   if (merchant && merchant.phase === 'choose') return command(needOf(merchant.o), 'tap');
   if (duelActive()) return command('fight', 'tap');
   if (gustActive()) return command('hold', 'tap');
+  if (scenesTap()) return;   // סצנות רשומות (scenes.js)
   if (lift) { const w = liftExpected()[0]; if (w) command(w, 'tap'); return; }
   if (mud) { const w = mudExpected()[0]; if (w) command(w, 'tap'); return; }
   if (boat) { const w = boatExpected()[0]; if (w) command(w, 'tap'); return; }
@@ -82,6 +83,7 @@ function testerAutoScenes(t) {
   jsAuto();
   wfAuto();
   bkAuto();
+  scenesAuto();   // סצנות רשומות (scenes.js)
   if (tunnelWait && tunnelWait.idle > 0.3) command('crawl', 'auto');
   if (gust && gust.phase === 'storm' && gust.held === null && gust.t > 1.0) command('hold', 'auto');
   if (rope && rope.phase === 'wait') command('catch', 'auto'); else if (rope && rope.phase === 'hang' && rope.theta >= ROPE.amp * ROPE.farAt) command('let go', 'auto');

@@ -29,6 +29,7 @@ function resetAct() { for (const k in act) act[k] = 0; climbK = 0; leapWin = nul
 let hideT = 0;               // כמה זמן הנינג'ה כבר בשיח (לאנימציה)
 // מהירות העולם בפועל: STOP ו-CLIMB עוצרים אותו, RUN מאיץ
 function curSpeed() {
+  const scs = scenesSpeed(); if (scs !== null) return scs;                 // סצנות רשומות (scenes.js)
   const ls = liftSpeed(); if (ls !== null) return ls;
   const mds = mudSpeed(); if (mds !== null) return mds;
   const bts = boatSpeed(); if (bts !== null) return bts;
@@ -47,11 +48,13 @@ function curSpeed() {
 // מתקרבים לחבר בסירה / לילד עם העגלה / לדוכן הסוחר: מאטים בהדרגה ומגיעים בהליכה, לא בריצה שנעצרת בבת אחת
 const APPROACH = { from: 42, to: 8, walk: 9 };   // מתחילים להאט 42 יחידות לפני, ומ-8 לפני הולכים במהירות 9
 function approachDist() {
-  if (boat || cart || merchant || boarS || jetS || wolfS || bikeS || typeof obstacles === 'undefined') return Infinity;
+  if (scenesActive() || boat || cart || merchant || boarS || jetS || wolfS || bikeS || typeof obstacles === 'undefined') return Infinity;
   const r = PLAYER.x + PLAYER.w; let d = Infinity;
   for (const o of obstacles) {
     if (o.passed || o.waving) continue;
-    if (o.type === 'boat') d = Math.min(d, boatStern(o) - BOAT.stepDX - r);
+    const sc = SCENE_BY_TYPE[o.type];
+    if (sc && sc.stopAt) d = Math.min(d, sc.stopAt(o) - r);   // סצנות רשומות (scenes.js)
+    else if (o.type === 'boat') d = Math.min(d, boatStern(o) - BOAT.stepDX - r);
     else if (o.type === 'cart') d = Math.min(d, o.x + o.cp - CART.stepDX - CART.watch - r);
     else if (o.type === 'jetgap' && !o.passed) d = Math.min(d, o.x + JS.stop - r);
     else if (o.type === 'bikeway' && !o.passed) d = Math.min(d, o.x + BK.stop - 5 + PLAYER.w / 2 - r);   // האופניים ליד העץ

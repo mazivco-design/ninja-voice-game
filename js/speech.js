@@ -126,6 +126,7 @@ function expectedWords() { return [...expectedWords0(), ...powerWordsOwned()]; }
 function expectedWords0(strict) {                                              // strict – בלי ברירת המחדל "כל המילים"
   if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? (merchant.t >= MERCH.askAt ? ['want'] : []) : merchant.phase === 'choose' ? (merchant.t >= MERCH.pickAt ? [...ITEM_WORDS] : []) : [];
   if (duelActive()) return ['fight'];
+  const sce = scenesExpected(); if (sce) return sce;   // סצנות רשומות (scenes.js)
   const me = mudExpected(); if (me) return me;
   const be = boatExpected(); if (be) return be;
   const ce = cartExpected(); if (ce) return ce;
@@ -283,6 +284,7 @@ function command(word, source) {
   if (state === 'sushi') { if (word === 'catch') sushiCatch(); return; }   // בונוס סושי
   if (state !== 'play' && !((state === 'demo' || state === 'intro') && source === 'demo')) return;   // במילון ובהדגמה – רק ההדגמה מזיזה את הנינג'ה
   heard = { text: word.toUpperCase(), t: 0.8 };
+  if (scenesCmd(word)) return;             // סצנות רשומות (scenes.js)
   if (bkCmd(word)) return;                 // אופניים: RIDE / RING / JUMP / BRAKE / STOP / GET OFF
   if (wfCmd(word)) return;                 // זאבים: CATCH / HOLD / LET GO
   if (jsCmd(word)) return;                 // שלב תרמיל הסילון: PICK UP / PUT ON / FLY / UP / DOWN
