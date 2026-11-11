@@ -128,7 +128,6 @@ function expectedWords0(strict) {                                              /
   if (duelActive()) return ['fight'];
   const sce = scenesExpected(); if (sce) return sce;   // סצנות רשומות (scenes.js)
   if (gustActive()) return ['hold'];
-  if (tunnelWait) return ['crawl'];
   if (ride && ride.phase === 'wait') return ['ride'];
   if (ride && (ride.phase === 'mount' || ride.phase === 'takeoff')) return ['up', 'down', 'fire'];
   if (rope && rope.phase !== 'done') return rope.phase === 'wait' ? ['catch'] : rope.phase === 'hang' ? ['let go'] : [];
