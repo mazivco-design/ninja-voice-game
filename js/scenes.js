@@ -34,6 +34,8 @@ function sceneAdd(def) {
 }
 
 function scenesReset() { for (const s of SCENES) if (s.reset) s.reset(); }
+// איפוס אחד לכל המקומות (תחילת משחק, הדגמה, מילון, חזרה לתפריט): מצב הסצנות וכל מה שעל המסך
+function resetScenes() { scenesReset(); obstacles = []; shurikens = []; fireballs = []; pickups = []; }
 function scenesActive() { for (const s of SCENES) if (s.active && s.active()) return s; return null; }
 function scenesUpdate(dt, pb) { for (const s of SCENES) if (s.update) s.update(dt, pb); }
 function scenesPhysics(dt) { for (const s of SCENES) if (s.physics && s.physics(dt)) return true; return false; }

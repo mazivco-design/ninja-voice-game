@@ -35,7 +35,7 @@ function startGame(m, idx) {
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
   world = m === 'stage' ? (STAGES[idx || 0].world ?? PAIR_WORLD[Math.floor((idx || 0) / 3)]) : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
-  scenesReset(); learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = null; liftIdx = 0; ptIdx = 0; merchNext = 'key'; obstacles = []; shurikens = []; fireballs = []; pickups = []; particles = []; flag = null;
+  resetScenes(); learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = null; liftIdx = 0; ptIdx = 0; merchNext = 'key'; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   earlyWord = null; py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
