@@ -1,0 +1,1010 @@
+{
+ "easy / JUMP": {
+  "end": "JUMP – done!",
+  "sec": 19.68,
+  "hits": 0,
+  "score": 4,
+  "hash": 1416906141,
+  "phases": ""
+ },
+ "easy / DOWN": {
+  "end": "DOWN – done!",
+  "sec": 19.07,
+  "hits": 0,
+  "score": 4,
+  "hash": 3765532129,
+  "phases": ""
+ },
+ "easy / JUMP + DOWN": {
+  "end": "JUMP + DOWN – done!",
+  "sec": 38.1,
+  "hits": 0,
+  "score": 10,
+  "hash": 1620053337,
+  "phases": ""
+ },
+ "easy / KICK": {
+  "end": "KICK – done!",
+  "sec": 18.57,
+  "hits": 0,
+  "score": 4,
+  "hash": 3079208639,
+  "phases": ""
+ },
+ "easy / THROW": {
+  "end": "THROW – done!",
+  "sec": 23.23,
+  "hits": 0,
+  "score": 4,
+  "hash": 1559791780,
+  "phases": ""
+ },
+ "easy / KICK + THROW": {
+  "end": "KICK + THROW – done!",
+  "sec": 45.92,
+  "hits": 0,
+  "score": 10,
+  "hash": 1320392981,
+  "phases": ""
+ },
+ "easy / CATCH": {
+  "end": "CATCH – done!",
+  "sec": 19.37,
+  "hits": 0,
+  "score": 4,
+  "hash": 1618241349,
+  "phases": ""
+ },
+ "easy / JUMP + FLY": {
+  "end": "JUMP + FLY – done!",
+  "sec": 33.88,
+  "hits": 0,
+  "score": 4,
+  "hash": 826008533,
+  "phases": ""
+ },
+ "easy / CATCH + FLY": {
+  "end": "CATCH + FLY – done!",
+  "sec": 60.82,
+  "hits": 0,
+  "score": 10,
+  "hash": 3513307916,
+  "phases": ""
+ },
+ "easy / STOP": {
+  "end": "STOP – done!",
+  "sec": 25.2,
+  "hits": 0,
+  "score": 4,
+  "hash": 3043852748,
+  "phases": ""
+ },
+ "easy / RUN": {
+  "end": "RUN – done!",
+  "sec": 27.98,
+  "hits": 0,
+  "score": 4,
+  "hash": 138892272,
+  "phases": ""
+ },
+ "easy / STOP + RUN": {
+  "end": "STOP + RUN – done!",
+  "sec": 56.75,
+  "hits": 0,
+  "score": 10,
+  "hash": 2779923919,
+  "phases": ""
+ },
+ "easy / SWIM": {
+  "end": "SWIM – done!",
+  "sec": 30.25,
+  "hits": 0,
+  "score": 4,
+  "hash": 3513566506,
+  "phases": ""
+ },
+ "easy / CLIMB": {
+  "end": "CLIMB – done!",
+  "sec": 35.78,
+  "hits": 0,
+  "score": 4,
+  "hash": 2949375922,
+  "phases": ""
+ },
+ "easy / SWIM + CLIMB": {
+  "end": "SWIM + CLIMB – done!",
+  "sec": 76.9,
+  "hits": 0,
+  "score": 10,
+  "hash": 4191714823,
+  "phases": ""
+ },
+ "easy / PUSH": {
+  "end": "PUSH – done!",
+  "sec": 18.22,
+  "hits": 0,
+  "score": 4,
+  "hash": 2541165922,
+  "phases": ""
+ },
+ "easy / PULL": {
+  "end": "PULL – done!",
+  "sec": 30.5,
+  "hits": 0,
+  "score": 4,
+  "hash": 599296616,
+  "phases": ""
+ },
+ "easy / PUSH + PULL": {
+  "end": "PUSH + PULL – done!",
+  "sec": 51.72,
+  "hits": 0,
+  "score": 10,
+  "hash": 2559501470,
+  "phases": ""
+ },
+ "easy / HIDE": {
+  "end": "HIDE – done!",
+  "sec": 27,
+  "hits": 0,
+  "score": 4,
+  "hash": 2064570822,
+  "phases": ""
+ },
+ "easy / BLOCK": {
+  "end": "BLOCK – done!",
+  "sec": 23.85,
+  "hits": 0,
+  "score": 4,
+  "hash": 3190852719,
+  "phases": ""
+ },
+ "easy / HIDE + BLOCK": {
+  "end": "HIDE + BLOCK – done!",
+  "sec": 51.87,
+  "hits": 0,
+  "score": 10,
+  "hash": 476483804,
+  "phases": ""
+ },
+ "easy / LEAP": {
+  "end": "LEAP – done!",
+  "sec": 19.68,
+  "hits": 0,
+  "score": 4,
+  "hash": 607915289,
+  "phases": ""
+ },
+ "easy / DIVE": {
+  "end": "DIVE – done!",
+  "sec": 27.87,
+  "hits": 0,
+  "score": 4,
+  "hash": 1750142467,
+  "phases": ""
+ },
+ "easy / LEAP + DIVE": {
+  "end": "LEAP + DIVE – done!",
+  "sec": 53.5,
+  "hits": 0,
+  "score": 10,
+  "hash": 3393149288,
+  "phases": ""
+ },
+ "easy / CRAWL": {
+  "end": "CRAWL – done!",
+  "sec": 34.9,
+  "hits": 0,
+  "score": 4,
+  "hash": 2269234008,
+  "phases": ""
+ },
+ "easy / FIRE": {
+  "end": "FIRE – done!",
+  "sec": 18.78,
+  "hits": 0,
+  "score": 4,
+  "hash": 77113309,
+  "phases": ""
+ },
+ "easy / CRAWL + FIRE": {
+  "end": "CRAWL + FIRE – done!",
+  "sec": 61.92,
+  "hits": 0,
+  "score": 10,
+  "hash": 1139844164,
+  "phases": ""
+ },
+ "easy / LET GO": {
+  "end": "LET GO – done!",
+  "sec": 40.52,
+  "hits": 0,
+  "score": 4,
+  "hash": 4171963541,
+  "phases": "rope:wait > rope:hang > rope:land > rope:done > rope:wait > rope:hang > rope:land > rope:done > rope:wait > rope:hang > rope:land > rope:done > rope:wait > rope:hang > rope:land > rope:done"
+ },
+ "easy / RIDE": {
+  "end": "RIDE – done!",
+  "sec": 48.15,
+  "hits": 0,
+  "score": 8,
+  "hash": 3844962834,
+  "phases": "ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave"
+ },
+ "easy / FIGHT": {
+  "end": "FIGHT – done!",
+  "sec": 30.17,
+  "hits": 0,
+  "score": 4,
+  "hash": 164588894,
+  "phases": "duel:enter > duel:face > duel:win > duel:enter > duel:face > duel:win > duel:enter > duel:face > duel:win > duel:enter > duel:face > duel:win"
+ },
+ "easy / HOLD": {
+  "end": "HOLD – done!",
+  "sec": 51.27,
+  "hits": 0,
+  "score": 4,
+  "hash": 2833020767,
+  "phases": "gust:storm > gust:calm > gust:back > gust:done > gust:storm > gust:calm > gust:back > gust:done > gust:storm > gust:calm > gust:back > gust:done > gust:storm > gust:calm > gust:back > gust:done"
+ },
+ "easy / PICK UP": {
+  "end": "PICK UP – done!",
+  "sec": 26.37,
+  "hits": 0,
+  "score": 4,
+  "hash": 1496909532,
+  "phases": "lift:atRock > lift:lifting > lift:atRock > lift:lifting > lift:atRock > lift:lifting > lift:atRock > lift:lifting"
+ },
+ "easy / PICK UP + PUT DOWN": {
+  "end": "PICK UP + PUT DOWN – done!",
+  "sec": 42.67,
+  "hits": 0,
+  "score": 4,
+  "hash": 1798144774,
+  "phases": "lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:climb > lift:onRock > lift:jumping > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:climb > lift:onRock > lift:jumping > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:pupCross > lift:crossing > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:climb > lift:onRock > lift:jumping"
+ },
+ "easy / PICK UP + THROW": {
+  "end": "PICK UP + THROW – done!",
+  "sec": 64.23,
+  "hits": 0,
+  "score": 8,
+  "hash": 1046375332,
+  "phases": "lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:throwing > lift:bite > lift:waitPull > lift:pulling > lift:thanks > lift:walkOut > lift:hop > lift:atRock > lift:lifting > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:throwing > lift:bite > lift:waitPull > lift:pulling > lift:thanks > lift:walkOut > lift:hop > lift:atRock > lift:lifting > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:throwing > lift:bite > lift:waitPull > lift:pulling > lift:thanks > lift:walkOut > lift:hop"
+ },
+ "easy / HELP": {
+  "end": "HELP – done!",
+  "sec": 99.38,
+  "hits": 0,
+  "score": 4,
+  "hash": 3422550801,
+  "phases": "mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks"
+ },
+ "easy / PUSH TOGETHER": {
+  "end": "PUSH TOGETHER – done!",
+  "sec": 34.82,
+  "hits": 0,
+  "score": 1,
+  "hash": 1026092857,
+  "phases": "boat:greet > boat:yesWait > boat:great > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell"
+ },
+ "easy / PUSH ON THREE": {
+  "end": "PUSH ON THREE – done!",
+  "sec": 104.85,
+  "hits": 0,
+  "score": 3,
+  "hash": 3153754198,
+  "phases": "cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK"
+ },
+ "easy / FISHING": {
+  "end": "FISHING – done!",
+  "sec": 96.88,
+  "hits": 0,
+  "score": 2,
+  "hash": 3500114309,
+  "phases": "boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:land > boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:land"
+ },
+ "easy / WILD BOAR": {
+  "end": "WILD BOAR – done!",
+  "sec": 28.93,
+  "hits": 0,
+  "score": 1,
+  "hash": 765440168,
+  "phases": "boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:walk > boar:stand > boar:exit"
+ },
+ "easy / JET PACK": {
+  "end": "JET PACK – done!",
+  "sec": 107.88,
+  "hits": 0,
+  "score": 1,
+  "hash": 69788168,
+  "phases": "jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:hover > jet:land > jet:drop"
+ },
+ "easy / WOLVES": {
+  "end": "WOLVES – done!",
+  "sec": 41.22,
+  "hits": 0,
+  "score": 1,
+  "hash": 1293578862,
+  "phases": "wolves:arrive > wolves:circle > wolves:rope > wolves:caught > wolves:lift > wolves:hang > wolves:climb > wolves:board > wolves:carry > wolves:lower > wolves:hover > wolves:drop > wolves:land > wolves:exit"
+ },
+ "easy / BIKE": {
+  "end": "BIKE – done!",
+  "sec": 44.87,
+  "hits": 0,
+  "score": 1,
+  "hash": 4207765084,
+  "phases": "bike:rideWait > bike:mount > bike:ride > bike:duckWait > bike:duckGo > bike:ride > bike:rampWait > bike:rampGo > bike:ride > bike:down > bike:liftOver > bike:ride > bike:stopWait > bike:stopping > bike:offWait > bike:off > bike:cheer"
+ },
+ "medium / JUMP": {
+  "end": "JUMP – done!",
+  "sec": 14.72,
+  "hits": 0,
+  "score": 4,
+  "hash": 2318922936,
+  "phases": ""
+ },
+ "medium / DOWN": {
+  "end": "DOWN – done!",
+  "sec": 14.25,
+  "hits": 0,
+  "score": 4,
+  "hash": 1162433063,
+  "phases": ""
+ },
+ "medium / JUMP + DOWN": {
+  "end": "JUMP + DOWN – done!",
+  "sec": 27.78,
+  "hits": 0,
+  "score": 10,
+  "hash": 1689763054,
+  "phases": ""
+ },
+ "medium / KICK": {
+  "end": "KICK – done!",
+  "sec": 13.85,
+  "hits": 0,
+  "score": 4,
+  "hash": 48689107,
+  "phases": ""
+ },
+ "medium / THROW": {
+  "end": "THROW – done!",
+  "sec": 17.18,
+  "hits": 0,
+  "score": 4,
+  "hash": 2090146630,
+  "phases": ""
+ },
+ "medium / KICK + THROW": {
+  "end": "KICK + THROW – done!",
+  "sec": 33.48,
+  "hits": 0,
+  "score": 10,
+  "hash": 2645613526,
+  "phases": ""
+ },
+ "medium / CATCH": {
+  "end": "CATCH – done!",
+  "sec": 14.48,
+  "hits": 0,
+  "score": 4,
+  "hash": 2145931869,
+  "phases": ""
+ },
+ "medium / JUMP + FLY": {
+  "end": "JUMP + FLY – done!",
+  "sec": 27.42,
+  "hits": 0,
+  "score": 4,
+  "hash": 3011544255,
+  "phases": ""
+ },
+ "medium / CATCH + FLY": {
+  "end": "CATCH + FLY – done!",
+  "sec": 48.65,
+  "hits": 0,
+  "score": 10,
+  "hash": 1696854336,
+  "phases": ""
+ },
+ "medium / STOP": {
+  "end": "STOP – done!",
+  "sec": 20.43,
+  "hits": 0,
+  "score": 4,
+  "hash": 2354786708,
+  "phases": ""
+ },
+ "medium / RUN": {
+  "end": "RUN – done!",
+  "sec": 23.22,
+  "hits": 0,
+  "score": 4,
+  "hash": 1760802526,
+  "phases": ""
+ },
+ "medium / STOP + RUN": {
+  "end": "STOP + RUN – done!",
+  "sec": 46.65,
+  "hits": 0,
+  "score": 10,
+  "hash": 973574485,
+  "phases": ""
+ },
+ "medium / SWIM": {
+  "end": "SWIM – done!",
+  "sec": 25.6,
+  "hits": 0,
+  "score": 4,
+  "hash": 4265730944,
+  "phases": ""
+ },
+ "medium / CLIMB": {
+  "end": "CLIMB – done!",
+  "sec": 30.92,
+  "hits": 0,
+  "score": 4,
+  "hash": 419776687,
+  "phases": ""
+ },
+ "medium / SWIM + CLIMB": {
+  "end": "SWIM + CLIMB – done!",
+  "sec": 63.98,
+  "hits": 0,
+  "score": 10,
+  "hash": 1431307034,
+  "phases": ""
+ },
+ "medium / PUSH": {
+  "end": "PUSH – done!",
+  "sec": 13.57,
+  "hits": 0,
+  "score": 4,
+  "hash": 560906563,
+  "phases": ""
+ },
+ "medium / PULL": {
+  "end": "PULL – done!",
+  "sec": 25.82,
+  "hits": 0,
+  "score": 4,
+  "hash": 1324613059,
+  "phases": ""
+ },
+ "medium / PUSH + PULL": {
+  "end": "PUSH + PULL – done!",
+  "sec": 47.58,
+  "hits": 0,
+  "score": 10,
+  "hash": 2266600971,
+  "phases": ""
+ },
+ "medium / HIDE": {
+  "end": "HIDE – done!",
+  "sec": 21.57,
+  "hits": 0,
+  "score": 4,
+  "hash": 1263731692,
+  "phases": ""
+ },
+ "medium / BLOCK": {
+  "end": "BLOCK – done!",
+  "sec": 17.62,
+  "hits": 0,
+  "score": 4,
+  "hash": 2329459047,
+  "phases": ""
+ },
+ "medium / HIDE + BLOCK": {
+  "end": "HIDE + BLOCK – done!",
+  "sec": 39.8,
+  "hits": 0,
+  "score": 10,
+  "hash": 762094473,
+  "phases": ""
+ },
+ "medium / LEAP": {
+  "end": "LEAP – done!",
+  "sec": 14.72,
+  "hits": 0,
+  "score": 4,
+  "hash": 1529457438,
+  "phases": ""
+ },
+ "medium / DIVE": {
+  "end": "DIVE – done!",
+  "sec": 23.05,
+  "hits": 0,
+  "score": 4,
+  "hash": 1578072535,
+  "phases": ""
+ },
+ "medium / LEAP + DIVE": {
+  "end": "LEAP + DIVE – done!",
+  "sec": 43.18,
+  "hits": 0,
+  "score": 10,
+  "hash": 2475544736,
+  "phases": ""
+ },
+ "medium / CRAWL": {
+  "end": "CRAWL – done!",
+  "sec": 25.58,
+  "hits": 0,
+  "score": 4,
+  "hash": 1865528343,
+  "phases": ""
+ },
+ "medium / FIRE": {
+  "end": "FIRE – done!",
+  "sec": 13.65,
+  "hits": 0,
+  "score": 4,
+  "hash": 2503204714,
+  "phases": ""
+ },
+ "medium / CRAWL + FIRE": {
+  "end": "CRAWL + FIRE – done!",
+  "sec": 38.53,
+  "hits": 0,
+  "score": 10,
+  "hash": 3888371546,
+  "phases": ""
+ },
+ "medium / LET GO": {
+  "end": "LET GO – done!",
+  "sec": 33.57,
+  "hits": 0,
+  "score": 4,
+  "hash": 2614983685,
+  "phases": "rope:wait > rope:hang > rope:land > rope:done > rope:wait > rope:hang > rope:land > rope:done > rope:wait > rope:hang > rope:land > rope:done > rope:wait > rope:hang > rope:land > rope:done"
+ },
+ "medium / RIDE": {
+  "end": "RIDE – done!",
+  "sec": 35,
+  "hits": 0,
+  "score": 8,
+  "hash": 645912345,
+  "phases": "ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave"
+ },
+ "medium / FIGHT": {
+  "end": "FIGHT – done!",
+  "sec": 25.07,
+  "hits": 0,
+  "score": 4,
+  "hash": 3154766903,
+  "phases": "duel:enter > duel:face > duel:win > duel:enter > duel:face > duel:win > duel:enter > duel:face > duel:win > duel:enter > duel:face > duel:win"
+ },
+ "medium / HOLD": {
+  "end": "HOLD – done!",
+  "sec": 43.85,
+  "hits": 0,
+  "score": 4,
+  "hash": 4145169122,
+  "phases": "gust:storm > gust:calm > gust:back > gust:done > gust:storm > gust:calm > gust:back > gust:done > gust:storm > gust:calm > gust:back > gust:done > gust:storm > gust:calm > gust:back > gust:done"
+ },
+ "medium / PICK UP": {
+  "end": "PICK UP – done!",
+  "sec": 20.58,
+  "hits": 0,
+  "score": 4,
+  "hash": 26906170,
+  "phases": "lift:atRock > lift:lifting > lift:atRock > lift:lifting > lift:atRock > lift:lifting > lift:atRock > lift:lifting"
+ },
+ "medium / PICK UP + PUT DOWN": {
+  "end": "PICK UP + PUT DOWN – done!",
+  "sec": 35.38,
+  "hits": 0,
+  "score": 4,
+  "hash": 2041911396,
+  "phases": "lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:climb > lift:onRock > lift:jumping > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:climb > lift:onRock > lift:jumping > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:pupCross > lift:crossing > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:climb > lift:onRock > lift:jumping"
+ },
+ "medium / PICK UP + THROW": {
+  "end": "PICK UP + THROW – done!",
+  "sec": 53.22,
+  "hits": 0,
+  "score": 8,
+  "hash": 3481009183,
+  "phases": "lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:throwing > lift:bite > lift:waitPull > lift:pulling > lift:thanks > lift:walkOut > lift:hop > lift:atRock > lift:lifting > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:throwing > lift:bite > lift:waitPull > lift:pulling > lift:thanks > lift:walkOut > lift:hop > lift:atRock > lift:lifting > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:throwing > lift:bite > lift:waitPull > lift:pulling > lift:thanks > lift:walkOut > lift:hop"
+ },
+ "medium / HELP": {
+  "end": "HELP – done!",
+  "sec": 94.3,
+  "hits": 0,
+  "score": 4,
+  "hash": 1056995886,
+  "phases": "mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks"
+ },
+ "medium / PUSH TOGETHER": {
+  "end": "PUSH TOGETHER – done!",
+  "sec": 32.58,
+  "hits": 0,
+  "score": 1,
+  "hash": 2449555358,
+  "phases": "boat:greet > boat:yesWait > boat:great > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell"
+ },
+ "medium / PUSH ON THREE": {
+  "end": "PUSH ON THREE – done!",
+  "sec": 101.32,
+  "hits": 0,
+  "score": 3,
+  "hash": 1047800224,
+  "phases": "cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK"
+ },
+ "medium / FISHING": {
+  "end": "FISHING – done!",
+  "sec": 92.6,
+  "hits": 0,
+  "score": 2,
+  "hash": 2066195468,
+  "phases": "boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:land > boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:land"
+ },
+ "medium / WILD BOAR": {
+  "end": "WILD BOAR – done!",
+  "sec": 24.72,
+  "hits": 0,
+  "score": 1,
+  "hash": 2860325849,
+  "phases": "boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:walk > boar:stand > boar:exit"
+ },
+ "medium / JET PACK": {
+  "end": "JET PACK – done!",
+  "sec": 105.62,
+  "hits": 0,
+  "score": 1,
+  "hash": 3883390405,
+  "phases": "jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:hover > jet:land > jet:drop"
+ },
+ "medium / WOLVES": {
+  "end": "WOLVES – done!",
+  "sec": 38.1,
+  "hits": 0,
+  "score": 1,
+  "hash": 3157402981,
+  "phases": "wolves:arrive > wolves:circle > wolves:rope > wolves:caught > wolves:lift > wolves:hang > wolves:climb > wolves:board > wolves:carry > wolves:lower > wolves:hover > wolves:drop > wolves:land > wolves:exit"
+ },
+ "medium / BIKE": {
+  "end": "BIKE – done!",
+  "sec": 42.07,
+  "hits": 0,
+  "score": 1,
+  "hash": 2007568403,
+  "phases": "bike:rideWait > bike:mount > bike:ride > bike:duckWait > bike:duckGo > bike:ride > bike:rampWait > bike:rampGo > bike:ride > bike:down > bike:liftOver > bike:ride > bike:stopWait > bike:stopping > bike:offWait > bike:off > bike:cheer"
+ },
+ "hard / JUMP": {
+  "end": "JUMP – done!",
+  "sec": 12.67,
+  "hits": 0,
+  "score": 4,
+  "hash": 3804834104,
+  "phases": ""
+ },
+ "hard / DOWN": {
+  "end": "DOWN – done!",
+  "sec": 12.25,
+  "hits": 0,
+  "score": 4,
+  "hash": 507465647,
+  "phases": ""
+ },
+ "hard / JUMP + DOWN": {
+  "end": "JUMP + DOWN – done!",
+  "sec": 23.38,
+  "hits": 0,
+  "score": 10,
+  "hash": 1440591577,
+  "phases": ""
+ },
+ "hard / KICK": {
+  "end": "KICK – done!",
+  "sec": 11.92,
+  "hits": 0,
+  "score": 4,
+  "hash": 3638576236,
+  "phases": ""
+ },
+ "hard / THROW": {
+  "end": "THROW – done!",
+  "sec": 14.62,
+  "hits": 0,
+  "score": 4,
+  "hash": 3410366953,
+  "phases": ""
+ },
+ "hard / KICK + THROW": {
+  "end": "KICK + THROW – done!",
+  "sec": 27.53,
+  "hits": 0,
+  "score": 10,
+  "hash": 2015830040,
+  "phases": ""
+ },
+ "hard / CATCH": {
+  "end": "CATCH – done!",
+  "sec": 12.45,
+  "hits": 0,
+  "score": 4,
+  "hash": 2068087647,
+  "phases": ""
+ },
+ "hard / JUMP + FLY": {
+  "end": "JUMP + FLY – done!",
+  "sec": 24.93,
+  "hits": 0,
+  "score": 4,
+  "hash": 3580778498,
+  "phases": ""
+ },
+ "hard / CATCH + FLY": {
+  "end": "CATCH + FLY – done!",
+  "sec": 43.63,
+  "hits": 0,
+  "score": 10,
+  "hash": 2468297403,
+  "phases": ""
+ },
+ "hard / STOP": {
+  "end": "STOP – done!",
+  "sec": 18.27,
+  "hits": 0,
+  "score": 4,
+  "hash": 1289875026,
+  "phases": ""
+ },
+ "hard / RUN": {
+  "end": "RUN – done!",
+  "sec": 20.85,
+  "hits": 0,
+  "score": 4,
+  "hash": 1017496402,
+  "phases": ""
+ },
+ "hard / STOP + RUN": {
+  "end": "STOP + RUN – done!",
+  "sec": 41.92,
+  "hits": 0,
+  "score": 10,
+  "hash": 2112383844,
+  "phases": ""
+ },
+ "hard / SWIM": {
+  "end": "SWIM – done!",
+  "sec": 23.22,
+  "hits": 0,
+  "score": 4,
+  "hash": 4104286513,
+  "phases": ""
+ },
+ "hard / CLIMB": {
+  "end": "CLIMB – done!",
+  "sec": 28.65,
+  "hits": 0,
+  "score": 4,
+  "hash": 3587476883,
+  "phases": ""
+ },
+ "hard / SWIM + CLIMB": {
+  "end": "SWIM + CLIMB – done!",
+  "sec": 60,
+  "hits": 0,
+  "score": 10,
+  "hash": 2470960559,
+  "phases": ""
+ },
+ "hard / PUSH": {
+  "end": "PUSH – done!",
+  "sec": 11.67,
+  "hits": 0,
+  "score": 4,
+  "hash": 3554647071,
+  "phases": ""
+ },
+ "hard / PULL": {
+  "end": "PULL – done!",
+  "sec": 23.52,
+  "hits": 0,
+  "score": 4,
+  "hash": 3983149706,
+  "phases": ""
+ },
+ "hard / PUSH + PULL": {
+  "end": "PUSH + PULL – done!",
+  "sec": 42.35,
+  "hits": 0,
+  "score": 10,
+  "hash": 3382053770,
+  "phases": ""
+ },
+ "hard / HIDE": {
+  "end": "HIDE – done!",
+  "sec": 19.2,
+  "hits": 0,
+  "score": 4,
+  "hash": 284203015,
+  "phases": ""
+ },
+ "hard / BLOCK": {
+  "end": "BLOCK – done!",
+  "sec": 14.98,
+  "hits": 0,
+  "score": 4,
+  "hash": 3005043403,
+  "phases": ""
+ },
+ "hard / HIDE + BLOCK": {
+  "end": "HIDE + BLOCK – done!",
+  "sec": 34.63,
+  "hits": 0,
+  "score": 10,
+  "hash": 1867867343,
+  "phases": ""
+ },
+ "hard / LEAP": {
+  "end": "LEAP – done!",
+  "sec": 12.67,
+  "hits": 0,
+  "score": 4,
+  "hash": 2579484868,
+  "phases": ""
+ },
+ "hard / DIVE": {
+  "end": "DIVE – done!",
+  "sec": 20.68,
+  "hits": 0,
+  "score": 4,
+  "hash": 4048342513,
+  "phases": ""
+ },
+ "hard / LEAP + DIVE": {
+  "end": "LEAP + DIVE – done!",
+  "sec": 38.42,
+  "hits": 0,
+  "score": 10,
+  "hash": 2299273250,
+  "phases": ""
+ },
+ "hard / CRAWL": {
+  "end": "CRAWL – done!",
+  "sec": 21.52,
+  "hits": 0,
+  "score": 4,
+  "hash": 2222520456,
+  "phases": ""
+ },
+ "hard / FIRE": {
+  "end": "FIRE – done!",
+  "sec": 11.55,
+  "hits": 0,
+  "score": 4,
+  "hash": 114349295,
+  "phases": ""
+ },
+ "hard / CRAWL + FIRE": {
+  "end": "CRAWL + FIRE – done!",
+  "sec": 27.15,
+  "hits": 0,
+  "score": 10,
+  "hash": 1642035075,
+  "phases": ""
+ },
+ "hard / LET GO": {
+  "end": "LET GO – done!",
+  "sec": 30.33,
+  "hits": 0,
+  "score": 4,
+  "hash": 419063504,
+  "phases": "rope:wait > rope:hang > rope:land > rope:done > rope:wait > rope:hang > rope:land > rope:done > rope:wait > rope:hang > rope:land > rope:done > rope:wait > rope:hang > rope:land > rope:done"
+ },
+ "hard / RIDE": {
+  "end": "RIDE – done!",
+  "sec": 28.57,
+  "hits": 0,
+  "score": 6,
+  "hash": 2108836566,
+  "phases": "ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave"
+ },
+ "hard / FIGHT": {
+  "end": "FIGHT – done!",
+  "sec": 22.7,
+  "hits": 0,
+  "score": 4,
+  "hash": 1577523585,
+  "phases": "duel:enter > duel:face > duel:win > duel:enter > duel:face > duel:win > duel:enter > duel:face > duel:win > duel:enter > duel:face > duel:win"
+ },
+ "hard / HOLD": {
+  "end": "HOLD – done!",
+  "sec": 38.28,
+  "hits": 0,
+  "score": 4,
+  "hash": 3695815612,
+  "phases": "gust:storm > gust:calm > gust:back > gust:done > gust:storm > gust:calm > gust:back > gust:done > gust:storm > gust:calm > gust:back > gust:done > gust:storm > gust:calm > gust:back > gust:done"
+ },
+ "hard / PICK UP": {
+  "end": "PICK UP – done!",
+  "sec": 18.33,
+  "hits": 0,
+  "score": 4,
+  "hash": 1334168932,
+  "phases": "lift:atRock > lift:lifting > lift:atRock > lift:lifting > lift:atRock > lift:lifting > lift:atRock > lift:lifting"
+ },
+ "hard / PICK UP + PUT DOWN": {
+  "end": "PICK UP + PUT DOWN – done!",
+  "sec": 30.9,
+  "hits": 0,
+  "score": 4,
+  "hash": 3112215486,
+  "phases": "lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:climb > lift:onRock > lift:jumping > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:climb > lift:onRock > lift:jumping > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:pupCross > lift:crossing > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:climb > lift:onRock > lift:jumping"
+ },
+ "hard / PICK UP + THROW": {
+  "end": "PICK UP + THROW – done!",
+  "sec": 47.95,
+  "hits": 0,
+  "score": 8,
+  "hash": 197141120,
+  "phases": "lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:throwing > lift:bite > lift:waitPull > lift:pulling > lift:thanks > lift:walkOut > lift:hop > lift:atRock > lift:lifting > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:throwing > lift:bite > lift:waitPull > lift:pulling > lift:thanks > lift:walkOut > lift:hop > lift:atRock > lift:lifting > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:throwing > lift:bite > lift:waitPull > lift:pulling > lift:thanks > lift:walkOut > lift:hop"
+ },
+ "hard / HELP": {
+  "end": "HELP – done!",
+  "sec": 92.07,
+  "hits": 0,
+  "score": 4,
+  "hash": 1604584032,
+  "phases": "mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks"
+ },
+ "hard / PUSH TOGETHER": {
+  "end": "PUSH TOGETHER – done!",
+  "sec": 31.27,
+  "hits": 0,
+  "score": 1,
+  "hash": 1804197655,
+  "phases": "boat:greet > boat:yesWait > boat:great > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell"
+ },
+ "hard / PUSH ON THREE": {
+  "end": "PUSH ON THREE – done!",
+  "sec": 99.38,
+  "hits": 0,
+  "score": 3,
+  "hash": 157239202,
+  "phases": "cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK"
+ },
+ "hard / FISHING": {
+  "end": "FISHING – done!",
+  "sec": 90.25,
+  "hits": 0,
+  "score": 2,
+  "hash": 60018901,
+  "phases": "boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:land > boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:land"
+ },
+ "hard / WILD BOAR": {
+  "end": "WILD BOAR – done!",
+  "sec": 22.42,
+  "hits": 0,
+  "score": 1,
+  "hash": 4200860323,
+  "phases": "boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:walk > boar:stand > boar:exit"
+ },
+ "hard / JET PACK": {
+  "end": "JET PACK – done!",
+  "sec": 104.22,
+  "hits": 0,
+  "score": 1,
+  "hash": 125834010,
+  "phases": "jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:hover > jet:land > jet:drop"
+ },
+ "hard / WOLVES": {
+  "end": "WOLVES – done!",
+  "sec": 36.23,
+  "hits": 0,
+  "score": 1,
+  "hash": 2402193543,
+  "phases": "wolves:arrive > wolves:circle > wolves:rope > wolves:caught > wolves:lift > wolves:hang > wolves:climb > wolves:board > wolves:carry > wolves:lower > wolves:hover > wolves:drop > wolves:land > wolves:exit"
+ },
+ "hard / BIKE": {
+  "end": "BIKE – done!",
+  "sec": 40.42,
+  "hits": 0,
+  "score": 1,
+  "hash": 1646085613,
+  "phases": "bike:rideWait > bike:mount > bike:ride > bike:duckWait > bike:duckGo > bike:ride > bike:rampWait > bike:rampGo > bike:ride > bike:down > bike:liftOver > bike:ride > bike:stopWait > bike:stopping > bike:offWait > bike:off > bike:cheer"
+ }
+}
