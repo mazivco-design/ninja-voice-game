@@ -29,7 +29,6 @@ function testerTap() {
   if (boat) { const w = boatExpected()[0]; if (w) command(w, 'tap'); return; }
   if (cart) { const w = cartExpected()[0]; if (w) command(w, 'tap'); return; }
   if (jetS) { const w = jsExpected()[0]; if (w) command(w, 'tap'); return; }
-  if (wolfS) { const w = wfExpected()[0]; if (w) command(w, 'tap'); return; }
   if (ride && ride.phase === 'wait') return command('ride', 'tap');
   if (rope && rope.phase === 'wait') return command('catch', 'tap');
   if (rope && rope.phase === 'hang') return command('let go', 'tap');
@@ -78,7 +77,6 @@ function testerAutoScenes(t) {
   boatAuto();
   cartAuto();
   jsAuto();
-  wfAuto();
   scenesAuto();   // סצנות רשומות (scenes.js)
   if (tunnelWait && tunnelWait.idle > 0.3) command('crawl', 'auto');
   if (gust && gust.phase === 'storm' && gust.held === null && gust.t > 1.0) command('hold', 'auto');
