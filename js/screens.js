@@ -166,7 +166,7 @@ function renderDict() {
 }
 
 function resetDemo() {
-  scenesReset(); obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; cart = null; boarS = null; jetS = null; wolfS = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null; banner = null; flash = null; heard = null;
+  scenesReset(); obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; cart = null; jetS = null; wolfS = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; particles = []; flag = null; banner = null; flash = null; heard = null;
   py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   demoSteps = []; demoClock = 0;
 }
@@ -263,7 +263,7 @@ function speakSynth(w) {
 
 // חפץ קטן ליד הנינג'ה (אם צריך), ורשימת פעולות לפי זמן
 function showWord(w) {
-  if (!sceneLabel(w) && w !== 'help' && w !== 'push together' && w !== 'push on three' && w !== 'fishing' && w !== 'boar' && w !== 'jetpack' && w !== 'wolves') speak(w);
+  if (!sceneLabel(w) && w !== 'help' && w !== 'push together' && w !== 'push on three' && w !== 'fishing' && w !== 'jetpack' && w !== 'wolves') speak(w);
   document.querySelectorAll('.word').forEach(b => b.classList.toggle('active', b.dataset.w === w));
   resetDemo();
   setupDemo(w);
@@ -306,7 +306,7 @@ let introWords = [], introT = 0, runSpeed = 0;
 
 // מציב חפץ קטן ליד הנינג'ה ומתזמן את הפעולה (משותף למילון ולהדגמה)
 function setupDemo(w) {
-  scenesReset(); obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; cart = null; boarS = null; jetS = null; wolfS = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; flash = null; invulnT = 0;
+  scenesReset(); obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; cart = null; jetS = null; wolfS = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; flash = null; invulnT = 0;
   py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0; resetAct();
   demoSteps = []; demoClock = 0;
   const near = PLAYER.x + PLAYER.w;
@@ -336,7 +336,6 @@ function setupDemo(w) {
   if (w === 'wolves') { const o = { type: 'wolfden' }; wfSetup(o); o.x = PLAYER.x + PLAYER.w - WF.stop; obstacles.push(o); }   // עומד על הסלע (wolves.js מפעיל CATCH / HOLD / LET GO בהדגמה)
   if (sceneIntro(w) && sceneIntro(w).demo) sceneIntro(w).demo();   // סצנות רשומות (scenes.js)
   if (w === 'jetpack') { const o = { type: 'jetgap' }; jsSetup(o); o.x = PLAYER.x + PLAYER.w - JS.stop; obstacles.push(o); }   // עומד ליד התרמיל (jetstage.js מפעיל את ההדגמה)
-  if (w === 'boar') { const o = { type: 'boar' }; boarSetup(o); o.x = PLAYER.x + PLAYER.w - BOAR.tree0 - o.lead + boarStandGap(0); obstacles.push(o); }   // עומד ליד העץ הראשון (boar.js מפעיל HIDE בהדגמה)
   if (w === 'hold') obstacles.push({ type: 'gust', x: near + 1 - GUST.stalks[2], w: GUST.stalks[2] + 4 });
   obstacles.forEach(o => { o.passed = false; o.hit = false; o.demo = true; });   // בהדגמה – בלי פגיעות
   demoSteps = w === 'fly' ? [{ at: 0.9, w: 'jump' }, { at: 1.3, w: 'fly' }]
@@ -344,7 +343,7 @@ function setupDemo(w) {
             : w === 'let go' ? [{ at: 0.9, w: 'catch' }, { at: 2.7, w: 'let go' }]
             : w === 'ride' ? [{ at: 0.9, w: 'ride' }, { at: 2.9, w: 'up' }, { at: 3.8, w: 'down' }, { at: 4.6, w: 'fire' }]
             : w === 'hold' ? [{ at: 1.2, w }]
-            : sceneIntro(w) || w === 'help' || w === 'push together' || w === 'push on three' || w === 'fishing' || w === 'boar' || w === 'jetpack' || w === 'wolves' ? []
+            : sceneIntro(w) || w === 'help' || w === 'push together' || w === 'push on three' || w === 'fishing' || w === 'jetpack' || w === 'wolves' ? []
             : w === 'pick up' ? [{ at: 0.8, w }]
             : w === 'put down' ? [{ at: 0.8, w: 'pick up', say: true }, { at: 3.0, w }, { at: 4.4, w: 'jump', say: true }]
             : w === 'fight' ? [{ at: 1.3, w }, { at: 2.1, w }, { at: 2.9, w }]
@@ -372,14 +371,14 @@ function introNext() {
   }
   const w = introWords.shift();
   setupDemo(w);
-  if (!sceneLabel(w) && w !== 'help' && w !== 'push together' && w !== 'push on three' && w !== 'fishing' && w !== 'boar' && w !== 'jetpack' && w !== 'wolves') speak(w);                                                  // HELP: הנינג'ה עצמו צועק בסצנה
-  banner = { text: sceneIntro(w) ? sceneIntro(w).banner : w === 'help' ? 'CATCH the rope, then HOLD!' : w === 'push together' ? 'PUSH with your friend, then JUMP in!' : w === 'push on three' ? 'PUSH on THREE, then JUMP in!' : w === 'fishing' ? 'THROW the line, then PULL!' : w === 'boar' ? 'SNEAK on green · HIDE when the ears move!' : w === 'jetpack' ? 'PICK UP · PUT ON · FLY!' : w === 'wolves' ? 'CATCH · HOLD · CLIMB · JUMP!' : 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
-  introT = sceneIntro(w) ? sceneIntro(w).time : w === 'fly' ? 4.6 : w === 'want' ? 12.8 : w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'put down' ? 6.8 : w === 'pick up' ? 2.8 : w === 'crawl' ? 5.2 : w === 'help' ? 12.7 : w === 'push together' ? 14 : w === 'push on three' ? 31 : w === 'fishing' ? 16 : w === 'boar' ? 12 : w === 'jetpack' ? 14 : w === 'wolves' ? 32 : 2.8;
+  if (!sceneLabel(w) && w !== 'help' && w !== 'push together' && w !== 'push on three' && w !== 'fishing' && w !== 'jetpack' && w !== 'wolves') speak(w);                                                  // HELP: הנינג'ה עצמו צועק בסצנה
+  banner = { text: sceneIntro(w) ? sceneIntro(w).banner : w === 'help' ? 'CATCH the rope, then HOLD!' : w === 'push together' ? 'PUSH with your friend, then JUMP in!' : w === 'push on three' ? 'PUSH on THREE, then JUMP in!' : w === 'fishing' ? 'THROW the line, then PULL!' : w === 'jetpack' ? 'PICK UP · PUT ON · FLY!' : w === 'wolves' ? 'CATCH · HOLD · CLIMB · JUMP!' : 'Say ' + w.toUpperCase() + '!', sub: STAGES[stageIdx].hint, t: 99 };
+  introT = sceneIntro(w) ? sceneIntro(w).time : w === 'fly' ? 4.6 : w === 'want' ? 12.8 : w === 'let go' ? 5 : w === 'ride' ? 6 : w === 'fight' ? 5 : w === 'hold' ? 5 : w === 'put down' ? 6.8 : w === 'pick up' ? 2.8 : w === 'crawl' ? 5.2 : w === 'help' ? 12.7 : w === 'push together' ? 14 : w === 'push on three' ? 31 : w === 'fishing' ? 16 : w === 'jetpack' ? 14 : w === 'wolves' ? 32 : 2.8;
 }
 
 function finishIntro() {
   if (state !== 'intro') return;
-  scenesReset(); obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; cart = null; boarS = null; jetS = null; wolfS = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; demoSteps = []; flash = null; invulnT = 0;
+  scenesReset(); obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; ride = null; duel = null; fightT = 0; duelBones = []; duelSwords = []; gust = null; lift = null; mud = null; boat = null; cart = null; jetS = null; wolfS = null; tunnelWait = null; skyPrizes = []; gustAdv = 0; windLevel = 0; windStreaks = []; demoSteps = []; flash = null; invulnT = 0;
   py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0; resetAct();
   speed = runSpeed; distSinceSpawn = 0; nextGap = speed * 2.4; liftKindNext = null; liftIdx = 0; ptIdx = 0; merchNext = 'key';   // PICK UP: הסצנות מתחילות מההתחלה
   seenWords = [];

@@ -130,7 +130,6 @@ function expectedWords0(strict) {                                              /
   const me = mudExpected(); if (me) return me;
   const be = boatExpected(); if (be) return be;
   const ce = cartExpected(); if (ce) return ce;
-  const bre = boarExpected(); if (bre) return bre;
   const wfe = wfExpected(); if (wfe) return wfe;
   const jse = jsExpected(); if (jse) return jse;
   if (gustActive()) return ['hold'];
@@ -289,6 +288,7 @@ function command(word, source) {
   if ((source === 'voice' || source === 'tap') && state === 'play' && expectedWords0(true).includes(word)) okBadge = { w: word, t: 1.0 };   // פידבק: נקלט נכון
   if ((source === 'voice' || source === 'tap') && earlyHold(word)) { okBadge = null; return; }   // מילה נכונה שנאמרה מוקדם – נשמרת ומופעלת כשמגיעים למכשול
 
+  if (scenesAct(word)) return;             // סצנות רשומות (scenes.js)
   if (word === 'jump') {
     if (mudBusy()) return;                 // תקוע בבוץ – אי אפשר לקפוץ
     if (boatJump()) return;                // קופץ לתוך הסירה
@@ -332,7 +332,6 @@ function command(word, source) {
   else if (word === 'run')   { if (strayWord('run')) return; act.run = RUN_BOOST.time; act.stop = 0; }   // דוהר מהר – אבל RUN ששמענו בטעות ליד מכשול אחר לא מאיץ אל תוכו
   else if (word === 'swim' && boatSwim()) {}                             // FISHING: נפל מהסירה – שוחה חזרה
   else if (word === 'swim')  { act.swim = SWIM_TIME; duckT = 0; }
-  else if (word === 'climb' && boarClimb()) {}                          // ביער – מטפס על העץ עם הענפים
   else if (word === 'climb') { act.climbWant = 2.5; }                     // מטפס כשהנינג'ה מגיע לסולם (ההתקרבות איטית – ה-CLIMB לא פג בדרך)
   else if (word === 'yes' && (boatYes() || cartYes())) {}                                         // YES – עונים לחבר בסירה
   else if (word === 'push' && (boatPush() || cartPush())) {}                            // דוחפים את הסירה עם החבר
@@ -340,8 +339,6 @@ function command(word, source) {
   else if (word === 'pull' && boatPull()) {}                             // FISHING: מושך את הדג
   else if (word === 'pull' && liftPull()) {}                             // מושך את הגור מהבור
   else if (word === 'pull')  { act.pull = 0.6; act.pullWant = GATE.want; duckT = 0; }   // מושך כשמגיעים לחבל
-  else if (word === 'sneak' && boarSneak()) {}                           // ביער – מתגנבים לעץ הבא
-  else if (word === 'hide' && boarHide()) {}                             // ביער – מאחורי העץ
   else if (word === 'hide')  { act.hide = HIDE_TIME; duckT = 0; }
   else if (word === 'block') { act.block = BLOCK_TIME; }
   else if (word === 'leap') {                                             // זינוק: אם יש חלון קרוב – מזנק כשמגיעים אליו

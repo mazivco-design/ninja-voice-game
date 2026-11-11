@@ -695,3 +695,19 @@ function drawSneakSign(S) {
   ctx.restore();
 }
 function boarCharging(o) { return !!boarS && boarS.o === o && !!boarS.ch; }
+
+// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). הציור עדיין מחובר ב-draw.js
+sceneAdd({
+  type: 'boar', word: 'boar', label: true,
+  listen: ['hide', 'sneak', 'climb'],
+  active: () => !!boarS,
+  reset: () => { boarS = null; },
+  setup: boarSetup, afterGap: 0.8, noCollide: true,
+  box: o => ({ l: o.x, r: o.x + o.w, t: GROUND - 2, b: GROUND }),
+  stopAt: o => boarStandR(o, 0),                                                    // העץ הראשון ביער
+  update: boarUpdate, physics: boarPhysics, speed: boarSpeed, pose: boarPose,
+  expected: boarExpected, auto: boarAuto,
+  act: word => word === 'sneak' ? boarSneak() : word === 'hide' ? boarHide() : word === 'climb' ? boarClimb() : false,
+  intro: { banner: 'SNEAK on green · HIDE when the ears move!', time: 12,
+           demo: () => { const o = { type: 'boar' }; boarSetup(o); o.x = PLAYER.x + PLAYER.w - BOAR.tree0 - o.lead + boarStandGap(0); obstacles.push(o); } }   // עומד ליד העץ הראשון (boarUpdate מפעיל את ההדגמה)
+});

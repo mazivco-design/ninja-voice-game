@@ -482,7 +482,6 @@ function playerPose() {
   P = mudPose(P);
   P = boatPose(P);
   P = cartPose(P);
-  P = boarPose(P);
   P = wfPose(P);                                   // זאבים: על הסלע / תלוי בחבל
   P = jsPose(P);                                   // תרמיל סילון: מרים / לובש / עף                                 // ביער: הולך / נצמד לגזע / נהדף                                 // עגלה: דוחף / מחכה לשלוש                                 // סירה: דוחף / יושב וחותר                                  // HELP: תקוע בבוץ / אוחז בחבל
   P = scenesPose(P);                               // סצנות רשומות (scenes.js)
