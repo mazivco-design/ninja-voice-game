@@ -33,11 +33,11 @@ def srgb(h):  # צבע מ־hex לליניארי
 
 M = {
     'ground': mat('Ground', None, vcol=True),
-    'wood': mat('Wood', srgb('7a4a2a')), 'woodDark': mat('WoodDark', srgb('4a2c1a')),
-    'wall': mat('Wall', srgb('efe6d2')), 'roof': mat('Roof', srgb('3b4655'), 0.6),
-    'stone': mat('Stone', srgb('9a9a92')), 'stoneDark': mat('StoneDark', srgb('77776f')),
+    'wood': mat('Wood', srgb('9a5433')), 'woodDark': mat('WoodDark', srgb('643324')),
+    'wall': mat('Wall', srgb('efe6d2')), 'roof': mat('Roof', srgb('40557a'), 0.6),
+    'stone': mat('Stone', srgb('b2b4c0')), 'stoneDark': mat('StoneDark', srgb('8d8fa3')),
     'pine': mat('Pine', srgb('2f5d35')), 'pineLight': mat('PineLight', srgb('3f7a42')),
-    'bark': mat('Bark', srgb('5a3a26')), 'blossom': mat('Blossom', srgb('f2b6c8')),
+    'bark': mat('Bark', srgb('7a4630')), 'blossom': mat('Blossom', srgb('f2b6c8')),
     'leaf': mat('Leaf', srgb('5f9a3e')), 'water': mat('Water', srgb('5aa7c9'), 0.1),
 }
 
@@ -178,7 +178,7 @@ def pine(x, y, s=1.0):
         tube(bark, curve(base, end, Vector((0, 0, 0)), 5, -0.15 * L), [0.13 * s, 0.1 * s, 0.08 * s, 0.06 * s, 0.04 * s], 6)
         cloud(leaf, end + Vector((0, 0, 0.15 * s)), (0.85 + (1 - t) * 0.8) * s, 0.42, random.randint(6, 9))
     cloud(leaf, tp[-1] + Vector((0, 0, 0.2 * s)), 0.95 * s, 0.5, 8)
-    return tree_objects('Pine', bark, leaf, '22462a', '5f9c4c', x, y, ground_z(x, y) - 0.15)
+    return tree_objects('Pine', bark, leaf, '1c4a44', '4c9a78', x, y, ground_z(x, y) - 0.15)
 
 def broadleaf(x, y, s=1.0):
     """עץ עלים: גזע שמתפצל לכמה ענפים, וכיפה עגולה ומלאה."""
@@ -193,7 +193,7 @@ def broadleaf(x, y, s=1.0):
         tube(bark, curve(top, end, Vector((0, 0, 0)), 5, 0.1 * L), [0.17 * s, 0.13 * s, 0.1 * s, 0.07 * s, 0.05 * s], 6); ends.append(end)
     for e in ends: cloud(leaf, e, 1.25 * s, 0.85, 9)
     cloud(leaf, top + Vector((0, 0, 2.2 * s)), 1.3 * s, 0.85, 9)
-    return tree_objects('Tree', bark, leaf, '3d6e2c', '9ccc5e', x, y, ground_z(x, y) - 0.15)
+    return tree_objects('Tree', bark, leaf, '4f8f2a', 'b4dc5c', x, y, ground_z(x, y) - 0.15)
 
 def cherry(x, y, s=1.0):
     """עץ דובדבן: ענפים דקים ומתפשטים לצדדים, ענני פריחה ורודים."""
@@ -211,7 +211,7 @@ def cherry(x, y, s=1.0):
 def bush(x, y, s=1.0):
     bark, leaf = bmesh.new(), bmesh.new()
     cloud(leaf, Vector((0, 0, 0.35 * s)), 0.85 * s, 0.7, 6)
-    return tree_objects('Bush', bark, leaf, '3f7430', '8fc35a', x, y, ground_z(x, y))
+    return tree_objects('Bush', bark, leaf, '2f7048', '7fc27a', x, y, ground_z(x, y))
 
 def rock(x, y, s=1.0):
     o = blob('Rock', 0.8 * s, (x, y, ground_z(x, y) + 0.1 * s), M['stone' if random.random() < 0.5 else 'stoneDark'], (1.3, 1, 0.7), 2, 0.12)

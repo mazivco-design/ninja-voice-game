@@ -25,14 +25,51 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
-const scene = new THREE.Scene(); scene.background = new THREE.Color(0xbfe3f5); scene.fog = new THREE.Fog(0xbfe3f5, 55, 150);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xbcd9f0);
+scene.fog = new THREE.Fog(0xcfdff0, 36, 165);            // ערפל כחלחל־בהיר: הגבעות הרחוקות נהיות כחלחלות (עומק, כמו בציור נוף)
 const camera = new THREE.PerspectiveCamera(48, innerWidth / innerHeight, 0.3, 400);
 addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
-scene.add(new THREE.HemisphereLight(0xe8f4ff, 0x6f7f52, 1.5));
-const sun = new THREE.DirectionalLight(0xfff1dc, 2.5); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+scene.add(new THREE.HemisphereLight(0xcdd9ff, 0x9a8fb5, 1.35));   // אור שמיים כחלחל־סגלגל → הצללים קרירים (לא ירוק כהה)
+const sun = new THREE.DirectionalLight(0xffedd0, 2.7);   // שמש חמה sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -34, right: 34, top: 34, bottom: -34, near: 1, far: 140 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.05;
 scene.add(sun, sun.target);
 const SUN_DIR = new THREE.Vector3(0.714, -0.616, -0.333).normalize();   // כמו השמש בבלנדר: מאחורי הרץ, מאירה את הצוק
+
+// שמיים: כיפה עם מעבר צבע רך (כחול למעלה → בהיר באופק) וכמה עננים לבנים
+const sky = new THREE.Mesh(new THREE.SphereGeometry(320, 24, 12), new THREE.ShaderMaterial({
+  side: THREE.BackSide, depthWrite: false, fog: false,
+  uniforms: { top: { value: new THREE.Color(0x5f9bd6) }, mid: { value: new THREE.Color(0x80b5e3) }, hor: { value: new THREE.Color(0xbcd9f0) } },
+  vertexShader: 'varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `uniform vec3 top, mid, hor; varying vec3 vDir;
+    void main(){ float h = normalize(vDir).y; vec3 c = mix(hor, mid, smoothstep(-0.02, 0.22, h)); c = mix(c, top, smoothstep(0.18, 0.75, h));
+      gl_FragColor = vec4(c, 1.0);
+      #include <colorspace_fragment>
+    }` }));
+sky.renderOrder = -10; sky.frustumCulled = false; scene.add(sky);
+{ const cm = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false }), cg = new THREE.SphereGeometry(1, 12, 8); let seed = 5;
+  const rnd = () => (seed = seed * 16807 % 2147483647) / 2147483647;
+  for (let i = 0; i < 7; i++) {
+    const c = new THREE.Group(); c.position.set(-50 + i * 45 + rnd() * 25, 55 + rnd() * 30, (i % 2 ? 1 : -1) * (95 + rnd() * 80));
+    for (let k = 0; k < 6; k++) { const b = new THREE.Mesh(cg, cm); const r = 3.5 + rnd() * 4; b.scale.set(r * 1.5, r * 0.55, r); b.position.set((k - 2.5) * 4.5 + rnd() * 2, rnd() * 2, rnd() * 4); c.add(b); }
+    scene.add(c);
+  } }
+
+// הנינג'ה לא בירוק (כדי לבלוט על הדשא): הגלימה והברדס בכחול־כהה, והשכמייה באדום
+function tintGreen(tex, rgb) {
+  const img = tex.image, cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
+  const x = cv.getContext('2d'); x.drawImage(img, 0, 0); const d = x.getImageData(0, 0, cv.width, cv.height), a = d.data;
+  for (let i = 0; i < a.length; i += 4) { const r = a[i], g = a[i + 1], b = a[i + 2];
+    if (g > r * 1.12 && g > b * 1.02) { const f = (r + g + b) / 3 / 255 / 0.36; a[i] = Math.min(255, rgb[0] * f * 255); a[i + 1] = Math.min(255, rgb[1] * f * 255); a[i + 2] = Math.min(255, rgb[2] * f * 255); } }
+  x.putImageData(d, 0, 0);
+  const t = new THREE.CanvasTexture(cv); t.flipY = tex.flipY; t.colorSpace = tex.colorSpace; t.wrapS = tex.wrapS; t.wrapT = tex.wrapT; t.magFilter = tex.magFilter; t.minFilter = tex.minFilter;
+  return t;
+}
+function recolorNinja(root) {
+  const made = {};
+  root.traverse(o => { if (!o.isMesh || !o.material.map) return; const k = /cape/i.test(o.name) ? 'red' : 'navy';
+    if (!made[k]) { made[k] = o.material.clone(); made[k].map = tintGreen(o.material.map, k === 'red' ? [0.80, 0.17, 0.14] : [0.17, 0.26, 0.50]); }
+    o.material = made[k]; });
+}
 
 // בלנדר (x לאורך, y לרוחב, z למעלה) → three.js
 const B = (x, y, z) => new THREE.Vector3(x, z, -y);
@@ -51,6 +88,7 @@ Promise.all([fetch('assets/run.json').then(r => r.json()), load('assets/run.glb'
 
   // העולם: חפצים שחוזרים הרבה (עצים, שיחים, סלעים) הופכים ל־InstancedMesh – הרבה פחות עבודה לאייפד
   world.scene.updateMatrixWorld(true);
+  recolorNinja(ch.scene);
   if (STYLE) { style = makeStyle(renderer, scene, camera, STYLE); style.toonify(world.scene); style.toonify(ch.scene);
     style.focus(ch.scene); ['Log', 'Gate', 'Ladder'].forEach(n => { const o = world.scene.getObjectByName(n); if (o) style.focus(o); }); }   // מודגשים: הנינג'ה והמכשולים
   gateL = world.scene.getObjectByName('GateL'); gateR = world.scene.getObjectByName('GateR');
@@ -204,7 +242,7 @@ function placeCamera(dt) {
   const wl = new THREE.Vector3().copy(base).addScaledVector(S.fwd, cam.cl[0]).addScaledVector(right, cam.cl[1]); wl.y += cam.cl[2];
   wp.y = Math.max(wp.y, groundAt(wp.x, wp.z) + 1.0);                           // לא נכנסים לאדמה
   const f = cam.init ? Math.min(1, dt * 3.2) : 1; cam.p.lerp(wp, f); cam.l.lerp(wl, cam.init ? Math.min(1, dt * 5) : 1); cam.init = true;
-  camera.position.copy(cam.p); camera.lookAt(cam.l);
+  camera.position.copy(cam.p); camera.lookAt(cam.l); sky.position.copy(cam.p);
   sun.target.position.copy(ninja.position); sun.position.copy(ninja.position).addScaledVector(SUN_DIR, -70);
 }
 

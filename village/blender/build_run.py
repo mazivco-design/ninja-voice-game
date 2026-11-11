@@ -63,7 +63,8 @@ for j in range(len(ys) - 1):
     for i in range(len(xs) - 1):
         bm.faces.new((grid[j][i], grid[j][i + 1], grid[j + 1][i + 1], grid[j + 1][i]))
 col = bm.loops.layers.color.new('Col')
-G1, G2, ROCK, ROCK2, DIRT = srgb('86b84e'), srgb('5c9640'), srgb('aaa698'), srgb('8f8b7f'), srgb('b88a57')
+# פלטה: דשא ירוק־צהבהב חמים, סלע אפור קריר, שביל בצבע חול – כל סוג חפץ בגוון משלו
+G1, G2, ROCK, ROCK2, DIRT = srgb('a9c96c'), srgb('7dae58'), srgb('b4b6c4'), srgb('9092a6'), srgb('dcc8a0')
 bm.normal_update(); bm.verts.index_update()
 vcol = {}
 for v in bm.verts:

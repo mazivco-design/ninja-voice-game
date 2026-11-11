@@ -106,13 +106,15 @@ export function makeStyle(renderer, scene, camera, name) {
           float m0 = texture2D(tMask, vUv).r; m = max(m, m0);                                  // m0 – בדיוק על החפץ; m – כולל שוליים לקו
           float l = dot(col, vec3(0.299, 0.587, 0.114));
           float red = smoothstep(0.12, 0.35, col.r - max(col.g, col.b));                       // אדום/ורוד נשארים חזקים
-          col = mix(vec3(l), col, clamp(0.62 + 0.5 * red + 0.3 * m0, 0.0, 1.15));               // צבעים עמומים, חוץ ממה שחשוב
+          col = mix(vec3(l), col, clamp(0.84 + 0.3 * red + 0.2 * m0, 0.0, 1.15));               // צבעים עמומים, חוץ ממה שחשוב
           float lb = floor(l * 6.0 + 0.5 + (cloud2 - 0.5) * 0.9) / 6.0;                        // שכבות־שכבות עם שוליים לא אחידים
-          col *= mix(1.0, (lb + 0.05) / (l + 0.05), 0.55);
-          col = mix(col, vec3(1.0), 0.20);                                                     // בהיר ורך
-          col *= 0.91 + 0.18 * cloud2;                                                         // פיגמנט לא אחיד
-          col = mix(col, vec3(1.0), smoothstep(0.62, 0.8, cloud) * 0.20);                      // כתמי נייר חשוף
-          float d = lin(vUv);
+          float dS = lin(vUv);
+          col *= mix(1.0, (lb + 0.05) / (l + 0.05), 0.34 * (1.0 - smoothstep(70.0, 130.0, dS)));   // עדין; בשמיים ובעננים – בלי שכבות
+          col = mix(col, col * vec3(0.90, 0.95, 1.12), (1.0 - smoothstep(0.15, 0.6, l)) * 0.5);   // גוונים כהים נוטים לכחול – אור חם מול צל קריר
+          col = mix(col, vec3(1.0), 0.10);                                                     // רך, אבל לא אפרורי
+          col *= 0.93 + 0.14 * cloud2;                                                         // פיגמנט לא אחיד
+          col = mix(col, vec3(1.0), smoothstep(0.62, 0.8, cloud) * 0.13);                      // כתמי נייר חשוף
+          float d = dS;
           float th = (0.85 + 0.75 * fbm(p / (110.0 * k) + 3.0)) * k;                           // קו דק שמתעבה רק מעט
           e = edgeAt(vUv + wob, th);
           e *= 0.55 + 0.45 * smoothstep(0.30, 0.55, fbm(p / (16.0 * k)));                      // נקטע פה ושם, כמו ביד
