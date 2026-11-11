@@ -762,7 +762,7 @@ function drawBoatTalk(o) {
   }
 }
 
-// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). הציור עדיין מחובר ב-draw.js
+// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). כולל הציור
 // סצנה אחת לשני שלבים: PUSH TOGETHER (דוחפים את הסירה עם החבר) ו-FISHING (אותה סירה במצב דיג – מכשול 'fishboat')
 sceneAdd({
   type: 'boat', words: ['push together', 'fishing'], label: true,
@@ -773,6 +773,7 @@ sceneAdd({
   setup: boatSetup, afterGap: 0.8, noCollide: true,
   box: o => ({ l: o.x, r: o.x + o.w, t: GROUND - 2, b: GROUND }),
   stopAt: o => boatStern(o) - BOAT.stepDX,                                          // ליד החבר שעומד מאחורי הסירה
+  draw: drawBoatBack, drawFront: drawBoatFront,                                       // הדופן הקרובה של הסירה מעל היושבים
   update: boatUpdate, physics: boatPhysics, speed: boatSpeed, pose: boatPose,
   expected: boatExpected, auto: boatAuto,
   act: word => word === 'jump' ? boatJump() : word === 'throw' ? boatThrow() : word === 'swim' ? boatSwim() : word === 'yes' ? boatYes() : word === 'push' ? boatPush() : word === 'pull' ? boatPull() : false,

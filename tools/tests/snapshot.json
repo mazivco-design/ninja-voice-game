@@ -1238,6 +1238,436 @@
  "listen / journey": {
   "words": "block, brake, catch, climb, crawl, dive, down, fight, fire, fly, get off, hide, hold, i, jump, jump in, key, kick, leap, let go, pick up, pull, push, put down, put on, ride, ring, rope, run, shield, sneak, stop, swim, throw, torch, up, want, yes"
  },
+ "pixels intro / JUMP": {
+  "frames": 5,
+  "pix": 2475536930,
+  "err": null
+ },
+ "pixels / JUMP": {
+  "frames": 39,
+  "pix": 3661270515,
+  "err": null
+ },
+ "pixels intro / DOWN": {
+  "frames": 5,
+  "pix": 1630043489,
+  "err": null
+ },
+ "pixels / DOWN": {
+  "frames": 38,
+  "pix": 1115310180,
+  "err": null
+ },
+ "pixels intro / JUMP + DOWN": {
+  "frames": 11,
+  "pix": 2607889158,
+  "err": null
+ },
+ "pixels / JUMP + DOWN": {
+  "frames": 76,
+  "pix": 2715012928,
+  "err": null
+ },
+ "pixels intro / KICK": {
+  "frames": 5,
+  "pix": 822045072,
+  "err": null
+ },
+ "pixels / KICK": {
+  "frames": 37,
+  "pix": 1009121432,
+  "err": null
+ },
+ "pixels intro / THROW": {
+  "frames": 5,
+  "pix": 847793528,
+  "err": null
+ },
+ "pixels / THROW": {
+  "frames": 46,
+  "pix": 1408592656,
+  "err": null
+ },
+ "pixels intro / KICK + THROW": {
+  "frames": 11,
+  "pix": 3478056496,
+  "err": null
+ },
+ "pixels / KICK + THROW": {
+  "frames": 91,
+  "pix": 3443130661,
+  "err": null
+ },
+ "pixels intro / CATCH": {
+  "frames": 5,
+  "pix": 3236655301,
+  "err": null
+ },
+ "pixels / CATCH": {
+  "frames": 38,
+  "pix": 4107973290,
+  "err": null
+ },
+ "pixels intro / JUMP + FLY": {
+  "frames": 9,
+  "pix": 2678214098,
+  "err": null
+ },
+ "pixels / JUMP + FLY": {
+  "frames": 67,
+  "pix": 433152638,
+  "err": null
+ },
+ "pixels intro / CATCH + FLY": {
+  "frames": 14,
+  "pix": 694725958,
+  "err": null
+ },
+ "pixels / CATCH + FLY": {
+  "frames": 121,
+  "pix": 2765127571,
+  "err": null
+ },
+ "pixels intro / STOP": {
+  "frames": 5,
+  "pix": 796979693,
+  "err": null
+ },
+ "pixels / STOP": {
+  "frames": 50,
+  "pix": 853287602,
+  "err": null
+ },
+ "pixels intro / RUN": {
+  "frames": 5,
+  "pix": 969945839,
+  "err": null
+ },
+ "pixels / RUN": {
+  "frames": 55,
+  "pix": 2716141898,
+  "err": null
+ },
+ "pixels intro / STOP + RUN": {
+  "frames": 11,
+  "pix": 2869400563,
+  "err": null
+ },
+ "pixels / STOP + RUN": {
+  "frames": 113,
+  "pix": 927237094,
+  "err": null
+ },
+ "pixels intro / SWIM": {
+  "frames": 5,
+  "pix": 38964535,
+  "err": null
+ },
+ "pixels / SWIM": {
+  "frames": 60,
+  "pix": 1766814179,
+  "err": null
+ },
+ "pixels intro / CLIMB": {
+  "frames": 5,
+  "pix": 4092803349,
+  "err": null
+ },
+ "pixels / CLIMB": {
+  "frames": 71,
+  "pix": 1030376962,
+  "err": null
+ },
+ "pixels intro / SWIM + CLIMB": {
+  "frames": 11,
+  "pix": 2112019773,
+  "err": null
+ },
+ "pixels / SWIM + CLIMB": {
+  "frames": 153,
+  "pix": 3207133387,
+  "err": null
+ },
+ "pixels intro / PUSH": {
+  "frames": 5,
+  "pix": 1162866370,
+  "err": null
+ },
+ "pixels / PUSH": {
+  "frames": 36,
+  "pix": 2974595963,
+  "err": null
+ },
+ "pixels intro / PULL": {
+  "frames": 5,
+  "pix": 1658944506,
+  "err": null
+ },
+ "pixels / PULL": {
+  "frames": 61,
+  "pix": 3784515795,
+  "err": null
+ },
+ "pixels intro / PUSH + PULL": {
+  "frames": 11,
+  "pix": 1962657332,
+  "err": null
+ },
+ "pixels / PUSH + PULL": {
+  "frames": 103,
+  "pix": 2192457846,
+  "err": null
+ },
+ "pixels intro / HIDE": {
+  "frames": 5,
+  "pix": 101647653,
+  "err": null
+ },
+ "pixels / HIDE": {
+  "frames": 54,
+  "pix": 1982084033,
+  "err": null
+ },
+ "pixels intro / BLOCK": {
+  "frames": 5,
+  "pix": 4186622585,
+  "err": null
+ },
+ "pixels / BLOCK": {
+  "frames": 47,
+  "pix": 414757920,
+  "err": null
+ },
+ "pixels intro / HIDE + BLOCK": {
+  "frames": 11,
+  "pix": 826978675,
+  "err": null
+ },
+ "pixels / HIDE + BLOCK": {
+  "frames": 103,
+  "pix": 4073889221,
+  "err": null
+ },
+ "pixels intro / LEAP": {
+  "frames": 5,
+  "pix": 1829832312,
+  "err": null
+ },
+ "pixels / LEAP": {
+  "frames": 39,
+  "pix": 2948868025,
+  "err": null
+ },
+ "pixels intro / DIVE": {
+  "frames": 5,
+  "pix": 1164426970,
+  "err": null
+ },
+ "pixels / DIVE": {
+  "frames": 55,
+  "pix": 2550484911,
+  "err": null
+ },
+ "pixels intro / LEAP + DIVE": {
+  "frames": 11,
+  "pix": 3168453587,
+  "err": null
+ },
+ "pixels / LEAP + DIVE": {
+  "frames": 107,
+  "pix": 1836832456,
+  "err": null
+ },
+ "pixels intro / CRAWL": {
+  "frames": 10,
+  "pix": 1447460241,
+  "err": null
+ },
+ "pixels / CRAWL": {
+  "frames": 69,
+  "pix": 164753478,
+  "err": null
+ },
+ "pixels intro / FIRE": {
+  "frames": 5,
+  "pix": 974756985,
+  "err": null
+ },
+ "pixels / FIRE": {
+  "frames": 37,
+  "pix": 2541273736,
+  "err": null
+ },
+ "pixels intro / CRAWL + FIRE": {
+  "frames": 16,
+  "pix": 2195154374,
+  "err": null
+ },
+ "pixels / CRAWL + FIRE": {
+  "frames": 123,
+  "pix": 1754485465,
+  "err": null
+ },
+ "pixels intro / I WANT": {
+  "frames": 25,
+  "pix": 3121233073,
+  "err": null
+ },
+ "pixels intro / LET GO": {
+  "frames": 10,
+  "pix": 4195455290,
+  "err": null
+ },
+ "pixels / LET GO": {
+  "frames": 81,
+  "pix": 760514,
+  "err": null
+ },
+ "pixels intro / RIDE": {
+  "frames": 12,
+  "pix": 2513738803,
+  "err": null
+ },
+ "pixels / RIDE": {
+  "frames": 96,
+  "pix": 3510863981,
+  "err": null
+ },
+ "pixels intro / FIGHT": {
+  "frames": 10,
+  "pix": 2411906941,
+  "err": null
+ },
+ "pixels / FIGHT": {
+  "frames": 60,
+  "pix": 978938246,
+  "err": null
+ },
+ "pixels intro / HOLD": {
+  "frames": 10,
+  "pix": 2414983051,
+  "err": null
+ },
+ "pixels / HOLD": {
+  "frames": 102,
+  "pix": 2618510389,
+  "err": null
+ },
+ "pixels intro / PICK UP": {
+  "frames": 5,
+  "pix": 1017692976,
+  "err": null
+ },
+ "pixels / PICK UP": {
+  "frames": 52,
+  "pix": 1402165673,
+  "err": null
+ },
+ "pixels intro / PICK UP + PUT DOWN": {
+  "frames": 13,
+  "pix": 1445433099,
+  "err": null
+ },
+ "pixels / PICK UP + PUT DOWN": {
+  "frames": 85,
+  "pix": 2418035634,
+  "err": null
+ },
+ "pixels intro / PICK UP + THROW": {
+  "frames": 11,
+  "pix": 2901257328,
+  "err": null
+ },
+ "pixels / PICK UP + THROW": {
+  "frames": 128,
+  "pix": 3824262828,
+  "err": null
+ },
+ "pixels intro / HELP": {
+  "frames": 25,
+  "pix": 2751783032,
+  "err": null
+ },
+ "pixels / HELP": {
+  "frames": 198,
+  "pix": 2745027875,
+  "err": null
+ },
+ "pixels intro / PUSH TOGETHER": {
+  "frames": 28,
+  "pix": 1098858584,
+  "err": null
+ },
+ "pixels / PUSH TOGETHER": {
+  "frames": 69,
+  "pix": 2130458663,
+  "err": null
+ },
+ "pixels intro / PUSH ON THREE": {
+  "frames": 62,
+  "pix": 1086507336,
+  "err": null
+ },
+ "pixels / PUSH ON THREE": {
+  "frames": 209,
+  "pix": 1272388767,
+  "err": null
+ },
+ "pixels intro / FISHING": {
+  "frames": 32,
+  "pix": 1303506524,
+  "err": null
+ },
+ "pixels / FISHING": {
+  "frames": 193,
+  "pix": 2990505028,
+  "err": null
+ },
+ "pixels intro / WILD BOAR": {
+  "frames": 24,
+  "pix": 693343319,
+  "err": null
+ },
+ "pixels / WILD BOAR": {
+  "frames": 57,
+  "pix": 2859206293,
+  "err": null
+ },
+ "pixels intro / JET PACK": {
+  "frames": 28,
+  "pix": 4007824559,
+  "err": null
+ },
+ "pixels / JET PACK": {
+  "frames": 215,
+  "pix": 930074830,
+  "err": null
+ },
+ "pixels intro / WOLVES": {
+  "frames": 64,
+  "pix": 1879443833,
+  "err": null
+ },
+ "pixels / WOLVES": {
+  "frames": 82,
+  "pix": 1394090397,
+  "err": null
+ },
+ "pixels intro / BIKE": {
+  "frames": 66,
+  "pix": 944481142,
+  "err": null
+ },
+ "pixels / BIKE": {
+  "frames": 89,
+  "pix": 1318908349,
+  "err": null
+ },
+ "pixels / journey last": {
+  "frames": 720,
+  "pix": 288289695,
+  "err": null
+ },
  "intro / JUMP": {
   "sec": 2.82,
   "hash": 3942402658,

@@ -39,6 +39,18 @@ with open_game() as (pg, errs):
       getLearned = () => WORDS.slice(); isLearned = () => true; await play('journey', 0); out['listen / journey'] = listenWords.slice().sort().join(', ');
       return out; }""")
     for k, v in lw.items(): now[k] = { 'words': v }
+    # ציור: סיכום הפיקסלים של המסך לאורך כל שלב (פעמיים בשנייה), של מסך הפתיחה, ושל הקטע האחרון במסע
+    for i, name, w0 in stages:
+        pg.fresh()
+        r = pg.evaluate("i => T.run({ stage: i, intro: true, maxSec: 150, pix: 30 })", i)
+        now[f'pixels intro / {name}'] = { 'frames': r['pixN'], 'pix': r['pixHash'], 'err': r['drawErr'] }
+        if w0 == 'want': continue
+        pg.fresh()
+        r = pg.evaluate("i => T.run({ stage: i, pix: 30 })", i)
+        now[f'pixels / {name}'] = { 'frames': r['pixN'], 'pix': r['pixHash'], 'err': r['drawErr'] }
+    pg.fresh()
+    r = pg.evaluate("""st => T.run({ journey: st, maxSec: 360, pix: 30, setup: () => { getLearned = () => WORDS.slice(); isLearned = () => true; } })""", last)
+    now['pixels / journey last'] = { 'frames': r['pixN'], 'pix': r['pixHash'], 'err': r['drawErr'] }
     for i, name, w0 in stages:
         # מסך הפתיחה של השלב (ההדגמה): משך, הכרזות, מה נאמר בקול, ורצף הפאזות
         pg.fresh()

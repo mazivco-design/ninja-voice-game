@@ -23,7 +23,8 @@ HELPER = r"""() => {
     // מחליף את השחקן האוטומטי של סצנה גם בטבלת הרישום (scenes.js), אם הסצנה כבר רשומה שם
     swapAuto(old, fn) { if (typeof SCENES !== 'undefined') for (const s of SCENES) if (s.auto === old) s.auto = fn; },
     // opts: { stage | journey, diff, seed, draw: כל כמה פריימים לצייר (0 = בלי), maxSec, setup(), tick(n) → true כדי לעצור,
-    //         intro: true = רק מסך הפתיחה של השלב (ההדגמה), עד "Press START" · tap: N = מצב 👆, לחיצה כל N פריימים }
+    //         intro: true = רק מסך הפתיחה של השלב (ההדגמה), עד "Press START" · tap: N = מצב 👆, לחיצה כל N פריימים,
+    //         pix: N = כל N פריימים מציירים ומסכמים את הפיקסלים של המסך (pixHash) – הוכחה שהציור לא השתנה }
     run(opts) {
       const o = Object.assign({ diff: 'easy', seed: 1, draw: 0, maxSec: 400 }, opts);
       vt = 0; gameRnd = rng(o.seed); drawRnd = rng(o.seed + 1000);
@@ -31,6 +32,7 @@ HELPER = r"""() => {
       if (o.setup) o.setup();
       if (o.journey !== undefined) startGame('journey', o.journey);
       else { startGame('stage', o.stage); if (!o.intro) try { finishIntro(); } catch (e) {} }
+      let ph = 2166136261, pixN = 0;
       const phases = [], banners = []; let lastB = '', last = '', n = 0, h = 2166136261, minLives = lives, drawErr = null, drawn = 0;
       while ((o.intro ? state === 'intro' && introT < 1e8 : state === 'play') && n < 60 * o.maxSec) {
         update(1 / 60); vt += 1 / 60; n++;
@@ -40,11 +42,17 @@ HELPER = r"""() => {
         if (o.tap && n % o.tap === 0) testerTap();
         if (n % 10 === 0) { h = mix(h, py); h = mix(h, score); h = mix(h, obstacles.length); if (obstacles[0]) h = mix(h, obstacles[0].x); }
         if (o.draw && n % o.draw === 0) { const g = Math.random; Math.random = () => drawRnd(); try { draw(); drawn++; } catch (e) { drawErr = drawErr || String(e.stack || e).slice(0, 300); } Math.random = g; }
+        if (o.pix && n % o.pix === 0) {
+          const g = Math.random; Math.random = () => drawRnd(); try { draw(); } catch (e) { drawErr = drawErr || String(e.stack || e).slice(0, 300); } Math.random = g;
+          const d = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+          for (let i = 0; i < d.length; i += 4 * 7) ph = Math.imul(ph ^ (d[i] | (d[i + 1] << 8) | (d[i + 2] << 16)), 16777619) >>> 0;   // כל פיקסל שביעי
+          pixN++;
+        }
         if (o.tick && o.tick(n)) break;
       }
       const title = document.getElementById('overTitle')?.textContent || '';
       return { state, title, sec: +(n / 60).toFixed(2), frames: n, hits, lives: isFinite(lives) ? lives : null, minLives: isFinite(minLives) ? minLives : null,
-               score, picked, station: typeof jStation === 'number' ? jStation : null, phases, banners, said: said.slice(), hash: h, drawn, drawErr };
+               score, picked, station: typeof jStation === 'number' ? jStation : null, phases, banners, said: said.slice(), hash: h, pixHash: ph, pixN, drawn, drawErr };
     }
   };
 }"""

@@ -361,7 +361,7 @@ function bkDrawNinja() {
   return true;
 }
 
-// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). הציור עדיין מחובר ב-draw.js
+// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). כולל הציור
 sceneAdd({
   type: 'bikeway', word: 'bike', label: true,
   listen: ['ride', 'ring', 'jump', 'brake', 'stop', 'get off'],
@@ -370,6 +370,7 @@ sceneAdd({
   setup: bkSetup, afterGap: 0.8, noCollide: true,
   box: o => ({ l: o.x, r: o.x + o.w, t: GROUND - 2, b: GROUND }),
   stopAt: o => o.x + BK.stop - 5 + PLAYER.w / 2,                                   // האופניים ליד העץ
+  draw: drawBikeWay, drawNinja: bkDrawNinja,                                         // על האופניים – הנינג'ה והאופניים מצוירים יחד
   update: bkUpdate, physics: bkPhysics, speed: bkSpeed,
   expected: bkExpected, cmd: bkCmd, auto: bkAuto,
   intro: { banner: 'RIDE · RING · JUMP · BRAKE · STOP · GET OFF!', time: 33,

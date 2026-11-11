@@ -425,7 +425,7 @@ function drawWolvesFront() {
   for (let k = 1; k < 4; k++) { ctx.beginPath(); ctx.moveTo(bx - 3.6 * S + k * 1.8 * S, by - 2.8 * S); ctx.lineTo(bx - 3.6 * S + k * 1.8 * S, by); ctx.stroke(); }   // קליעה
 }
 
-// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). הציור עדיין מחובר ב-draw.js
+// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). כולל הציור
 sceneAdd({
   type: 'wolfden', word: 'wolves', label: true,
   listen: ['catch', 'hold', 'climb', 'jump'],
@@ -434,6 +434,7 @@ sceneAdd({
   setup: wfSetup, afterGap: 0.8, noCollide: true,
   box: o => ({ l: o.x, r: o.x + o.w, t: GROUND - 2, b: GROUND }),
   stopAt: o => o.x + WF.stop,                                                       // הסלע הקטן מול הזאבים
+  draw: drawWolves,
   update: wfUpdate, physics: wfPhysics, speed: wfSpeed, pose: wfPose,
   expected: wfExpected, cmd: wfCmd, auto: wfAuto,
   intro: { banner: 'CATCH · HOLD · CLIMB · JUMP!', time: 32,

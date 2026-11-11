@@ -334,7 +334,7 @@ function drawCartFront(o) {
   if (p === 'ride' || (p === 'roll' && C.t < 1.2)) say('Wheee!', { age: p === 'ride' ? C.t : undefined, color: '#be185d', size: 4.2 });
 }
 
-// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). הציור עדיין מחובר ב-draw.js
+// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). כולל הציור
 sceneAdd({
   type: 'cart', word: 'push on three', label: true,
   listen: ['jump in', 'push', 'jump', 'yes'],                                        // PUSH בספירה, ואז JUMP / JUMP IN
@@ -343,6 +343,7 @@ sceneAdd({
   setup: cartSetup, afterGap: 0.8, noCollide: true,
   box: o => ({ l: o.x, r: o.x + o.w, t: GROUND - 2, b: GROUND }),
   stopAt: o => o.x + o.cp - CART.stepDX - CART.watch,                               // מול הילד עם העגלה
+  draw: drawCartBack, drawFront: drawCartFront, drawNinja: cartRiding,                 // יושב בעגלה – מצויר בתוכה
   update: cartUpdate, physics: cartPhysics, speed: cartSpeed, pose: cartPose,
   expected: cartExpected, auto: cartAuto,
   act: word => word === 'jump' ? cartJump() : word === 'yes' ? cartYes() : word === 'push' ? cartPush() : false,

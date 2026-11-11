@@ -1,7 +1,18 @@
 /* ninja-voice-game – scenes.js
    רישום הסצנות (השלבים המיוחדים): כל קובץ סצנה קורא בסופו ל-sceneAdd({...}) פעם אחת, והבסיס (game / state / speech / tester / screens / draw)
    עובר על הרשימה במקום להכיר כל סצנה בשמה. נטען אחרי state.js ולפני קובצי הסצנות.
-   בזמן המעבר: סצנות שעוד לא נרשמו ממשיכות לעבוד דרך החיבורים הישנים בבסיס – שתי הדרכים חיות זו לצד זו.
+
+   איך מוסיפים שלב חדש (סצנה):
+     1. קובץ חדש js/<שם>.js עם המצב, העדכון, הציור והשחקן האוטומטי של הסצנה, ובסופו sceneAdd({...}) אחד.
+     2. שורת <script> ב-ninja-voice-game.html, אחרי scenes.js ולפני speech.js.
+     3. ב-config.js: המילה בסוף WORDS (אף פעם לא באמצע – ההתקדמות של הילדים שמורה לפי מיקום), שורה ב-STAGES וב-WORD_OBSTACLE.
+     4. סמל / תמונה למילון, אם צריך (drawIcon, dictionary).
+     5. python3 tools/tests/all-stages.py ו-scenes.py, ואז python3 tools/tests/snapshot.py --update (נוספו חתימות לשלב החדש; הישנות חייבות להישאר זהות).
+   אין צורך לגעת ב-game.js / state.js / speech.js / tester.js / screens.js / draw.js.
+
+   מה עוד מחובר בבסיס בשמות מפורשים (סצנות ישנות, שם הסדר חשוב): המילים של הדרקון, החבל, הסוחר ו-HOLD ב-speech.js;
+   עצירת העולם של הסוחר / החבל / הדרקון / הקרב / הטורנדו ב-state.js; doorSetup והרווחים של התהום ב-spawn; התנוחות הישנות,
+   הרקעים (יער, צוקים), התהום והתרמיל ב-draw.js; והרשימות SPECIAL_TYPES (power.js), LEARN_KEEP ו-CLASH.
 
    כל השדות רשות, חוץ מ-type:
      type        סוג המכשול של הסצנה (obstacle.type), למשל 'bikeway'
@@ -20,6 +31,10 @@
      expected() → רשימת מילים או null, auto() – השחקן האוטומטי, tap() – רשות: המילה למצב 👆 (ברירת מחדל: הראשונה ב-expected)
      cmd(word)   → true אם המילה שייכת לסצנה. נקרא ראשון: בלי תג "נקלט" ובלי שמירת מילה מוקדמת
      act(word)   → true אם הסצנה ביצעה את המילה. נקרא אחרי תג ה"נקלט" ושמירת מילה מוקדמת, לפני הפעולה הרגילה של המילה
+     draw(o)     ציור המכשול / הסצנה, בשכבת המכשולים (מאחורי הנינג'ה)
+     drawOver(o, top, bottom)  ציור מיד מעל הנינג'ה (למשל גזעים שמסתירים אותו)
+     drawFront(o)  ציור בשכבה הקדמית, מעל הכול (למשל הדופן הקרובה של הסירה)
+     drawNinja() → true אם הסצנה מציירת את הנינג'ה בעצמה (על אופניים, בעגלה)
      intro       מסך הפתיחה של השלב: { time, demo() – מציב את הסצנה ליד הנינג'ה, banner – רשות (ברירת מחדל "Say X!"),
                  steps() – רשות: המילים שההדגמה מפעילה לפי זמן [{ at, w, say }] (בלי זה הסצנה מפעילה את עצמה) }
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
@@ -59,3 +74,4 @@ function sceneLabel(w) { const s = SCENE_BY_WORD[w]; return !!(s && s.label); } 
 function sceneIntro(w) { const s = SCENE_BY_WORD[w]; return (s && (s.words ? s.intro && s.intro[w] : s.intro)) || null; }  // מסך הפתיחה של השלב, אם הסצנה רשומה
 // השם שבו מכשול קיים חוזר לחפיסת המסע (סירה במצב דיג חוזרת כ-'fishboat')
 function sceneSpawnName(o) { const s = SCENE_BY_TYPE[o.type]; return s && s.variantOf ? s.variantOf(o) : o.type; }
+function scenesDrawNinja() { for (const s of SCENES) if (s.drawNinja && s.drawNinja()) return true; return false; }

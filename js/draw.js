@@ -544,16 +544,14 @@ function draw() {
   for (const o of obstacles) if (o.type === 'guard' && o.rx !== undefined) drawHideRock(o);   // הסלעים: לפני השומרים, מאחורי הנינג'ה
   drawTornado();
   drawNinja();
-  for (const o of obstacles) if (o.type === 'boar') drawForestFront(o, top, bottom);   // הגזעים מעל הנינג'ה – מתחבא מאחוריהם
+  for (const o of obstacles) { const sc = SCENE_BY_TYPE[o.type]; if (sc && sc.drawOver) sc.drawOver(o, top, bottom); }   // סצנות רשומות: מיד מעל הנינג'ה   // הגזעים מעל הנינג'ה – מתחבא מאחוריהם
   drawDuelFx();
   drawWind();
   for (const o of obstacles) if (o.type === 'chasm') drawRopeSwing(o);        // החבל (והנינג'ה התלוי עליו) – לפני הכול
   for (const o of obstacles) if (o.type === 'window') drawFireRing(o, true);
   for (const o of obstacles) if (o.type === 'door') drawGateFront(o);           // החומה סביב הדלת – מעל הנינג'ה: הוא עובר דרך הפתח, לא לפני הדלת   // החצי הקדמי של הטבעת – מעל הנינג'ה, נראה שהוא עובר דרכה
   for (const o of obstacles) if (o.type === 'bridge') drawFieldSmoke(o);
-  for (const o of obstacles) if (o.type === 'mud') drawMudFront(o);
-  for (const o of obstacles) if (o.type === 'boat') drawBoatFront(o);
-  for (const o of obstacles) if (o.type === 'cart') drawCartFront(o);          // הדופן הקרובה של הסירה מעל היושבים            // הבוץ מעל הרגליים, החבל והבועות
+  for (const o of obstacles) { const sc = SCENE_BY_TYPE[o.type]; if (sc && sc.drawFront) sc.drawFront(o); }   // סצנות רשומות: השכבה הקדמית          // הדופן הקרובה של הסירה מעל היושבים            // הבוץ מעל הרגליים, החבל והבועות
   for (const o of obstacles) if (o.type === 'lake' || o.type === 'pond') {   // מים מעל השחיין – נראה חצי שקוע / צולל
     ctx.fillStyle = o.type === 'lake' ? 'rgba(20,184,166,.55)' : 'rgba(14,116,144,.6)'; waterPath(o, bottom); ctx.fill();
     if (o.type === 'pond') drawNet(o, true);                                  // הרשת לפני הצולל
@@ -604,18 +602,8 @@ function draw() {
 
 function drawObstacle(o, top) {
   const x = o.x;
-  if (o.type === 'boar') { drawBoar(o); return; }
-  if (o.type === 'wolfden') { drawWolves(o); return; }
-  if (o.type === 'bikeway') { drawBikeWay(o); return; }
-  if (o.type === 'dragon') { drawDragon(o.x + DRAGON.saddle, GROUND - DRAGON.lie, ride && ride.o === o && ride.phase === 'mount' ? 'stand' : 'lie'); return; }
+  const sc = SCENE_BY_TYPE[o.type]; if (sc && sc.draw) { sc.draw(o); return; }   // סצנות רשומות (scenes.js)
   if (SKY_TYPES.includes(o.type)) { drawSky(o); return; }
-  if (o.type === 'duel') { drawDuelEnemy(o); return; }
-  if (o.type === 'gust') { drawGustBamboo(o); return; }
-  if (o.type === 'lift') { drawLiftObstacle(o); return; }
-  if (o.type === 'mud') { drawMudBack(o); return; }
-  if (o.type === 'boat') { drawBoatBack(o); return; }
-  if (o.type === 'cart') { drawCartBack(o); return; }
-  if (o.type === 'bramble') { drawTunnel(o); return; }   // CRAWL: סלע ענק ומחילה מתחתיו (tunnel.js)
   if (artDraw(o)) return;                        // יש ציור SVG מהסטודיו – הוא מחליף את הציור הרגיל
   if (o.type === 'door') { drawGate(o); drawMerchant(o); return; }   // I WANT: סוחר ודלת נעולה
   if (o.type === 'box') {                       // ארגז עץ
@@ -1401,8 +1389,7 @@ function drawNinjaBody() {
   if (drawGustNinja()) return;                                                    // בטורנדו: מחזיק בקנה / עף
   if (ropeHanging()) return;
   if (!boarDrawingFront && boarFrontO()) return;                                  // ביער (גם בדרך לעץ הראשון וביציאה) – הנינג'ה מצויר מעל העצים (drawForestFront ב-boar.js)
-  if (bkDrawNinja()) return;                                                      // על האופניים – הנינג'ה והאופניים יחד (bike.js)
-  if (cartRiding()) return;                                                       // יושב בעגלה – מצויר בתוכה (cart.js)                                                      // תלוי על החבל – מצויר ב-drawRopeSwing
+  if (scenesDrawNinja()) return;   // סצנות רשומות (scenes.js)
   const pb = playerBox();
   const swim = swimShown();
   const drowning = drownK > 0 && !swim && py <= 0 && sinkT <= 0;     // במים בלי SWIM – שוקע

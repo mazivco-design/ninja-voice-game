@@ -128,6 +128,7 @@ sceneAdd({
   reset: () => { tunnelWait = null; },
   setup: o => { o.w = tunnelW(); }, noCollide: true,                                // בלי CRAWL הנינג'ה פשוט נעצר בפתח – אין פסילה
   box: o => ({ l: o.x, r: o.x + o.w, t: GROUND - TUN.rockH, b: GROUND }),
+  draw: drawTunnel,
   update: tunnelUpdate,
   speed: () => tunnelHolds() ? 0                                                    // עומד בפתח המחילה ומחכה
              : state !== 'play' && obstacles.some(o => o.type === 'bramble' && o.inTunnel) ? (runSpeed || cfg.speed) * BRAMBLE.slow : null,   // בהדגמה – זוחל לאורך המחילה

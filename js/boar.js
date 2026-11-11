@@ -696,7 +696,7 @@ function drawSneakSign(S) {
 }
 function boarCharging(o) { return !!boarS && boarS.o === o && !!boarS.ch; }
 
-// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). הציור עדיין מחובר ב-draw.js
+// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). כולל הציור
 sceneAdd({
   type: 'boar', word: 'boar', label: true,
   listen: ['hide', 'sneak', 'climb'],
@@ -705,6 +705,7 @@ sceneAdd({
   setup: boarSetup, afterGap: 0.8, noCollide: true,
   box: o => ({ l: o.x, r: o.x + o.w, t: GROUND - 2, b: GROUND }),
   stopAt: o => boarStandR(o, 0),                                                    // העץ הראשון ביער
+  draw: drawBoar, drawOver: drawForestFront,                                          // הגזעים מעל הנינג'ה – מתחבא מאחוריהם
   update: boarUpdate, physics: boarPhysics, speed: boarSpeed, pose: boarPose,
   expected: boarExpected, auto: boarAuto,
   act: word => word === 'sneak' ? boarSneak() : word === 'hide' ? boarHide() : word === 'climb' ? boarClimb() : false,

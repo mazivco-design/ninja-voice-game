@@ -495,7 +495,7 @@ function drawTreasure(item, x, y, sc) {
   ctx.restore();
 }
 
-// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). הציור עדיין מחובר ב-draw.js
+// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). כולל הציור
 // סצנה אחת לשתי מילים (PICK UP, PUT DOWN). כאן המילים עצמן נאמרות, ולכן אין label
 const LIFT_LISTEN = ['pick up', 'put down', 'jump', 'throw', 'pull'];                 // PICK UP → PUT DOWN → JUMP
 function liftDemo(kind) { const o = { type: 'lift', x: PLAYER.x + PLAYER.w + 1 }; liftKindNext = kind; liftSetup(o); obstacles.push(o); }
@@ -506,6 +506,7 @@ sceneAdd({
   reset: () => { lift = null; },
   setup: liftSetup, afterGap: 0.6, noCollide: true,
   box: o => ({ l: o.x, r: o.x + o.w, t: GROUND - LIFT.wallH, b: GROUND }),
+  draw: drawLiftObstacle,
   update: liftUpdate, physics: liftPhysics, speed: liftSpeed, pose: liftPose,
   expected: liftExpected, auto: liftAuto,
   act: word => word === 'jump' ? liftJump() : word === 'throw' ? liftThrow() : word === 'pull' ? liftPull()
