@@ -131,7 +131,6 @@ function expectedWords0(strict) {                                              /
   const be = boatExpected(); if (be) return be;
   const ce = cartExpected(); if (ce) return ce;
   const bre = boarExpected(); if (bre) return bre;
-  const bke = bkExpected(); if (bke) return bke;
   const wfe = wfExpected(); if (wfe) return wfe;
   const jse = jsExpected(); if (jse) return jse;
   if (gustActive()) return ['hold'];
@@ -285,7 +284,6 @@ function command(word, source) {
   if (state !== 'play' && !((state === 'demo' || state === 'intro') && source === 'demo')) return;   // במילון ובהדגמה – רק ההדגמה מזיזה את הנינג'ה
   heard = { text: word.toUpperCase(), t: 0.8 };
   if (scenesCmd(word)) return;             // סצנות רשומות (scenes.js)
-  if (bkCmd(word)) return;                 // אופניים: RIDE / RING / JUMP / BRAKE / STOP / GET OFF
   if (wfCmd(word)) return;                 // זאבים: CATCH / HOLD / LET GO
   if (jsCmd(word)) return;                 // שלב תרמיל הסילון: PICK UP / PUT ON / FLY / UP / DOWN
   if ((source === 'voice' || source === 'tap') && state === 'play' && expectedWords0(true).includes(word)) okBadge = { w: word, t: 1.0 };   // פידבק: נקלט נכון

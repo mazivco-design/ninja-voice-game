@@ -1006,5 +1006,642 @@
   "score": 1,
   "hash": 1646085613,
   "phases": "bike:rideWait > bike:mount > bike:ride > bike:duckWait > bike:duckGo > bike:ride > bike:rampWait > bike:rampGo > bike:ride > bike:down > bike:liftOver > bike:ride > bike:stopWait > bike:stopping > bike:offWait > bike:off > bike:cheer"
+ },
+ "intro / JUMP": {
+  "sec": 2.82,
+  "hash": 3942402658,
+  "banners": "Say JUMP! | Ready? Press START",
+  "said": "jump",
+  "phases": ""
+ },
+ "tap / JUMP": {
+  "end": "JUMP – done!",
+  "sec": 19.22,
+  "hits": 0,
+  "score": 4,
+  "hash": 807497151,
+  "phases": ""
+ },
+ "intro / DOWN": {
+  "sec": 2.82,
+  "hash": 3327524741,
+  "banners": "Say DOWN! | Ready? Press START",
+  "said": "down",
+  "phases": ""
+ },
+ "tap / DOWN": {
+  "end": "DOWN – done!",
+  "sec": 19.12,
+  "hits": 1,
+  "score": 3,
+  "hash": 4160649458,
+  "phases": ""
+ },
+ "intro / JUMP + DOWN": {
+  "sec": 5.63,
+  "hash": 3517201718,
+  "banners": "Say JUMP! | Say DOWN! | Ready? Press START",
+  "said": "jump | down",
+  "phases": ""
+ },
+ "tap / JUMP + DOWN": {
+  "end": "JUMP + DOWN – done!",
+  "sec": 38.75,
+  "hits": 0,
+  "score": 10,
+  "hash": 1237065414,
+  "phases": ""
+ },
+ "intro / KICK": {
+  "sec": 2.82,
+  "hash": 2448664665,
+  "banners": "Say KICK! | Ready? Press START",
+  "said": "kick",
+  "phases": ""
+ },
+ "tap / KICK": {
+  "end": "KICK – done!",
+  "sec": 19.12,
+  "hits": 0,
+  "score": 4,
+  "hash": 2210803171,
+  "phases": ""
+ },
+ "intro / THROW": {
+  "sec": 2.82,
+  "hash": 3913980293,
+  "banners": "Say THROW! | Ready? Press START",
+  "said": "throw",
+  "phases": ""
+ },
+ "tap / THROW": {
+  "end": "THROW – done!",
+  "sec": 22.08,
+  "hits": 0,
+  "score": 4,
+  "hash": 2716603990,
+  "phases": ""
+ },
+ "intro / KICK + THROW": {
+  "sec": 5.63,
+  "hash": 1596132753,
+  "banners": "Say KICK! | Say THROW! | Ready? Press START",
+  "said": "kick | throw",
+  "phases": ""
+ },
+ "tap / KICK + THROW": {
+  "end": "KICK + THROW – done!",
+  "sec": 43.48,
+  "hits": 0,
+  "score": 10,
+  "hash": 952986195,
+  "phases": ""
+ },
+ "intro / CATCH": {
+  "sec": 2.82,
+  "hash": 3264834540,
+  "banners": "Say CATCH! | Ready? Press START",
+  "said": "catch",
+  "phases": ""
+ },
+ "tap / CATCH": {
+  "end": "CATCH – done!",
+  "sec": 18.75,
+  "hits": 0,
+  "score": 4,
+  "hash": 2326466573,
+  "phases": ""
+ },
+ "intro / JUMP + FLY": {
+  "sec": 4.62,
+  "hash": 159662102,
+  "banners": "Say FLY! | Ready? Press START",
+  "said": "fly",
+  "phases": ""
+ },
+ "tap / JUMP + FLY": {
+  "end": "JUMP + FLY – done!",
+  "sec": 34.22,
+  "hits": 0,
+  "score": 4,
+  "hash": 3880222161,
+  "phases": ""
+ },
+ "intro / CATCH + FLY": {
+  "sec": 7.43,
+  "hash": 3777803794,
+  "banners": "Say CATCH! | Say FLY! | Ready? Press START",
+  "said": "catch | fly",
+  "phases": ""
+ },
+ "tap / CATCH + FLY": {
+  "end": "CATCH + FLY – done!",
+  "sec": 69.87,
+  "hits": 2,
+  "score": 8,
+  "hash": 311038966,
+  "phases": ""
+ },
+ "intro / STOP": {
+  "sec": 2.82,
+  "hash": 2902331029,
+  "banners": "Say STOP! | Ready? Press START",
+  "said": "stop",
+  "phases": ""
+ },
+ "tap / STOP": {
+  "end": "still playing",
+  "sec": 150,
+  "hits": 0,
+  "score": 0,
+  "hash": 3287809943,
+  "phases": ""
+ },
+ "intro / RUN": {
+  "sec": 2.82,
+  "hash": 3327524741,
+  "banners": "Say RUN! | Ready? Press START",
+  "said": "run",
+  "phases": ""
+ },
+ "tap / RUN": {
+  "end": "RUN – done!",
+  "sec": 21,
+  "hits": 0,
+  "score": 4,
+  "hash": 3153150702,
+  "phases": ""
+ },
+ "intro / STOP + RUN": {
+  "sec": 5.63,
+  "hash": 348542691,
+  "banners": "Say STOP! | Say RUN! | Ready? Press START",
+  "said": "stop | run",
+  "phases": ""
+ },
+ "tap / STOP + RUN": {
+  "end": "still playing",
+  "sec": 150,
+  "hits": 0,
+  "score": 4,
+  "hash": 4143025011,
+  "phases": ""
+ },
+ "intro / SWIM": {
+  "sec": 2.82,
+  "hash": 3671627845,
+  "banners": "Say SWIM! | Ready? Press START",
+  "said": "swim",
+  "phases": ""
+ },
+ "tap / SWIM": {
+  "end": "SWIM – done!",
+  "sec": 31.62,
+  "hits": 0,
+  "score": 4,
+  "hash": 2306570906,
+  "phases": ""
+ },
+ "intro / CLIMB": {
+  "sec": 2.82,
+  "hash": 3122762612,
+  "banners": "Say CLIMB! | Ready? Press START",
+  "said": "climb",
+  "phases": ""
+ },
+ "tap / CLIMB": {
+  "end": "CLIMB – done!",
+  "sec": 35.98,
+  "hits": 0,
+  "score": 4,
+  "hash": 4173164876,
+  "phases": ""
+ },
+ "intro / SWIM + CLIMB": {
+  "sec": 5.63,
+  "hash": 2572494082,
+  "banners": "Say SWIM! | Say CLIMB! | Ready? Press START",
+  "said": "swim | climb",
+  "phases": ""
+ },
+ "tap / SWIM + CLIMB": {
+  "end": "SWIM + CLIMB – done!",
+  "sec": 79.63,
+  "hits": 0,
+  "score": 10,
+  "hash": 2432109827,
+  "phases": ""
+ },
+ "intro / PUSH": {
+  "sec": 2.82,
+  "hash": 3299753833,
+  "banners": "Say PUSH! | Ready? Press START",
+  "said": "push",
+  "phases": ""
+ },
+ "tap / PUSH": {
+  "end": "PUSH – done!",
+  "sec": 19.17,
+  "hits": 0,
+  "score": 4,
+  "hash": 476371799,
+  "phases": ""
+ },
+ "intro / PULL": {
+  "sec": 2.82,
+  "hash": 2379337433,
+  "banners": "Say PULL! | Ready? Press START",
+  "said": "pull",
+  "phases": ""
+ },
+ "tap / PULL": {
+  "end": "PULL – done!",
+  "sec": 30.57,
+  "hits": 0,
+  "score": 4,
+  "hash": 2036139443,
+  "phases": ""
+ },
+ "intro / PUSH + PULL": {
+  "sec": 5.63,
+  "hash": 963515027,
+  "banners": "Say PUSH! | Say PULL! | Ready? Press START",
+  "said": "push | pull",
+  "phases": ""
+ },
+ "tap / PUSH + PULL": {
+  "end": "PUSH + PULL – done!",
+  "sec": 50.23,
+  "hits": 0,
+  "score": 10,
+  "hash": 24736656,
+  "phases": ""
+ },
+ "intro / HIDE": {
+  "sec": 2.82,
+  "hash": 1855972149,
+  "banners": "Say HIDE! | Ready? Press START",
+  "said": "hide",
+  "phases": ""
+ },
+ "tap / HIDE": {
+  "end": "HIDE – done!",
+  "sec": 26.37,
+  "hits": 0,
+  "score": 4,
+  "hash": 4241362429,
+  "phases": ""
+ },
+ "intro / BLOCK": {
+  "sec": 2.82,
+  "hash": 1746506321,
+  "banners": "Say BLOCK! | Ready? Press START",
+  "said": "block",
+  "phases": ""
+ },
+ "tap / BLOCK": {
+  "end": "BLOCK – done!",
+  "sec": 24.33,
+  "hits": 0,
+  "score": 4,
+  "hash": 606424381,
+  "phases": ""
+ },
+ "intro / HIDE + BLOCK": {
+  "sec": 5.63,
+  "hash": 2323369531,
+  "banners": "Say HIDE! | Say BLOCK! | Ready? Press START",
+  "said": "hide | block",
+  "phases": ""
+ },
+ "tap / HIDE + BLOCK": {
+  "end": "HIDE + BLOCK – done!",
+  "sec": 54.23,
+  "hits": 0,
+  "score": 10,
+  "hash": 3690090828,
+  "phases": ""
+ },
+ "intro / LEAP": {
+  "sec": 2.82,
+  "hash": 37983356,
+  "banners": "Say LEAP! | Ready? Press START",
+  "said": "leap",
+  "phases": ""
+ },
+ "tap / LEAP": {
+  "end": "LEAP – done!",
+  "sec": 19.22,
+  "hits": 0,
+  "score": 4,
+  "hash": 3580244087,
+  "phases": ""
+ },
+ "intro / DIVE": {
+  "sec": 2.82,
+  "hash": 856755653,
+  "banners": "Say DIVE! | Ready? Press START",
+  "said": "dive",
+  "phases": ""
+ },
+ "tap / DIVE": {
+  "end": "DIVE – done!",
+  "sec": 27.92,
+  "hits": 0,
+  "score": 4,
+  "hash": 440981344,
+  "phases": ""
+ },
+ "intro / LEAP + DIVE": {
+  "sec": 5.63,
+  "hash": 1535023340,
+  "banners": "Say LEAP! | Say DIVE! | Ready? Press START",
+  "said": "leap | dive",
+  "phases": ""
+ },
+ "tap / LEAP + DIVE": {
+  "end": "LEAP + DIVE – done!",
+  "sec": 49.75,
+  "hits": 0,
+  "score": 10,
+  "hash": 224767809,
+  "phases": ""
+ },
+ "intro / CRAWL": {
+  "sec": 5.22,
+  "hash": 1158824444,
+  "banners": "Say CRAWL! | Ready? Press START",
+  "said": "crawl",
+  "phases": ""
+ },
+ "tap / CRAWL": {
+  "end": "CRAWL – done!",
+  "sec": 35.37,
+  "hits": 0,
+  "score": 4,
+  "hash": 1344672943,
+  "phases": ""
+ },
+ "intro / FIRE": {
+  "sec": 2.82,
+  "hash": 2643967369,
+  "banners": "Say FIRE! | Ready? Press START",
+  "said": "fire",
+  "phases": ""
+ },
+ "tap / FIRE": {
+  "end": "FIRE – done!",
+  "sec": 18.23,
+  "hits": 0,
+  "score": 4,
+  "hash": 2217221485,
+  "phases": ""
+ },
+ "intro / CRAWL + FIRE": {
+  "sec": 8.03,
+  "hash": 1623201856,
+  "banners": "Say CRAWL! | Say FIRE! | Ready? Press START",
+  "said": "crawl | fire",
+  "phases": ""
+ },
+ "tap / CRAWL + FIRE": {
+  "end": "CRAWL + FIRE – done!",
+  "sec": 52.87,
+  "hits": 0,
+  "score": 10,
+  "hash": 3937839173,
+  "phases": ""
+ },
+ "intro / I WANT": {
+  "sec": 12.8,
+  "hash": 687745829,
+  "banners": "Say WANT! | Ready? Press START",
+  "said": "want | merchant: hi there! | ninja: hi! | What would you like? | merchant: i have a key | merchant: a rope | merchant: and a torch | which one? | Here you go! | ninja: thank you!",
+  "phases": "merchant:ask > merchant:choose > merchant:give > merchant:walk"
+ },
+ "intro / LET GO": {
+  "sec": 5.02,
+  "hash": 4160005691,
+  "banners": "Say LET GO! | Ready? Press START",
+  "said": "let go",
+  "phases": "rope:wait > rope:hang > rope:land > rope:done"
+ },
+ "tap / LET GO": {
+  "end": "still playing",
+  "sec": 150,
+  "hits": 1,
+  "score": 0,
+  "hash": 921000770,
+  "phases": "rope:wait > rope:hang > rope:fall"
+ },
+ "intro / RIDE": {
+  "sec": 6.02,
+  "hash": 976705388,
+  "banners": "Say RIDE! | Ready? Press START",
+  "said": "ride",
+  "phases": "ride:wait > ride:mount > ride:takeoff > ride:fly"
+ },
+ "tap / RIDE": {
+  "end": "RIDE – done!",
+  "sec": 48.42,
+  "hits": 0,
+  "score": 8,
+  "hash": 3043733421,
+  "phases": "ride:wait > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave"
+ },
+ "intro / FIGHT": {
+  "sec": 5.02,
+  "hash": 3413753275,
+  "banners": "Say FIGHT! | Ready? Press START",
+  "said": "fight",
+  "phases": "duel:enter > duel:face > duel:win"
+ },
+ "tap / FIGHT": {
+  "end": "FIGHT – done!",
+  "sec": 29.6,
+  "hits": 0,
+  "score": 4,
+  "hash": 2177818306,
+  "phases": "duel:enter > duel:face > duel:win > duel:enter > duel:face > duel:win > duel:enter > duel:face > duel:win > duel:enter > duel:face > duel:win"
+ },
+ "intro / HOLD": {
+  "sec": 5.02,
+  "hash": 406688101,
+  "banners": "Say HOLD! | Ready? Press START",
+  "said": "hold",
+  "phases": "gust:storm > gust:calm"
+ },
+ "tap / HOLD": {
+  "end": "HOLD – done!",
+  "sec": 51.78,
+  "hits": 0,
+  "score": 4,
+  "hash": 1096571025,
+  "phases": "gust:storm > gust:calm > gust:back > gust:done > gust:storm > gust:calm > gust:back > gust:done > gust:storm > gust:calm > gust:back > gust:done > gust:storm > gust:calm > gust:back > gust:done"
+ },
+ "intro / PICK UP": {
+  "sec": 2.82,
+  "hash": 821138569,
+  "banners": "Say PICK UP! | Ready? Press START",
+  "said": "pick up",
+  "phases": "lift:atRock > lift:lifting"
+ },
+ "tap / PICK UP": {
+  "end": "PICK UP – done!",
+  "sec": 26.18,
+  "hits": 0,
+  "score": 4,
+  "hash": 2803309142,
+  "phases": "lift:atRock > lift:lifting > lift:atRock > lift:lifting > lift:atRock > lift:lifting > lift:atRock > lift:lifting"
+ },
+ "intro / PICK UP + PUT DOWN": {
+  "sec": 6.82,
+  "hash": 1436192419,
+  "banners": "Say PUT DOWN! | Say PICK UP! | Say JUMP! | Ready? Press START",
+  "said": "put down | pick up | jump",
+  "phases": "lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:climb > lift:onRock > lift:jumping"
+ },
+ "tap / PICK UP + PUT DOWN": {
+  "end": "PICK UP + PUT DOWN – done!",
+  "sec": 42.35,
+  "hits": 0,
+  "score": 4,
+  "hash": 1128019250,
+  "phases": "lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:climb > lift:onRock > lift:jumping > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:climb > lift:onRock > lift:jumping > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:pupCross > lift:crossing > lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:placing > lift:climb > lift:onRock > lift:jumping"
+ },
+ "intro / PICK UP + THROW": {
+  "sec": 5.63,
+  "hash": 831731265,
+  "banners": "Say PICK UP! | Say THROW! | Ready? Press START",
+  "said": "pick up | throw",
+  "phases": "lift:atRock > lift:lifting"
+ },
+ "tap / PICK UP + THROW": {
+  "end": "PICK UP + THROW – done!",
+  "sec": 46.27,
+  "hits": 0,
+  "score": 8,
+  "hash": 2674825202,
+  "phases": "lift:atRock > lift:lifting > lift:carry > lift:atTarget > lift:throwing > lift:bite > lift:waitPull > lift:pulling > lift:thanks > lift:walkOut > lift:hop > lift:atRock > lift:lifting"
+ },
+ "intro / HELP": {
+  "sec": 12.7,
+  "hash": 2912539226,
+  "banners": "CATCH the rope, then HOLD! | Say CATCH! | Say HOLD! | Ready? Press START",
+  "said": "help! | friend: i'm coming! | friend: ready? | friend: catch! | friend: hold on!",
+  "phases": "mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull"
+ },
+ "tap / HELP": {
+  "end": "HELP – done!",
+  "sec": 91.63,
+  "hits": 0,
+  "score": 4,
+  "hash": 2674521030,
+  "phases": "mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:caught > mud:pull > mud:thanks > mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:caught > mud:pull > mud:thanks > mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:caught > mud:pull > mud:thanks > mud:sink > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:caught > mud:pull > mud:thanks"
+ },
+ "intro / PUSH TOGETHER": {
+  "sec": 14,
+  "hash": 2523594167,
+  "banners": "PUSH with your friend, then JUMP in! | Say YES! | Say PUSH! | Say JUMP IN! | Ready? Press START",
+  "said": "friend: hi! my boat is stuck in the sand. | friend: can you help me? | friend: great! let's push together! | friend: jump in!",
+  "phases": "boat:greet > boat:yesWait > boat:great > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row"
+ },
+ "tap / PUSH TOGETHER": {
+  "end": "PUSH TOGETHER – done!",
+  "sec": 34.63,
+  "hits": 0,
+  "score": 1,
+  "hash": 2766253262,
+  "phases": "boat:greet > boat:yesWait > boat:great > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell"
+ },
+ "intro / PUSH ON THREE": {
+  "sec": 31.02,
+  "hash": 1487986811,
+  "banners": "PUSH on THREE, then JUMP in! | Say YES! | Say JUMP IN! | Ready? Press START",
+  "said": "kid: can you help me push? | yes | kid: one | kid: two | kid: three | kid: one | kid: two | kid: three | kid: one | kid: two | kid: three | kid: jump in! | kid: thank you!",
+  "phases": "cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK"
+ },
+ "tap / PUSH ON THREE": {
+  "end": "still playing",
+  "sec": 150,
+  "hits": 0,
+  "score": 0,
+  "hash": 2723057985,
+  "phases": "cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early > cart:count > cart:early"
+ },
+ "intro / FISHING": {
+  "sec": 16,
+  "hash": 1395683923,
+  "banners": "THROW the line, then PULL! | Say JUMP IN! | Say THROW! | Say PULL! | Ready? Press START",
+  "said": "friend: jump in!",
+  "phases": "boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row"
+ },
+ "tap / FISHING": {
+  "end": "FISHING – done!",
+  "sec": 92.77,
+  "hits": 0,
+  "score": 2,
+  "hash": 3825878073,
+  "phases": "boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:fight > boat:reel > boat:caught > boat:row > boat:land > boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:fight > boat:reel > boat:caught > boat:row > boat:land"
+ },
+ "intro / WILD BOAR": {
+  "sec": 12,
+  "hash": 1770158343,
+  "banners": "SNEAK on green · HIDE when the ears move! | Ready? Press START",
+  "said": "sneak | hide | sneak",
+  "phases": "boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:walk"
+ },
+ "tap / WILD BOAR": {
+  "end": "WILD BOAR – done!",
+  "sec": 24.57,
+  "hits": 0,
+  "score": 1,
+  "hash": 3248466755,
+  "phases": "boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:exit"
+ },
+ "intro / JET PACK": {
+  "sec": 14,
+  "hash": 2250127353,
+  "banners": "PICK UP · PUT ON · FLY! | Ready? Press START",
+  "said": "",
+  "phases": "jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly"
+ },
+ "tap / JET PACK": {
+  "end": "still playing",
+  "sec": 150,
+  "hits": 7,
+  "score": 0,
+  "hash": 861425152,
+  "phases": "jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:fall > jet:wear > jet:take > jet:fly > jet:fall > jet:wear > jet:take > jet:fly > jet:fall > jet:wear > jet:take > jet:fly > jet:fall > jet:wear > jet:take > jet:fly > jet:fall > jet:wear > jet:take > jet:fly > jet:fall > jet:wear > jet:take > jet:fly > jet:fall > jet:wear > jet:take > jet:fly"
+ },
+ "intro / WOLVES": {
+  "sec": 32.02,
+  "hash": 2769230541,
+  "banners": "CATCH · HOLD · CLIMB · JUMP! | Ready? Press START",
+  "said": "catch | hold | climb | jump",
+  "phases": "wolves:arrive > wolves:circle > wolves:rope > wolves:caught > wolves:lift > wolves:hang > wolves:climb > wolves:board > wolves:carry > wolves:lower > wolves:hover > wolves:drop > wolves:land > wolves:exit"
+ },
+ "tap / WOLVES": {
+  "end": "WOLVES – done!",
+  "sec": 40.32,
+  "hits": 0,
+  "score": 1,
+  "hash": 3088710922,
+  "phases": "wolves:arrive > wolves:circle > wolves:rope > wolves:caught > wolves:lift > wolves:hang > wolves:climb > wolves:board > wolves:carry > wolves:lower > wolves:hover > wolves:drop > wolves:land > wolves:exit"
+ },
+ "intro / BIKE": {
+  "sec": 33.02,
+  "hash": 1635934325,
+  "banners": "RIDE · RING · JUMP · BRAKE · STOP · GET OFF! | Ready? Press START",
+  "said": "",
+  "phases": "bike:rideWait > bike:mount > bike:ride > bike:duckWait > bike:duckGo > bike:ride > bike:rampWait > bike:rampGo > bike:ride > bike:down > bike:liftOver > bike:ride > bike:stopWait > bike:stopping > bike:offWait > bike:off > bike:cheer"
+ },
+ "tap / BIKE": {
+  "end": "BIKE – done!",
+  "sec": 44,
+  "hits": 0,
+  "score": 1,
+  "hash": 3049184013,
+  "phases": "bike:rideWait > bike:mount > bike:ride > bike:duckWait > bike:duckGo > bike:ride > bike:rampWait > bike:rampGo > bike:ride > bike:down > bike:liftOver > bike:ride > bike:stopWait > bike:stopping > bike:offWait > bike:off > bike:cheer"
  }
 }

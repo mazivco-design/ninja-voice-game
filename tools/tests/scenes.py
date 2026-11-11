@@ -23,23 +23,23 @@ with open_game(sub) as (pg, errs):
         return pg.evaluate(js, arg)
     for d in DIFFS:
         # חזיר, שחקן ממהר: SNEAK מיד בכל מחסה, אף פעם לא HIDE. (לפעמים עובר בלי שרואים אותו – לכן כאן לא דורשים פגיעה)
-        r = run("""d => { boarAuto = () => { const S = boarS; if (S && (S.np === 'stand' || S.np === 'hidden') && S.nt > 0.3) command('sneak', 'auto'); };
+        r = run("""d => { const keep = boarAuto; boarAuto = () => { const S = boarS; if (S && (S.np === 'stand' || S.np === 'hidden') && S.nt > 0.3) command('sneak', 'auto'); }; T.swapAuto(keep, boarAuto);
           return T.run({ stage: STAGES.findIndex(s => s.name === 'WILD BOAR'), diff: d, draw: 4 }); }""", d)
         check('boar in a hurry / ' + d, r, 'done' in r['title'] and has(r, 'boar:walk', 'boar:exit'), 'expected: done, walked and left the forest')
 
         # חזיר, שחקן פזיז: SNEAK דווקא ברגע הלא נכון (כשחזיר עומד להרים את הראש) → רואים אותו, כוכב יורד, והשלב נגמר
-        r = run("""d => { boarAuto = () => { const S = boarS; if (S && (S.np === 'stand' || S.np === 'hidden') && S.nt > 0.3 && !boarSneakGood()) command('sneak', 'auto'); };
+        r = run("""d => { const keep = boarAuto; boarAuto = () => { const S = boarS; if (S && (S.np === 'stand' || S.np === 'hidden') && S.nt > 0.3 && !boarSneakGood()) command('sneak', 'auto'); }; T.swapAuto(keep, boarAuto);
           return T.run({ stage: STAGES.findIndex(s => s.name === 'WILD BOAR'), diff: d, draw: 4 }); }""", d)
         check('boar reckless / ' + d, r, 'done' in r['title'] and r['hits'] > 0 and has(r, 'boar:walk', 'boar:exit'), 'expected: done, seen at least once (hits > 0)')
 
         # אופניים: כל המילים חוץ מ-BRAKE. שלושה לבבות (באימון אין לבבות) כדי לראות שיורד בדיוק אחד
-        r = run("""d => { bkAuto = () => { const S = bikeS; if (!S) return; const w = (bkExpected() || [])[0]; if (w && w !== 'brake' && S.t > 0.5) command(w, 'auto'); };
+        r = run("""d => { const keep = bkAuto; bkAuto = () => { const S = bikeS; if (!S) return; const w = (bkExpected() || [])[0]; if (w && w !== 'brake' && S.t > 0.5) command(w, 'auto'); }; T.swapAuto(keep, bkAuto);
           return T.run({ stage: STAGES.findIndex(s => s.name === 'BIKE'), diff: d, draw: 4, tick: n => { if (n === 1) lives = 3; } }); }""", d)
         check('bike no brake / ' + d, r, 'done' in r['title'] and r['hits'] == 1 and r['lives'] == 2 and has(r, 'bike:crash', 'bike:up', 'bike:cheer'), 'expected: done, one hit, one life lost, crash then finish')
 
         # דיג: PULL בנשיכה, אבל בלי PULL במאבק הראשון → נופלים, שוחים וחוזרים. במאבק הבא מושכים כרגיל
         r = run("""d => { const keep = boatAuto; let fell = false;
-          boatAuto = () => { if (!boat) return; if (boat.phase === 'fall') fell = true; if (boat.phase === 'fight' && !fell) return; keep(); };
+          boatAuto = () => { if (!boat) return; if (boat.phase === 'fall') fell = true; if (boat.phase === 'fight' && !fell) return; keep(); }; T.swapAuto(keep, boatAuto);
           return T.run({ stage: STAGES.findIndex(s => s.name === 'FISHING'), diff: d, draw: 4 }); }""", d)
         check('fishing no pull / ' + d, r, 'done' in r['title'] and has(r, 'boat:fight', 'boat:fall', 'boat:swimWait', 'boat:swimBack', 'boat:climbIn'), 'expected: done, fall > swim > back in the boat')
 
