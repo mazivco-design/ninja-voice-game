@@ -478,7 +478,6 @@ function playerPose() {
   if (act.stop > STOP_TIME - 0.8) applyStop(P);
   P = gustPlayerPose(P, now);                     // רוח: נצמד לבמבוק / עף אחורה
   P = duelPlayerPose(P, now);
-  P = liftPose(P);
   P = scenesPose(P);                               // סצנות רשומות (scenes.js)
   P = merchPose(P);                                // PICK UP: הסלע מעל הראש
   P = jetPose(P);                                 // תרמיל סילון – עף קדימה                     // קרב: עמידה עם חרב והנפות

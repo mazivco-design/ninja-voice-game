@@ -128,7 +128,6 @@ function expectedWords0(strict) {                                              /
   if (duelActive()) return ['fight'];
   const sce = scenesExpected(); if (sce) return sce;   // סצנות רשומות (scenes.js)
   if (gustActive()) return ['hold'];
-  const le = liftExpected(); if (le) return le;
   if (tunnelWait) return ['crawl'];
   if (ride && ride.phase === 'wait') return ['ride'];
   if (ride && (ride.phase === 'mount' || ride.phase === 'takeoff')) return ['up', 'down', 'fire'];
@@ -283,7 +282,6 @@ function command(word, source) {
 
   if (scenesAct(word)) return;             // סצנות רשומות (scenes.js)
   if (word === 'jump') {
-    if (liftJump()) return;                // על הסלע – קופץ מעל הקיר / אל הכוכב
     if (py === 0) { vy = cfg.jumpV; py = 0.001; duckT = 0; sfx('jump'); }   // קופץ גם מתוך התכופפות
   } else if (word === 'up') { rideLane(true); }                       // UP – הדרקון עולה לגובה העליון
   else if (word === 'ride') { rideCmd(); }                             // RIDE – עולים על הדרקון
@@ -299,7 +297,6 @@ function command(word, source) {
     kickT = KICK.time;                     // בעיטה – שוברת קיר שקרוב מספיק
     duckT = 0;
   } else if (word === 'throw') {
-    if (liftThrow()) return;               // PICK UP: זורק את החבל לבור (להצלת הגור)
     if (throwCd <= 0) {                    // זורק שוריקן קדימה
       const pb = playerBox();
       shurikens.push({ x: pb.r, y: pb.t + 5, rot: 0 });
@@ -321,7 +318,6 @@ function command(word, source) {
   else if (word === 'swim')  { act.swim = SWIM_TIME; duckT = 0; }
   else if (word === 'climb') { act.climbWant = 2.5; }                     // מטפס כשהנינג'ה מגיע לסולם (ההתקרבות איטית – ה-CLIMB לא פג בדרך)
   else if (word === 'push')  { act.push = 0.6; duckT = 0; }
-  else if (word === 'pull' && liftPull()) {}                             // מושך את הגור מהבור
   else if (word === 'pull')  { act.pull = 0.6; act.pullWant = GATE.want; duckT = 0; }   // מושך כשמגיעים לחבל
   else if (word === 'hide')  { act.hide = HIDE_TIME; duckT = 0; }
   else if (word === 'block') { act.block = BLOCK_TIME; }
@@ -339,8 +335,6 @@ function command(word, source) {
   else if (word === 'shield') shieldCmd();                                // SHIELD – בועת מגן (מהחנות)
   else if (word === 'jet') jetCmd();                                      // JET – תרמיל סילון (מהחנות)
   else if (word === 'hold') holdCmd();                                                  // HOLD – נתפס בגזע הבמבוק
-  else if (word === 'pick up') liftPick();                               // PICK UP – מרים את הסלע
-  else if (word === 'put down') liftPut();                               // PUT DOWN – מניח אותו
   else if (word === 'fight') fightCmd();                                  // FIGHT – הנפת חרב
   else if (word === 'let go') ropeLetGo();                               // LET GO – משחררים את החבל
   else if (word === 'want') merchantWant();                              // I WANT – הסוחר שואל: איזה?

@@ -494,3 +494,24 @@ function drawTreasure(item, x, y, sc) {
   }
   ctx.restore();
 }
+
+// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). הציור עדיין מחובר ב-draw.js
+// סצנה אחת לשתי מילים (PICK UP, PUT DOWN). כאן המילים עצמן נאמרות, ולכן אין label
+const LIFT_LISTEN = ['pick up', 'put down', 'jump', 'throw', 'pull'];                 // PICK UP → PUT DOWN → JUMP
+function liftDemo(kind) { const o = { type: 'lift', x: PLAYER.x + PLAYER.w + 1 }; liftKindNext = kind; liftSetup(o); obstacles.push(o); }
+sceneAdd({
+  type: 'lift', words: ['pick up', 'put down'],
+  listen: { 'pick up': LIFT_LISTEN, 'put down': LIFT_LISTEN },
+  active: () => !!lift,
+  reset: () => { lift = null; },
+  setup: liftSetup, afterGap: 0.6, noCollide: true,
+  box: o => ({ l: o.x, r: o.x + o.w, t: GROUND - LIFT.wallH, b: GROUND }),
+  update: liftUpdate, physics: liftPhysics, speed: liftSpeed, pose: liftPose,
+  expected: liftExpected, auto: liftAuto,
+  act: word => word === 'jump' ? liftJump() : word === 'throw' ? liftThrow() : word === 'pull' ? liftPull()
+             : word === 'pick up' ? (liftPick(), true) : word === 'put down' ? (liftPut(), true) : false,
+  intro: {
+    'pick up': { time: 2.8, demo: () => liftDemo('grab'), steps: () => [{ at: 0.8, w: 'pick up' }] },
+    'put down': { time: 6.8, demo: () => liftDemo('wall'), steps: () => [{ at: 0.8, w: 'pick up', say: true }, { at: 3.0, w: 'put down' }, { at: 4.4, w: 'jump', say: true }] }
+  }
+});
