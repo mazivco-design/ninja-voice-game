@@ -1,5 +1,12 @@
 /* ninja-voice-game – boat.js
-   PUSH TOGETHER (מסע בסירה): תרגול של דחיפה משותפת וקפיצה לסירה – שלוש פעמים בכל מסע.
+   PUSH TOGETHER (מסע בסירה): דחיפה משותפת וקפיצה לסירה, עם חבר.
+   שני סוגי מפגש (o.full):
+   · מפגש מלא – בשלב האימון: החבר דוחף לבד, שם לב לנינג'ה (notice), מנופף ומסביר (greet), מבקש עזרה (yesWait → YES),
+     שמח ורץ לצד הסירה (great), דוחפים (PUSH), "We did it!", קופץ פנימה וקורא (JUMP), שטים – ובאמצע "Look! A fish!", ונפרדים.
+   · מפגש קצר – במסע ובמשחק חופשי: החבר כבר מחכה ליד הסירה ומנופף מרחוק, ישר PUSH ו-JUMP, שייט קצר ומשפט פרידה אחד.
+     המשפטים מתחלפים (o.v). במסע הסירה מופיעה לכל היותר פעם אחת בקטע (journey.js: J_ONCE).
+   בכל המתנה למילה: החבר מסמן, מחכה, ואם שותקים – מסמן שוב קצת אחרת (nudge), ורק אחר כך המשחק אומר את המילה.
+   התיאור הישן (לפני 2026-11-11):
    · חוף חול ארוך, סירת עץ, ונינג'ה חבר שמנסה לדחוף אותה לבד – מתאמץ, הסירה רק רועדת.
      הנינג'ה שלנו מגיע ונעצר. החבר זז הצידה ומבקש "Can you help me push?". הנינג'ה ניגש לסירה.
    · PUSH – דוחפים ביחד, הסירה זזה צעד. שלוש דחיפות והיא במים. החבר קופץ פנימה וקורא "Jump in!" – JUMP.
@@ -11,7 +18,11 @@
 
 const BOAT = { shore: 72, sail: 230, isl: 50, islands: 0,   /* בלי אי – שטים ישר לחוף השני */ len: 28, h: 6.5, bx0: 30, pushes: 1, step: 30, pushT: 1.4, greetT: 2.6, greatT: 2.0, thanksT: 2.7, byeT: 1.4,
                askT: 1.6, stepT: 0.5, stepDX: 7, hiT: 1.3, boardT: 0.7, boardDX: 13, row: 26, waveT: 1.4, waveAt: 24, stuckT: 0.7,
-               outT: 0.7, landT: 0.75, landDX: 21, hint: 3.5, hintEvery: 6, coins: 6 };
+               outT: 0.7, landT: 0.75, landDX: 21, hint: 3.5, hintEvery: 6, coins: 6,
+               sailShort: 115, noticeT: 1.0, waveT2: 1.3, greetFullT: 3.1, greatFullT: 2.5, cheerT: 0.8, nudge: 3, hintFull: 6.5, lookAt: 3.0, lookT: 1.9, byeShortT: 1.6, helloDist: 78 };
+const BOAT_HELLO = ['Hey, buddy! Push with me?', 'You again! Push with me?', 'Perfect timing! Push with me?'];   // מפגש קצר: ברכה מתחלפת
+const BOAT_BYE = ['Thanks, buddy!', 'Nice one! See you!', 'See you soon!'];                                      // ...ופרידה מתחלפת
+function boatNudge(B) { return B.phase === 'yesWait' ? 'Please?' : B.phase === 'wait' ? (B.o.full ? 'Come on, push!' : 'Come on!') : 'Come on, jump in!'; }   // הסימון השני, כשהילד שותק
 let boat = null;   // { o, phase, t, idle, hinted, n }
 // FISHING (o.mode === 'fish'): הסירה כבר במים ליד החוף והחבר יושב בה – JUMP פנימה, שטים, ובכל מקום דייג:
 // THROW – זורקים חכה. המצוף צף ... שוקע (נשיכה) – PULL ומושכים דג. מוקדם מדי – "Wait for the bite!", מאוחר מדי – הדג בורח וזורקים שוב.
@@ -30,8 +41,11 @@ function boatSetup(o) {                                                         
     o.end = x + FISH.tail; o.w = o.end + 12; return;
   }
   o.bx = BOAT.bx0; o.c = 0;                                                        // c = האי הבא
-  o.isl = []; let x = BOAT.shore + BOAT.sail;
-  for (let i = 0; i < BOAT.islands; i++) { o.isl.push({ l: x, r: x + BOAT.isl }); x += BOAT.isl + BOAT.sail; }
+  o.full = mode === 'stage' && state === 'play';                                   // מפגש מלא רק בשלב האימון; במסע, במשחק חופשי ובהדגמה – קצר
+  o.v = Math.floor(Math.random() * BOAT_HELLO.length); o.hello = 0;                // איזה משפט ברכה / פרידה הפעם
+  const sail = o.full ? BOAT.sail : BOAT.sailShort;
+  o.isl = []; let x = BOAT.shore + sail;
+  for (let i = 0; i < BOAT.islands; i++) { o.isl.push({ l: x, r: x + BOAT.isl }); x += BOAT.isl + sail; }
   o.end = x;                                                                       // החוף בצד השני
   o.w = o.end + 12;
 }
@@ -51,6 +65,7 @@ function boatKeelY(o) {
 }
 function boatDeck(o) { return boatKeelY(o) - 3.4; }                                // איפה יושבים בתוך הסירה
 function boatBusy() { return !!boat; }
+function boatCheer(o) { return o.full ? BOAT.cheerT : 0; }                          // כמה זמן החבר שמח אחרי הדחיפה, לפני שהוא קופץ לסירה
 function waveDist(o) { return o.x + o.isl[o.c].l + 8 - boatStern(o); }
 
 // מהירות העולם בזמן השלב (null = לא בשליטה שלנו). שלילי = העולם זז ימינה (יוצאים מהסירה אחורה)
@@ -69,19 +84,23 @@ function boatSpeed() {
 
 function boatUpdate(dt, pb) {
   for (const ob of obstacles) if (ob.type === 'boat' && ob.jumps) { for (const j of ob.jumps) j.t += dt; ob.jumps = ob.jumps.filter(j => j.t < 1.2); }   // הדגים הקופצים
+  for (const ob of obstacles) if (ob.type === 'boat' && ob.mode !== 'fish' && !ob.full && !ob.passed && !ob.waving) {   // מפגש קצר: החבר רואה את הנינג'ה מרחוק, מנופף וקורא לו
+    if (ob.hello) ob.hello += dt;
+    else if (boatStern(ob) - PLAYER.x < BOAT.helloDist) { ob.hello = dt; speak('friend: ' + BOAT_HELLO[ob.v].toLowerCase()); }
+  }
   if (!boat) {
     const o = obstacles.find(o => o.type === 'boat' && !o.passed && !o.waving && pb.r >= boatStern(o) - BOAT.stepDX - 0.3 && pb.l < o.x + o.end);
     if (!o) return;
     const over = pb.r - (boatStern(o) - BOAT.stepDX); if (over > 0) ropeShiftBy(over);   // נעצר מאחורי החבר שדוחף לבד
     py = 0; vy = 0; duckT = 0; flyT = 0; act.run = 0;
-    boat = { o, phase: o.mode === 'fish' ? 'jumpWait' : 'greet', t: 0, idle: 0, hinted: 0, n: 0 };
-    speak(o.mode === 'fish' ? 'friend: jump in!' : 'friend: hi! my boat is stuck in the sand.');
+    boat = { o, phase: o.mode === 'fish' ? 'jumpWait' : o.full ? 'notice' : 'step', t: 0, idle: 0, hinted: 0, n: 0, nudged: 0 };
+    if (o.mode === 'fish') speak('friend: jump in!');                               // מלא: החבר קודם שם לב (notice) ורק אז מדבר. קצר: כבר קרא מרחוק
     return;
   }
   const B = boat, o = B.o, v = boatSpeed(); B.t += dt;
   if (!obstacles.includes(o)) { boat = null; return; }
   const demo = state !== 'play';
-  const go = ph => { B.phase = ph; B.t = 0; B.idle = 0; B.hinted = 0; };
+  const go = ph => { B.phase = ph; B.t = 0; B.idle = 0; B.hinted = 0; B.nudged = 0; B.said = 0; };
   if (['push', 'row', 'wave'].includes(B.phase)) o.bx += v * dt;                 // הסירה זזה יחד עם הנינג'ה (העולם זז אחורה)
   if (B.phase === 'wait' || B.phase === 'yesWait' || B.phase === 'jumpWait' || B.phase === 'throwWait' || B.phase === 'bite' || B.phase === 'fight' || B.phase === 'swimWait') {   // מחכים למילה – אחרי שתיקה ארוכה המשחק אומר אותה
     B.idle += dt;
@@ -91,11 +110,22 @@ function boatUpdate(dt, pb) {
     else if (B.phase === 'bite') { if (B.idle >= 2.2 && !B.hinted) { B.hinted++; sayWords([w], 1.2, B); } }   // בנשיכה – רמז מהר, החלון קצר
     else if (B.phase === 'fight') { if (B.idle >= FISH.fightHint && !B.fightHinted) { B.fightHinted = 1; sayWords([w], 1.2, B); } }   // הדג גורר – רמז אחד
     else if (B.phase === 'swimWait') {}                                           // החבר כבר צעק "Swim!"
+    else if (o.mode !== 'fish') {                                                 // עם החבר: קודם הוא מסמן שוב (nudge), ורק אחרי עוד שתיקה המשחק אומר את המילה
+      if (B.idle >= BOAT.nudge && !B.nudged) { B.nudged = 1; speak('friend: ' + boatNudge(B).toLowerCase()); }
+      if (B.idle >= BOAT.hintFull + B.hinted * BOAT.hintEvery) { B.hinted++; sayWords([sw], 1.6, B); }
+    }
     else if (B.idle >= BOAT.hint + B.hinted * BOAT.hintEvery) { B.hinted++; sayWords([sw], 1.6, B); }
   }
   switch (B.phase) {
-    case 'greet': if (B.t >= BOAT.greetT) { go('yesWait'); speak('friend: can you help me?'); } break;   // החבר מסתובב, מנופף ומצביע על הסירה ועל המים
-    case 'great': if (B.t >= BOAT.greatT) go('step'); break;                     // "Great! Let's push together!" – וזז לצד הסירה
+    case 'notice': if (B.t >= BOAT.noticeT) { go('greet'); speak('friend: hey! over here!'); } break;   // שם לב: מפסיק לדחוף, מנגב את המצח, מסתובב אל הנינג'ה
+    case 'greet':                                                                  // מסמן: מנופף "Hey! Over here!", ואז מצביע על הסירה "My boat is stuck!"
+      if (!B.said && B.t >= BOAT.waveT2) { B.said = 1; speak('friend: my boat is stuck!'); }
+      if (B.t >= BOAT.greetFullT) { go('yesWait'); speak('friend: can you help me?'); }
+      break;
+    case 'great':                                                                  // מגיב: "Yay!" עם אגרוף מונף, רץ לצד הסירה, טופח עליה – "Let's push together!"
+      if (!B.said && B.t >= BOAT.cheerT) { B.said = 1; speak("friend: let's push together!"); }
+      if (B.t >= BOAT.greatFullT) go('step');
+      break;
     case 'ask': if (B.t >= BOAT.askT) go('step'); break;                          // החבר זז הצידה ומבקש עזרה
     case 'step': if (B.t >= BOAT.stepT) { go('wait'); B.n = 0; } break;           // הנינג'ה ניגש לסירה
     case 'hi': if (B.t >= BOAT.hiT) { go('wait'); B.n = 0; } break;
@@ -103,15 +133,19 @@ function boatUpdate(dt, pb) {
       if (Math.random() < 0.5) particles.push({ x: PLAYER.x + 2 + Math.random() * 3, y: GROUND, vx: -8 - Math.random() * 8, vy: -4 - Math.random() * 5, g: 40, life: 0.45, color: '#e7cf9a', size: 0.8 });   // חול שעף מהרגליים
       if (B.t >= BOAT.pushT) {
         B.n++; sfx('thud');
-        if (B.n >= BOAT.pushes) { go('friendIn'); burst(boatStern(o) + BOAT.len * 0.8, waterY(), '#e0f2fe', 12, 24); sfx('splash'); }   // הסירה במים – התזה
+        if (B.n >= BOAT.pushes) { go('friendIn'); if (o.full) speak('friend: yes! we did it!'); burst(boatStern(o) + BOAT.len * 0.8, waterY(), '#e0f2fe', 12, 24); sfx('splash'); }   // הסירה במים – התזה
         else go('wait');
       }
       break;
-    case 'friendIn': if (B.t >= 0.8) { go('jumpWait'); speak('friend: jump in!'); } break;   // החבר קופץ פנימה ראשון
-    case 'board': if (B.t >= BOAT.boardT) { go('row'); burst(PLAYER.x + 4, boatDeck(o), '#e0f2fe', 6, 14); } break;
+    case 'friendIn': if (B.t >= 0.8 + boatCheer(o)) { go('jumpWait'); speak('friend: jump in!'); } break;   // (מלא: קודם שמח "We did it!") החבר קופץ פנימה ראשון
+    case 'board': if (B.t >= BOAT.boardT) { go('row'); burst(PLAYER.x + 4, boatDeck(o), '#e0f2fe', 6, 14); if (o.full) speak('friend: nice one!'); } break;
     case 'row':
       B.fishT = (B.fishT || 0) - dt;                                               // דגים קופצים מהמים ליד הסירה
       if (B.fishT <= 0) { B.fishT = 0.9 + Math.random() * 1.1; (o.jumps = o.jumps || []).push({ rx: o.bx + (Math.random() < 0.5 ? -6 - Math.random() * 14 : BOAT.len + 4 + Math.random() * 22), t: 0, dir: Math.random() < 0.5 ? 1 : -1, h: 7 + Math.random() * 5, col: ['#fb923c', '#facc15', '#f472b6', '#38bdf8'][Math.floor(Math.random() * 4)] }); }
+      if (o.full && !B.looked && B.t >= BOAT.lookAt) {                             // רואים יחד: דג גדול קופץ לפני הסירה והחבר מצביע עליו (הילד לא צריך להגיד כלום)
+        B.looked = B.t; speak('friend: look! a fish!'); sfx('splash');
+        (o.jumps = o.jumps || []).push({ rx: o.bx + BOAT.len + 13, t: 0, dir: -1, h: 12, col: '#fb923c' });
+      }
       if (o.mode === 'fish' && o.c < o.spots.length) { if (boatStern(o) >= o.x + o.spots[o.c]) { go('fishAsk'); o.jumps = []; } }   // הגענו למקום דייג
       else if (o.mode !== 'fish' && o.c < o.isl.length) { if (waveDist(o) <= BOAT.waveAt + 8) { B.waveV = waveDist(o) / BOAT.waveT; go('wave'); sfx('wind'); } }   // גל גדול מתקרב
       else if (boatStern(o) + BOAT.len >= o.x + o.end - 1) go('land');            // החרטום נגע בחוף
@@ -160,12 +194,12 @@ function boatUpdate(dt, pb) {
         py = 0; vy = 0; burst(PLAYER.x + 4, GROUND - 0.5, WORLDS[world].dust, 7, 14); sfx('clear');
         if (mode === 'journey' && state === 'play') { picked += BOAT.coins; coinsFlying++; flyCoinToHud({ x: PLAYER.x + 1 }, GROUND - 18); floatText(PLAYER.x + 4, GROUND - 26, '+' + BOAT.coins + ' 🟡', '#ca8a04'); }
         if (o.mode === 'fish') { cleared(o); o.waving = true; boat = null; }
-        else { go('farewell'); speak('friend: thanks for your help! see you!'); }   // נפרדים: החבר מודה, הנינג'ה מסתובב ואומר Bye
+        else { go('farewell'); speak('friend: ' + (o.full ? 'thanks, buddy! see you!' : BOAT_BYE[o.v].toLowerCase())); }   // נפרדים: החבר מודה; במפגש המלא הנינג'ה גם אומר Bye
       }
       break;
     case 'farewell':
-      if (!B.bye && B.t >= BOAT.thanksT) { B.bye = 1; speak('ninja: bye!'); }
-      if (B.t >= BOAT.thanksT + BOAT.byeT) { cleared(o); o.waving = true; boat = null; }
+      if (o.full && !B.bye && B.t >= BOAT.thanksT) { B.bye = 1; speak('ninja: bye!'); }
+      if (B.t >= (o.full ? BOAT.thanksT + BOAT.byeT : BOAT.byeShortT)) { cleared(o); o.waving = true; boat = null; }
       break;
   }
 }
@@ -221,7 +255,7 @@ function fishWetY() {                                                           
 /* ---------- פקודות ---------- */
 function boatYes() {                                                              // YES – עונים לחבר שביקש עזרה (true = טופל כאן)
   if (!boat || boat.phase !== 'yesWait') return false;
-  boat.phase = 'great'; boat.t = 0; boat.idle = 0; boat.hinted = 0; speak("friend: great! let's push together!");
+  boat.phase = 'great'; boat.t = 0; boat.idle = 0; boat.hinted = 0; boat.nudged = 0; boat.said = 0; speak('friend: yay!');
   return true;
 }
 function boatPush() {
@@ -278,7 +312,7 @@ function boatPose(P) {
   const B = boat, p = B.phase, now = performance.now() / 1000;
   if (p === 'push') return posePush();
   if (p === 'step') return poseRun(now * 18);
-  if (p === 'ask' || p === 'greet' || p === 'yesWait' || p === 'great') return poseIdle(now);
+  if (p === 'ask' || p === 'notice' || p === 'greet' || p === 'yesWait' || p === 'great') return poseIdle(now);
   if (p === 'farewell') { P = poseIdle(now); if (B.t > 0.4) P.arms[1] = waveArm(now); return P; }   // מסתובב לחבר ומנופף
   if (['wait', 'hi', 'friendIn', 'jumpWait'].includes(p)) return handsOnBoat(poseIdle(now));   // ידיים על הסירה
   if (p === 'board' || p === 'out' || p === 'land') return poseAir(B.t < ({ board: BOAT.boardT, out: BOAT.outT, land: BOAT.landT })[p] / 2);
@@ -319,34 +353,61 @@ function friendSpot(o) {                                                        
     if (p === 'swimBack' || p === 'rescue' || p === 'climbIn') { P.lean = 0.45; P.arms = [[1.3, 1.5], [1.2, 1.4]]; }   // מושך אותו פנימה
     return { x: seat, y: deck, P, scale: sc, inBoat: true };
   }
-  if (p === 'alone') { const P = posePush(); P.lean += Math.sin(now * 14) * 0.06; return { x: st - 3.4, y: GROUND, P, scale: sc, alone: true }; }   // דוחף לבד ולא מצליח
-  if (p === 'greet') {                                                           // מסתובב אל הנינג'ה ומנופף, ואז מצביע על הסירה ועל המים
-    const P = poseIdle(now), t = B.t;
-    if (t < 0.7) { P.arms[1] = waveArm(now); return { x: st - 0.8, y: GROUND, P, scale: sc, facing: -1 }; }
-    if (t < 1.6) { P.arms[1] = [1.25, 1.2]; P.lean = 0.12; return { x: st - 0.8, y: GROUND, P, scale: sc }; }   // מצביע על הסירה התקועה
-    P.arms[1] = [1.85, 1.8]; P.lean = 0.05; return { x: st - 0.8, y: GROUND, P, scale: sc };                    // ...ועל המים
+  const hop = (f, h) => Math.abs(Math.sin(now * f)) * h;                           // קפיצה קטנה במקום
+  const beckon = () => [1.75, 2.35 + Math.sin(now * 9) * 0.5];                      // "בוא!" – יד מושטת אל הנינג'ה ומסמנת
+  const fx0 = st - 3.4, tx = st - 0.8;                                             // דוחף לבד מאחורי הירכתיים; כשמדברים – צעד אחורה, שלא ייצמד לנינג'ה
+  if (p === 'alone' && !o.full) {                                                  // מפגש קצר: כבר מחכה ליד הסירה. כשהנינג'ה מתקרב – מנופף וקורא לו
+    const P = poseIdle(now); if (o.hello) { P.arms[1] = waveArm(now); P.headTilt = -0.1; }
+    return { x: side, y: sy - (o.hello && o.hello < 1.2 ? hop(9, 0.7) : 0), P, scale: sc, facing: -1, hello: o.hello > 0 };
   }
-  if (p === 'yesWait') { const P = poseIdle(now); P.arms[1] = [1.1, 1.7 + Math.sin(now * 3) * 0.08]; P.arms[0] = [0.9, 1.5]; return { x: st - 0.8, y: GROUND, P, scale: sc, facing: -1 }; }   // פונה לנינג'ה ושואל
-  if (p === 'great') {                                                           // שמח, וזז לצד הסירה
-    const k = ease(Math.min(1, Math.max(0, (B.t - 0.6) / 0.8)));
-    const P = k > 0 && k < 1 ? poseRun(now * 16) : poseIdle(now); if (k === 0) P.arms = [[-2.4, -2.9], [2.4, 2.9]];
-    return { x: lerp(st - 0.8, side, k), y: lerp(GROUND, sy, k), P, scale: sc, facing: k === 0 ? -1 : 1 };
+  if (p === 'alone') { const P = posePush(); P.lean += Math.sin(now * 14) * 0.06; P.eyes = 'squint'; return { x: fx0, y: GROUND, P, scale: sc, alone: true }; }   // דוחף לבד ולא מצליח
+  if (p === 'notice') {                                                          // שם לב: מתיישר ומנגב את המצח, ואז מסתובב אל הנינג'ה – ונדלק
+    const P = poseIdle(now), t = B.t;
+    if (t < 0.55) { P.arms[1] = [2.0, 3.5 + Math.sin(t * 14) * 0.15]; P.lean = -0.05; P.headTilt = 0.15; return { x: fx0, y: GROUND, P, scale: sc }; }
+    const q = Math.min(1, (t - 0.55) / 0.3); P.eyes = 'wide'; P.arms = [[-0.5, -0.2], [0.6, 1.0]]; return { x: lerp(fx0, tx, q), y: GROUND - Math.sin(Math.PI * q) * 1.2, P, scale: sc, facing: -1 };
+  }
+  if (p === 'greet') {                                                           // מסמן: מנופף ביד גדולה אל הנינג'ה, ואז מצביע על הסירה התקועה
+    const P = poseIdle(now), t = B.t;
+    if (t < BOAT.waveT2) { P.arms[1] = waveArm(now); P.headTilt = -0.1; return { x: tx, y: GROUND - hop(8, 0.6), P, scale: sc, facing: -1 }; }
+    if (t < BOAT.greetFullT - 0.5) { P.arms[1] = [1.3, 1.25]; P.lean = 0.12; return { x: tx, y: GROUND, P, scale: sc }; }
+    P.arms = [[0.7, 1.3], [0.9, 1.6]]; return { x: tx, y: GROUND, P, scale: sc, facing: -1 };                // חוזר אל הנינג'ה, ידיים פתוחות
+  }
+  if (p === 'yesWait') {                                                         // מחכה: נשאר ומביט. אם שותקים – "Please?", ראש מוטה וקפיצות קטנות
+    const P = poseIdle(now);
+    if (B.nudged) { P.arms = [[1.3, 2.3], [1.45, 2.45]]; P.headTilt = 0.28; return { x: tx, y: GROUND - hop(6, 0.7), P, scale: sc, facing: -1 }; }
+    P.arms[1] = [1.1, 1.7 + Math.sin(now * 3) * 0.08]; P.arms[0] = [0.9, 1.5]; return { x: tx, y: GROUND, P, scale: sc, facing: -1 };
+  }
+  if (p === 'great') {                                                           // מגיב: אגרוף מונף וקפיצה, רץ לצד הסירה, וטופח עליה
+    const t = B.t, k = ease(Math.min(1, Math.max(0, (t - BOAT.cheerT) / 0.8)));
+    if (k === 0) { const P = poseIdle(now); P.arms = [[-0.4, 0.3], [2.5, 3.0]]; P.headTilt = -0.15; return { x: tx, y: GROUND - hop(9, 1.3), P, scale: sc, facing: -1 }; }
+    if (k < 1) return { x: lerp(tx, side, k), y: lerp(GROUND, sy, k), P: poseRun(now * 16), scale: sc };
+    const P = poseIdle(now); P.arms[1] = [1.25, 1.45 + Math.sin(now * 12) * 0.22]; P.lean = 0.12; return { x: side, y: sy, P, scale: sc };   // טופח על הסירה
   }
   if (p === 'ask') {                                                             // מסתובב, מבקש עזרה וזז לצד הסירה
     const k = ease(Math.min(1, Math.max(0, (B.t - 0.5) / 0.8)));
     const P = k > 0 && k < 1 ? poseRun(now * 16) : poseIdle(now); if (k === 0) P.arms[1] = [2.7, 3.2 + Math.sin(now * 10) * 0.35];
     return { x: lerp(st - 3.4, side, k), y: lerp(GROUND, sy, k), P, scale: sc };
   }
+  if (p === 'wait' && (B.idle < 0.8 || (B.nudged && B.idle < BOAT.nudge + 1.5))) { const P = poseIdle(now); P.arms[1] = beckon(); return { x: side, y: sy, P, scale: sc, facing: -1 }; }   // מסתובב אל הנינג'ה ומסמן לו לבוא לדחוף (ושוב, אם שותקים)
   if (p === 'step' || p === 'wait' || p === 'hi') { const P = handsOnBoat(poseIdle(now)); if (p === 'hi' && B.t < 0.8) P.arms[1] = [2.7, 3.2 + Math.sin(now * 10) * 0.35]; return { x: side, y: sy, P, scale: sc }; }
   if (p === 'push') return { x: side, y: sy, P: posePush(), scale: sc };
   if (p === 'friendIn') {                                                        // קופץ פנימה בקשת
-    const k = Math.min(1, B.t / 0.6), e = ease(k);
-    return { x: lerp(side, seat, e), y: lerp(sy, deck, e) - Math.sin(Math.PI * k) * 8, P: k < 1 ? poseAir(k < 0.5) : sitLegs(poseIdle(now)), scale: sc, inBoat: k > 0.4 };
+    const c = boatCheer(o);
+    if (B.t < c) { const P = poseIdle(now); P.arms = [[-2.4, -2.9], [2.4, 2.9]]; return { x: side, y: sy - hop(9, 1.4), P, scale: sc, facing: -1 }; }   // "Yes! We did it!" – ידיים למעלה, אל הנינג'ה
+    const k = Math.min(1, (B.t - c) / 0.6), e = ease(k);
+    return { x: lerp(side, seat, e), y: lerp(sy, deck, e) - Math.sin(Math.PI * k) * 8, P: k < 1 ? poseAir(k < 0.5) : sitLegs(poseIdle(now)), scale: sc, inBoat: k > 0.4, facing: k < 1 ? 1 : -1 };
   }
   if (p === 'out') {                                                             // קופץ מהסירה אל צד הסירה על האי
     const k = Math.min(1, B.t / BOAT.outT), e = ease(k);
     return { x: lerp(seat, side, e), y: lerp(deck, sy, e) - Math.sin(Math.PI * k) * 8, P: poseAir(k < 0.5), scale: sc, inBoat: k < 0.5 };
   }
+  if (p === 'jumpWait') {                                                        // כבר בסירה, מסתובב אל הנינג'ה וקורא לו. אם שותקים – טופח על המושב
+    const P = sitLegs(poseIdle(now));
+    if (B.nudged) { P.arms[1] = [0.75, 1.35 + Math.sin(now * 12) * 0.3]; P.lean = 0.2; } else P.arms[1] = beckon();
+    return { x: seat, y: deck, P, scale: sc, inBoat: true, facing: -1 };
+  }
+  if (p === 'board') { const P = sitLegs(poseIdle(now)); P.arms = [[1.3, 1.55], [1.2, 1.45]]; P.lean = 0.3; return { x: seat, y: deck, P, scale: sc, inBoat: true, facing: -1 }; }   // מושיט ידיים ומייצב את הנינג'ה
+  if (p === 'row' && B.looked && B.t - B.looked < BOAT.lookT) { const P = sitLegs(poseIdle(now)); P.arms[1] = [1.75, 1.65]; P.lean = 0.18; P.eyes = 'wide'; return { x: seat, y: deck, P, scale: sc, inBoat: true }; }   // מצביע על הדג
   if (p === 'row') return { x: seat, y: deck, P: rowArms(sitLegs(poseIdle(now)), now, 0.4), scale: sc, inBoat: true };
   if (p === 'wave' || p === 'stuck') { const P = sitLegs(poseIdle(now)); P.arms = [[-2.4, -2.9], [2.4, 2.9]]; return { x: seat, y: deck, P, scale: sc, inBoat: true }; }
   const P = sitLegs(poseIdle(now)); if (p === 'bye' || p === 'land' || p === 'farewell') P.arms[1] = waveArm(now);   // יושב בסירה (ומנופף בסוף)
@@ -424,31 +485,32 @@ function drawBoatBack(o) {
   const F = friendSpot(o);
   if (!F.inBoat) drawFriend({ fx: F.x, fy: F.y, facing: F.facing || 1, scale: F.scale, pose: F.P });
   drawBoatHull(o, true);                                                          // פנים הסירה (הדופן הרחוקה)
-  if (F.inBoat) drawFriend({ fx: F.x, fy: F.y, scale: F.scale, pose: F.P });
+  if (F.inBoat) drawFriend({ fx: F.x, fy: F.y, facing: F.facing || 1, scale: F.scale, pose: F.P });
 }
 const BED_Y = x => GROUND + 22.5 + Math.sin(x * 0.07) * 1.2 + Math.sin(x * 0.19 + 1) * 0.5;   // גובה הקרקעית בנקודה x
 function drawRiverBed(P, bottom, t) {
+  const bedY = x => BED_Y(x - P.x);                                                // הקרקעית צמודה לעולם (לאגן), לא למסך – אחרת היא "מתגלגלת" כמו גל כשהעולם זז
   const L = Math.max(P.x - 2, viewL() - 6), R = Math.min(P.x + P.w + 2, viewR() + 6);
   const sg = ctx.createLinearGradient(0, GROUND + 21, 0, GROUND + 30);               // חול
   sg.addColorStop(0, '#d9c38f'); sg.addColorStop(1, '#a8895a');
   ctx.fillStyle = sg; ctx.beginPath(); ctx.moveTo(L, bottom);
-  for (let x = L; x <= R; x += 1.5) ctx.lineTo(x, BED_Y(x));
+  for (let x = L; x <= R; x += 1.5) ctx.lineTo(x, bedY(x));
   ctx.lineTo(R, bottom); ctx.closePath(); ctx.fill();
   ctx.fillStyle = 'rgba(120,96,60,.35)';                                          // חלוקים קטנים
-  for (let i = Math.floor((L - P.x) / 4.3); P.x + i * 4.3 < R; i++) { const x = P.x + i * 4.3 + hash(i) * 2; ctx.beginPath(); ctx.ellipse(x, BED_Y(x) + 1.6 + hash(i * 1.7) * 3, 0.6 + hash(i * 3.1) * 0.5, 0.3, 0, 0, Math.PI * 2); ctx.fill(); }
+  for (let i = Math.floor((L - P.x) / 4.3); P.x + i * 4.3 < R; i++) { const x = P.x + i * 4.3 + hash(i) * 2; ctx.beginPath(); ctx.ellipse(x, bedY(x) + 1.6 + hash(i * 1.7) * 3, 0.6 + hash(i * 3.1) * 0.5, 0.3, 0, 0, Math.PI * 2); ctx.fill(); }
   // כל ~11 יחידות: אבן גדולה, צמח ארוך (אצה), שיח עלים רחבים, או עשב קצר – לפי hash קבוע (לא מרצד)
   const step = 11;
   for (let i = Math.floor((L - P.x - 12) / step); P.x + i * step < R + 12; i++) {
-    const x = P.x + 6 + i * step + hash(i * 9.1) * 6, y = BED_Y(x), k = hash(i * 4.7), sw = Math.sin(t * 1.2 + i * 1.3);
+    const x = P.x + 6 + i * step + hash(i * 9.1) * 6, y = bedY(x), k = hash(i * 4.7), sw = Math.sin(t * 1.2 + i * 1.3);
     if (x < P.x + 4 || x > P.x + P.w - 4) continue;
     if (k < 0.3) {                                                                  // אבנים: אחת גדולה ועוד קטנות לידה
       const n = 1 + Math.floor(hash(i * 2.3) * 3);
       for (let j = 0; j < n; j++) {
         const rx = x + (j - (n - 1) / 2) * 2.6 + hash(i + j * 5.5) * 0.8, rw = (j === 0 ? 2.4 : 1.4) + hash(i * 3 + j) * 0.9, rh = rw * (0.55 + hash(i * 7 + j) * 0.2);
         const shade = ['#64748b', '#78716c', '#57534e', '#6b7280'][Math.floor(hash(i * 11 + j) * 4)];
-        ctx.fillStyle = shade; ctx.beginPath(); ctx.ellipse(rx, BED_Y(rx) + 0.4 - rh * 0.55, rw, rh, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.beginPath(); ctx.ellipse(rx - rw * 0.25, BED_Y(rx) + 0.4 - rh * 0.95, rw * 0.5, rh * 0.3, -0.2, 0, Math.PI * 2); ctx.fill();   // אור מלמעלה
-        ctx.fillStyle = 'rgba(34,197,94,.35)'; ctx.beginPath(); ctx.ellipse(rx + rw * 0.3, BED_Y(rx) + 0.4 - rh * 0.2, rw * 0.45, rh * 0.25, 0, 0, Math.PI * 2); ctx.fill();   // אצה ירוקה על האבן
+        ctx.fillStyle = shade; ctx.beginPath(); ctx.ellipse(rx, bedY(rx) + 0.4 - rh * 0.55, rw, rh, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.beginPath(); ctx.ellipse(rx - rw * 0.25, bedY(rx) + 0.4 - rh * 0.95, rw * 0.5, rh * 0.3, -0.2, 0, Math.PI * 2); ctx.fill();   // אור מלמעלה
+        ctx.fillStyle = 'rgba(34,197,94,.35)'; ctx.beginPath(); ctx.ellipse(rx + rw * 0.3, bedY(rx) + 0.4 - rh * 0.2, rw * 0.45, rh * 0.25, 0, 0, Math.PI * 2); ctx.fill();   // אצה ירוקה על האבן
       }
     } else if (k < 0.55) {                                                           // אצה ארוכה: כמה סרטים מתנופפים
       for (let b = 0; b < 4; b++) {
@@ -715,6 +777,7 @@ function drawBoatTalk(o) {
   if (!B) {
     if (o.waving) { if (F.x < viewR() + 4 && F.x > viewL() - 6) drawBubble('Bye! 👋', F.x, by, { tail: -1, size: 3.4 }); }
     else if (F.alone && F.x < W - 6) drawBubble('Ugh! Too heavy!', F.x, by, { tail: -1, size: 3.4 });
+    else if (F.hello && o.hello < 2.6 && F.x < W - 4) drawBubble(BOAT_HELLO[o.v], Math.min(F.x, viewR() - 30), by, { tail: -1, color: '#1d4ed8', age: o.hello, size: 3.6 });
     return;
   }
   const p = B.phase, say = (txt, opt) => drawBubble(txt, F.x, by, Object.assign({ tail: -1, color: '#1d4ed8' }, opt));
@@ -740,19 +803,26 @@ function drawBoatTalk(o) {
     }
     return;
   }
+  const nudge = B.nudged && ['yesWait', 'wait', 'jumpWait'].includes(p);            // הסימון השני מחליף את הבועה הרגילה
+  if (nudge) say(boatNudge(B), { age: B.idle - BOAT.nudge, size: 3.8 });
   if (p === 'ask') say('Can you help me push?', { age: B.t, size: 3.8 });
-  if (p === 'greet') say('Hi! My boat is stuck in the sand.', { age: B.t, size: 3.6 });
-  if (p === 'yesWait') say('Can you help me?', { age: B.t, size: 3.8 });
-  if (p === 'great') say("Great! Let's push together!", { age: B.t, size: 3.6 });
+  if (p === 'greet') { if (B.t < BOAT.waveT2) say('Hey! Over here!', { age: B.t, size: 3.8 }); else say('My boat is stuck!', { age: B.t - BOAT.waveT2, size: 3.6 }); }
+  if (p === 'yesWait' && !nudge) say('Can you help me?', { age: B.t, size: 3.8 });
+  if (p === 'great') { if (B.t < BOAT.cheerT) say('Yay!', { age: B.t, size: 4, color: '#15803d' }); else say("Let's push together!", { age: B.t - BOAT.cheerT, size: 3.6 }); }
   if (p === 'farewell') {
-    if (B.t < BOAT.thanksT + 0.3) drawBubble('Thanks for your help! See you!', Math.max(F.x, viewL() + 26), by, { tail: -1, color: '#1d4ed8', age: B.t, size: 3.6 });   // החבר בקצה המסך – הבועה נשארת בפנים
-    if (B.t >= BOAT.thanksT) drawBubble('Bye! 👋', PLAYER.x + 3, GROUND - 20, { tail: 1, size: 3.6, age: B.t - BOAT.thanksT });
+    const full = o.full, T = full ? BOAT.thanksT : BOAT.byeShortT;
+    if (B.t < T + 0.3) drawBubble(full ? 'Thanks, buddy! See you!' : BOAT_BYE[o.v], Math.max(F.x, viewL() + 26), by, { tail: -1, color: '#1d4ed8', age: B.t, size: 3.6 });   // החבר בקצה המסך – הבועה נשארת בפנים
+    if (full && B.t >= BOAT.thanksT) drawBubble('Bye! 👋', PLAYER.x + 3, GROUND - 20, { tail: 1, size: 3.6, age: B.t - BOAT.thanksT });
   }
   if (p === 'hi') say("Stuck again! Let's push!", { age: B.t, size: 3.6 });
-  if (p === 'wait' && B.n > 0) say('Again!', { age: B.idle, size: 3.8 });
-  if (p === 'push') say(B.n === BOAT.pushes - 1 ? 'Yes!' : 'Hup!', { age: B.t, size: 3.6, color: '#111827' });
-  if (p === 'jumpWait' || (p === 'friendIn' && B.t > 0.6)) say('Jump in!', { age: p === 'jumpWait' ? B.t + 0.3 : 0 });
-  if (p === 'row' && B.t < 1.6) say('Row, row! 🚣', { age: B.t, size: 3.6, color: '#111827' });
+  if (p === 'wait' && B.n > 0 && !nudge) say('Again!', { age: B.idle, size: 3.8 });
+  if (p === 'push') say('Hup!', { age: B.t, size: 3.6, color: '#111827' });
+  if (p === 'friendIn' && B.t < boatCheer(o)) say('Yes! We did it!', { age: B.t, size: 3.8, color: '#15803d' });
+  if ((p === 'jumpWait' && !nudge) || (p === 'friendIn' && B.t > boatCheer(o) + 0.6)) say('Jump in!', { age: p === 'jumpWait' ? B.t + 0.3 : 0 });
+  if (o.full) {
+    if (p === 'board' && B.t > 0.45 || p === 'row' && B.t < 1.2) say('Nice one!', { age: p === 'board' ? B.t - 0.45 : B.t + 0.3, size: 3.6, color: '#15803d' });
+    if (p === 'row' && B.looked && B.t - B.looked < BOAT.lookT) say('Look! A fish!', { age: B.t - B.looked, size: 3.8 });
+  } else if (p === 'row' && B.t < 1.6) say('Row, row! 🚣', { age: B.t, size: 3.6, color: '#111827' });
   if (p === 'wave') say('Whoa! A big wave!', { age: B.t, size: 3.6, color: '#b91c1c' });
   if (p === 'stuck') say('Oh no! Stuck!', { age: B.t, size: 3.6, color: '#b91c1c' });
   if (labelsVisible()) {

@@ -168,6 +168,14 @@ function obstacleValue(type) {
 // מכשולים שמתבלבלים ביניהם (PUSH / PULL) – לא אחד אחרי השני
 const CLASH = { boulder: ['gate'], gate: ['boulder'], boat: ['cart'], cart: ['boat'] };   // + סירה ועגלה (שתיהן דחיפה עם חבר)
 function pickType() {
+  let t = pickType1();
+  if (mode === 'journey') {                                                     // מפגש עם חבר – רק פעם אחת בקטע (J_ONCE ב-journey.js)
+    for (let k = 0; k < 12 && J_ONCE.includes(t) && jSeen[t]; k++) t = pickType1();
+    if (J_ONCE.includes(t)) jSeen[t] = 1;
+  }
+  return t;
+}
+function pickType1() {
   const prev = obstacles.length ? obstacles[obstacles.length - 1].type : null;
   if (mode === 'journey' && jDeck.length) {                                     // במסע: קודם כל מכשול לפחות פעם אחת (journey.js)
     const i = jDeck.findIndex(t => !(CLASH[prev] || []).includes(t));
