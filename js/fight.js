@@ -238,3 +238,18 @@ function drawDuelFx() {                                                         
     ctx.restore();
   }
 }
+
+// הרישום של הסצנה (scenes.js). סצנה ישנה – נשארו בבסיס: עצירת העולם (duelHolds ב-state.js), התנוחה והציור ב-draw.js
+sceneAdd({
+  type: 'duel', word: 'fight',
+  active: duelActive,
+  reset: () => { duel = null; fightT = 0; duelBones = []; duelSwords = []; },
+  setup: o => { o.w = 8; }, afterGap: 0.4, noCollide: true,
+  box: o => ({ l: o.x - 4, r: o.x + 4, t: GROUND - 16, b: GROUND }),
+  update: duelUpdate,
+  expected: () => duelActive() ? ['fight'] : null,
+  act: word => word === 'fight' ? (fightCmd(), true) : false,                         // FIGHT – הנפת חרב (גם בלי אויב)
+  auto: () => { if (duel && duel.phase === 'face' && duel.t > 0.35) command('fight', 'auto'); },
+  intro: { time: 5, demo: () => { obstacles.push({ type: 'duel', x: PLAYER.x + PLAYER.w + 40, w: 8 }); },
+           steps: () => [{ at: 1.3, w: 'fight' }, { at: 2.1, w: 'fight' }, { at: 2.9, w: 'fight' }] }
+});

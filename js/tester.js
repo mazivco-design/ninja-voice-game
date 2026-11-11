@@ -21,7 +21,6 @@ function testerTap() {
   if (state !== 'play') return;
   if (merchant && merchant.phase === 'ask' && merchant.t >= MERCH.askAt) return command('want', 'tap');
   if (merchant && merchant.phase === 'choose') return command(needOf(merchant.o), 'tap');
-  if (duelActive()) return command('fight', 'tap');
   if (scenesTap()) return;   // סצנות רשומות (scenes.js)
   if (ride && ride.phase === 'wait') return command('ride', 'tap');
   if (rope && rope.phase === 'wait') return command('catch', 'tap');
@@ -65,7 +64,6 @@ function autoFireNow(o, pb) {
 }
 function testerAutoScenes(t) {
   if (ride && ride.phase === 'wait') command('ride', 'auto');
-  if (duel && duel.phase === 'face' && duel.t > 0.35) command('fight', 'auto');
   scenesAuto();   // סצנות רשומות (scenes.js)
   if (rope && rope.phase === 'wait') command('catch', 'auto'); else if (rope && rope.phase === 'hang' && rope.theta >= ROPE.amp * ROPE.farAt) command('let go', 'auto');
   if (merchant && merchant.t > 1) { if (merchant.phase === 'ask' && merchant.t > MERCH.askAt + 0.6) command('want', 'auto'); else if (merchant.phase === 'choose' && merchant.t > MERCH.pickAt) command(needOf(merchant.o), 'auto'); }
