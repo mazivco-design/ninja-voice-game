@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>ניסוי Spine</title>
+<link rel="stylesheet" href="spine-test/spine-player.min.css">
+<script src="spine-test/spine-player.min.js"></script>
+<style>
+  html, body { margin: 0; height: 100%; background: #0f172a; color: #e2e8f0; font-family: system-ui, sans-serif; overflow: hidden; }
+  #wrap { display: flex; flex-direction: column; height: 100%; }
+  #bar { padding: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  #bar b { margin-inline-end: 8px; }
+  button { font: 700 15px system-ui; padding: 9px 13px; border: 0; border-radius: 10px; background: #1e293b; color: #e2e8f0; }
+  button.on { background: #4f46e5; color: #fff; }
+  #stage { flex: 1; position: relative; background: linear-gradient(#bae6fd 0 78%, #4ade80 78% 81%, #a16207 81%); }
+  #player { position: absolute; inset: 0; }
+  #note { padding: 6px 10px; font-size: 12px; color: #94a3b8; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="bar"><b>ניסוי Spine · Spineboy</b><span id="anims"></span>
+    <span style="flex:1"></span>
+    <button data-s="0.25">0.25×</button><button data-s="0.5">0.5×</button><button data-s="1" class="on">1×</button>
+  </div>
+  <div id="stage"><div id="player"></div></div>
+  <div id="note">דמות דוגמה של Esoteric Software – לניסוי בלבד, לא לשימוש מסחרי. דף ניסוי נפרד, לא חלק מהמשחק.</div>
+</div>
+<script>
+// דף ניסוי: האם דמות בפורמט Spine רצה חלק ב-Safari באייפד. לא קשור לקוד המשחק.
+const ANIMS = [['idle', 'IDLE'], ['walk', 'WALK'], ['run', 'RUN'], ['jump', 'JUMP'], ['hoverboard', 'FLY'], ['shoot', 'SHOOT'], ['death', 'FALL']];
+let player;
+function play(name) {
+  if (name === 'jump' || name === 'death' || name === 'shoot') {       // תנועה חד-פעמית, ואז חוזרים לריצה במעבר חלק
+    const st = player.animationState; st.setAnimation(0, name, false); st.addAnimation(0, name === 'death' ? 'idle' : 'run', true, 0);
+  } else player.animationState.setAnimation(0, name, true);
+  document.querySelectorAll('#anims button').forEach(b => b.classList.toggle('on', b.dataset.a === name));
+}
+player = new spine.SpinePlayer('player', {
+  skeleton: 'spine-test/spineboy-pro.json', atlas: 'spine-test/spineboy.atlas',
+  animation: 'run', showControls: false, alpha: true, backgroundColor: '#00000000', premultipliedAlpha: true,
+  viewport: { x: -1090, y: -295, width: 2180, height: 1500, padLeft: 0, padRight: 0, padTop: 0, padBottom: 0, transitionTime: 0 },
+  success: p => {
+    p.animationState.data.defaultMix = 0.2;                            // מעבר רך בין תנועות
+    const box = document.getElementById('anims');
+    ANIMS.forEach(([a, lbl]) => { const b = document.createElement('button'); b.textContent = lbl; b.dataset.a = a; b.onclick = () => play(a); box.appendChild(b); box.append(' '); });
+    play('run'); window.READY = true;
+  },
+  error: (p, msg) => { document.getElementById('note').textContent = 'שגיאה: ' + msg; }
+});
+document.querySelectorAll('[data-s]').forEach(b => b.onclick = () => {
+  player.animationState.timeScale = +b.dataset.s;
+  document.querySelectorAll('[data-s]').forEach(x => x.classList.toggle('on', x === b));
+});
+</script>
+</body>
+</html>
