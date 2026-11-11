@@ -294,7 +294,7 @@ function drawBikeWay(o) {
     if (!S || S.p === 'rideWait' || (S.p === 'mount' && S.t < BK.mountT * 0.5)) drawBike(bx, GROUND, 0, playerColor(), 0, 1);
   }
   // האופניים שנשארו ליד הקו
-  if (o.parked) { drawBike(ex + 10, GROUND, 0, playerColor(), 0, 1); drawBike(ex + 20, GROUND, 0, '#2563eb', 0.6, 0.95); }
+  if (o.parked) { drawBike(ex + 10, GROUND, 0, playerColor(), 0, 1); drawBike(ex + 20, GROUND, 0, friendAccent(), 0.6, 0.95); }
   // החבר
   if (!o.parked) drawBikeFriend(o);
   drawBikeTalk(o);
@@ -311,7 +311,7 @@ function drawBikeFriend(o) {
   const extra = {};
   if (!S || S.p === 'rideWait') extra.arms = [[1.3, 1.5], [2.7, 3.2 + Math.sin(now * 10) * 0.35]];   // מנופף
   if (S && (S.p === 'cheer' || S.p === 'off')) extra.arms = [[2.5, 2.9], [2.6, 3.0]];
-  drawBikeRider(x, GROUND - gh, bkSlope(o, x), crank * 0.97 + 1.3, '#2563eb', null, 0.94, extra);
+  drawBikeRider(x, GROUND - gh, bkSlope(o, x), crank * 0.97 + 1.3, friendAccent(), null, FRIEND.scale, extra);
 }
 function drawBikeTalk(o) {
   const S = bikeS && bikeS.o === o ? bikeS : null;

@@ -15,7 +15,6 @@ function mudWin(base) { return base * (cfg && cfg.forgive ? 1.3 : 1); }         
 function mudStuckX(o) { return o.x + MUD.stuck; }
 function mudStand(o) { return MUD.w + MUD.stand; }                                // איפה החבר עומד (יחסית ל-o.x)
 function friendX(o) { return o.x + (o.fr === undefined ? viewR() + 12 - o.x : o.fr); }
-function mudAccent() { const c = typeof playerColor === 'function' ? playerColor() : '#dc2626'; return c === '#2563eb' ? '#f59e0b' : '#2563eb'; }
 function mudPullDist() { return MUD.w + 1 - MUD.stuck; }
 
 // עומק הבוץ בנקודה x (0 מחוץ לשלולית). שפות משופעות
@@ -300,12 +299,12 @@ function drawMudBack(o) {
   const fx = friendX(o);
   if (fx > viewR() + 10) return;
   const M = mud && mud.o === o ? mud : null, p = M ? M.phase : 'done';
-  const FP = friendPose(o), h1 = figHand(fx, GROUND, -1, 1, FP, 1), h0 = figHand(fx, GROUND, -1, 1, FP, 0);
+  const FP = friendPose(o), h1 = figHand(fx, GROUND, -1, FRIEND.scale, FP, 1), h0 = figHand(fx, GROUND, -1, FRIEND.scale, FP, 0);
   const hand = h1[0] <= h0[0] ? h1 : h0, back = hand === h1 ? h0 : h1;           // החבל עובר דרך שתי הידיים: מהיד הקדמית אל הנינג'ה, ומהאחורית אל הקרקע
   o._fh = hand; o._fb = back;
   const coiled = ['sink', 'help', 'come', 'ready', 'throw', 'reel'].includes(p) && !(p === 'throw' && M.t > MUD.release + 0.05);
   if (!coiled) drawSlack(fx, back, p === 'pull' || p === 'thanks' || p === 'done' ? 3 : 2);   // אחרי הזריקה – שאר החבל מאחוריו
-  drawFigure({ fx, fy: GROUND, facing: -1, scale: 1, kind: 'ninja', accent: mudAccent(), pose: FP });
+  drawFriend({ fx, fy: GROUND, facing: -1, pose: FP });
   if (coiled) {                                                                   // לפני הזריקה / באיסוף: החבל המגולגל תלוי מהיד ומתנדנד
     const sw = p === 'come' ? Math.sin(t * 16) * 0.35 : p === 'throw' ? M.t * 13 : Math.sin(t * 2.2) * 0.08;   // בזריקה – החבל מסתובב מעל הראש
     drawHangCoil(hand[0], hand[1], p === 'reel' ? 0.55 + 0.45 * Math.min(1, M.t / MUD.reelT) : 1, sw);

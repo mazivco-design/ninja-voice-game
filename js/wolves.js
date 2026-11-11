@@ -378,7 +378,7 @@ function drawBalloon(bx, by, sc, alpha) {                                       
   ctx.fillStyle = '#92400e'; ctx.fillRect(-3.6, -3.6, 7.2, 3.6); ctx.fillStyle = '#b45309'; ctx.fillRect(-3.6, -3.6, 7.2, 0.8);   // הסל
   ctx.restore();
   ctx.save(); ctx.globalAlpha = alpha;
-  drawFigure({ fx: bx + sw - 2.6 * sc, fy: by - 1.2 * sc, facing: 1, scale: 0.72 * sc, kind: 'ninja', accent: mudAccent(), pose: Object.assign(poseIdle(t), { arms: [[1.2, 1.6], [0.2, 0.4]] }) });   // החבר בסל
+  drawFriend({ fx: bx + sw - 2.6 * sc, fy: by - 1.2 * sc, scale: 0.72 * sc, pose: Object.assign(poseIdle(t), { arms: [[1.2, 1.6], [0.2, 0.4]] }) });   // החבר בסל
   ctx.restore();
 }
 function wfBalloonPos() {                                                             // מיקום הכדור: x, תחתית הסל, קנה מידה, שקיפות

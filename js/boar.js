@@ -573,7 +573,7 @@ function drawBoarFriend0(S) {
   else if (S.fs === 'come' && F.np === 'stand') { P.arms = [[0.4, 0.5], [1.8 + Math.sin(now * 9) * 0.5, 2.6 + Math.sin(now * 9) * 0.6]]; }   // מנופף "בוא!"
   const hx = F.np === 'hidden' && F.i < BOAR.trees ? boarTreeX(S.o, F.i) : F.x;     // מתחבא – צמוד למרכז המחסה
   const hop = F.np === 'hop' ? Math.abs(Math.sin(now * 12)) * 3 : 0;                 // הקפיצות בדילוג
-  drawFigure({ fx: hx, fy: GROUND + boarFrontDY() + BOAR.friendDY - hop, facing: F.np === 'wave' || (S.fs === 'come' && F.np === 'stand') ? -1 : 1, scale: 0.92, kind: 'ninja', accent: '#2563eb', pose: P, suit: null });
+  drawFigure({ fx: hx, fy: GROUND + boarFrontDY() + BOAR.friendDY - hop, facing: F.np === 'wave' || (S.fs === 'come' && F.np === 'stand') ? -1 : 1, scale: FRIEND.scale, kind: 'ninja', accent: friendAccent(), pose: P, suit: null });
 }
 function drawFriendTalk(S) {                                                          // מה החבר לוחש
   const txt = { come: 'Come!', hide: 'Hide!' }[S.fs];

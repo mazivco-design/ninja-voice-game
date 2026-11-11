@@ -307,7 +307,7 @@ function boatPose(P) {
 /* ---------- ציור ---------- */
 function friendSpot(o) {                                                          // איפה החבר ובאיזו תנוחה
   const B = boat && boat.o === o ? boat : null, p = B ? B.phase : (o.waving ? 'bye' : 'alone'), now = performance.now() / 1000, st = boatStern(o);
-  const side = st + 8, sy = GROUND - 2.6, seat = st + BOAT.len * 0.72, deck = boatDeck(o), sc = 0.92;
+  const side = st + 8, sy = GROUND - 2.6, seat = st + BOAT.len * 0.72, deck = boatDeck(o), sc = FRIEND.scale;
   const ease = q => q * q * (3 - 2 * q);
   if (o.mode === 'fish' && p !== 'row') {                                         // דייג: החבר יושב בסירה מההתחלה
     const P = sitLegs(poseIdle(now));
@@ -422,9 +422,9 @@ function drawBoatBack(o) {
   const B = boat && boat.o === o ? boat : null;
   if (B && B.phase === 'wave') drawWave(o, Math.min(1, B.t / BOAT.waveT));
   const F = friendSpot(o);
-  if (!F.inBoat) drawFigure({ fx: F.x, fy: F.y, facing: F.facing || 1, scale: F.scale, kind: 'ninja', accent: mudAccent(), pose: F.P });
+  if (!F.inBoat) drawFriend({ fx: F.x, fy: F.y, facing: F.facing || 1, scale: F.scale, pose: F.P });
   drawBoatHull(o, true);                                                          // פנים הסירה (הדופן הרחוקה)
-  if (F.inBoat) drawFigure({ fx: F.x, fy: F.y, facing: 1, scale: F.scale, kind: 'ninja', accent: mudAccent(), pose: F.P });
+  if (F.inBoat) drawFriend({ fx: F.x, fy: F.y, scale: F.scale, pose: F.P });
 }
 const BED_Y = x => GROUND + 22.5 + Math.sin(x * 0.07) * 1.2 + Math.sin(x * 0.19 + 1) * 0.5;   // גובה הקרקעית בנקודה x
 function drawRiverBed(P, bottom, t) {
