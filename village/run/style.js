@@ -9,11 +9,13 @@
    סגנונות:  toon  – מצויר עם קווי מתאר
              ink   – דיו יפני על נייר
              water – צבעי מים
-   שימוש: const st = makeStyle(renderer, scene, camera, 'ink'); st.toonify(object3d); בלולאה: st.render();
+             paper – משולב: נייר + צבעי מים בשכבות של דיו + קו דיו דק ועדין   (הבחירה של זיו: דיו + צבעי מים, קו עדין)
+             wash  – כמו paper אבל כמעט בלי קו; הקו מופיע רק סביב חפצים "מודגשים" (focus): הנינג'ה והמכשולים
+   שימוש: const st = makeStyle(renderer, scene, camera, 'ink'); st.toonify(object3d); st.focus(object3d); בלולאה: st.render();
    ============================================================ */
 import * as THREE from 'three';
 
-export const STYLES = { toon: 0, ink: 1, water: 2 };
+export const STYLES = { toon: 0, ink: 1, water: 2, paper: 3, wash: 4 };
 
 export function makeStyle(renderer, scene, camera, name) {
   const mode = STYLES[name];
@@ -35,16 +37,19 @@ export function makeStyle(renderer, scene, camera, name) {
   const rtNorm = new THREE.WebGLRenderTarget(4, 4, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
   rtNorm.depthTexture = new THREE.DepthTexture(4, 4); rtNorm.depthTexture.type = THREE.UnsignedIntType;
   const normalMat = new THREE.MeshNormalMaterial();
+  // מסכה של החפצים המודגשים (שכבה 1): מציירים רק אותם בלבן, ברזולוציה חצויה
+  const rtMask = new THREE.WebGLRenderTarget(4, 4); const maskMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  function focus(root) { root.traverse(o => o.layers.enable(1)); }
 
   const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
     depthTest: false, depthWrite: false,
-    uniforms: { tColor: { value: rtColor.texture }, tNormal: { value: rtNorm.texture }, tDepth: { value: rtNorm.depthTexture },
+    uniforms: { tColor: { value: rtColor.texture }, tNormal: { value: rtNorm.texture }, tDepth: { value: rtNorm.depthTexture }, tMask: { value: rtMask.texture },
                 res: { value: new THREE.Vector2() }, near: { value: camera.near }, far: { value: camera.far }, mode: { value: mode } },
     vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
     fragmentShader: /* glsl */`
       precision highp float;
       varying vec2 vUv;
-      uniform sampler2D tColor, tNormal, tDepth; uniform vec2 res; uniform float near, far; uniform int mode;
+      uniform sampler2D tColor, tNormal, tDepth, tMask; uniform vec2 res; uniform float near, far; uniform int mode;
 
       float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
@@ -90,6 +95,32 @@ export function makeStyle(renderer, scene, camera, name) {
           float th = 1.2 + 2.6 * fbm(p / 120.0 + 3.0);                                         // קו מכחול: עבה ודק
           e = edgeAt(vUv + wob, th) * (0.75 + 0.35 * fbm(p / 9.0));
           col = mix(col, vec3(0.07, 0.06, 0.07), clamp(e, 0.0, 1.0) * 0.95);
+        } else if (mode >= 3) {                            // ----- משולב: צבעי מים + שכבות דיו + קו דק -----
+          float k = res.y / 900.0;                                                             // אותו עובי קו בכל גודל מסך
+          vec2 wob = (vec2(fbm(p / 55.0), fbm(p / 55.0 + 5.0)) - 0.5) * 6.0 * k / res;
+          vec3 s = vec3(0.0);
+          for (int i = 0; i < 6; i++){ float a = float(i) * 1.047; s += texture2D(tColor, vUv + wob + vec2(cos(a), sin(a)) * 2.0 * k / res).rgb; }
+          col = toSRGB(s / 6.0);
+          // מסכת ההדגשה, מורחבת מעט כדי לכלול גם את הקו שמסביב לצללית
+          float m = 0.0; for (int i = 0; i < 8; i++){ float a = float(i) * 0.785; m = max(m, texture2D(tMask, vUv + vec2(cos(a), sin(a)) * 3.0 * k / res).r); }
+          float m0 = texture2D(tMask, vUv).r; m = max(m, m0);                                  // m0 – בדיוק על החפץ; m – כולל שוליים לקו
+          float l = dot(col, vec3(0.299, 0.587, 0.114));
+          float red = smoothstep(0.12, 0.35, col.r - max(col.g, col.b));                       // אדום/ורוד נשארים חזקים
+          col = mix(vec3(l), col, clamp(0.62 + 0.5 * red + 0.3 * m0, 0.0, 1.15));               // צבעים עמומים, חוץ ממה שחשוב
+          float lb = floor(l * 6.0 + 0.5 + (cloud2 - 0.5) * 0.9) / 6.0;                        // שכבות־שכבות עם שוליים לא אחידים
+          col *= mix(1.0, (lb + 0.05) / (l + 0.05), 0.55);
+          col = mix(col, vec3(1.0), 0.20);                                                     // בהיר ורך
+          col *= 0.91 + 0.18 * cloud2;                                                         // פיגמנט לא אחיד
+          col = mix(col, vec3(1.0), smoothstep(0.62, 0.8, cloud) * 0.20);                      // כתמי נייר חשוף
+          float d = lin(vUv);
+          float th = (0.85 + 0.75 * fbm(p / (110.0 * k) + 3.0)) * k;                           // קו דק שמתעבה רק מעט
+          e = edgeAt(vUv + wob, th);
+          e *= 0.55 + 0.45 * smoothstep(0.30, 0.55, fbm(p / (16.0 * k)));                      // נקטע פה ושם, כמו ביד
+          e *= 1.0 - 0.75 * smoothstep(16.0, 55.0, d);                                         // על חפצים רחוקים כמעט נעלם
+          if (mode == 4) e *= mix(0.10, 1.0, m);                                               // כמעט בלי קו – חוץ מהמודגשים
+          col = mix(col, vec3(0.27, 0.22, 0.20), clamp(e, 0.0, 1.0) * 0.72);                   // אפור־חום, לא שחור
+          vec3 paper = vec3(1.0, 0.975, 0.925) * (0.93 + 0.10 * grain) * (0.975 + 0.04 * cloud);
+          col *= paper;
         } else {                                           // ----- צבעי מים -----
           vec2 wob = (vec2(fbm(p / 55.0), fbm(p / 55.0 + 5.0)) - 0.5) * 7.0 / res;             // הצבע "נמרח" מעט
           vec3 s = vec3(0.0);
@@ -112,7 +143,7 @@ export function makeStyle(renderer, scene, camera, name) {
 
   function resize() {
     renderer.getDrawingBufferSize(size);
-    rtColor.setSize(size.x, size.y); rtNorm.setSize(size.x, size.y);
+    rtColor.setSize(size.x, size.y); rtNorm.setSize(size.x, size.y); rtMask.setSize(size.x >> 1, size.y >> 1);
     quad.material.uniforms.res.value.copy(size);
   }
   resize();
@@ -123,8 +154,13 @@ export function makeStyle(renderer, scene, camera, name) {
     const bg = scene.background, fog = scene.fog, sh = renderer.shadowMap.autoUpdate;
     scene.overrideMaterial = normalMat; scene.background = null; scene.fog = null; renderer.shadowMap.autoUpdate = false;
     renderer.setRenderTarget(rtNorm); renderer.setClearColor(0x8080ff, 1); renderer.clear(); renderer.render(scene, camera);
+    if (mode === 4 || mode === 3) {                                               // מסכת המודגשים
+      scene.overrideMaterial = maskMat; camera.layers.set(1);
+      renderer.setRenderTarget(rtMask); renderer.setClearColor(0x000000, 1); renderer.clear(); renderer.render(scene, camera);
+      camera.layers.set(0);
+    }
     scene.overrideMaterial = null; scene.background = bg; scene.fog = fog; renderer.shadowMap.autoUpdate = sh;
     renderer.setRenderTarget(null); renderer.render(quadScene, quadCam);
   }
-  return { toonify, render, resize };
+  return { toonify, focus, render, resize };
 }

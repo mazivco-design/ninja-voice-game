@@ -51,7 +51,8 @@ Promise.all([fetch('assets/run.json').then(r => r.json()), load('assets/run.glb'
 
   // העולם: חפצים שחוזרים הרבה (עצים, שיחים, סלעים) הופכים ל־InstancedMesh – הרבה פחות עבודה לאייפד
   world.scene.updateMatrixWorld(true);
-  if (STYLE) { style = makeStyle(renderer, scene, camera, STYLE); style.toonify(world.scene); style.toonify(ch.scene); }
+  if (STYLE) { style = makeStyle(renderer, scene, camera, STYLE); style.toonify(world.scene); style.toonify(ch.scene);
+    style.focus(ch.scene); ['Log', 'Gate', 'Ladder'].forEach(n => { const o = world.scene.getObjectByName(n); if (o) style.focus(o); }); }   // מודגשים: הנינג'ה והמכשולים
   gateL = world.scene.getObjectByName('GateL'); gateR = world.scene.getObjectByName('GateR');
   const groups = new Map();
   world.scene.traverse(o => { if (o.isMesh) { const k = o.geometry.uuid + '|' + o.material.uuid; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(o); } });
