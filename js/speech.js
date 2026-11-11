@@ -127,7 +127,6 @@ function expectedWords0(strict) {                                              /
   if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? (merchant.t >= MERCH.askAt ? ['want'] : []) : merchant.phase === 'choose' ? (merchant.t >= MERCH.pickAt ? [...ITEM_WORDS] : []) : [];
   if (duelActive()) return ['fight'];
   const sce = scenesExpected(); if (sce) return sce;   // סצנות רשומות (scenes.js)
-  const be = boatExpected(); if (be) return be;
   if (gustActive()) return ['hold'];
   const le = liftExpected(); if (le) return le;
   if (tunnelWait) return ['crawl'];
@@ -284,7 +283,6 @@ function command(word, source) {
 
   if (scenesAct(word)) return;             // סצנות רשומות (scenes.js)
   if (word === 'jump') {
-    if (boatJump()) return;                // קופץ לתוך הסירה
     if (liftJump()) return;                // על הסלע – קופץ מעל הקיר / אל הכוכב
     if (py === 0) { vy = cfg.jumpV; py = 0.001; duckT = 0; sfx('jump'); }   // קופץ גם מתוך התכופפות
   } else if (word === 'up') { rideLane(true); }                       // UP – הדרקון עולה לגובה העליון
@@ -301,7 +299,6 @@ function command(word, source) {
     kickT = KICK.time;                     // בעיטה – שוברת קיר שקרוב מספיק
     duckT = 0;
   } else if (word === 'throw') {
-    if (boatThrow()) return;               // FISHING: זורק את החכה
     if (liftThrow()) return;               // PICK UP: זורק את החבל לבור (להצלת הגור)
     if (throwCd <= 0) {                    // זורק שוריקן קדימה
       const pb = playerBox();
@@ -321,13 +318,9 @@ function command(word, source) {
     }
   } else if (word === 'stop') { act.stop = STOP_TIME; act.run = 0; }       // העולם עוצר
   else if (word === 'run')   { if (strayWord('run')) return; act.run = RUN_BOOST.time; act.stop = 0; }   // דוהר מהר – אבל RUN ששמענו בטעות ליד מכשול אחר לא מאיץ אל תוכו
-  else if (word === 'swim' && boatSwim()) {}                             // FISHING: נפל מהסירה – שוחה חזרה
   else if (word === 'swim')  { act.swim = SWIM_TIME; duckT = 0; }
   else if (word === 'climb') { act.climbWant = 2.5; }                     // מטפס כשהנינג'ה מגיע לסולם (ההתקרבות איטית – ה-CLIMB לא פג בדרך)
-  else if (word === 'yes' && boatYes()) {}                                         // YES – עונים לחבר בסירה
-  else if (word === 'push' && boatPush()) {}                            // דוחפים את הסירה עם החבר
   else if (word === 'push')  { act.push = 0.6; duckT = 0; }
-  else if (word === 'pull' && boatPull()) {}                             // FISHING: מושך את הדג
   else if (word === 'pull' && liftPull()) {}                             // מושך את הגור מהבור
   else if (word === 'pull')  { act.pull = 0.6; act.pullWant = GATE.want; duckT = 0; }   // מושך כשמגיעים לחבל
   else if (word === 'hide')  { act.hide = HIDE_TIME; duckT = 0; }

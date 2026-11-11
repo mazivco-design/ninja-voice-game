@@ -31,7 +31,6 @@ let hideT = 0;               // כמה זמן הנינג'ה כבר בשיח (ל�
 function curSpeed() {
   const scs = scenesSpeed(); if (scs !== null) return scs;                 // סצנות רשומות (scenes.js)
   const ls = liftSpeed(); if (ls !== null) return ls;
-  const bts = boatSpeed(); if (bts !== null) return bts;
   if (tunnelHolds()) return 0;                                            // CRAWL: עומד בפתח המחילה ומחכה
   if (state !== 'play' && obstacles.some(o => o.type === 'bramble' && o.inTunnel)) return (runSpeed || cfg.speed) * BRAMBLE.slow;   // בהדגמה – זוחל לאורך המחילה                     // PICK UP: עומדים ליד הסלע / הולכים איתו לאט / על הסלע
   const ms = merchSpeed(); if (ms !== null) return ms;                    // I WANT: הולכים עם החפץ / מטפסים על הצוק / עוברים במערה
@@ -42,13 +41,12 @@ function curSpeed() {
 // מתקרבים לחבר בסירה / לילד עם העגלה / לדוכן הסוחר: מאטים בהדרגה ומגיעים בהליכה, לא בריצה שנעצרת בבת אחת
 const APPROACH = { from: 42, to: 8, walk: 9 };   // מתחילים להאט 42 יחידות לפני, ומ-8 לפני הולכים במהירות 9
 function approachDist() {
-  if ((scenesActive() || {}).stopAt || boat || merchant || typeof obstacles === 'undefined') return Infinity;
+  if ((scenesActive() || {}).stopAt || merchant || typeof obstacles === 'undefined') return Infinity;
   const r = PLAYER.x + PLAYER.w; let d = Infinity;
   for (const o of obstacles) {
     if (o.passed || o.waving) continue;
     const sc = SCENE_BY_TYPE[o.type];
     if (sc && sc.stopAt) d = Math.min(d, sc.stopAt(o) - r);   // סצנות רשומות (scenes.js)
-    else if (o.type === 'boat') d = Math.min(d, boatStern(o) - BOAT.stepDX - r);
     else if (o.type === 'cliff' && !o.climbed && !o.hit) d = Math.min(d, o.x - CLIFF.ladder - CLIFF.range - r);   // הצוק עם הסולם: מאטים ומגיעים בהליכה
     else if (o.type === 'gate' && !o.open && !o.lifting && !o.hit) d = Math.min(d, o.x - GATE.rope - r);   // השער עם החבל: מאטים לפני – יותר זמן להגיד PULL
     else if (o.type === 'door' && !o.unlocked && !o.hit) d = Math.min(d, o.x - DOOR.stopAt - r);   // הדוכן של הסוחר

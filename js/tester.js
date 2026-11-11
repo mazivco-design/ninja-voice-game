@@ -25,7 +25,6 @@ function testerTap() {
   if (gustActive()) return command('hold', 'tap');
   if (scenesTap()) return;   // סצנות רשומות (scenes.js)
   if (lift) { const w = liftExpected()[0]; if (w) command(w, 'tap'); return; }
-  if (boat) { const w = boatExpected()[0]; if (w) command(w, 'tap'); return; }
   if (ride && ride.phase === 'wait') return command('ride', 'tap');
   if (rope && rope.phase === 'wait') return command('catch', 'tap');
   if (rope && rope.phase === 'hang') return command('let go', 'tap');
@@ -70,7 +69,6 @@ function testerAutoScenes(t) {
   if (ride && ride.phase === 'wait') command('ride', 'auto');
   if (duel && duel.phase === 'face' && duel.t > 0.35) command('fight', 'auto');
   liftAuto();
-  boatAuto();
   scenesAuto();   // סצנות רשומות (scenes.js)
   if (tunnelWait && tunnelWait.idle > 0.3) command('crawl', 'auto');
   if (gust && gust.phase === 'storm' && gust.held === null && gust.t > 1.0) command('hold', 'auto');

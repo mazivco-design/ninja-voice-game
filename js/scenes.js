@@ -5,7 +5,8 @@
 
    כל השדות רשות, חוץ מ-type:
      type        סוג המכשול של הסצנה (obstacle.type), למשל 'bikeway'
-     word        מילת השלב ב-WORDS / STAGES, למשל 'bike'
+     word        מילת השלב ב-WORDS / STAGES, למשל 'bike'. כמה שלבים באותה סצנה: words: [...], ואז listen ו-intro הם מפה לפי מילה
+     variants    סוגי מכשול נוספים שהם אותה סצנה עם תכונות, למשל { fishboat: { mode: 'fish' } }; variantOf(o) מחזיר את שם הסוג של מכשול קיים
      label       true = מילת השלב היא רק שם, הילד לא אומר אותה (לא מאזינים לה ולא מקריאים אותה בפתיחה)
      listen      מילים נוספות שמאזינים להן כשהשלב פתוח
      active()    האם הסצנה רצה עכשיו
@@ -23,11 +24,12 @@
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
 const SCENES = [];
-const SCENE_BY_TYPE = {}, SCENE_BY_WORD = {};
+const SCENE_BY_TYPE = {}, SCENE_BY_WORD = {}, SCENE_VARIANT = {};
 function sceneAdd(def) {
   SCENES.push(def);
   if (def.type) SCENE_BY_TYPE[def.type] = def;
-  if (def.word) SCENE_BY_WORD[def.word] = def;
+  for (const w of def.words || (def.word ? [def.word] : [])) SCENE_BY_WORD[w] = def;
+  for (const v in def.variants || {}) SCENE_VARIANT[v] = { type: def.type, props: def.variants[v] };
 }
 
 function scenesReset() { for (const s of SCENES) if (s.reset) s.reset(); }
@@ -48,7 +50,9 @@ function scenesTap() {
 }
 // המילים שמאזינים להן: מוסיף ל-list את המילים של כל סצנה שהשלב שלה בין words
 function scenesListen(words, list) {
-  for (const s of SCENES) if (s.listen && words.includes(s.word)) for (const w of s.listen) if (!list.includes(w)) list.push(w);
+  for (const s of SCENES) if (s.listen) for (const sw of s.words || [s.word]) if (words.includes(sw)) for (const w of (Array.isArray(s.listen) ? s.listen : s.listen[sw]) || []) if (!list.includes(w)) list.push(w);
 }
 function sceneLabel(w) { const s = SCENE_BY_WORD[w]; return !!(s && s.label); }      // מילת שלב שהיא רק שם
-function sceneIntro(w) { const s = SCENE_BY_WORD[w]; return (s && s.intro) || null; }  // מסך הפתיחה של השלב, אם הסצנה רשומה
+function sceneIntro(w) { const s = SCENE_BY_WORD[w]; return (s && (s.words ? s.intro && s.intro[w] : s.intro)) || null; }  // מסך הפתיחה של השלב, אם הסצנה רשומה
+// השם שבו מכשול קיים חוזר לחפיסת המסע (סירה במצב דיג חוזרת כ-'fishboat')
+function sceneSpawnName(o) { const s = SCENE_BY_TYPE[o.type]; return s && s.variantOf ? s.variantOf(o) : o.type; }

@@ -761,3 +761,25 @@ function drawBoatTalk(o) {
     if (p === 'jumpWait') label('JUMP IN', PLAYER.x + 4, GROUND - 24, 4, '#fde047', '#1e293b');
   }
 }
+
+// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). הציור עדיין מחובר ב-draw.js
+// סצנה אחת לשני שלבים: PUSH TOGETHER (דוחפים את הסירה עם החבר) ו-FISHING (אותה סירה במצב דיג – מכשול 'fishboat')
+sceneAdd({
+  type: 'boat', words: ['push together', 'fishing'], label: true,
+  variants: { fishboat: { mode: 'fish' } }, variantOf: o => o.mode === 'fish' ? 'fishboat' : 'boat',
+  listen: { 'push together': ['jump in', 'push', 'jump', 'yes'], fishing: ['jump in', 'jump', 'throw', 'pull', 'swim'] },   // אפשר להגיד גם JUMP IN
+  active: () => !!boat,
+  reset: () => { boat = null; },
+  setup: boatSetup, afterGap: 0.8, noCollide: true,
+  box: o => ({ l: o.x, r: o.x + o.w, t: GROUND - 2, b: GROUND }),
+  stopAt: o => boatStern(o) - BOAT.stepDX,                                          // ליד החבר שעומד מאחורי הסירה
+  update: boatUpdate, physics: boatPhysics, speed: boatSpeed, pose: boatPose,
+  expected: boatExpected, auto: boatAuto,
+  act: word => word === 'jump' ? boatJump() : word === 'throw' ? boatThrow() : word === 'swim' ? boatSwim() : word === 'yes' ? boatYes() : word === 'push' ? boatPush() : word === 'pull' ? boatPull() : false,
+  intro: {
+    'push together': { banner: 'PUSH with your friend, then JUMP in!', time: 14,
+                       demo: () => { const o = { type: 'boat' }; boatSetup(o); o.x = PLAYER.x + PLAYER.w + BOAT.stepDX - BOAT.bx0; obstacles.push(o); } },   // מתחיל צמוד לסירה (boatUpdate מפעיל את ההדגמה)
+    fishing: { banner: 'THROW the line, then PULL!', time: 16,
+               demo: () => { const o = { type: 'boat', mode: 'fish' }; boatSetup(o); o.x = PLAYER.x + PLAYER.w + BOAT.stepDX - o.bx; obstacles.push(o); } }   // הסירה במים והחבר בתוכה
+  }
+});
