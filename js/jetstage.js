@@ -602,3 +602,18 @@ function drawJetHeld() {
   if (S.p === 'hold') jsPack(playerHand[0] + 0.6, playerHand[1], 0, false);
   if (S.p === 'put') { const k = Math.min(1, S.t / JS.putT), e = k * k * (3 - 2 * k); jsPack(lerp(playerHand[0] + 0.6, PLAYER.x + 1.2, e), lerp(playerHand[1], GROUND - py - 9.5, e) - Math.sin(Math.PI * e) * 4, 0, false); }
 }
+
+// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). הציור עדיין מחובר ב-draw.js
+sceneAdd({
+  type: 'jetgap', word: 'jetpack', label: true,
+  listen: ['pick up', 'put on', 'fly', 'up', 'down', 'crawl'],
+  active: () => !!jetS,
+  reset: () => { jetS = null; },
+  setup: jsSetup, afterGap: 0.8, noCollide: true,
+  box: o => ({ l: o.x, r: o.x + o.w, t: GROUND - 2, b: GROUND }),
+  stopAt: o => o.x + JS.stop,                                                       // התרמיל ליד התהום
+  update: jsUpdate, physics: jsPhysics, speed: jsSpeed, pose: jsPose,
+  expected: jsExpected, cmd: jsCmd, auto: jsAuto,
+  intro: { banner: 'PICK UP · PUT ON · FLY!', time: 14,
+           demo: () => { const o = { type: 'jetgap' }; jsSetup(o); o.x = PLAYER.x + PLAYER.w - JS.stop; obstacles.push(o); } }   // עומד ליד התרמיל (jsUpdate מפעיל את ההדגמה)
+});

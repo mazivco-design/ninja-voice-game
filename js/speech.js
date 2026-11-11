@@ -130,7 +130,6 @@ function expectedWords0(strict) {                                              /
   const me = mudExpected(); if (me) return me;
   const be = boatExpected(); if (be) return be;
   const ce = cartExpected(); if (ce) return ce;
-  const jse = jsExpected(); if (jse) return jse;
   if (gustActive()) return ['hold'];
   const le = liftExpected(); if (le) return le;
   if (tunnelWait) return ['crawl'];
@@ -282,7 +281,6 @@ function command(word, source) {
   if (state !== 'play' && !((state === 'demo' || state === 'intro') && source === 'demo')) return;   // במילון ובהדגמה – רק ההדגמה מזיזה את הנינג'ה
   heard = { text: word.toUpperCase(), t: 0.8 };
   if (scenesCmd(word)) return;             // סצנות רשומות (scenes.js)
-  if (jsCmd(word)) return;                 // שלב תרמיל הסילון: PICK UP / PUT ON / FLY / UP / DOWN
   if ((source === 'voice' || source === 'tap') && state === 'play' && expectedWords0(true).includes(word)) okBadge = { w: word, t: 1.0 };   // פידבק: נקלט נכון
   if ((source === 'voice' || source === 'tap') && earlyHold(word)) { okBadge = null; return; }   // מילה נכונה שנאמרה מוקדם – נשמרת ומופעלת כשמגיעים למכשול
 
