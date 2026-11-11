@@ -1007,6 +1007,138 @@
   "hash": 1646085613,
   "phases": "bike:rideWait > bike:mount > bike:ride > bike:duckWait > bike:duckGo > bike:ride > bike:rampWait > bike:rampGo > bike:ride > bike:down > bike:liftOver > bike:ride > bike:stopWait > bike:stopping > bike:offWait > bike:off > bike:cheer"
  },
+ "listen / JUMP": {
+  "words": "jump, shield"
+ },
+ "listen / DOWN": {
+  "words": "down, shield"
+ },
+ "listen / JUMP + DOWN": {
+  "words": "down, jump, shield"
+ },
+ "listen / KICK": {
+  "words": "kick, shield"
+ },
+ "listen / THROW": {
+  "words": "shield, throw"
+ },
+ "listen / KICK + THROW": {
+  "words": "kick, shield, throw"
+ },
+ "listen / CATCH": {
+  "words": "catch, shield"
+ },
+ "listen / JUMP + FLY": {
+  "words": "fly, jump, shield"
+ },
+ "listen / CATCH + FLY": {
+  "words": "catch, fly, jump, shield"
+ },
+ "listen / STOP": {
+  "words": "shield, stop"
+ },
+ "listen / RUN": {
+  "words": "run, shield"
+ },
+ "listen / STOP + RUN": {
+  "words": "run, shield, stop"
+ },
+ "listen / SWIM": {
+  "words": "shield, swim"
+ },
+ "listen / CLIMB": {
+  "words": "climb, shield"
+ },
+ "listen / SWIM + CLIMB": {
+  "words": "climb, shield, swim"
+ },
+ "listen / PUSH": {
+  "words": "push, shield"
+ },
+ "listen / PULL": {
+  "words": "pull, shield"
+ },
+ "listen / PUSH + PULL": {
+  "words": "pull, push, shield"
+ },
+ "listen / HIDE": {
+  "words": "hide, shield"
+ },
+ "listen / BLOCK": {
+  "words": "block, shield"
+ },
+ "listen / HIDE + BLOCK": {
+  "words": "block, hide, shield"
+ },
+ "listen / LEAP": {
+  "words": "leap, shield"
+ },
+ "listen / DIVE": {
+  "words": "dive, shield"
+ },
+ "listen / LEAP + DIVE": {
+  "words": "dive, leap, shield"
+ },
+ "listen / CRAWL": {
+  "words": "crawl, shield"
+ },
+ "listen / FIRE": {
+  "words": "fire, shield"
+ },
+ "listen / CRAWL + FIRE": {
+  "words": "crawl, fire, shield"
+ },
+ "listen / I WANT": {
+  "words": "i, key, rope, shield, torch, want"
+ },
+ "listen / LET GO": {
+  "words": "catch, let go, shield"
+ },
+ "listen / RIDE": {
+  "words": "down, fire, ride, shield, up"
+ },
+ "listen / FIGHT": {
+  "words": "fight, shield"
+ },
+ "listen / HOLD": {
+  "words": "hold, shield"
+ },
+ "listen / PICK UP": {
+  "words": "jump, pick up, pull, put down, shield, throw"
+ },
+ "listen / PICK UP + PUT DOWN": {
+  "words": "jump, pick up, pull, put down, shield, throw"
+ },
+ "listen / PICK UP + THROW": {
+  "words": "jump, pick up, pull, put down, shield, throw"
+ },
+ "listen / HELP": {
+  "words": "catch, hold, shield"
+ },
+ "listen / PUSH TOGETHER": {
+  "words": "jump, jump in, push, shield, yes"
+ },
+ "listen / PUSH ON THREE": {
+  "words": "jump, jump in, push, shield, yes"
+ },
+ "listen / FISHING": {
+  "words": "jump, jump in, pull, shield, swim, throw"
+ },
+ "listen / WILD BOAR": {
+  "words": "climb, hide, shield, sneak"
+ },
+ "listen / JET PACK": {
+  "words": "crawl, down, fly, pick up, put on, shield, up"
+ },
+ "listen / WOLVES": {
+  "words": "catch, climb, hold, jump, shield"
+ },
+ "listen / BIKE": {
+  "words": "brake, get off, jump, ride, ring, shield, stop"
+ },
+ "listen / journey": {
+  "words": "block, brake, catch, climb, crawl, dive, down, fight, fire, fly, get off, hide, hold, i, jump, jump in, key, kick, leap, let go, pick up, pull, push, put down, put on, ride, ring, rope, run, shield, sneak, stop, swim, throw, torch, up, want, yes"
+ },
  "intro / JUMP": {
   "sec": 2.82,
   "hash": 3942402658,

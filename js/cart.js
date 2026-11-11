@@ -333,3 +333,19 @@ function drawCartFront(o) {
   if (p === 'byeK') { drawBubble('Bye! 👋', C.kx - 1, GROUND - 19, { age: C.t, tail: -1, size: 3.4, color: '#be185d' }); if (C.t > 0.3) drawBubble('Bye!', PLAYER.x + 5, GROUND - 22, { age: C.t - 0.3, tail: 1, size: 3.4, color: '#1d4ed8' }); }
   if (p === 'ride' || (p === 'roll' && C.t < 1.2)) say('Wheee!', { age: p === 'ride' ? C.t : undefined, color: '#be185d', size: 4.2 });
 }
+
+// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). הציור עדיין מחובר ב-draw.js
+sceneAdd({
+  type: 'cart', word: 'push on three', label: true,
+  listen: ['jump in', 'push', 'jump', 'yes'],                                        // PUSH בספירה, ואז JUMP / JUMP IN
+  active: () => !!cart,
+  reset: () => { cart = null; },
+  setup: cartSetup, afterGap: 0.8, noCollide: true,
+  box: o => ({ l: o.x, r: o.x + o.w, t: GROUND - 2, b: GROUND }),
+  stopAt: o => o.x + o.cp - CART.stepDX - CART.watch,                               // מול הילד עם העגלה
+  update: cartUpdate, physics: cartPhysics, speed: cartSpeed, pose: cartPose,
+  expected: cartExpected, auto: cartAuto,
+  act: word => word === 'jump' ? cartJump() : word === 'yes' ? cartYes() : word === 'push' ? cartPush() : false,
+  intro: { banner: 'PUSH on THREE, then JUMP in!', time: 31,
+           demo: () => { const o = { type: 'cart' }; cartSetup(o); o.x = PLAYER.x + PLAYER.w + CART.stepDX + CART.watch - CART.cp0; obstacles.push(o); } }   // מתחיל מול הילד (cartUpdate מפעיל את ההדגמה)
+});

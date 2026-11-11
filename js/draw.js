@@ -480,7 +480,6 @@ function playerPose() {
   P = duelPlayerPose(P, now);
   P = liftPose(P);
   P = boatPose(P);
-  P = cartPose(P);
   P = scenesPose(P);                               // סצנות רשומות (scenes.js)
   P = merchPose(P);                                // PICK UP: הסלע מעל הראש
   P = jetPose(P);                                 // תרמיל סילון – עף קדימה                     // קרב: עמידה עם חרב והנפות

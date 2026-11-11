@@ -128,7 +128,6 @@ function expectedWords0(strict) {                                              /
   if (duelActive()) return ['fight'];
   const sce = scenesExpected(); if (sce) return sce;   // סצנות רשומות (scenes.js)
   const be = boatExpected(); if (be) return be;
-  const ce = cartExpected(); if (ce) return ce;
   if (gustActive()) return ['hold'];
   const le = liftExpected(); if (le) return le;
   if (tunnelWait) return ['crawl'];
@@ -286,7 +285,6 @@ function command(word, source) {
   if (scenesAct(word)) return;             // סצנות רשומות (scenes.js)
   if (word === 'jump') {
     if (boatJump()) return;                // קופץ לתוך הסירה
-    if (cartJump()) return;                // קופץ לתוך העגלה
     if (liftJump()) return;                // על הסלע – קופץ מעל הקיר / אל הכוכב
     if (py === 0) { vy = cfg.jumpV; py = 0.001; duckT = 0; sfx('jump'); }   // קופץ גם מתוך התכופפות
   } else if (word === 'up') { rideLane(true); }                       // UP – הדרקון עולה לגובה העליון
@@ -326,8 +324,8 @@ function command(word, source) {
   else if (word === 'swim' && boatSwim()) {}                             // FISHING: נפל מהסירה – שוחה חזרה
   else if (word === 'swim')  { act.swim = SWIM_TIME; duckT = 0; }
   else if (word === 'climb') { act.climbWant = 2.5; }                     // מטפס כשהנינג'ה מגיע לסולם (ההתקרבות איטית – ה-CLIMB לא פג בדרך)
-  else if (word === 'yes' && (boatYes() || cartYes())) {}                                         // YES – עונים לחבר בסירה
-  else if (word === 'push' && (boatPush() || cartPush())) {}                            // דוחפים את הסירה עם החבר
+  else if (word === 'yes' && boatYes()) {}                                         // YES – עונים לחבר בסירה
+  else if (word === 'push' && boatPush()) {}                            // דוחפים את הסירה עם החבר
   else if (word === 'push')  { act.push = 0.6; duckT = 0; }
   else if (word === 'pull' && boatPull()) {}                             // FISHING: מושך את הדג
   else if (word === 'pull' && liftPull()) {}                             // מושך את הגור מהבור

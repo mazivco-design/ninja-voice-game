@@ -19,6 +19,13 @@ with open_game() as (pg, errs):
             pg.fresh()
             r = pg.evaluate("([i, d]) => T.run({ stage: i, diff: d })", [i, d])
             now[f'{d} / {name}'] = { 'end': r['title'], 'sec': r['sec'], 'hits': r['hits'], 'score': r['score'], 'hash': r['hash'], 'phases': ' > '.join(r['phases']) }
+    # המילים שמאזינים להן (listenWords) בכל שלב ובמסע – ממוינות, כי הסדר לא משנה למנוע הזיהוי
+    pg.fresh()
+    lw = pg.evaluate("""async () => { stopAudio = () => {}; ensureAudio = async () => false; const out = {};
+      for (let i = 0; i < STAGES.length; i++) { await play('stage', i); out['listen / ' + STAGES[i].name] = listenWords.slice().sort().join(', '); }
+      getLearned = () => WORDS.slice(); isLearned = () => true; await play('journey', 0); out['listen / journey'] = listenWords.slice().sort().join(', ');
+      return out; }""")
+    for k, v in lw.items(): now[k] = { 'words': v }
     for i, name, w0 in stages:
         # מסך הפתיחה של השלב (ההדגמה): משך, הכרזות, מה נאמר בקול, ורצף הפאזות
         pg.fresh()
