@@ -76,7 +76,7 @@ for v in bm.verts:
     vcol[v.index] = rgb
 for f in bm.faces:
     for l in f.loops: l[col] = (*vcol[l.vert.index], 1)
-obj_from_bm('Ground', bm, M['ground'])
+obj_from_bm('Ground', bm, M['ground'], smooth=True)          # חלק – כדי שקווי המתאר (בסגנון המצויר) לא יסמנו כל משולש
 
 # ---------- מכשולים ----------
 def along(x, lat=0.0):

@@ -11,11 +11,14 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { makeStyle, STYLES } from './style.js';
 
 const Q = new URLSearchParams(location.search);
 const AUTO = Q.has('auto');                       // לבדיקות: אומר את המילים לבד
 const TS = +Q.get('ts') || 1;
 const $ = id => document.getElementById(id);
+const STYLE = Q.get('style') in STYLES ? Q.get('style') : null;   // toon / ink / water – מראה מצויר (style.js); בלי – המראה הרגיל
+let style = null;
 
 // ---------- במה ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -48,6 +51,7 @@ Promise.all([fetch('assets/run.json').then(r => r.json()), load('assets/run.glb'
 
   // העולם: חפצים שחוזרים הרבה (עצים, שיחים, סלעים) הופכים ל־InstancedMesh – הרבה פחות עבודה לאייפד
   world.scene.updateMatrixWorld(true);
+  if (STYLE) { style = makeStyle(renderer, scene, camera, STYLE); style.toonify(world.scene); style.toonify(ch.scene); }
   gateL = world.scene.getObjectByName('GateL'); gateR = world.scene.getObjectByName('GateR');
   const groups = new Map();
   world.scene.traverse(o => { if (o.isMesh) { const k = o.geometry.uuid + '|' + o.material.uuid; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(o); } });
@@ -127,6 +131,7 @@ function say(word) {
 $('say').addEventListener('pointerdown', e => { e.preventDefault(); const o = nextObs(); if (o) say(o.type); });
 addEventListener('keydown', e => { const o = nextObs(); if (o && (e.code === 'Space' || e.key.toUpperCase() === o.type[0])) say(o.type); });
 $('again').addEventListener('click', setup);
+document.querySelectorAll('#styles a').forEach(a => { const q = new URLSearchParams(location.search); a.dataset.s ? q.set('style', a.dataset.s) : q.delete('style'); a.href = '?' + q; a.classList.toggle('on', (a.dataset.s || null) === STYLE); });
 
 // ---------- תנועה ----------
 function update(dt) {
@@ -223,6 +228,6 @@ function loop() {
   const dt = Math.min(0.05, clock.getDelta());
   for (let i = 0; i < TS; i++) { update(dt); mixer.update(dt); placeCamera(dt); }     // TS>1 רק לבדיקות (הרצה מהירה)
   updateWord();
-  renderer.render(scene, camera);
+  if (style) style.render(); else renderer.render(scene, camera);
   requestAnimationFrame(loop);
 }

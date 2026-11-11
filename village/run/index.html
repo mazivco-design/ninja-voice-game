@@ -24,6 +24,10 @@
   #end { position: fixed; inset: 0; display: none; flex-direction: column; gap: 18px; align-items: center; justify-content: center; background: rgba(15, 23, 42, .35); }
   #end div { color: #fff; font: bold 40px system-ui, sans-serif; text-shadow: 0 2px 8px rgba(0,0,0,.4); }
   #end button { padding: 12px 28px; border: 0; border-radius: 14px; background: #f8fafc; color: #0f172a; font: bold 20px system-ui, sans-serif; }
+  #styles { position: fixed; top: 10px; left: 12px; display: flex; gap: 6px; direction: rtl; }
+  #styles a { padding: 7px 12px; border-radius: 10px; background: rgba(15, 23, 42, .5); color: #f8fafc; font-size: 14px; text-decoration: none; }
+  #styles a.on { background: #f8fafc; color: #0f172a; font-weight: 600; }
+  #hint { top: 54px !important; }
   #load { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #bfe3f5; color: #1f2937; font-size: 18px; }
 </style>
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
@@ -31,6 +35,7 @@
 <body>
 <div id="load">טוען את העמק…</div>
 <div id="hint" class="pill">הנינג'ה רץ לבד · כשמופיעה מילה – נוגעים בה (בהמשך: אומרים אותה)</div>
+<div id="styles"><a>רגיל</a><a data-s="toon">מצויר</a><a data-s="ink">דיו</a><a data-s="water">צבעי מים</a></div>
 <div id="tag"></div>
 <button id="say"></button>
 <div id="end"><div>הגעת לשער! 🎉</div><button id="again">שוב</button></div>
