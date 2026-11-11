@@ -33,7 +33,7 @@
 #menu.fuji .mpA { grid-area: a; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 #menu.fuji .mpGo { grid-area: go; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 #menu.fuji .mpC { grid-area: c; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
-#menu.fuji .mpBtns { grid-area: btns; display: flex; gap: 8px; margin: 0; padding: 0; position: static; background: none; }
+#menu.fuji .mpBtns { grid-area: btns; display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; position: static; background: none; }
 
 #menu.fuji .mtop { display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: nowrap; }
 #menu.fuji .seal { width: 40px; height: 40px; flex: none; border-radius: 8px; background: #c8372d; color: #fbf5e6; transform: rotate(-4deg);
@@ -84,13 +84,14 @@
 #menu.fuji .stage:disabled { opacity: 1; }
 #menu.fuji .stage.locked .num { opacity: .6; }
 
-#menu.fuji .free { flex: 1; min-width: 0; height: 52px; padding: 0 8px; border-radius: 12px; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 15px; font-weight: 900;
+#menu.fuji .free { flex: 1; min-width: max-content; height: 52px; padding: 0 8px; border-radius: 12px; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 15px; font-weight: 900;
   box-shadow: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
 #menu.fuji .free.mix, #menu.fuji .free.words, #menu.fuji .free.order { background: transparent; border: 2px solid #2c4a7c; color: #2c4a7c; }
-#menu.fuji .free.shop { flex: 1.5; background: #e9b949; border: 0; color: #4a2f0b; box-shadow: 0 4px 0 #a07a22; font-size: 16px; }
+#menu.fuji .free.shop { flex: 1.5; padding: 0 12px; background: #e9b949; border: 0; color: #4a2f0b; box-shadow: 0 4px 0 #a07a22; font-size: 16px; }
 #menu.fuji .free.shop .stall { width: 28px; height: 26px; flex: none; }
 #menu.fuji .free.shop .coinIco { width: 1em; height: 1em; box-shadow: none; }
 #menu.fuji .free:disabled { opacity: .55; }
+/* כפתור לא נמחץ מתחת לרוחב התוכן שלו: כשאין מקום (במצב בודק יש גם Order ו-Coins) הכפתורים יורדים לשורה שנייה */
 
 /* ---------- לוח הניקוד: זז ומתקפל ---------- */
 #menu.fuji .sideBoard { position: absolute; left: 16px; top: 62px; width: 272px; max-height: min(62vh, 520px); z-index: 4; order: 0;
