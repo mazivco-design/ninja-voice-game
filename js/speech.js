@@ -126,7 +126,6 @@ function expectedWords() { return [...expectedWords0(), ...powerWordsOwned()]; }
 function expectedWords0(strict) {                                              // strict – בלי ברירת המחדל "כל המילים"
   if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? (merchant.t >= MERCH.askAt ? ['want'] : []) : merchant.phase === 'choose' ? (merchant.t >= MERCH.pickAt ? [...ITEM_WORDS] : []) : [];
   const sce = scenesExpected(); if (sce) return sce;   // סצנות רשומות (scenes.js)
-  if (rope && rope.phase !== 'done') return rope.phase === 'wait' ? ['catch'] : rope.phase === 'hang' ? ['let go'] : [];
   const pb = playerBox(), out = [];
   for (const o of obstacles) {
     if (o.passed || o.hit || o.caught || o.x + (o.w || 0) < pb.l || o.x > W + 10) continue;

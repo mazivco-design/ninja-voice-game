@@ -22,7 +22,6 @@ async function play(m, idx) {
   const words = m === 'stage' ? STAGES[idx || 0].words : m === 'journey' ? journeyWords(WORDS.length) : freeWords();   // במסע מקשיבים לכל המילים שנלמדו
   listenWords = words.includes('fly') && !words.includes('jump') ? [...words, 'jump'] : [...words];   // FLY צריך גם JUMP
   if (words.includes('want')) listenWords.push('i', ...ITEM_WORDS);
-  if (words.includes('let go') && !words.includes('catch')) listenWords.push('catch');
   scenesListen(words, listenWords);   // סצנות רשומות (scenes.js)
   listenWords = listenWords.filter(w => !sceneLabel(w));
   if (m !== 'demo') for (const w of powerWordsOwned()) if (!listenWords.includes(w)) listenWords.push(w);   // SHIELD / JET – אם יש מנות
@@ -37,7 +36,7 @@ function startGame(m, idx) {
   banked = false; resetAct(); sinkT = 0; coinsFlying = 0; dragonUsed = false; petX = 0; runGain = 0; segSettled = true;
   world = m === 'stage' ? (STAGES[idx || 0].world ?? PAIR_WORLD[Math.floor((idx || 0) / 3)]) : 0;
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
-  scenesReset(); learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = null; liftIdx = 0; ptIdx = 0; merchNext = 'key'; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; rope = null; particles = []; flag = null;
+  scenesReset(); learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = null; liftIdx = 0; ptIdx = 0; merchNext = 'key'; obstacles = []; shurikens = []; fireballs = []; pickups = []; merchant = null; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
   earlyWord = null; py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
@@ -207,7 +206,6 @@ function spawn() {
   const o = { type, x: viewR() + 2, passed: false, hit: false };
   if (variant) Object.assign(o, variant.props);
   if (type === 'river') o.w = riverWidth();
-  if (type === 'chasm') o.w = CHASM.w;
   { const sc = SCENE_BY_TYPE[type]; if (sc && sc.setup) sc.setup(o); }   // סצנות רשומות (scenes.js)
   if (type === 'lake') o.w = speed * LAKE.factor;        // רחב מדי לקפיצה
   if (type === 'bridge') o.w = speed * BRIDGE.factor;    // רחב מדי לקפיצה, ארוך מדי להליכה
@@ -255,7 +253,6 @@ function obstacleBox(o) {
     case 'ice':   return { l: o.x, r: o.x + ICE.w, t: GROUND - ICE.h, b: GROUND };
     case 'door':  return { l: o.x, r: o.x + (o.w || DOOR.w), t: GROUND - DOOR.h, b: GROUND };
     case 'skyrock': case 'bat': return skyBox(o);
-    case 'chasm': return { l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 40 };
     case 'enemy': return { l: o.x, r: o.x + ENEMY.w, t: GROUND - ENEMY.h, b: GROUND };
     case 'river': return { l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 20 };
     case 'coin':return { l: o.x, r: o.x + 6, t: COIN.y - 3, b: COIN.y + 3 };
@@ -284,7 +281,7 @@ function collides(o, pb) {
   if (o.demo || o.type === 'coin' || o.broken || o.defeated) return false;
   if (jetSafe()) return false;                                // עף עם תרמיל הסילון – מעל הכול
   if (SCENE_BY_TYPE[o.type] && SCENE_BY_TYPE[o.type].noCollide) return false;   // סצנות רשומות (scenes.js)
-  if (o.climbed || o.pushed || o.open || o.deflected || o.landed || o.unlocked || o.type === 'chasm') return false;   // תהום: העולם עוצר לפניה, הנפילה מטופלת ב-rope.js
+  if (o.climbed || o.pushed || o.open || o.deflected || o.landed || o.unlocked) return false;   // תהום: העולם עוצר לפניה, הנפילה מטופלת ב-rope.js
   if (o.type === 'rock' && o.fallK === undefined) return false;
   if (o.type === 'guard' && hidingFrom === o) return false;   // מתכופף מאחורי הסלעים – השומרים לא רואים
   const m = cfg.forgive || 0;
@@ -519,7 +516,6 @@ function update(dt) {
 
   const pb = playerBox();
   merchantUpdate(dt, pb);
-  ropeUpdate(dt, pb);
   earlyUpdate(dt);                                   // מילה נכונה שנאמרה מוקדם – מופעלת כשמגיעים למכשול
   scenesUpdate(dt, pb);                              // סצנות רשומות (scenes.js)
   powerTick(dt);

@@ -142,3 +142,19 @@ function drawRopeSwing(o) {                                      // החבל (ו
   if (rope && rope.o === o && rope.phase === 'wait' && labelsVisible()) label('CATCH', ax, ay - 8, 4, '#fde047', '#1e293b');
   if (rope && rope.o === o && rope.phase === 'hang' && labelsVisible()) label('LET GO', ax, ay - 8, 4, '#fde047', '#1e293b');
 }
+
+// הרישום של הסצנה (scenes.js). סצנה ישנה – נשארו בבסיס: המילים CATCH / LET GO ב-speech.js (הסדר שם חשוב),
+// עצירת העולם ב-state.js, הרווח של הגבעה לפני ואחרי התהום ב-spawn (game.js), והציור ב-draw.js
+sceneAdd({
+  type: 'chasm', word: 'let go',
+  listen: ['catch'],                                                                 // LET GO צריך גם CATCH
+  active: () => !!rope && (rope.phase === 'wait' || rope.phase === 'hang'),
+  reset: () => { rope = null; },
+  setup: o => { o.w = CHASM.w; }, noCollide: true,                                   // העולם עוצר לפני התהום, הנפילה מטופלת ב-rope.js
+  box: o => ({ l: o.x, r: o.x + o.w, t: GROUND, b: GROUND + 40 }),
+  update: ropeUpdate,
+  expected: () => rope && rope.phase !== 'done' ? (rope.phase === 'wait' ? ['catch'] : rope.phase === 'hang' ? ['let go'] : []) : null,
+  auto: () => { if (rope && rope.phase === 'wait') command('catch', 'auto'); else if (rope && rope.phase === 'hang' && rope.theta >= ROPE.amp * ROPE.farAt) command('let go', 'auto'); },
+  intro: { time: 5, demo: () => { obstacles.push({ type: 'chasm', x: PLAYER.x + PLAYER.w + ROPE.stopAt - 2, w: CHASM.w }); },
+           steps: () => [{ at: 0.9, w: 'catch' }, { at: 2.7, w: 'let go' }] }
+});

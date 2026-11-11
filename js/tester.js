@@ -22,8 +22,6 @@ function testerTap() {
   if (merchant && merchant.phase === 'ask' && merchant.t >= MERCH.askAt) return command('want', 'tap');
   if (merchant && merchant.phase === 'choose') return command(needOf(merchant.o), 'tap');
   if (scenesTap()) return;   // סצנות רשומות (scenes.js)
-  if (rope && rope.phase === 'wait') return command('catch', 'tap');
-  if (rope && rope.phase === 'hang') return command('let go', 'tap');
   const pb = playerBox();
   const o = obstacles.filter(o => !o.passed && !o.hit && !o.caught && o.x + (o.w || 0) >= pb.l).sort((a, b) => a.x - b.x)[0];
   if (!o) return command('jump', 'tap');
@@ -63,7 +61,6 @@ function autoFireNow(o, pb) {
 }
 function testerAutoScenes(t) {
   scenesAuto();   // סצנות רשומות (scenes.js)
-  if (rope && rope.phase === 'wait') command('catch', 'auto'); else if (rope && rope.phase === 'hang' && rope.theta >= ROPE.amp * ROPE.farAt) command('let go', 'auto');
   if (merchant && merchant.t > 1) { if (merchant.phase === 'ask' && merchant.t > MERCH.askAt + 0.6) command('want', 'auto'); else if (merchant.phase === 'choose' && merchant.t > MERCH.pickAt) command(needOf(merchant.o), 'auto'); }
   if (autoSt.flyAt !== null && t >= autoSt.flyAt) { command('fly', 'auto'); autoSt.flyAt = null; }
 }
