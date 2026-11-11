@@ -479,7 +479,6 @@ function playerPose() {
   P = gustPlayerPose(P, now);                     // רוח: נצמד לבמבוק / עף אחורה
   P = duelPlayerPose(P, now);
   P = liftPose(P);
-  P = mudPose(P);
   P = boatPose(P);
   P = cartPose(P);
   P = scenesPose(P);                               // סצנות רשומות (scenes.js)

@@ -451,3 +451,18 @@ function drawCrow(x, y, dir, flap, burnt) {
   wing(-2.0 - flap * 2.0, '#1f2937');                                             // כנף קרובה
   ctx.restore();
 }
+
+// הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). הציור עדיין מחובר ב-draw.js
+sceneAdd({
+  type: 'mud', word: 'help', label: true,                                           // HELP: בינתיים המשחק אומר HELP, הילד אומר CATCH ו-HOLD
+  listen: ['catch', 'hold'],
+  active: () => !!mud,
+  reset: () => { mud = null; },
+  setup: o => { o.w = MUD.w + MUD.stand + 8; }, afterGap: 0.8, noCollide: true,
+  box: o => ({ l: o.x, r: o.x + MUD.w, t: GROUND - 2, b: GROUND }),
+  update: mudUpdate, speed: mudSpeed, pose: mudPose,
+  expected: mudExpected, auto: mudAuto,
+  act: word => word === 'jump' ? mudBusy() : word === 'catch' ? mudCatch() : word === 'hold' ? mudHold() : false,   // תקוע בבוץ – אי אפשר לקפוץ
+  intro: { banner: 'CATCH the rope, then HOLD!', time: 12.7,
+           demo: () => { obstacles.push({ type: 'mud', x: PLAYER.x + 4 - MUD.stuck, w: MUD.w + MUD.stand + 8 }); } }   // נתקע מיד – והחבר בא (mudUpdate מפעיל את ההדגמה)
+});
