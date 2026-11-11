@@ -127,7 +127,6 @@ function expectedWords0(strict) {                                              /
   if (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') return merchant.phase === 'ask' ? (merchant.t >= MERCH.askAt ? ['want'] : []) : merchant.phase === 'choose' ? (merchant.t >= MERCH.pickAt ? [...ITEM_WORDS] : []) : [];
   if (duelActive()) return ['fight'];
   const sce = scenesExpected(); if (sce) return sce;   // סצנות רשומות (scenes.js)
-  if (gustActive()) return ['hold'];
   if (ride && ride.phase === 'wait') return ['ride'];
   if (ride && (ride.phase === 'mount' || ride.phase === 'takeoff')) return ['up', 'down', 'fire'];
   if (rope && rope.phase !== 'done') return rope.phase === 'wait' ? ['catch'] : rope.phase === 'hang' ? ['let go'] : [];

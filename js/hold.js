@@ -271,3 +271,17 @@ function drawGustNinja() {
   }
   return false;
 }
+
+// הרישום של הסצנה (scenes.js). סצנה ישנה – חלק מהחיבורים נשארו בבסיס: המילה HOLD ב-speech.js (אחרי HOLD של הבוץ),
+// האטת העולם (gustHolds / gustSlow ב-state.js), התנוחה והציור ב-draw.js
+sceneAdd({
+  type: 'gust', word: 'hold',
+  active: gustActive,                                                               // מחכים ל-HOLD
+  reset: () => { gust = null; gustAdv = 0; windLevel = 0; windStreaks = []; },
+  setup: o => { o.w = GUST.stalks[2] + 4; }, afterGap: 0.4, noCollide: true,
+  box: o => ({ l: o.x, r: o.x + GUST.stalks[2] + 4, t: GROUND - GUST.h, b: GROUND }),   // כל החורשה
+  update: gustUpdate,
+  expected: () => gustActive() ? ['hold'] : null,
+  auto: () => { if (gust && gust.phase === 'storm' && gust.held === null && gust.t > 1.0) command('hold', 'auto'); },
+  intro: { time: 5, demo: () => { obstacles.push({ type: 'gust', x: PLAYER.x + PLAYER.w + 1 - GUST.stalks[2], w: GUST.stalks[2] + 4 }); }, steps: () => [{ at: 1.2, w: 'hold' }] }
+});
