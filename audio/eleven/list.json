@@ -2097,6 +2097,234 @@
    },
    "text": "Which one?",
    "voice": "Roger"
+  },
+  {
+   "file": "friend7-lukas-ugh",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[straining] Ugh! Too heavy!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-overhere",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[shouting] Hey! Over here!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-boatstuck",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "My boat is stuck!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-please",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[hopeful] Please?",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-yay",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[excited] Yay!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-pushtogether",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[happy] Let's push together!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-comeonpush",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "Come on, push!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-comeon",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "Come on!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-wedidit",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[excited] Yes! We did it!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-comeonjump",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "Come on, jump in!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-niceone",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[happy] Nice one!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-fish",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[excited] Look! A fish!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-thanks-buddy-see",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[happy] Thanks, buddy! See you!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-hello1",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[happy] Hey, buddy! Push with me?",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-hello2",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[happy] You again! Push with me?",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-hello3",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[happy] Perfect timing! Push with me?",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-thanks-buddy",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[happy] Thanks, buddy!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-niceone-see",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[happy] Nice one! See you!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend7-lukas-seeyousoon",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[happy] See you soon!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
   }
  ]
 }
