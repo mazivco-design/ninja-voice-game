@@ -90,6 +90,9 @@ h3 { font-size: 14px; color: #94a3b8; margin: 12px 0 6px; font-weight: 800; }
 <div id="app">
   <div id="stage">
     <div id="bar">
+      <a class="b" href="ninja-voice-game.html" style="text-decoration:none">🎮 חזרה למשחק</a>
+      <a class="b" href="ninja-voice-game.html#design" style="text-decoration:none">🎨 Design</a>
+      <div class="sep"></div>
       <div class="grp" id="chars"></div>
       <div class="sep"></div>
       <div class="grp">
@@ -239,6 +242,9 @@ function renderBar() {
 $('play').onclick = () => { playing = !playing; renderBar(); };
 $('step').onclick = () => { playing = false; t += 1 / 30; renderBar(); };
 $('skel').onclick = () => { skeleton = !skeleton; renderBar(); };
+document.querySelectorAll('#bar a.b').forEach(l => l.onclick = e => {      // יוצאים מהעורך – לא לאבד שינויים שלא נשמרו
+  if (JSON.stringify(RIG) !== saved && !confirm('יש שינויים שלא נשמרו בטיוטה. לצאת בלי לשמור?')) e.preventDefault();
+});
 $('onion').onclick = () => { onion = !onion; renderBar(); showTip(); };
 $('refBtn').onclick = () => { refOn = !refOn; renderBar(); };
 $('smart').onclick = () => { smartDrag = !smartDrag; renderBar(); showTip(); };

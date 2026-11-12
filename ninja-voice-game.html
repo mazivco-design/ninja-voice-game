@@ -213,7 +213,7 @@
       <div class="labRow"><span class="lbl">Speed</span><span id="labSpeeds"></span>
         <button class="lb" id="labPlay">⏸</button><button class="lb" id="labStep">Step ▶|</button>
         <button class="lb" id="labSkel">Skeleton</button><button class="lb" id="labEnemy">Enemy</button>
-        <button class="lb" id="labDesign">🎨 Design</button><a class="lb" id="labAnimator" href="animator.html" style="text-decoration:none">✏️ Animator</a><button class="lb" id="labClose">✕ Close</button></div>
+        <button class="lb" id="labDesign">🎨 Design</button><button class="lb" id="labClose">✕ Close</button></div>
       <div id="labInfo"></div>
     </div>
   </div>
@@ -281,6 +281,11 @@
 <script src="js/sushi.js?v=20261111v"></script>
 <script src="js/editor.js?v=20261111v"></script>
 <script src="js/main.js?v=20261111v"></script>
+<script>
+// 🎬 פותח ישר את עורך האנימציה (animator.html). סטודיו הציורים (Design) נפתח מהעורך: ninja-voice-game.html#design
+$('labBtn').onclick = () => { location.href = 'animator.html'; };
+if (location.hash === '#design') window.addEventListener('load', () => setTimeout(() => { history.replaceState(null, '', location.pathname); openStudio(); }, 300));
+</script>
 <!-- סנכרון בין מכשירים (משותף לכל הפרויקטים) -->
 <script src="/Ziviz-Projects-/firebase-config.js"></script>
 <script src="/Ziviz-Projects-/ls-sync.js" data-app="ninja" data-prefix="ninjaVoice" data-exclude="ninjaVoice_mute,ninjaVoice_vlog,ninjaVoice_current" data-button="#menu .mtop" data-busy="#menu:not(.show)"></script>
