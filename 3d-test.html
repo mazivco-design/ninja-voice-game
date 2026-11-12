@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>ניסוי דמות תלת־ממד</title>
+<script type="importmap">{ "imports": { "three": "./3d-test/three.module.min.js" } }</script>
+<style>
+  html, body { margin: 0; height: 100%; background: #0f172a; color: #e2e8f0; font-family: system-ui, sans-serif; overflow: hidden; }
+  #wrap { display: flex; flex-direction: column; height: 100%; }
+  .bar { padding: 6px 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .bar b { margin-inline-end: 6px; font-size: 14px; }
+  button { font: 700 15px system-ui; padding: 9px 13px; border: 0; border-radius: 10px; background: #1e293b; color: #e2e8f0; }
+  button.on { background: #4f46e5; color: #fff; }
+  #stage { flex: 1; position: relative; background: linear-gradient(#bae6fd 0 78%, #4ade80 78% 81%, #a16207 81%); min-height: 0; }
+  #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #note { padding: 6px 10px; font-size: 12px; color: #94a3b8; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div class="bar"><b>תנועה</b><span id="anims"></span></div>
+  <div class="bar"><b>הבעה</b><span id="faces"></span><span style="flex:1"></span><b>מבט</b><span id="views"></span><b>סגנון</b><span id="styles"></span></div>
+  <div id="stage"></div>
+  <div id="note">דמות דוגמה חינמית (RobotExpressive, מאת Tomás Laulhé, רישיון CC0). דף ניסוי נפרד, לא חלק מהמשחק.</div>
+</div>
+<script type="module">
+// דף ניסוי: דמות תלת־ממדית שמצוירת מהצד בסגנון שטוח ומצויר (toon + קו מתאר). לא קשור לקוד המשחק.
+import * as THREE from 'three';
+import { GLTFLoader } from './3d-test/GLTFLoader.js';
+import { OutlineEffect } from './3d-test/OutlineEffect.js';
+
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+stage.appendChild(renderer.domElement);
+const effect = new OutlineEffect(renderer, { defaultThickness: 0.006, defaultColor: [0.12, 0.08, 0.08] });
+const scene = new THREE.Scene();
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 2.2); sun.position.set(3, 6, 8); scene.add(sun);
+const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
+
+// מדרג צבע בשלושה שלבים – נותן את המראה השטוח והמצויר
+const grad = new THREE.DataTexture(new Uint8Array([110, 110, 110, 255, 190, 190, 190, 255, 255, 255, 255, 255]), 3, 1);
+grad.minFilter = grad.magFilter = THREE.NearestFilter; grad.needsUpdate = true;
+
+let mixer, actions = {}, cur, face, model, toon = true, view = 'side';
+const mats = [];                                   // [mesh, חומר מקורי, חומר מצויר]
+const ANIMS = [['Idle', 'IDLE'], ['Walking', 'WALK'], ['Running', 'RUN'], ['Jump', 'JUMP'], ['Punch', 'PUNCH'], ['Wave', 'WAVE'], ['Yes', 'YES'], ['Death', 'FALL']];
+const ONCE = ['Jump', 'Punch', 'Wave', 'Yes', 'Death'];
+const FACES = [['', '🙂 רגיל'], ['Angry', '😠 כועס'], ['Surprised', '😮 מופתע'], ['Sad', '😢 עצוב']];
+let faceGoal = {};
+
+function btns(id, items, isOn, pick) {
+  const box = document.getElementById(id); box.innerHTML = '';
+  items.forEach(([v, t]) => { const b = document.createElement('button'); b.textContent = t; b.className = isOn(v) ? 'on' : '';
+    b.onclick = () => { pick(v); renderBars(); }; box.appendChild(b); box.append(' '); });
+}
+let curName = 'Running', curFace = '';
+function renderBars() {
+  btns('anims', ANIMS, v => v === curName, play);
+  btns('faces', FACES, v => v === curFace, v => { curFace = v; });
+  btns('views', [['side', 'מהצד'], ['q', 'חצי צד']], v => v === view, v => { view = v; });
+  btns('styles', [[true, 'מצויר'], [false, 'תלת־ממד רגיל']], v => v === toon, v => { toon = v; mats.forEach(([m, a, b]) => m.material = toon ? b : a); });
+}
+function play(name) {
+  const a = actions[name]; if (!a) return;
+  const once = ONCE.includes(name);
+  a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = true;
+  if (cur && cur !== a) a.crossFadeFrom(cur, 0.2, true);       // מעבר רך בין תנועות
+  a.play(); cur = a; curName = name;
+}
+new GLTFLoader().load('3d-test/RobotExpressive.glb', g => {
+  model = g.scene; scene.add(model);
+  model.traverse(o => {
+    if (!o.isMesh) return;
+    if (o.morphTargetDictionary && 'Angry' in o.morphTargetDictionary) face = o;
+    const a = o.material, b = new THREE.MeshToonMaterial({ color: a.color, gradientMap: grad });
+    mats.push([o, a, b]); o.material = b;
+  });
+  mixer = new THREE.AnimationMixer(model);
+  g.animations.forEach(c => actions[c.name] = mixer.clipAction(c));
+  mixer.addEventListener('finished', e => { if (e.action === cur && curName !== 'Death') { play(curName === 'Jump' ? 'Running' : 'Idle'); renderBars(); } });
+  play('Running'); renderBars(); window.READY = true;
+}, undefined, e => { document.getElementById('note').textContent = 'שגיאה בטעינת הדמות: ' + (e.message || e); });
+
+function fit() {
+  const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false);
+  const H = 7.2, W = H * w / h;                     // כמה "מטרים" רואים; הקרקע בגובה 19% מלמטה, כמו ברקע
+  cam.left = -W / 2; cam.right = W / 2; cam.bottom = -H * 0.19; cam.top = H * 0.81; cam.updateProjectionMatrix();
+}
+addEventListener('resize', fit); fit();
+const clock = new THREE.Clock(); let yaw = Math.PI / 2;
+function loop() {
+  requestAnimationFrame(loop);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if (mixer) mixer.update(dt);
+  if (model) { const goal = view === 'side' ? Math.PI / 2 : Math.PI / 4; yaw += (goal - yaw) * Math.min(1, dt * 8); model.rotation.y = yaw; }
+  if (face) for (const [k] of FACES) if (k) { const i = face.morphTargetDictionary[k], g = k === curFace ? 1 : 0; face.morphTargetInfluences[i] += (g - face.morphTargetInfluences[i]) * Math.min(1, dt * 10); }
+  cam.position.set(0, 0, 20); cam.lookAt(0, 0, 0);
+  if (toon) effect.render(scene, cam); else renderer.render(scene, cam);
+}
+loop();
+</script>
+</body>
+</html>
