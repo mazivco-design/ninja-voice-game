@@ -592,6 +592,7 @@ function draw() {
       bigText(banner.text, 32, 9, '#4f46e5');
       if (banner.sub) bigText(banner.sub, 43, 5, '#1e293b');
     }
+    if (typeof drawBoatChip === 'function') drawBoatChip();              // המילה שהחבר מחכה לה (אפורה) / שנקלטה (ירוקה)
   }
   ctx.restore();
 

@@ -83,11 +83,13 @@ function boatSpeed() {
 }
 
 function boatUpdate(dt, pb) {
+  if (boatChip && boatChip.ok > 0) boatChip.ok -= dt;                             // הירוק של המילה שנקלטה דוהה בזמן המשחק
   for (const ob of obstacles) if (ob.type === 'boat' && ob.jumps) { for (const j of ob.jumps) j.t += dt; ob.jumps = ob.jumps.filter(j => j.t < 1.2); }   // הדגים הקופצים
   for (const ob of obstacles) if (ob.type === 'boat' && ob.mode !== 'fish' && !ob.full && !ob.passed && !ob.waving) {   // מפגש קצר: החבר רואה את הנינג'ה מרחוק, מנופף וקורא לו
     if (ob.hello) ob.hello += dt;
     else if (boatStern(ob) - PLAYER.x < BOAT.helloDist) { ob.hello = dt; speak('friend: ' + BOAT_HELLO[ob.v].toLowerCase()); }
   }
+  for (const ob of obstacles) if (ob.type === 'boat' && ob.full && !ob.ugh && !boat && boatStern(ob) - PLAYER.x < 60) { ob.ugh = 1; speak('friend: ugh! too heavy!'); }   // מפגש מלא: הקול הראשון – הנינג'ה עוד מתקרב והחבר דוחף לבד
   if (!boat) {
     const o = obstacles.find(o => o.type === 'boat' && !o.passed && !o.waving && pb.r >= boatStern(o) - BOAT.stepDX - 0.3 && pb.l < o.x + o.end);
     if (!o) return;
@@ -106,6 +108,7 @@ function boatUpdate(dt, pb) {
     B.idle += dt;
     const w = B.phase === 'wait' ? 'push' : B.phase === 'yesWait' ? 'yes' : B.phase === 'jumpWait' ? 'jump' : B.phase === 'throwWait' ? 'throw' : B.phase === 'swimWait' ? 'swim' : 'pull';
     const sw = w === 'jump' ? 'jump in' : w;                                     // בסירה מלמדים JUMP IN (גם JUMP לבד עובד)
+    if (B.held === w && !demo) { B.held = 0; boatChipOk(w); if (w === 'push') boatPush(); else if (w === 'jump') boatJump(); return; }   // נאמרה רגע לפני – מפעילים עכשיו
     if (demo) { if (B.idle >= 0.9) { if (banner) banner.text = 'Say ' + sw.toUpperCase() + '!'; command(w, 'demo'); } }
     else if (B.phase === 'bite') { if (B.idle >= 2.2 && !B.hinted) { B.hinted++; sayWords([w], 1.2, B); } }   // בנשיכה – רמז מהר, החלון קצר
     else if (B.phase === 'fight') { if (B.idle >= FISH.fightHint && !B.fightHinted) { B.fightHinted = 1; sayWords([w], 1.2, B); } }   // הדג גורר – רמז אחד
@@ -255,12 +258,14 @@ function fishWetY() {                                                           
 /* ---------- פקודות ---------- */
 function boatYes() {                                                              // YES – עונים לחבר שביקש עזרה (true = טופל כאן)
   if (!boat || boat.phase !== 'yesWait') return false;
+  boatChipOk('yes');
   boat.phase = 'great'; boat.t = 0; boat.idle = 0; boat.hinted = 0; boat.nudged = 0; boat.said = 0; speak('friend: yay!');
   return true;
 }
 function boatPush() {
   if (!boat) return false;
-  if (boat.phase === 'wait') { boat.phase = 'push'; boat.t = 0; }
+  if (boat.phase === 'wait') { boat.phase = 'push'; boat.t = 0; boatChipOk('push'); }
+  else if (['great', 'step'].includes(boat.phase)) boat.held = 'push';           // אמר PUSH כשהחבר עוד בדרך לסירה – נשמר ומופעל כשמוכנים
   return true;
 }
 function boatThrow() {                                                            // דייג: THROW זורק את החכה (true = טופל כאן)
@@ -288,8 +293,30 @@ function boatSwim() {                                                           
 }
 function boatJump() {                                                             // true = ה-JUMP טופל כאן
   if (!boat) return false;
-  if (boat.phase === 'jumpWait') { boat.phase = 'board'; boat.t = 0; sfx('jump'); }
+  if (boat.phase === 'jumpWait') { boat.phase = 'board'; boat.t = 0; sfx('jump'); boatChipOk('jump'); }
+  else if (boat.o.mode !== 'fish' && ['push', 'friendIn'].includes(boat.phase)) boat.held = 'jump';   // אמר JUMP כשהחבר עוד קופץ פנימה – נשמר
   return true;
+}
+/* ---------- המילה שמחכים לה – בראש המסך: אפורה כשמחכים, ירוקה כשנקלטה ---------- */
+let boatChip = null;                                                              // { w, ok } – ok = כמה זמן עוד להציג בירוק
+const BOAT_CHIP_TEXT = { yes: 'YES', push: 'PUSH', jump: 'JUMP IN' };
+function boatChipOk(w) { if (BOAT_CHIP_TEXT[w] && boat && boat.o.mode !== 'fish') boatChip = { w, ok: 1.1 }; }   // בדיג אין שבב
+function drawBoatChip() {
+  if (state !== 'play') { boatChip = null; return; }
+  const want = boat && boat.o.mode !== 'fish' ? (boatExpected() || [])[0] : null;
+  let w = null, ok = false;
+  if (boatChip && boatChip.ok > 0) { w = boatChip.w; ok = true; }
+  else if (want && BOAT_CHIP_TEXT[want]) w = want;
+  if (!w) return;
+  const txt = BOAT_CHIP_TEXT[w], y = 24, sz = 6;
+  ctx.save(); ctx.font = '900 ' + sz + 'px -apple-system, system-ui, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const tw = ctx.measureText(txt).width, pw = tw + sz * 1.6, ph = sz * 1.55, pop = ok ? 1 + Math.max(0, boatChip.ok - 0.8) * 0.5 : 1;
+  ctx.translate(W / 2, y); ctx.scale(pop, pop);
+  ctx.fillStyle = 'rgba(0,0,0,.12)'; roundRect(-pw / 2 + 0.4, -ph / 2 + 0.6, pw, ph, ph / 2); ctx.fill();
+  ctx.fillStyle = ok ? '#16a34a' : 'rgba(255,255,255,.88)'; roundRect(-pw / 2, -ph / 2, pw, ph, ph / 2); ctx.fill();
+  if (!ok) { ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 0.4; ctx.stroke(); }
+  ctx.fillStyle = ok ? '#fff' : '#6b7280'; ctx.fillText((ok ? '✓ ' : '') + txt, 0, sz * 0.05);
+  ctx.restore();
 }
 function boatExpected() {
   if (!boat) return null;

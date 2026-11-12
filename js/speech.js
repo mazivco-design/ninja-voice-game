@@ -169,11 +169,13 @@ function strayWord(w) {
   return !!next && !(OBSTACLE_WORDS[next.type] || []).includes(w);
 }
 // בזמן שהמילון מקריא מילה, המיקרופון שומע אותה – לא מפעילים אותה פעמיים
-let ignoreVoiceUntil = 0, lastLoudT = -1e9, voiceSaid = '';
+let ignoreVoiceUntil = 0, lastLoudT = -1e9, voiceSaid = '', voicePlayEnd = 0;   // voicePlayEnd – מתי ההקלטה הנוכחית באמת נגמרת (בלי זנב הביטחון)
 let listenWords = [...WORDS];          // המילים שהזיהוי מקשיב להן במשחק הנוכחי
 function voiceCommand(w, how, conf, text) {
   // רק מילה שהמשחק עצמו אומר עכשיו נחשבת הד מהרמקול – מילה אחרת של הילד עוברת
-  if (performance.now() < ignoreVoiceUntil && new RegExp('(^|[^a-z])' + w + '([^a-z]|$)').test(voiceSaid)) { dbg('heard', w + ' (ignored – speaker)'); voiceLog(w, 'speaker', conf, text); return; }
+  // מילה שהשלב מחכה לה עכשיו (למשל JUMP אחרי שהחבר קרא "Jump in!"): נחסמת רק בזמן שהקול עדיין מתנגן – ילד שעונה מיד לא נבלע בזנב
+  const echoUntil = expectedWords0(true).includes(w) ? Math.min(ignoreVoiceUntil, voicePlayEnd + 150) : ignoreVoiceUntil;
+  if (performance.now() < echoUntil && new RegExp('(^|[^a-z])' + w + '([^a-z]|$)').test(voiceSaid)) { dbg('heard', w + ' (ignored – speaker)'); voiceLog(w, 'speaker', conf, text); return; }
   if (!listenWords.includes(w)) { dbg('heard', w + ' (ignored – not in this stage)'); voiceLog(w, 'off', conf, text); return; }
   // מילה מתקבלת רק אם המיקרופון קלט קול ברור בשנייה וחצי האחרונות – לא רעש חלש ברקע
   if (performance.now() - lastLoudT > 2500) { dbg('heard', w + ' (ignored – too quiet)'); voiceLog(w, 'quiet', conf, text); return; }
