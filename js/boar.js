@@ -107,8 +107,8 @@ function boarPathB() { const S = boarS; return S ? S.boars.find(b => b !== S.ch 
 // לרדת לשביל? רק כשהחזיר השני רחוק / לא מסתכל, הנינג'ה עומד במחסה, וזה הרווח בין עצים
 function boarPathOK(B) {
   const S = boarS; if (!S || S.ch || boarPathB() || (S.paths || 0) >= BOAR.pathMax2 || S.i < 1 || S.fsT < 0) return false;
-  if (!(S.np === 'stand' || S.np === 'hidden') || S.open || S.nt < 1.5 || (S.pathCD || 0) > 0) return false;
-  const d = B.x - boarNX(); if (B.dir !== -1 || d < BOAR.pathMin || d > BOAR.pathMax || !boarGapOK(S.o, B.x)) return false;
+  if (!(S.np === 'stand' || S.np === 'hidden') || S.open || S.nt < 0.5 || (S.pathCD || 0) > 0) return false;
+  const d = B.x - boarNX(), g = boarFindGap(S.o, B.x, -1); if (B.dir !== -1 || d > BOAR.pathMax || g - boarNX() < BOAR.pathMin || B.x - g > 30) return false;   // הרווח הבא לפניו – לא רחוק, ולא צמוד לנינג'ה
   return S.boars.every(b => b === B || b.m === 'off' || Math.abs(b.x - boarNX()) > 75 || (b.m === 'graze' && b.dur - b.t > 5) || (b.m === 'walk' && !boarDanger(b)));
 }
 function boarPatrol(B, dt) {
@@ -122,11 +122,13 @@ function boarPatrol(B, dt) {
       B.x += B.dir * BOAR.bWalkV * dt;
       if (B.dir === 1 && B.x > R) { B.dir = -1; B.m = 'off'; B.t = 0; B.dur = rnd(0.6, 2.0); B.g = boarGrazeDur(); B.stops = 0; }   // יצא מימין – מסתובב מחוץ למסך ועובר לשביל
       else if (B.dir === -1 && B.x < L) { B.dir = 1; B.m = 'off'; B.t = 0; B.dur = rnd(0.6, 2.0); B.g = boarGrazeDur(); B.stops = 0; }   // יצא משמאל – מסתובב מחוץ למסך ועובר אל מאחורי העצים
-      else if (boarPathOK(B) && Math.random() < dt * 2) { B.m = 'pdesc'; B.t = 0; boarS.paths = (boarS.paths || 0) + 1; boarS.pathCD = 12; flash = { text: '🐗 HIDE!', t: 1.8 }; sfx('swish'); }   // יורד לטייל בשביל
+      else if (B.pathGo != null && B.x <= B.pathGo) { const ok = boarPathOK(B); B.pathGo = null; if (ok) { B.x = boarFindGap(boarS.o, B.x, -1); B.m = 'pdesc'; B.t = 0; boarS.paths = (boarS.paths || 0) + 1; boarS.pathCD = 12; flash = { text: '🐗 HIDE!', t: 1.8 }; sfx('swish'); } }   // הגיע לרווח – יורד לטייל בשביל
+      else if (B.pathGo == null && boarPathOK(B) && Math.random() < dt * 2) B.pathGo = boarFindGap(boarS.o, B.x, -1);   // מחליט לרדת – ברווח הבא
       else if (B.t >= B.dur && boarDanger(B) && (B.stops || 0) < 2) { B.m = 'graze'; B.t = 0; B.dur = B.g; B.stops = (B.stops || 0) + 1; }   // עוצר לאכול (בעומק – פעם אחת במעבר)
       break;
     case 'graze':
-      if (B.t >= B.dur) {
+      if (B.t > 1 && B.t < B.dur - 1 && boarPathOK(B) && Math.random() < dt * 0.5) { B.m = 'walk'; B.t = 0; B.dur = 99; B.pathGo = boarFindGap(boarS.o, B.x, -1); }   // מפסיק לרעות בעומק והולך לרדת לשביל
+      else if (B.t >= B.dur) {
         if (boarS && boarS.boars.some(b => b !== B && (b.m === 'ears' || b.m === 'look' || b === boarS.ch) && boarDanger(b))) B.dur += 1.5;   // לא שניהם בבת אחת – מחכה שהשני יסיים
         else { B.m = 'ears'; B.t = 0; sfx('swish'); }
       }
@@ -496,6 +498,7 @@ function boarAuto() {
     return;
   }
   if (S.open) { command('sneak', 'auto'); return; }
+  if (!S.paths && S.i >= 1 && S.nt < 6 && S.boars.some(b => b.m !== 'off' && b.dir === -1 && b.x - boarNX() > BOAR.pathMin && b.x - boarNX() < BOAR.pathMax)) return;   // כמו ילד שעוצר להסתכל – נותן לחזיר הזדמנות לרדת לשביל (כדי שהבדיקות יעברו גם בביקור בשביל)
   if (S.ch || S.boars.some(b => b.m === 'ears' && boarDanger(b) && !boarSafeFrom(b) && b.t > 0.4)) command('hide', 'auto');
   else if (boarSneakGood() && S.nt > 0.5) command('sneak', 'auto');
 }
