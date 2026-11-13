@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>ניסוי דמות SVG</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0f172a; color: #e2e8f0; font-family: system-ui, sans-serif; overflow: hidden; }
+  #wrap { display: flex; flex-direction: column; height: 100%; }
+  .bar { padding: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .bar b { margin-inline-end: 6px; font-size: 14px; }
+  button { font: 700 15px system-ui; padding: 9px 13px; border: 0; border-radius: 10px; background: #1e293b; color: #e2e8f0; }
+  button.on { background: #4f46e5; color: #fff; }
+  #stage { flex: 1; position: relative; min-height: 0; overflow: hidden; background: linear-gradient(#bae6fd 0 78%, #4ade80 78% 81%, #a16207 81%); }
+  /* כפות הרגליים (y=404 מתוך 450) יושבות בדיוק על קו הקרקע (81%) */
+  #stage svg { position: absolute; height: 62%; width: auto; left: 50%; transform: translateX(-50%); bottom: 12.66%; overflow: visible; }
+  #note { padding: 6px 10px; font-size: 12px; color: #94a3b8; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div class="bar"><b>תנועה</b><span id="anims"></span><span style="flex:1"></span><b>מהירות</b><span id="speeds"></span></div>
+  <div id="stage"></div>
+  <div id="note">דף ניסוי נפרד, לא חלק מהמשחק. הדמות היא קובץ ה-SVG ששלחת (מבט צד), והתנועה נוצרת מסיבוב החלקים סביב נקודות הציר שלה.</div>
+</div>
+<script>
+// דף ניסוי: מזיזים דמות SVG מחולקת לחלקים. כל חלק מסתובב סביב נקודת הציר שרשומה עליו (transform-origin).
+const D = Math.PI / 180, PIV = {};
+let svg, root, anim = 'run', t0 = performance.now(), speed = 1, clock = 0, last = 0;
+const el = id => svg.querySelector('#' + id);
+const rot = (id, a) => `rotate(${a.toFixed(2)} ${PIV[id][0]} ${PIV[id][1]})`;
+const WAIST = [200, 305];
+const lean = a => `rotate(${a.toFixed(2)} ${WAIST[0]} ${WAIST[1]})`;
+
+// איפה כף הרגל אחרי סיבוב הירך (th) והברך (kn) – כדי שהרגל הדורכת תישאר על הקרקע
+function footY(hip, knee, sole, th, kn) {
+  const r = (p, c, a) => { const s = Math.sin(a * D), k = Math.cos(a * D), x = p[0] - c[0], y = p[1] - c[1]; return [c[0] + x * k - y * s, c[1] + x * s + y * k]; };
+  return r(r(sole, knee, kn), hip, th)[1];
+}
+// תנוחה = זוויות במעלות. שלילי = קדימה (ימינה), חיובי = אחורה
+function pose(name, p) {
+  const f = 2 * Math.PI * p, s = Math.sin(f), c = Math.cos(f);
+  if (name === 'run') return { lean: 9, head: -4, up: 0,
+    thF: -8 - 42 * s, knF: 14 + 66 * Math.max(0, c),  thB: -8 + 42 * s, knB: 14 + 66 * Math.max(0, -c),
+    shF: 48 * s, elF: -78, shB: -48 * s, elB: -78, tails: 16 + 6 * Math.sin(f * 2) };
+  if (name === 'jump') {                               // הכנה → זינוק → שיא → נחיתה
+    const k = x => Math.max(0, Math.min(1, x)), e = x => x * x * (3 - 2 * x);
+    const crouch = e(k(p / 0.18)) * (1 - e(k((p - 0.18) / 0.1))) + e(k((p - 0.82) / 0.08)) * (1 - e(k((p - 0.9) / 0.1)));
+    const air = k((p - 0.24) / 0.6), up = p > 0.24 && p < 0.84 ? 4 * air * (1 - air) * 120 : 0, tuck = Math.sin(Math.PI * air) * (up ? 1 : 0);
+    return { lean: 6 + 18 * crouch - 6 * tuck, head: -6 * crouch, up,
+      thF: -6 - 48 * crouch - 55 * tuck, knF: 8 + 86 * crouch + 80 * tuck, thB: 6 - 40 * crouch - 30 * tuck, knB: 8 + 80 * crouch + 70 * tuck,
+      shF: 50 * crouch - 150 * tuck, elF: -20 - 30 * crouch, shB: 40 * crouch - 120 * tuck, elB: -20 - 30 * crouch, tails: 10 - 40 * tuck + 30 * crouch };
+  }
+  if (name === 'slash') {                              // הנפה לאחור → חיתוך קדימה
+    const k = x => Math.max(0, Math.min(1, x)), e = x => x * x * (3 - 2 * x);
+    const wind = e(k(p / 0.3)), cut = e(k((p - 0.36) / 0.14)), back = e(k((p - 0.75) / 0.25));
+    const sh = (-150 * wind + 95 * cut) * (1 - back);
+    return { lean: (-6 * wind + 18 * cut) * (1 - back), head: 0, up: 0, sword: p < 0.92,
+      thF: -22, knF: 14, thB: 20, knB: 8, shF: sh, elF: (-25 * wind + 15 * cut) * (1 - back) - 10 * back, wrF: 60 * cut * (1 - back),
+      shB: 25 * cut * (1 - back) + 10, elB: -40, tails: 10 + 14 * cut * (1 - back) };
+  }
+  return { lean: 0, head: 1.5 * s, up: 0, thF: -9, knF: 6, thB: 10, knB: 4, shF: 6 + 3 * s, elF: -22, shB: -8 - 3 * s, elB: -18, tails: 4 + 5 * s, breathe: s };
+}
+const LEN = { idle: 2.6, run: 0.62, jump: 1.15, slash: 0.9 }, ONCE = { jump: 1, slash: 1 };
+
+function apply(P) {
+  const yF = footY(PIV.leg_front, PIV.shin_front, [205, 404], P.thF, P.knF), yB = footY(PIV.leg_back, PIV.shin_back, [213, 398], P.thB, P.knB);
+  const drop = -Math.max(yF - 404, yB - 398);                    // מורידים/מעלים את הגוף כך שהרגל הנמוכה נוגעת בקרקע
+  root.setAttribute('transform', `translate(0 ${(drop - (P.up || 0)).toFixed(2)})`);
+  const L = lean(P.lean);
+  el('leg_front').setAttribute('transform', rot('leg_front', P.thF)); el('shin_front').setAttribute('transform', rot('shin_front', P.knF));
+  el('leg_back').setAttribute('transform', rot('leg_back', P.thB));   el('shin_back').setAttribute('transform', rot('shin_back', P.knB));
+  el('torso').setAttribute('transform', L); el('back_gear').setAttribute('transform', L);
+  el('head').setAttribute('transform', L + ' ' + rot('head', P.head));
+  el('arm_front').setAttribute('transform', L + ' ' + rot('arm_front', P.shF)); el('forearm_front').setAttribute('transform', rot('forearm_front', P.elF));
+  el('hand_front').setAttribute('transform', rot('hand_front', P.wrF || 0));
+  el('arm_back').setAttribute('transform', L + ' ' + rot('arm_back', P.shB));   el('forearm_back').setAttribute('transform', rot('forearm_back', P.elB));
+  el('headband_tails').setAttribute('transform', rot('headband_tails', P.tails));
+  el('active_sword').setAttribute('display', P.sword ? 'inline' : 'none');
+}
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; clock += dt * speed;
+  let p = clock / LEN[anim];
+  if (ONCE[anim] && p >= 1) { play('idle'); p = 0; }
+  apply(pose(anim, p % 1));
+}
+function play(a) { anim = a; clock = 0; bars(); }
+function btns(id, items, isOn, pick) {
+  const box = document.getElementById(id); box.innerHTML = '';
+  items.forEach(([v, t]) => { const b = document.createElement('button'); b.textContent = t; b.className = isOn(v) ? 'on' : ''; b.onclick = () => { pick(v); bars(); }; box.appendChild(b); box.append(' '); });
+}
+function bars() {
+  btns('anims', [['idle', 'IDLE'], ['run', 'RUN'], ['jump', 'JUMP'], ['slash', 'SWORD']], v => v === anim, play);
+  btns('speeds', [[0.25, '0.25×'], [0.5, '0.5×'], [1, '1×']], v => v === speed, v => { speed = v; });
+}
+fetch('svg-test/ninja-side.svg').then(r => r.text()).then(txt => {
+  const stage = document.getElementById('stage'); stage.innerHTML = txt; svg = stage.querySelector('svg');
+  svg.removeAttribute('width'); svg.removeAttribute('height');
+  // קוראים את נקודות הציר ומסירים את transform-origin (אחרת הסיבוב נעשה פעמיים)
+  svg.querySelectorAll('[transform-origin]').forEach(g => { PIV[g.id] = g.getAttribute('transform-origin').split(/[ ,]+/).map(Number); g.removeAttribute('transform-origin'); });
+  root = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  [...svg.children].filter(n => n.tagName !== 'defs').forEach(n => root.appendChild(n)); svg.appendChild(root);
+  bars(); last = performance.now(); requestAnimationFrame(frame); window.READY = true;
+}).catch(e => { document.getElementById('note').textContent = 'שגיאה בטעינת הדמות: ' + e; });
+</script>
+</body>
+</html>
