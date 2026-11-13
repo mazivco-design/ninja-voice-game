@@ -2254,11 +2254,11 @@
  },
  "tap / WILD BOAR": {
   "end": "WILD BOAR – done!",
-  "sec": 33.07,
-  "hits": 1,
+  "sec": 38.57,
+  "hits": 0,
   "score": 1,
-  "hash": 3468686335,
-  "phases": "boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:exit"
+  "hash": 4217140060,
+  "phases": "boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:duck > boar:hidden > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:exit"
  },
  "intro / JET PACK": {
   "sec": 14,
