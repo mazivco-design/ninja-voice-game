@@ -43,7 +43,7 @@ function journeyBest(p, d) { return p ? load('p' + p.id + '_jbest_' + d, 0) : pL
 function journeyWords(st) { return WORDS.slice(0, Math.min(WORDS.length, st + 1)).filter(w => isLearned(w)); }
 
 let jStation = 0;          // התחנה שממנה יצאנו לקטע הנוכחי
-const J_ONCE = ['boat'];   // מפגש עם חבר הוא אירוע, לא מכשול: לכל היותר פעם אחת בקטע מסע (פיילוט: הסירה)
+const J_ONCE = ['boat', 'seesaw'];   // מפגש עם חבר הוא אירוע, לא מכשול: לכל היותר פעם אחת בקטע מסע (פיילוט: הסירה)
 let jSeen = {};            // אילו מהם כבר הופיעו בקטע הנוכחי
 let jDeck = [], jSegN = 0; // חפיסת המכשולים של הקטע (כל מכשול לפחות פעם אחת), ואורך הקטע
 

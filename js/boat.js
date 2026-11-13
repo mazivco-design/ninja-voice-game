@@ -304,16 +304,17 @@ function boatJump() {                                                           
 let boatChip = null;                                                              // { w, ok } – ok = כמה זמן עוד להציג בירוק
 const BOAT_CHIP_TEXT = { yes: 'YES', push: 'PUSH', jump: 'JUMP IN', help: 'HELP', catch: 'CATCH', hold: 'HOLD' };
 function boatChipOk(w) { if (BOAT_CHIP_TEXT[w] && boat && boat.o.mode !== 'fish') boatChip = { w, ok: 1.1 }; }   // בדיג אין שבב
-function wordChipOk(w) { if (BOAT_CHIP_TEXT[w]) boatChip = { w, ok: 1.1 }; }
+function wordChipOk(w) { if (chipText(w)) boatChip = { w, ok: 1.1 }; }
+function chipText(w) { return typeof ssS !== 'undefined' && ssS ? SS_CHIP[w] : BOAT_CHIP_TEXT[w]; }   // שלב הקיר (seesaw.js) – בלי "IN"
 function chipTick(dt) { if (boatChip && boatChip.ok > 0) boatChip.ok -= dt; }
 function drawBoatChip() {
   if (state !== 'play') { boatChip = null; return; }
-  const want = boat && boat.o.mode !== 'fish' ? (boatExpected() || [])[0] : typeof mud !== 'undefined' && mud ? (mudExpected() || [])[0] : null;
+  const want = boat && boat.o.mode !== 'fish' ? (boatExpected() || [])[0] : typeof mud !== 'undefined' && mud ? (mudExpected() || [])[0] : typeof ssS !== 'undefined' && ssS ? (ssExpected() || [])[0] : null;
   let w = null, ok = false;
   if (boatChip && boatChip.ok > 0) { w = boatChip.w; ok = true; }
-  else if (want && BOAT_CHIP_TEXT[want]) w = want;
+  else if (want && chipText(want)) w = want;
   if (!w) return;
-  const txt = BOAT_CHIP_TEXT[w], y = 24, sz = 6;
+  const txt = chipText(w) || BOAT_CHIP_TEXT[w], y = 24, sz = 6;
   ctx.save(); ctx.font = '900 ' + sz + 'px -apple-system, system-ui, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const tw = ctx.measureText(txt).width, pw = tw + sz * 1.6, ph = sz * 1.55, pop = ok ? 1 + Math.max(0, boatChip.ok - 0.8) * 0.5 : 1;
   ctx.translate(W / 2, y); ctx.scale(pop, pop);

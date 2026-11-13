@@ -2337,6 +2337,114 @@
    "text": "[worried] Oh no! It won't move!",
    "voice": "lib-lukas",
    "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend9-lukas-helpup",
+   "text": "[hopeful] Hey! Help me up!"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend9-lukas-jumpboard",
+   "text": "[excited] Jump on the board!"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend9-lukas-waitforme",
+   "text": "[laughing] Whoa! Wait for me!"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend9-lukas-catchrope",
+   "text": "Catch the rope!"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend9-lukas-climbup",
+   "text": "[encouraging] Climb up!"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend9-lukas-yourturn",
+   "text": "[cheerful] Your turn! Stand on the board!"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend9-lukas-catchedge",
+   "text": "[excited] Ready? Catch the edge!"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend9-lukas-throwrope",
+   "text": "Throw me the rope!"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend9-lukas-pullup",
+   "text": "[encouraging] Pull me up!"
   }
  ]
 }
