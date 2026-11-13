@@ -15,7 +15,7 @@ const BOAR_TREES = [
   { dx: 104, kind: 'rock', w: 24 },
   { dx: 146, kind: 'tree', w: 15, col: '#826347', lean: -0.01, br: [[0.36, -1, 10], [0.58, 1, 9], [0.74, 1, 6]] }
 ];
-const BOAR = { size: 1.2, lead: 200, ramp: 70, edge: 110, tree0: 24, trees: BOAR_TREES.length, walkV: 16, duckT: 0.35,
+const BOAR = { stopNear: 7, size: 1.2, lead: 200, ramp: 70, edge: 110, tree0: 24, trees: BOAR_TREES.length, walkV: 16, duckT: 0.35,
                bWalkV: 10, walkMin: 1.6, walkMax: 2.6, grazeMin: 3.0, grazeMax: 6.5, lookT: 1.5, pawT: 1.0, lostT: 1.3,
                fallT: 1.1, knock: 7, passBy: 26, coins: 4, enter: 16, rockH: 15, tutor: 2, near: 24, deepY: -3.4, deepS: 0.74, frontDY: 8, ninjaDY: 4, friendDY: 0,
                pressT: 3.2, pressR: 2.2, bushDX: 36, bushW: 30, bushH: 17, fbushDX: 24, fbushW: 26, fbushH: 13,
@@ -146,7 +146,7 @@ function boarUpdate(dt, pb) {
   const d = o.x - S.ox; if (d) { for (const B of S.boars) B.x += d; S.f.x += d; }    // החזירים והחבר זזים יחד עם היער
   S.ox = o.x;
   const demo = state !== 'play', goN = p => { S.np = p; S.nt = 0; };
-  const atCover = S.np === 'stand' || S.np === 'hidden';
+  const atCover = (S.np === 'stand' || S.np === 'hidden') && !S.open;            // עצר בשטח פתוח – לא מחסה
   // החזירים מסיירים (חוץ מזה שמסתער)
   for (const B of S.boars) if (B !== S.ch) {
     boarPatrol(B, dt);
@@ -179,10 +179,10 @@ function boarUpdate(dt, pb) {
   switch (S.np) {
     case 'duck': if (S.nt >= BOAR.duckT) { goN('hidden'); S.atTrunk = 1; } break;
     case 'fall': if (S.nt >= BOAR.fallT) { if (S.walking) goN('walk'); else { goN('stand'); S.atTrunk = 0; } } break;
-    case 'walk':
-      if (pb.r >= boarStandR(o, S.i) - 0.01) {
-        const over = pb.r - boarStandR(o, S.i); if (over > 0) ropeShiftBy(-over);
-        goN('stand'); S.walking = 0; S.atTrunk = 0;
+    case 'walk':                                                                     // מתגנב ברצף – עובר גם ליד עצים, עד שהילד אומר STOP
+      if (pb.r >= boarStandR(o, S.i) + BOAR.stopNear) {
+        if (S.i < BOAR.trees - 1) { S.i++; if (S.f.i <= S.i) { S.f.i = Math.min(BOAR.trees, S.i + 1); S.f.hop = 1; } }   // עבר את המחסה – ממשיך לבא, והחבר מדלג קדימה
+        else { goN('exit'); S.walking = 0; if (S.f.i < BOAR.trees) { S.f.i = BOAR.trees; S.f.hop = 1; } }               // עבר את האחרון – יוצא מהיער
       }
       break;
     case 'exit':
@@ -215,7 +215,8 @@ function boarUpdate(dt, pb) {
   else if (S.fs) S.fs = null;
   if (demo) {                                                                        // הדגמה: SNEAK כשכדאי, HIDE כשהאוזניים זזות
     const say = w => { const np = S.np, sd = S.side; command(w, 'demo'); if (S.np !== np || S.side !== sd) speak(w); };
-    if (atCover && S.boars.some(b => b.m === 'ears' && boarDanger(b) && !boarSafeFrom(b) && b.t > 0.3)) say('hide');
+    if (boarNearStop()) say('stop');
+    else if (atCover && S.boars.some(b => b.m === 'ears' && boarDanger(b) && !boarSafeFrom(b) && b.t > 0.3)) say('hide');
     else if (atCover && boarSneakGood() && S.nt > 0.8) say('sneak');
   }
 }
@@ -242,6 +243,7 @@ function boarPhysics() {
 function boarHide() {
   if (!boarS) return false;
   const S = boarS;
+  if (S.open) return true;                                                           // בשטח פתוח אין מאחורי מה להתחבא
   if (S.np === 'stand' || S.np === 'hidden') {
     const th = S.ch || boarThreat(), side = th ? boarSideFor(th) : 'back';
     if (S.np === 'hidden' && side === S.side) return true;
@@ -256,18 +258,36 @@ function boarSneakGood() {
   const need = boarTripT();
   return S.boars.every(b => boarTimeToLook(b) > need);
 }
-function boarSneak() {                                                               // SNEAK פתוח תמיד – יוצאים למחסה הבא (מהאחרון – יוצאים מהיער)
+function boarSneak() {                                                               // SNEAK פתוח תמיד – מתחילים להתגנב, וממשיכים עד STOP (מהאחרון – יוצאים מהיער)
   if (!boarS) return false;
   const S = boarS;
   if (S.np !== 'stand' && S.np !== 'hidden') return true;
+  if (S.open) { S.open = 0; S.np = 'walk'; S.nt = 0; S.walking = 1; S.atTrunk = 0; S.fs = null; return true; }   // עצר בשטח פתוח – ממשיך אל המחסה שלפניו
   if (S.i >= BOAR.trees - 1) { S.np = 'exit'; S.nt = 0; if (S.f.i < BOAR.trees) { S.f.i = BOAR.trees; S.f.hop = 1; } return true; }
   S.i++; S.np = 'walk'; S.nt = 0; S.walking = 1; S.atTrunk = 0; S.fs = null; S.fsT = 0;
   if (S.f.i <= S.i) { S.f.i = Math.min(BOAR.trees, S.i + 1); S.f.hop = 1; }            // לא חיכה לחבר – החבר מדלג קדימה באותו רגע
   return true;
 }
+// STOP – עוצרים איפה שהנינג'ה נמצא. ליד עץ / סלע – זה מחסה (אפשר HIDE). באמצע הדרך – עומד בשטח פתוח, והחזירים יכולים לראות
+function boarStop() {
+  if (!boarS) return false;
+  const S = boarS;
+  if (S.np !== 'walk') return true;
+  const r = PLAYER.x + PLAYER.w, o = S.o;
+  let k = -1;
+  for (let i = 0; i < BOAR.trees; i++) if (Math.abs(r - boarStandR(o, i)) <= BOAR.stopNear) k = i;
+  S.np = 'stand'; S.nt = 0; S.walking = 0; S.atTrunk = 0;
+  if (k >= 0) { ropeShiftBy(boarStandR(o, k) - r); S.i = k; S.open = 0;   // נצמד למחסה (תיקון קטן קדימה / אחורה)
+                if (S.f.i <= S.i) { S.f.i = Math.min(BOAR.trees, S.i + 1); S.f.hop = 1; } }
+  else S.open = 1;
+  return true;
+}
+function boarNearStop() { const S = boarS; return !!S && S.np === 'walk' && PLAYER.x + PLAYER.w >= boarStandR(S.o, S.i) - 0.5; }   // הגיע למחסה – רגע טוב לעצור (לבודק ולהדגמה)
 function boarExpected() {
   if (!boarS) return null;
   const S = boarS;
+  if (S.np === 'walk') return ['stop'];
+  if (S.open) return ['sneak'];
   const warn = S.ch || S.boars.some(b => (b.m === 'ears' || b.m === 'look') && boarDanger(b) && !boarSafeFrom(b));
   if (S.np === 'stand') return warn ? ['hide'] : ['sneak', 'hide'];
   if (S.np === 'hidden') return warn ? ['hide', 'sneak'] : ['sneak'];
@@ -275,7 +295,9 @@ function boarExpected() {
 }
 function boarAuto() {
   const S = boarS; if (!S) return;
+  if (boarNearStop()) { command('stop', 'auto'); return; }
   if (S.np !== 'stand' && S.np !== 'hidden') return;
+  if (S.open) { command('sneak', 'auto'); return; }
   if (S.ch || S.boars.some(b => b.m === 'ears' && boarDanger(b) && !boarSafeFrom(b) && b.t > 0.4)) command('hide', 'auto');
   else if (boarSneakGood() && S.nt > 0.5) command('sneak', 'auto');
 }
@@ -699,7 +721,7 @@ function boarCharging(o) { return !!boarS && boarS.o === o && !!boarS.ch; }
 // הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). כולל הציור
 sceneAdd({
   type: 'boar', word: 'boar', label: true,
-  listen: ['hide', 'sneak', 'climb'],
+  listen: ['hide', 'sneak', 'stop', 'climb'],
   active: () => !!boarS,
   reset: () => { boarS = null; },
   setup: boarSetup, afterGap: 0.8, noCollide: true,
@@ -708,7 +730,7 @@ sceneAdd({
   draw: drawBoar, drawOver: drawForestFront,                                          // הגזעים מעל הנינג'ה – מתחבא מאחוריהם
   update: boarUpdate, physics: boarPhysics, speed: boarSpeed, pose: boarPose,
   expected: boarExpected, auto: boarAuto,
-  act: word => word === 'sneak' ? boarSneak() : word === 'hide' ? boarHide() : word === 'climb' ? boarClimb() : false,
-  intro: { banner: 'SNEAK on green · HIDE when the ears move!', time: 12,
+  act: word => word === 'sneak' ? boarSneak() : word === 'stop' ? boarStop() : word === 'hide' ? boarHide() : word === 'climb' ? boarClimb() : false,
+  intro: { banner: 'SNEAK · STOP at a tree · HIDE!', time: 14,
            demo: () => { const o = { type: 'boar' }; boarSetup(o); o.x = PLAYER.x + PLAYER.w - BOAR.tree0 - o.lead + boarStandGap(0); obstacles.push(o); } }   // עומד ליד העץ הראשון (boarUpdate מפעיל את ההדגמה)
 });

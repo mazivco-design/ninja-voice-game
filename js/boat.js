@@ -19,7 +19,7 @@
 const BOAT = { shore: 72, sail: 230, isl: 50, islands: 0,   /* בלי אי – שטים ישר לחוף השני */ len: 28, h: 6.5, bx0: 30, pushes: 1, step: 30, pushT: 1.4, greetT: 2.6, greatT: 2.0, thanksT: 2.7, byeT: 1.4,
                askT: 1.6, stepT: 0.5, stepDX: 7, hiT: 1.3, boardT: 0.7, boardDX: 13, row: 26, waveT: 1.4, waveAt: 24, stuckT: 0.7,
                outT: 0.7, landT: 0.75, landDX: 21, hint: 3.5, hintEvery: 6, coins: 6,
-               sailShort: 115, noticeT: 1.0, waveT2: 1.3, greetFullT: 3.1, greatFullT: 2.5, cheerT: 0.8, nudge: 3, hintFull: 6.5, lookAt: 3.0, lookT: 1.9, byeShortT: 1.6, helloDist: 78 };
+               sailShort: 115, noticeT: 1.0, waveT2: 1.3, greetFullT: 3.1, greatFullT: 2.5, cheerT: 0.8, nudge: 6, hintFull: 10, lookAt: 3.0, lookT: 1.9, byeShortT: 1.6, helloDist: 78 };
 const BOAT_HELLO = ['Hey, buddy! Push with me?', 'You again! Push with me?', 'Perfect timing! Push with me?'];   // מפגש קצר: ברכה מתחלפת
 const BOAT_BYE = ['Thanks, buddy!', 'Nice one! See you!', 'See you soon!'];                                      // ...ופרידה מתחלפת
 function boatNudge(B) { return B.phase === 'yesWait' ? 'Please?' : B.phase === 'wait' ? (B.o.full ? 'Come on, push!' : 'Come on!') : 'Come on, jump in!'; }   // הסימון השני, כשהילד שותק
@@ -89,7 +89,7 @@ function boatUpdate(dt, pb) {
     if (ob.hello) ob.hello += dt;
     else if (boatStern(ob) - PLAYER.x < BOAT.helloDist) { ob.hello = dt; speak('friend: ' + BOAT_HELLO[ob.v].toLowerCase()); }
   }
-  for (const ob of obstacles) if (ob.type === 'boat' && ob.full && !ob.ugh && !boat && boatStern(ob) - PLAYER.x < 60) { ob.ugh = 1; speak('friend: ugh! too heavy!'); }   // מפגש מלא: הקול הראשון – הנינג'ה עוד מתקרב והחבר דוחף לבד
+  for (const ob of obstacles) if (ob.type === 'boat' && ob.full && !ob.ugh && !boat && boatStern(ob) - PLAYER.x < 60) { ob.ugh = 1; speak("friend: oh no! it won't move!"); }   // מפגש מלא: הקול הראשון – הנינג'ה עוד מתקרב והחבר דוחף לבד
   if (!boat) {
     const o = obstacles.find(o => o.type === 'boat' && !o.passed && !o.waving && pb.r >= boatStern(o) - BOAT.stepDX - 0.3 && pb.l < o.x + o.end);
     if (!o) return;
@@ -140,7 +140,10 @@ function boatUpdate(dt, pb) {
         else go('wait');
       }
       break;
-    case 'friendIn': if (B.t >= 0.8 + boatCheer(o)) { go('jumpWait'); speak('friend: jump in!'); } break;   // (מלא: קודם שמח "We did it!") החבר קופץ פנימה ראשון
+    case 'friendIn':                                                               // (מלא: קודם שמח "We did it!") החבר קופץ פנימה ראשון, וקורא "Jump in!" כבר בזמן הקפיצה –
+      if (!B.said && B.t >= boatCheer(o)) { B.said = 1; speak('friend: jump in!'); }   // כשמתחילים לחכות הוא כבר שותק, וקולו לא מתערבב בתשובה של הילד
+      if (B.t >= 0.8 + boatCheer(o)) go('jumpWait');
+      break;
     case 'board': if (B.t >= BOAT.boardT) { go('row'); burst(PLAYER.x + 4, boatDeck(o), '#e0f2fe', 6, 14); if (o.full) speak('friend: nice one!'); } break;
     case 'row':
       B.fishT = (B.fishT || 0) - dt;                                               // דגים קופצים מהמים ליד הסירה
@@ -297,13 +300,15 @@ function boatJump() {                                                           
   else if (boat.o.mode !== 'fish' && ['push', 'friendIn'].includes(boat.phase)) boat.held = 'jump';   // אמר JUMP כשהחבר עוד קופץ פנימה – נשמר
   return true;
 }
-/* ---------- המילה שמחכים לה – בראש המסך: אפורה כשמחכים, ירוקה כשנקלטה ---------- */
+/* ---------- המילה שמחכים לה – בראש המסך: אפורה כשמחכים, ירוקה כשנקלטה (בסירה ובבוץ) ---------- */
 let boatChip = null;                                                              // { w, ok } – ok = כמה זמן עוד להציג בירוק
-const BOAT_CHIP_TEXT = { yes: 'YES', push: 'PUSH', jump: 'JUMP IN' };
+const BOAT_CHIP_TEXT = { yes: 'YES', push: 'PUSH', jump: 'JUMP IN', help: 'HELP', catch: 'CATCH', hold: 'HOLD' };
 function boatChipOk(w) { if (BOAT_CHIP_TEXT[w] && boat && boat.o.mode !== 'fish') boatChip = { w, ok: 1.1 }; }   // בדיג אין שבב
+function wordChipOk(w) { if (BOAT_CHIP_TEXT[w]) boatChip = { w, ok: 1.1 }; }
+function chipTick(dt) { if (boatChip && boatChip.ok > 0) boatChip.ok -= dt; }
 function drawBoatChip() {
   if (state !== 'play') { boatChip = null; return; }
-  const want = boat && boat.o.mode !== 'fish' ? (boatExpected() || [])[0] : null;
+  const want = boat && boat.o.mode !== 'fish' ? (boatExpected() || [])[0] : typeof mud !== 'undefined' && mud ? (mudExpected() || [])[0] : null;
   let w = null, ok = false;
   if (boatChip && boatChip.ok > 0) { w = boatChip.w; ok = true; }
   else if (want && BOAT_CHIP_TEXT[want]) w = want;
@@ -803,7 +808,7 @@ function drawBoatTalk(o) {
   const B = boat && boat.o === o ? boat : null, F = friendSpot(o), by = F.y - 20;
   if (!B) {
     if (o.waving) { if (F.x < viewR() + 4 && F.x > viewL() - 6) drawBubble('Bye! 👋', F.x, by, { tail: -1, size: 3.4 }); }
-    else if (F.alone && F.x < W - 6) drawBubble('Ugh! Too heavy!', F.x, by, { tail: -1, size: 3.4 });
+    else if (F.alone && F.x < W - 6) drawBubble("Oh no! It won't move!", F.x, by, { tail: -1, size: 3.4 });
     else if (F.hello && o.hello < 2.6 && F.x < W - 4) drawBubble(BOAT_HELLO[o.v], Math.min(F.x, viewR() - 30), by, { tail: -1, color: '#1d4ed8', age: o.hello, size: 3.6 });
     return;
   }

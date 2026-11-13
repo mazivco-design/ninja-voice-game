@@ -45,7 +45,7 @@ const WORDS_DEFAULT = WORDS.slice();
   } catch (e) {}
 })();
 const WORD_ICON = { jump: '⬆️', down: '⬇️', kick: '🦶', throw: '✴️', catch: '🟡', fly: '🪁',
-                    stop: '✋', run: '💨', swim: '🌊', climb: '🧗', push: '🪨', pull: '⛓️', hide: '🌿', block: '🛡️', leap: '🤸', dive: '🤿', crawl: '🐛', fire: '🔥', want: '🙋', 'let go': '🪢', ride: '🐉', fight: '⚔️', hold: '🎋', 'pick up': '🏋️', 'put down': '🫳', help: '🆘', 'push together': '🚣', 'push on three': '🎃', fishing: '🎣', boar: '🐗', jetpack: '🚀', wolves: '🐺', bike: '🚲', ring: '🔔', brake: '🛑', 'get off': '🛬', yes: '👍' };
+                    stop: '✋', run: '💨', swim: '🌊', climb: '🧗', push: '🪨', pull: '🪢', hide: '🌿', block: '🛡️', leap: '🤸', dive: '🤿', crawl: '🐛', fire: '🔥', want: '🙋', 'let go': '🪢', ride: '🐉', fight: '⚔️', hold: '🎋', 'pick up': '🏋️', 'put down': '🫳', help: '🆘', 'push together': '🚣', 'push on three': '🎃', fishing: '🎣', boar: '🐗', jetpack: '🚀', wolves: '🐺', bike: '🚲', ring: '🔔', brake: '🛑', 'get off': '🛬', yes: '👍' };
 
 // רמות קושי – קובעות מהירות, לבבות וקפיצה.
 // gapT = הזמן (בשניות) בין מכשול למכשול. מוגדר בזמן ולא במרחק,
@@ -112,7 +112,7 @@ const WORD_OBSTACLE = { jump: 'box', down: 'beam', kick: 'wall', throw: 'enemy',
                         stop: 'rock', run: 'bridge', swim: 'lake', climb: 'cliff', push: 'boulder', pull: 'gate', hide: 'guard', block: 'arrows',
                         leap: 'window', dive: 'pond', crawl: 'bramble', fire: 'ice', want: 'door', 'let go': 'chasm', ride: 'dragon', fight: 'duel', hold: 'gust', 'pick up': 'lift', 'put down': 'lift', help: 'mud', 'push together': 'boat', 'push on three': 'cart', fishing: 'fishboat', boar: 'boar', jetpack: 'jetgap', wolves: 'wolfden', bike: 'bikeway' };
 // זיהוי קולי: מילה שמתאימה למכשול שעל המסך מופעלת מיד. מילה אחרת מחכה לתוצאה הסופית, ומופעלת רק בביטחון גבוה
-const VOICE = { confMin: 0.8, waitMs: 350, logMax: 600 };   // waitMs: מילה שלא מתאימה למכשול הקרוב מחכה לכל היותר כך לציון, ואז מופעלת בכל מקרה
+const VOICE = { confMin: 0.8, waitMs: 350, logMax: 600, echoRefire: 1500 };   // echoRefire: מילה שנחסמה כהד ועדיין שם אחרי כך הרבה זמן מסוף הקול – היא של הילד   // waitMs: מילה שלא מתאימה למכשול הקרוב מחכה לכל היותר כך לציון, ואז מופעלת בכל מקרה
 // אילו מילים "מצופות" ליד כל מכשול (ההפך של WORD_OBSTACLE, ועוד מילים שעובדות יחד)
 const OBSTACLE_WORDS = Object.fromEntries(Object.entries(WORD_OBSTACLE).map(([w, t]) => [t, [w]]));
 OBSTACLE_WORDS.river = ['jump', 'fly'];

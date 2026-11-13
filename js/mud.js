@@ -7,7 +7,7 @@
    בשלב הזה הילד לא אומר HELP – המשחק אומר. (בהמשך הילד יגיד HELP בעצמו.)
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const MUD = { w: 100, stuck: 24, deep: 5.2, pit: 9, sinkT: 1.6, helpT: 2.6, run: 58, stand: 7, readyT: 0.8, throwT: 1.0, release: 0.72, flyT: 0.7, drown: 2.2,
+const MUD = { helpHint: 4, helpEvery: 6, w: 100, stuck: 24, deep: 5.2, pit: 9, sinkT: 1.6, helpT: 2.6, run: 58, stand: 7, readyT: 0.8, throwT: 1.0, release: 0.72, flyT: 0.7, drown: 2.2,
               catchWin: 4.5, dropT: 0.6, reelT: 1.1, caughtT: 0.7, holdWin: 4.5, slipT: 0.9, pullT: 4.6, pullCyc: 1.2, thanksT: 4.3, almostT: 2.1, didItT: 3.2, tyT: 0.3, anyT: 2.5, walkA: 1.2, walkB: 2.5, hugA: 2.5, hugB: 3.9, hugGap: 5.4, coins: 4 };
 let mud = null;   // { o, phase: 'sink' | 'help' | 'come' | 'throw' | 'fly' | 'dangle' | 'drop' | 'reel' | 'caught' | 'tug' | 'slip' | 'pull' | 'thanks', t, throws, slips }
 
@@ -78,6 +78,7 @@ function mudUpdate(dt, pb) {
     o.fr = viewR() + 12 - o.x; sfx('splash'); burst(PLAYER.x + 4, GROUND, '#6b4423', 10, 22);
     return;
   }
+  chipTick(dt);
   const M = mud, o = M.o; M.t += dt; if (!['caught', 'tug', 'pull', 'thanks'].includes(M.phase)) M.total = (M.total || 0) + dt;
   if (!['caught', 'tug', 'pull', 'thanks', 'sink'].includes(M.phase)) {          // בכל דחיפה למעלה – התזת בוץ
     const st = mudStruggle(), nx = PLAYER.x + 4;
@@ -88,9 +89,12 @@ function mudUpdate(dt, pb) {
   const demo = state !== 'play';
   const go = (ph) => { M.phase = ph; M.t = 0; };
   switch (M.phase) {
-    case 'sink': if (M.t >= MUD.sinkT) { go('help'); speak('help!'); } break;
+    case 'sink': if (M.t >= MUD.sinkT) { if (demo) { go('help'); speak('help!'); } else go('helpWait'); } break;   // במשחק – הילד קורא לעזרה בעצמו
+    case 'helpWait':                                                               // שוקע ומחכה שהילד יקרא HELP. שותק? המשחק אומר את המילה (ושוב כל כמה שניות)
+      if (M.t >= MUD.helpHint + (M.hinted || 0) * MUD.helpEvery) { M.hinted = (M.hinted || 0) + 1; sayWords(['help'], 1.6); }
+      break;
     case 'help':
-      if (M.t >= 2.3 && !M.coming) { M.coming = 1; speak("friend: i'm coming!"); }   // אחרי ש-Help נגמר
+      if (M.t >= (M.called ? 0.7 : 2.3) && !M.coming) { M.coming = 1; speak("friend: i'm coming!"); }   // אחרי ש-Help נגמר (כשהילד קרא – מיד)
       if (M.t >= MUD.helpT) go('come'); break;
     case 'come': {                                                                // החבר רץ אליו
       o.fr = Math.max(mudStand(o), o.fr - MUD.run * dt);
@@ -152,24 +156,31 @@ function mudUpdate(dt, pb) {
 function mudCatch() {
   if (!mud) return false;
   const M = mud;
-  if ((M.phase === 'fly' && M.t >= MUD.flyT * 0.45) || M.phase === 'dangle') { M.held = Math.min(MUD.drown, (M.total || 0) * 0.28); M.phase = 'caught'; M.t = 0; M.hinted = 0; sfx('thud'); }
+  if ((M.phase === 'fly' && M.t >= MUD.flyT * 0.45) || M.phase === 'dangle') { M.held = Math.min(MUD.drown, (M.total || 0) * 0.28); M.phase = 'caught'; M.t = 0; M.hinted = 0; sfx('thud'); wordChipOk('catch'); }
   return true;
 }
 function mudHold() {
   if (!mud) return false;
   const M = mud;
-  if (M.phase === 'caught' || M.phase === 'tug') { M.phase = 'pull'; M.t = 0; M.hinted = 0; }
+  if (M.phase === 'caught' || M.phase === 'tug') { M.phase = 'pull'; M.t = 0; M.hinted = 0; wordChipOk('hold'); }
+  return true;
+}
+function mudHelp() {                                                              // HELP – הילד קורא לעזרה, והחבר שומע ובא
+  if (!mud) return false;
+  if (mud.phase === 'helpWait') { mud.phase = 'help'; mud.t = 0; mud.called = 1; mud.hinted = 0; wordChipOk('help'); }
   return true;
 }
 function mudExpected() {
   if (!mud) return null;
   const p = mud.phase;
+  if (p === 'helpWait') return ['help'];
   if (p === 'fly' || p === 'dangle') return ['catch'];
   if (p === 'caught' || p === 'tug') return ['hold'];
   return [];
 }
 function mudAuto() {                                                              // מצב בודק 🤖
   if (!mud) return;
+  if (mud.phase === 'helpWait' && mud.t > 0.4) command('help', 'auto');
   if (mud.phase === 'dangle' && mud.t > 0.4) command('catch', 'auto');
   if (mud.phase === 'tug' && mud.t > 1.3) command('hold', 'auto');
 }
@@ -241,7 +252,7 @@ function friendPose(o) {
     else { P = poseIdle(now); if (t < 1.1) { const b = Math.sin(Math.PI * Math.min(1, Math.max(0, t - 0.3) / 0.8)); P.lean = 0.35 * b; P.headTilt = 0.2 * b; } else if (t >= MUD.hugA && t < MUD.hugB) poseHug(P, t, -1); }
   }
   else if (o.waving) { P = poseIdle(now); P.arms[1] = [2.7, 3.2 + Math.sin(now * 10) * 0.35]; }
-  else { P = poseIdle(now); if (p !== 'sink' && p !== 'help') P.arms[1] = [0.6, 1.2]; }
+  else { P = poseIdle(now); if (p !== 'sink' && p !== 'help' && p !== 'helpWait') P.arms[1] = [0.6, 1.2]; }
   return P;
 }
 
@@ -302,7 +313,7 @@ function drawMudBack(o) {
   const FP = friendPose(o), h1 = figHand(fx, GROUND, -1, FRIEND.scale, FP, 1), h0 = figHand(fx, GROUND, -1, FRIEND.scale, FP, 0);
   const hand = h1[0] <= h0[0] ? h1 : h0, back = hand === h1 ? h0 : h1;           // החבל עובר דרך שתי הידיים: מהיד הקדמית אל הנינג'ה, ומהאחורית אל הקרקע
   o._fh = hand; o._fb = back;
-  const coiled = ['sink', 'help', 'come', 'ready', 'throw', 'reel'].includes(p) && !(p === 'throw' && M.t > MUD.release + 0.05);
+  const coiled = ['sink', 'helpWait', 'help', 'come', 'ready', 'throw', 'reel'].includes(p) && !(p === 'throw' && M.t > MUD.release + 0.05);
   if (!coiled) drawSlack(fx, back, p === 'pull' || p === 'thanks' || p === 'done' ? 3 : 2);   // אחרי הזריקה – שאר החבל מאחוריו
   drawFriend({ fx, fy: GROUND, facing: -1, pose: FP });
   if (coiled) {                                                                   // לפני הזריקה / באיסוף: החבל המגולגל תלוי מהיד ומתנדנד
@@ -453,8 +464,8 @@ function drawCrow(x, y, dir, flap, burnt) {
 
 // הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). כולל הציור
 sceneAdd({
-  type: 'mud', word: 'help', label: true,                                           // HELP: בינתיים המשחק אומר HELP, הילד אומר CATCH ו-HOLD
-  listen: ['catch', 'hold'],
+  type: 'mud', word: 'help', label: true,                                           // HELP: הילד קורא לעזרה, ואחר כך אומר CATCH ו-HOLD (בהדגמה המשחק אומר HELP)
+  listen: ['help', 'catch', 'hold'],
   active: () => !!mud,
   reset: () => { mud = null; },
   setup: o => { o.w = MUD.w + MUD.stand + 8; }, afterGap: 0.8, noCollide: true,
@@ -462,7 +473,7 @@ sceneAdd({
   draw: drawMudBack, drawFront: drawMudFront,                                         // הבוץ מעל הרגליים, החבל והבועות
   update: mudUpdate, speed: mudSpeed, pose: mudPose,
   expected: mudExpected, auto: mudAuto,
-  act: word => word === 'jump' ? mudBusy() : word === 'catch' ? mudCatch() : word === 'hold' ? mudHold() : false,   // תקוע בבוץ – אי אפשר לקפוץ
+  act: word => word === 'jump' ? mudBusy() : word === 'help' ? mudHelp() : word === 'catch' ? mudCatch() : word === 'hold' ? mudHold() : false,   // תקוע בבוץ – אי אפשר לקפוץ
   intro: { banner: 'CATCH the rope, then HOLD!', time: 12.7,
            demo: () => { obstacles.push({ type: 'mud', x: PLAYER.x + 4 - MUD.stuck, w: MUD.w + MUD.stand + 8 }); } }   // נתקע מיד – והחבר בא (mudUpdate מפעיל את ההדגמה)
 });

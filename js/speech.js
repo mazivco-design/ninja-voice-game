@@ -83,16 +83,16 @@ function handleText(text, isFinal, detail) {
     const exp = expectedWords();                                   // מחושב לכל מילה – "I WANT KEY": אחרי WANT מצפים כבר לשם החפץ
     const w = words[i], conf = confs ? confs[i] : undefined, fresh = i >= seenWords.length || (i === words.length - 1 && w !== seenWords[i].w);
     if (!isFinal) {
-      if (!fresh) continue;
+      if (!fresh) { refireEcho(seenWords[i], w, text); continue; }
       if (seenWords[i] && seenWords[i].timer) clearTimeout(seenWords[i].timer);   // Vosk תיקן את המילה האחרונה – הישנה מתבטלת
       const entry = seenWords[i] = { w, fired: false, timer: null };
-      if (exp.includes(w)) { entry.fired = true; voiceCommand(w, 'go', undefined, text); }
+      if (exp.includes(w)) { entry.fired = true; entry.echo = voiceCommand(w, 'go', undefined, text) === 'echo'; entry.at = performance.now(); }
       else {                                                       // לא מתאימה למכשול – מחכים לציון, אבל לא יותר מ-waitMs (ילד שמדבר ברצף לא מקבל "סופי" בזמן)
         voiceLog(w, 'wait', undefined, text);
         entry.timer = setTimeout(() => { if (!entry.fired) { entry.fired = true; voiceCommand(w, 'late', undefined, text); } }, VOICE.waitMs);
       }
     } else {
-      if (seenWords[i] && seenWords[i].fired && !fresh) continue;   // כבר הופעלה מהזיהוי החלקי (או מהטיימר)
+      if (seenWords[i] && seenWords[i].fired && !fresh) { refireEcho(seenWords[i], w, text); continue; }   // כבר הופעלה מהזיהוי החלקי (או מהטיימר)
       if (seenWords[i] && seenWords[i].timer) clearTimeout(seenWords[i].timer);
       if (conf === undefined || conf >= VOICE.confMin || exp.includes(w)) voiceCommand(w, conf === undefined ? 'go' : 'late', conf, text);
       else voiceLog(w, 'low', conf, text);                      // ביטחון נמוך – כנראה מילה דומה
@@ -171,11 +171,17 @@ function strayWord(w) {
 // בזמן שהמילון מקריא מילה, המיקרופון שומע אותה – לא מפעילים אותה פעמיים
 let ignoreVoiceUntil = 0, lastLoudT = -1e9, voiceSaid = '', voicePlayEnd = 0;   // voicePlayEnd – מתי ההקלטה הנוכחית באמת נגמרת (בלי זנב הביטחון)
 let listenWords = [...WORDS];          // המילים שהזיהוי מקשיב להן במשחק הנוכחי
+// הקול של החבר והתשובה של הילד נקלטו כאותה מילה (בלי הפסקה ביניהם): המילה נחסמה כהד, והילד "נבלע".
+// אם אותה מילה עדיין שם הרבה אחרי שהקול נגמר – זה כבר הילד. (הד אמיתי נסגר מהר, תוך פחות משנייה)
+function refireEcho(e, w, text) {
+  if (!e || !e.echo || performance.now() < voicePlayEnd + VOICE.echoRefire || !expectedWords0(true).includes(w)) return;
+  e.echo = false; voiceCommand(w, 'late', undefined, text);
+}
 function voiceCommand(w, how, conf, text) {
   // רק מילה שהמשחק עצמו אומר עכשיו נחשבת הד מהרמקול – מילה אחרת של הילד עוברת
   // מילה שהשלב מחכה לה עכשיו (למשל JUMP אחרי שהחבר קרא "Jump in!"): נחסמת רק בזמן שהקול עדיין מתנגן – ילד שעונה מיד לא נבלע בזנב
   const echoUntil = expectedWords0(true).includes(w) ? Math.min(ignoreVoiceUntil, voicePlayEnd + 150) : ignoreVoiceUntil;
-  if (performance.now() < echoUntil && new RegExp('(^|[^a-z])' + w + '([^a-z]|$)').test(voiceSaid)) { dbg('heard', w + ' (ignored – speaker)'); voiceLog(w, 'speaker', conf, text); return; }
+  if (performance.now() < echoUntil && new RegExp('(^|[^a-z])' + w + '([^a-z]|$)').test(voiceSaid)) { dbg('heard', w + ' (ignored – speaker)'); voiceLog(w, 'speaker', conf, text); return 'echo'; }
   if (!listenWords.includes(w)) { dbg('heard', w + ' (ignored – not in this stage)'); voiceLog(w, 'off', conf, text); return; }
   // מילה מתקבלת רק אם המיקרופון קלט קול ברור בשנייה וחצי האחרונות – לא רעש חלש ברקע
   if (performance.now() - lastLoudT > 2500) { dbg('heard', w + ' (ignored – too quiet)'); voiceLog(w, 'quiet', conf, text); return; }
