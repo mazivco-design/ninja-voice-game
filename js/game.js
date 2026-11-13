@@ -324,7 +324,7 @@ function sayWords(say, t, key) {
   if (key) hintPenalty(key);
   speak(say[0]);
   if (say[1]) setTimeout(() => { if (state === 'play') speak(say[1]); }, 750);
-  flash = { text: say.map(w => ((w === 'push' && (boat || cart) ? '🫸' : WORD_ICON[w] || WORD_ICON[w.split(' ')[0]]) || '') + ' ' + w.toUpperCase()).join('  →  ') + '!', t };   // בסירה ובעגלה – יד דוחפת, לא סלע
+  flash = { text: say.map(w => ((w === 'push' && (boat || cart) ? '🫸' : w === 'help' ? '' : WORD_ICON[w] || WORD_ICON[w.split(' ')[0]]) || '') + ' ' + w.toUpperCase()).join('  →  ') + '!', t };   // בסירה ובעגלה – יד דוחפת, לא סלע
 }
 function learnAfterHit(o) {
   const say = learnWords(o);

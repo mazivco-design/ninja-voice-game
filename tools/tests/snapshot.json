@@ -1227,7 +1227,7 @@
   "words": "climb, hide, shield, sneak, stop"
  },
  "listen / JET PACK": {
-  "words": "crawl, down, fly, pick up, put on, shield, up"
+  "words": "crawl, down, fast, fly, pick up, put on, shield, up"
  },
  "listen / WOLVES": {
   "words": "catch, climb, hold, jump, shield"
@@ -1236,7 +1236,7 @@
   "words": "brake, get off, jump, ride, ring, shield, stop"
  },
  "listen / journey": {
-  "words": "block, brake, catch, climb, crawl, dive, down, fight, fire, fly, get off, hide, hold, i, jump, jump in, key, kick, leap, let go, pick up, pull, push, put down, put on, ride, ring, rope, run, shield, sneak, stop, swim, throw, torch, up, want, yes"
+  "words": "block, brake, catch, climb, crawl, dive, down, fast, fight, fire, fly, get off, hide, hold, i, jump, jump in, key, kick, leap, let go, pick up, pull, push, put down, put on, ride, ring, rope, run, shield, sneak, stop, swim, throw, torch, up, want, yes"
  },
  "pixels intro / JUMP": {
   "frames": 5,
@@ -1635,12 +1635,12 @@
  },
  "pixels intro / JET PACK": {
   "frames": 28,
-  "pix": 4007824559,
+  "pix": 2815302706,
   "err": null
  },
  "pixels / JET PACK": {
   "frames": 215,
-  "pix": 930074830,
+  "pix": 3224597710,
   "err": null
  },
  "pixels intro / WOLVES": {
@@ -2263,7 +2263,7 @@
  "intro / JET PACK": {
   "sec": 14,
   "hash": 2250127353,
-  "banners": "PICK UP · PUT ON · FLY! | Ready? Press START",
+  "banners": "PICK UP · PUT ON · FLY · FAST! | Ready? Press START",
   "said": "",
   "phases": "jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly"
  },

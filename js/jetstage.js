@@ -6,7 +6,7 @@
    מעל הצד השני: DOWN – נוחתים, מורידים את התרמיל (הוא נשאר שם) וממשיכים.
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const JS = { crawlD: 40, crawlT: 5.4, fuelT: 30, refuel: 0.45, stop: 4, pack: 9, edge: 26, gap: 640, cave: false, left: 0.15, lowAt: 0.4, after: 40, lanes: [9, 19, 29], start: 1, flyV: 10, birdV: 6,
+const JS = { boostT: 2.5, boostMul: 2.3, crawlD: 40, crawlT: 5.4, fuelT: 30, refuel: 0.45, stop: 4, pack: 9, edge: 26, gap: 640, cave: false, left: 0.15, lowAt: 0.4, after: 40, lanes: [9, 19, 29], start: 1, flyV: 10, birdV: 6,
              pickT: 0.8, putT: 1.1, can0: 12, takeT: 1.0, landT: 1.0, dropT: 0.9, hitR: 4.2, getR: 4.2, coins: 3 };
 // מה יש בדרך מעל התהום: מרחק מתחילת התהום, נתיב (0 נמוך, 1 אמצע, 2 גבוה), סוג
 const JS_ITEMS = [                                                                   // רק מטבעות באוויר (היהלומים – בתיבות על הצוקים)
@@ -48,7 +48,7 @@ function jsSpeed() {
   if (p === 'crawlIn') return JS.crawlD / JS.crawlT;
   if (p === 'crawlOut') return -JS.crawlD / JS.crawlT;
   if (JS_ISLE_P.includes(p)) return 0;
-  if (p === 'fly') return JS.flyV;
+  if (p === 'fly') return JS.flyV * (jetS.boost > 0 ? JS.boostMul : 1);              // FAST – טיסה מהירה קדימה לכמה שניות
   if (p === 'drop') return 0;
   return 0;
 }
@@ -85,6 +85,11 @@ function jsUpdate(dt, pb) {
       if (S.t >= JS.takeT) { go('fly'); S.rate = 0; }
       break;
     case 'fly': case 'hover': {
+      if (S.p === 'fly' && state === 'play' && !S.fastTold) { S.fastTold = 1; flash = { text: '💨 Say FAST to fly fast!', t: 2.2, size: 7 }; }
+      if (S.boost > 0) {                                                          // FAST: פסי רוח מאחורי הנינג'ה
+        S.boost -= dt; if (S.p !== 'fly') S.boost = 0;
+        if (Math.random() < 0.7) particles.push({ x: PLAYER.x - 1 - Math.random() * 4, y: GROUND - S.alt - 2 - Math.random() * 9, vx: -70, vy: 0, g: 0, life: 0.22, color: 'rgba(255,255,255,.85)', size: 3.2, rot: 0 });
+      }
       if (S.p === 'fly' && !S.rate) {                                             // קצב שריפה לקטע: מגיעים לתחנה הבאה עם בערך חמישית במיכל
         const nx0 = PLAYER.x + PLAYER.w / 2, nextK = JS_PILLARS.findIndex((P, k) => !S.pill[k] && jsPillarX(o, k) > nx0 + 2);
         const tx = nextK >= 0 ? jsPillarX(o, nextK) : jsFar(o) + 6;
@@ -224,6 +229,7 @@ function jsCmd(word) {
   if (word === 'put on') { if (S.p === 'hold') { S.p = 'put'; S.t = 0; sfx('swish'); } return true; }
   if (word === 'fly' && S.p === 'wear') { S.base = 0; S.p = 'take'; S.t = 0; sfxFile('jet-takeoff'); return true; }
   if (word === 'fly') return true;
+  if (word === 'fast') { if (S.p === 'fly' && S.fuel > 0) { S.boost = JS.boostT; sfx('swish'); } return true; }   // FAST – מאיצים קדימה
   if (word === 'up' || (word === 'fly' && S.p === 'pReady')) {
     if (S.p === 'pReady') { S.base = S.alt; S.lane = Math.max(1, S.lane); S.p = 'take'; S.t = 0; sfxFile('jet-takeoff'); }   // ממריאים מהצוק
     else if ((S.p === 'fly' || S.p === 'hover') && S.fuel > 0) S.lane = Math.min(2, S.lane + 1);
@@ -239,7 +245,7 @@ function jsCmd(word) {
 }
 function jsExpected() {
   const S = jetS; if (!S) return null;
-  return { find: ['pick up'], hold: ['put on'], empty: ['pick up'], wear: ['fly'], fly: ['up', 'down'], hover: ['down'], perch: ['pick up'], pReady: ['up'], atCave: ['crawl'], inCave: ['pick up'], atWall: ['fly'] }[S.p] || [];
+  return { find: ['pick up'], hold: ['put on'], empty: ['pick up'], wear: ['fly'], fly: ['up', 'down', 'fast'], hover: ['down'], perch: ['pick up'], pReady: ['up'], atCave: ['crawl'], inCave: ['pick up'], atWall: ['fly'] }[S.p] || [];
 }
 // טייס אוטומטי (בודק / הדגמה): מתחמק מציפורים ופונה אל המטבעות
 function jsAuto(src) {
@@ -606,7 +612,7 @@ function drawJetHeld() {
 // הרישום של הסצנה – הבסיס מכיר אותה רק דרך הטבלה (scenes.js). הציור עדיין מחובר ב-draw.js
 sceneAdd({
   type: 'jetgap', word: 'jetpack', label: true,
-  listen: ['pick up', 'put on', 'fly', 'up', 'down', 'crawl'],
+  listen: ['pick up', 'put on', 'fly', 'up', 'down', 'fast', 'crawl'],
   active: () => !!jetS,
   reset: () => { jetS = null; },
   setup: jsSetup, afterGap: 0.8, noCollide: true,
@@ -614,6 +620,6 @@ sceneAdd({
   stopAt: o => o.x + JS.stop,                                                       // התרמיל ליד התהום
   update: jsUpdate, physics: jsPhysics, speed: jsSpeed, pose: jsPose,
   expected: jsExpected, cmd: jsCmd, auto: jsAuto,
-  intro: { banner: 'PICK UP · PUT ON · FLY!', time: 14,
+  intro: { banner: 'PICK UP · PUT ON · FLY · FAST!', time: 14,
            demo: () => { const o = { type: 'jetgap' }; jsSetup(o); o.x = PLAYER.x + PLAYER.w - JS.stop; obstacles.push(o); } }   // עומד ליד התרמיל (jsUpdate מפעיל את ההדגמה)
 });
