@@ -2316,7 +2316,7 @@
   "sec": 32.02,
   "hash": 2769230541,
   "banners": "CATCH · HOLD · CLIMB · JUMP! | Ready? Press START",
-  "said": "catch | hold | climb | jump",
+  "said": "catch | hold | friend: climb up! | climb | jump",
   "phases": "wolves:arrive > wolves:circle > wolves:rope > wolves:caught > wolves:lift > wolves:hang > wolves:climb > wolves:board > wolves:carry > wolves:lower > wolves:hover > wolves:drop > wolves:land > wolves:exit"
  },
  "tap / WOLVES": {
