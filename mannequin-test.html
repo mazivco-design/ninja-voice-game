@@ -21,59 +21,48 @@
 </head>
 <body>
 <div id="wrap">
-  <div class="bar"><b>מהירות</b><span id="speeds"></span><span style="flex:1"></span><b>שלד</b><span id="skel"></span></div>
+  <div class="bar"><b>מהירות</b><span id="speeds"></span><span style="flex:1"></span><b>נקודות המדידה</b><span id="skel"></span></div>
   <div id="stage">
-    <div class="pane"><div class="cap">המקור (פיקסלים)</div><canvas id="src"></canvas></div>
+    <div class="pane"><div class="cap">התבנית המקורית (פיקסלים)</div><canvas id="src"></canvas></div>
     <div class="pane"><div class="cap">הבובה החדשה (קווים חלקים, איבר לכל צבע, בלי קו מתאר)</div><canvas id="vec"></canvas></div>
   </div>
-  <div id="note">דף ניסוי נפרד, לא חלק מהמשחק. דמות המקור: "Male Hero" מאת Ozzbit Games, גרסה חינמית, לשימוש לא מסחרי בלבד. הבובה מימין נבנתה לפי הפרופורציות והתנועה שלה.</div>
+  <div id="note">דף ניסוי נפרד, לא חלק מהמשחק. התבנית המקורית: "Male Hero Template" מאת Ozzbit Games, גרסה חינמית, לשימוש לא מסחרי בלבד. הבובה החדשה נמדדה ממנה ומצוירת בקווים חלקים.</div>
 </div>
 <script>
-// דף ניסוי: בובת תנועה וקטורית (איבר לכל צבע, בלי קונטור) לפי הפרופורציות והריצה של דמות המקור.
-const D = Math.PI / 180;
-// פרופורציות, ביחידות של פיקסל-מקור (גובה הדמות כ-37)
-const S = { headR: 6.9, headUp: 6.6, torso: 8.2, torsoW: 7, upper: 4.6, fore: 4.4, fist: 3.3, armW: 3.2, thigh: 5.4, shin: 5.2, legW: 3.9, bootL: 4.2, bootH: 2.7 };
-// צבעים כמו בבובת הדוגמה: גוף וראש בהירים, כל יד וכל רגל בצבע אחר
-const C = { body: '#c7d0f8', head: '#c7d0f8', armN: '#6f7fa3', armF: '#20244d', legN: '#8b9bf2', legF: '#2c3440' };
+// דף ניסוי: בובת תנועה וקטורית (איבר לכל צבע, בלי קונטור). התנוחות נמדדו מתמונות התבנית הצבעונית:
+// לכל איבר קו-אמצע של שמונה נקודות [x, y, עובי] בכל תמונה. בין התמונות עוברים בהחלקה, ולכן התנועה רציפה.
+const RUN = {"frames":[{"head":[72.76,54.27,5.48],"legN":[[64.0,70.3,3.0],[62.24,70.96,4.41],[60.44,71.49,4.99],[58.67,71.98,5.0],[56.87,71.44,5.02],[55.18,70.61,5.29],[53.86,71.7,3.35],[53.5,73.5,2.4]],"armN":[[68.0,61.17,3.47],[68.71,63.13,3.47],[70.01,64.66,3.47],[72.1,64.79,3.47],[74.18,64.73,4.66],[76.1,63.92,4.66],[77.84,62.77,4.02],[79.5,61.5,2.4]],"torso":[[70.87,57.93],[64.0,70.3]]},{"head":[71.76,56.27,5.48],"legN":[[62.83,71.28,3.0],[61.29,72.09,4.63],[59.64,72.59,5.0],[58.01,72.18,4.8],[56.5,71.33,4.27],[55.12,70.27,3.47],[53.9,71.51,2.34],[52.5,72.5,1.46]],"armN":[[65.7,61.0,3.0],[65.24,63.01,3.0],[65.63,64.99,3.47],[66.79,66.63,3.47],[68.68,67.45,3.47],[70.62,68.12,4.65],[72.56,68.81,3.32],[74.5,69.5,2.4]],"torso":[[69.98,59.98],[62.83,71.28]]},{"head":[70.7,57.22,5.41],"legN":[[67.32,72.05,1.83],[65.93,72.92,2.53],[64.53,73.78,3.0],[63.07,73.92,3.15],[61.55,73.3,3.46],[59.96,72.89,4.5],[58.91,73.96,3.46],[57.5,74.5,2.4]],"armN":[[63.0,61.3,3.0],[61.86,62.59,3.36],[60.9,64.0,4.26],[60.95,65.57,3.99],[61.73,67.08,3.87],[62.76,68.44,4.63],[64.19,69.41,3.53],[65.5,70.5,2.4]],"torso":[[69.14,60.97],[67.32,72.05]]},{"head":[72.7,53.22,5.41],"legN":[[69.0,68.72,3.0],[70.7,69.21,3.47],[72.24,70.08,3.47],[72.72,71.36,3.47],[72.16,73.03,3.47],[71.52,74.68,3.47],[72.96,75.64,3.16],[74.5,76.5,2.4]],"armN":[[64.83,58.0,3.0],[63.15,58.0,3.31],[61.56,58.36,3.47],[60.5,59.48,3.87],[60.09,61.11,4.66],[59.64,62.65,4.4],[58.04,63.16,1.83],[56.5,62.5,1.46]],"torso":[[70.99,56.9],[69.0,68.72]]},{"head":[73.7,52.22,5.41],"legN":[[69.8,66.75,3.47],[71.0,67.46,4.47],[72.18,68.19,4.96],[73.35,68.94,5.31],[74.14,70.08,4.75],[74.93,71.23,3.59],[75.62,72.44,3.12],[76.5,73.5,2.4]],"armN":[[65.88,56.88,3.47],[64.38,56.52,3.47],[62.92,56.52,3.47],[61.61,57.3,3.62],[60.65,58.52,4.6],[59.93,59.88,4.66],[58.9,61.01,3.54],[57.5,61.5,2.4]],"torso":[[71.94,55.88],[69.8,66.75]]},{"head":[72.7,54.22,5.41],"legN":[[70.35,69.27,3.47],[69.86,70.86,3.47],[71.23,71.8,4.11],[72.59,72.76,4.52],[73.84,73.86,3.64],[74.22,75.41,3.47],[75.07,76.76,3.17],[76.5,77.5,2.4]],"armN":[[64.96,58.12,3.0],[63.35,58.05,3.28],[61.8,58.24,3.47],[60.61,59.17,3.67],[60.35,60.76,4.63],[59.89,62.3,4.66],[59.64,63.89,3.32],[59.5,65.5,2.4]],"torso":[[70.97,57.89],[70.35,69.27]]},{"head":[71.7,56.22,5.41],"legN":[[68.12,71.12,3.47],[67.91,72.86,3.47],[69.16,74.06,3.47],[70.28,75.39,4.1],[71.18,76.9,4.66],[72.26,78.26,3.4],[73.83,78.98,2.15],[75.5,79.5,1.46]],"armN":[[64.12,60.88,3.47],[62.84,61.92,3.47],[62.0,63.22,3.98],[61.96,64.84,4.66],[62.49,66.35,4.41],[63.56,67.6,3.53],[64.86,68.39,2.83],[66.5,68.5,2.4]],"torso":[[70.26,60.01],[68.12,71.12]]},{"head":[70.76,57.27,5.48],"legN":[[66.2,71.75,5.0],[66.21,73.09,4.83],[66.21,74.43,4.66],[65.55,75.6,4.66],[64.96,76.81,4.81],[64.44,78.05,4.43],[63.78,79.1,2.88],[62.5,79.5,2.4]],"armN":[[64.7,62.0,3.0],[64.29,63.93,3.43],[65.42,65.47,3.09],[67.13,66.36,3.0],[69.02,66.86,3.16],[70.98,66.78,3.47],[72.93,66.56,3.28],[74.5,67.5,2.4]],"torso":[[68.9,60.94],[66.2,71.75]]},{"head":[72.76,53.27,5.48],"legN":[[64.79,68.93,1.83],[62.41,69.48,2.96],[60.37,70.79,3.47],[58.58,72.41,3.47],[57.0,74.26,3.47],[55.38,76.07,4.44],[53.81,77.75,3.66],[51.5,77.5,1.46]],"armN":[[68.0,59.17,3.47],[68.77,61.22,3.47],[70.45,62.54,3.47],[72.33,63.63,3.02],[74.47,63.56,3.47],[76.27,62.36,3.71],[77.73,60.75,4.38],[79.5,59.5,2.4]],"torso":[[70.9,56.94],[64.79,68.93]]},{"head":[73.66,52.16,5.41],"legN":[[65.79,67.93,1.83],[63.7,68.45,2.9],[61.83,69.48,3.47],[60.03,70.66,3.18],[57.99,70.86,3.39],[56.07,71.67,4.66],[54.52,73.01,3.93],[53.5,74.5,2.4]],"armN":[[70.29,58.14,3.47],[71.01,59.95,3.47],[72.53,61.06,3.47],[74.36,61.68,3.11],[76.21,61.3,3.34],[77.7,60.11,4.12],[79.0,58.67,3.91],[80.5,57.5,2.4]],"torso":[[71.76,55.75],[65.79,67.93]]}],"ground":80};
+// צבעים כמו בתבנית: ראש, גוף, יד קרובה, יד רחוקה, רגל קרובה, רגל רחוקה
+const C = { head: '#66becb', torso: '#78a66c', armN: '#d77e7e', armF: '#a94277', legN: '#5489b1', legF: '#283584' };
 let speed = 1, clock = 0, last = 0, showSkel = false;
-const CYCLE = 0.66, FRAMES = 10;
-const img = new Image(); img.src = 'mannequin-test/hero-run.png';
+const CYCLE = 0.66, N = RUN.frames.length, HALF = N / 2;
+const img = new Image(); img.src = 'mannequin-test/template-run.png';
 
-// תנוחת ריצה לפי שלב p (0..1). זוויות במעלות מכיוון "למטה"; חיובי = קדימה (ימינה)
-function runPose(p) {
-  const f = 2 * Math.PI * (p - 0.2), s = Math.sin(f), c = Math.cos(f);
-  const leg = (s, c) => ({ th: 6 + 64 * s, kn: 16 + 96 * Math.pow(Math.max(0, c), 1.15) });   // kn = כיפוף הברך לאחור
-  const arm = (s) => ({ sh: 12 + 66 * s, el: 56 - 26 * s });                                    // el = כיפוף המרפק קדימה
-  return { lean: 26 + 3 * Math.cos(2 * f), up: 2.2 * Math.abs(s), head: 0.5 * Math.sin(2 * f),
-           legN: leg(s, c), legF: leg(-s, -c), armN: arm(-s), armF: arm(s) };
+// החלקה מחזורית בין התמונות (Catmull-Rom) לערך אחד
+function cr(get, p) { const f = p * N, i = Math.floor(f), u = f - i, g = k => get(RUN.frames[((i + k) % N + N) % N]);
+  const a = g(-1), b = g(0), c = g(1), d = g(2);
+  return 0.5 * (2 * b + (c - a) * u + (2 * a - 5 * b + 4 * c - d) * u * u + (3 * b - 3 * c + d - a) * u * u * u); }
+function limbAt(name, p) { return RUN.frames[0][name].map((_, k) => [0, 1, 2].map(m => cr(F => F[name][k][m], p))); }
+function poseAt(p) {
+  const q = (p + 0.5) % 1;                                        // הצד הרחוק = הצד הקרוב חצי מחזור אחר כך
+  return { head: [0, 1, 2].map(m => cr(F => F.head[m], p)), neck: [0, 1].map(m => cr(F => F.torso[0][m], p)), hip: [0, 1].map(m => cr(F => F.torso[1][m], p)),
+           armN: limbAt('armN', p), legN: limbAt('legN', p), armF: limbAt('armF' in RUN.frames[0] ? 'armF' : 'armN', q), legF: limbAt('legN', q) };
 }
-const dir = a => [Math.sin(a * D), Math.cos(a * D)];
-function joints(P) {
-  const hipY = -(S.thigh + S.shin + S.bootH * 0.6) + 2.2 - P.up, hip = [0, hipY];
-  const sh = [hip[0] + Math.sin(P.lean * D) * S.torso, hip[1] - Math.cos(P.lean * D) * S.torso];       // כתף: מעל האגן, מוטה קדימה
-  const J = { hip, sh, head: [sh[0] + Math.sin(P.lean * D) * 2 + 0.6, sh[1] - S.headUp + P.head] };
-  for (const k of ['legN', 'legF']) { const L = P[k], a = dir(L.th), b = dir(L.th - L.kn);
-    const kn = [hip[0] + a[0] * S.thigh, hip[1] + a[1] * S.thigh], an = [kn[0] + b[0] * S.shin, kn[1] + b[1] * S.shin];
-    J[k] = { kn, an, footA: L.th - L.kn }; }
-  for (const k of ['armN', 'armF']) { const A = P[k], a = dir(A.sh), b = dir(A.sh + A.el);
-    const el = [sh[0] + a[0] * S.upper, sh[1] + a[1] * S.upper], ha = [el[0] + b[0] * S.fore, el[1] + b[1] * S.fore];
-    J[k] = { el, ha }; }
-  return J;
+// איבר = "נקניק" חלק: עיגולים צפופים לאורך קו האמצע, בעובי שמשתנה לאורכו
+function blob(g, pts, col, grow) {
+  g.fillStyle = col; const n = pts.length, P = k => pts[Math.max(0, Math.min(n - 1, k))];
+  for (let i = 0; i < n - 1; i++) for (let s = 0; s < 8; s++) { const u = s / 8, a = P(i - 1), b = P(i), c = P(i + 1), d = P(i + 2);
+    const v = m => 0.5 * (2 * b[m] + (c[m] - a[m]) * u + (2 * a[m] - 5 * b[m] + 4 * c[m] - d[m]) * u * u + (3 * b[m] - 3 * c[m] + d[m] - a[m]) * u * u * u);
+    g.beginPath(); g.arc(v(0), v(1), Math.max(1.2, v(2) / 2 + grow), 0, 7); g.fill(); }
+  const e = pts[n - 1]; g.beginPath(); g.arc(e[0], e[1], Math.max(1.2, e[2] / 2 + grow), 0, 7); g.fill();
 }
-function drawMannequin(g, J) {
-  const seg = (a, b, w, col) => { g.strokeStyle = col; g.lineWidth = w; g.lineCap = 'round'; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); };
-  const dot = (p, r, col) => { g.fillStyle = col; g.beginPath(); g.arc(p[0], p[1], r, 0, 7); g.fill(); };
-  const leg = (L, col) => { seg(J.hip, L.kn, S.legW, col); seg(L.kn, L.an, S.legW * 0.92, col);
-    g.save(); g.translate(L.an[0], L.an[1]); g.rotate(-Math.max(-60, Math.min(35, L.footA)) * D * 0.6);       // המגף נוטה עם השוק
-    g.fillStyle = col; g.beginPath(); g.ellipse(S.bootL * 0.38, S.bootH * 0.25, S.bootL, S.bootH, 0, 0, 7); g.fill(); g.restore(); };
-  const arm = (A, col) => { seg(J.sh, A.el, S.armW, col); seg(A.el, A.ha, S.armW * 0.95, col); dot(A.ha, S.fist, col); };
-  arm(J.armF, C.armF); leg(J.legF, C.legF);                                   // הצד הרחוק מאחור
-  seg([J.hip[0], J.hip[1] - 1], J.sh, S.torsoW, C.body);                      // גוף
-  dot([J.hip[0], J.hip[1]], S.torsoW * 0.52, C.body);
-  leg(J.legN, C.legN);
-  g.fillStyle = C.head; g.beginPath(); g.ellipse(J.head[0], J.head[1], S.headR, S.headR * 0.96, 0, 0, 7); g.fill();   // ראש
-  arm(J.armN, C.armN);
-  if (showSkel) { g.fillStyle = '#facc15'; [J.hip, J.sh, J.legN.kn, J.legN.an, J.legF.kn, J.legF.an, J.armN.el, J.armN.ha, J.armF.el, J.armF.ha].forEach(p => { g.beginPath(); g.arc(p[0], p[1], 0.55, 0, 7); g.fill(); }); }
+function drawMannequin(g, P) {
+  blob(g, P.armF, C.armF, 1); blob(g, P.legF, C.legF, 1);
+  blob(g, P.legN, C.legN, 1);
+  g.strokeStyle = C.torso; g.lineWidth = 7.2; g.lineCap = 'round'; g.beginPath(); g.moveTo(P.hip[0], P.hip[1] - 1.5); g.lineTo(P.neck[0], P.neck[1] + 1); g.stroke();
+  g.fillStyle = C.head; g.beginPath(); g.ellipse(P.head[0], P.head[1], P.head[2] + 0.2, P.head[2] + 0.5, 0, 0, 7); g.fill();
+  blob(g, P.armN, C.armN, 1);
+  if (showSkel) { g.fillStyle = '#fde047'; [P.armN, P.legN, P.armF, P.legF].forEach(L => L.forEach(p => { g.beginPath(); g.arc(p[0], p[1], 0.5, 0, 7); g.fill(); })); }
 }
 function setup(cv) { const r = cv.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2); cv.width = r.width * d; cv.height = r.height * d;
   const g = cv.getContext('2d'); const u = Math.min(r.width / 62, r.height / 56) * d;              // יחידה אחת = פיקסל-מקור אחד
@@ -84,10 +73,10 @@ function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now; clock += dt * speed;
   const p = (clock / CYCLE) % 1;
   let v = setup(document.getElementById('src')); v.g.imageSmoothingEnabled = false; ground(v);
-  if (img.complete && img.naturalWidth) { const i = Math.floor(p * FRAMES) % FRAMES;                 // בתמונת המקור כפות הרגליים ב-y=80, מרכז הגוף ב-x≈64
+  if (img.complete && img.naturalWidth) { const i = Math.floor(p * N + 0.5) % N;                    // בתמונת המקור הקרקע ב-y=80, מרכז הגוף ב-x=64
     v.g.drawImage(img, i * 128 + 34, 36, 60, 46, v.cx - 30 * v.u, v.gy - 44 * v.u, 60 * v.u, 46 * v.u); }
   v = setup(document.getElementById('vec')); ground(v);
-  v.g.save(); v.g.translate(v.cx - 4 * v.u, v.gy); v.g.scale(v.u, v.u); drawMannequin(v.g, joints(runPose(p))); v.g.restore();
+  v.g.save(); v.g.translate(v.cx - 64 * v.u, v.gy - RUN.ground * v.u); v.g.scale(v.u, v.u); drawMannequin(v.g, poseAt(p)); v.g.restore();
 }
 function btns(id, items, isOn, pick) { const box = document.getElementById(id); box.innerHTML = '';
   items.forEach(([val, t]) => { const b = document.createElement('button'); b.textContent = t; b.className = isOn(val) ? 'on' : ''; b.onclick = () => { pick(val); bars(); }; box.appendChild(b); box.append(' '); }); }
