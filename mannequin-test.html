@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>ניסוי בובת תנועה</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0f172a; color: #e2e8f0; font-family: system-ui, sans-serif; overflow: hidden; }
+  #wrap { display: flex; flex-direction: column; height: 100%; }
+  .bar { padding: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .bar b { margin-inline-end: 6px; font-size: 14px; }
+  button { font: 700 15px system-ui; padding: 9px 13px; border: 0; border-radius: 10px; background: #1e293b; color: #e2e8f0; }
+  button.on { background: #4f46e5; color: #fff; }
+  #stage { flex: 1; min-height: 0; display: flex; direction: ltr; background: #7b7f8a; }
+  .pane { flex: 1; position: relative; border-inline-end: 2px solid #5b5f6a; }
+  .pane:last-child { border: 0; }
+  .pane canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .cap { position: absolute; top: 8px; left: 0; right: 0; text-align: center; font-weight: 700; font-size: 14px; color: #f8fafc; direction: rtl; }
+  #note { padding: 6px 10px; font-size: 12px; color: #94a3b8; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div class="bar"><b>מהירות</b><span id="speeds"></span><span style="flex:1"></span><b>שלד</b><span id="skel"></span></div>
+  <div id="stage">
+    <div class="pane"><div class="cap">המקור (פיקסלים)</div><canvas id="src"></canvas></div>
+    <div class="pane"><div class="cap">הבובה החדשה (קווים חלקים, איבר לכל צבע, בלי קו מתאר)</div><canvas id="vec"></canvas></div>
+  </div>
+  <div id="note">דף ניסוי נפרד, לא חלק מהמשחק. דמות המקור: "Male Hero" מאת Ozzbit Games, גרסה חינמית, לשימוש לא מסחרי בלבד. הבובה מימין נבנתה לפי הפרופורציות והתנועה שלה.</div>
+</div>
+<script>
+// דף ניסוי: בובת תנועה וקטורית (איבר לכל צבע, בלי קונטור) לפי הפרופורציות והריצה של דמות המקור.
+const D = Math.PI / 180;
+// פרופורציות, ביחידות של פיקסל-מקור (גובה הדמות כ-37)
+const S = { headR: 6.9, headUp: 6.6, torso: 8.2, torsoW: 7, upper: 4.6, fore: 4.4, fist: 3.3, armW: 3.2, thigh: 5.4, shin: 5.2, legW: 3.9, bootL: 4.2, bootH: 2.7 };
+// צבעים כמו בבובת הדוגמה: גוף וראש בהירים, כל יד וכל רגל בצבע אחר
+const C = { body: '#c7d0f8', head: '#c7d0f8', armN: '#6f7fa3', armF: '#20244d', legN: '#8b9bf2', legF: '#2c3440' };
+let speed = 1, clock = 0, last = 0, showSkel = false;
+const CYCLE = 0.66, FRAMES = 10;
+const img = new Image(); img.src = 'mannequin-test/hero-run.png';
+
+// תנוחת ריצה לפי שלב p (0..1). זוויות במעלות מכיוון "למטה"; חיובי = קדימה (ימינה)
+function runPose(p) {
+  const f = 2 * Math.PI * (p - 0.2), s = Math.sin(f), c = Math.cos(f);
+  const leg = (s, c) => ({ th: 6 + 64 * s, kn: 16 + 96 * Math.pow(Math.max(0, c), 1.15) });   // kn = כיפוף הברך לאחור
+  const arm = (s) => ({ sh: 12 + 66 * s, el: 56 - 26 * s });                                    // el = כיפוף המרפק קדימה
+  return { lean: 26 + 3 * Math.cos(2 * f), up: 2.2 * Math.abs(s), head: 0.5 * Math.sin(2 * f),
+           legN: leg(s, c), legF: leg(-s, -c), armN: arm(-s), armF: arm(s) };
+}
+const dir = a => [Math.sin(a * D), Math.cos(a * D)];
+function joints(P) {
+  const hipY = -(S.thigh + S.shin + S.bootH * 0.6) + 2.2 - P.up, hip = [0, hipY];
+  const sh = [hip[0] + Math.sin(P.lean * D) * S.torso, hip[1] - Math.cos(P.lean * D) * S.torso];       // כתף: מעל האגן, מוטה קדימה
+  const J = { hip, sh, head: [sh[0] + Math.sin(P.lean * D) * 2 + 0.6, sh[1] - S.headUp + P.head] };
+  for (const k of ['legN', 'legF']) { const L = P[k], a = dir(L.th), b = dir(L.th - L.kn);
+    const kn = [hip[0] + a[0] * S.thigh, hip[1] + a[1] * S.thigh], an = [kn[0] + b[0] * S.shin, kn[1] + b[1] * S.shin];
+    J[k] = { kn, an, footA: L.th - L.kn }; }
+  for (const k of ['armN', 'armF']) { const A = P[k], a = dir(A.sh), b = dir(A.sh + A.el);
+    const el = [sh[0] + a[0] * S.upper, sh[1] + a[1] * S.upper], ha = [el[0] + b[0] * S.fore, el[1] + b[1] * S.fore];
+    J[k] = { el, ha }; }
+  return J;
+}
+function drawMannequin(g, J) {
+  const seg = (a, b, w, col) => { g.strokeStyle = col; g.lineWidth = w; g.lineCap = 'round'; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); };
+  const dot = (p, r, col) => { g.fillStyle = col; g.beginPath(); g.arc(p[0], p[1], r, 0, 7); g.fill(); };
+  const leg = (L, col) => { seg(J.hip, L.kn, S.legW, col); seg(L.kn, L.an, S.legW * 0.92, col);
+    g.save(); g.translate(L.an[0], L.an[1]); g.rotate(-Math.max(-60, Math.min(35, L.footA)) * D * 0.6);       // המגף נוטה עם השוק
+    g.fillStyle = col; g.beginPath(); g.ellipse(S.bootL * 0.38, S.bootH * 0.25, S.bootL, S.bootH, 0, 0, 7); g.fill(); g.restore(); };
+  const arm = (A, col) => { seg(J.sh, A.el, S.armW, col); seg(A.el, A.ha, S.armW * 0.95, col); dot(A.ha, S.fist, col); };
+  arm(J.armF, C.armF); leg(J.legF, C.legF);                                   // הצד הרחוק מאחור
+  seg([J.hip[0], J.hip[1] - 1], J.sh, S.torsoW, C.body);                      // גוף
+  dot([J.hip[0], J.hip[1]], S.torsoW * 0.52, C.body);
+  leg(J.legN, C.legN);
+  g.fillStyle = C.head; g.beginPath(); g.ellipse(J.head[0], J.head[1], S.headR, S.headR * 0.96, 0, 0, 7); g.fill();   // ראש
+  arm(J.armN, C.armN);
+  if (showSkel) { g.fillStyle = '#facc15'; [J.hip, J.sh, J.legN.kn, J.legN.an, J.legF.kn, J.legF.an, J.armN.el, J.armN.ha, J.armF.el, J.armF.ha].forEach(p => { g.beginPath(); g.arc(p[0], p[1], 0.55, 0, 7); g.fill(); }); }
+}
+function setup(cv) { const r = cv.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2); cv.width = r.width * d; cv.height = r.height * d;
+  const g = cv.getContext('2d'); const u = Math.min(r.width / 62, r.height / 56) * d;              // יחידה אחת = פיקסל-מקור אחד
+  return { g, u, cx: cv.width / 2, gy: cv.height * 0.84 }; }
+function ground(v) { v.g.fillStyle = '#111'; v.g.fillRect(v.cx - 26 * v.u, v.gy, 52 * v.u, 0.5 * v.u); }
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; clock += dt * speed;
+  const p = (clock / CYCLE) % 1;
+  let v = setup(document.getElementById('src')); v.g.imageSmoothingEnabled = false; ground(v);
+  if (img.complete && img.naturalWidth) { const i = Math.floor(p * FRAMES) % FRAMES;                 // בתמונת המקור כפות הרגליים ב-y=80, מרכז הגוף ב-x≈64
+    v.g.drawImage(img, i * 128 + 34, 36, 60, 46, v.cx - 30 * v.u, v.gy - 44 * v.u, 60 * v.u, 46 * v.u); }
+  v = setup(document.getElementById('vec')); ground(v);
+  v.g.save(); v.g.translate(v.cx - 4 * v.u, v.gy); v.g.scale(v.u, v.u); drawMannequin(v.g, joints(runPose(p))); v.g.restore();
+}
+function btns(id, items, isOn, pick) { const box = document.getElementById(id); box.innerHTML = '';
+  items.forEach(([val, t]) => { const b = document.createElement('button'); b.textContent = t; b.className = isOn(val) ? 'on' : ''; b.onclick = () => { pick(val); bars(); }; box.appendChild(b); box.append(' '); }); }
+function bars() { btns('speeds', [[0, 'עצור'], [0.15, 'איטי מאוד'], [0.4, 'איטי'], [1, 'רגיל']], x => x === speed, x => { speed = x; });
+  btns('skel', [[false, 'כבוי'], [true, 'דלוק']], x => x === showSkel, x => { showSkel = x; }); }
+bars(); last = performance.now(); requestAnimationFrame(frame); window.READY = true;
+</script>
+</body>
+</html>
