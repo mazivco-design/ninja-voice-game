@@ -305,11 +305,11 @@
  },
  "easy / WILD BOAR": {
   "end": "WILD BOAR – done!",
-  "sec": 59.5,
+  "sec": 60.35,
   "hits": 0,
   "score": 1,
-  "hash": 1077124224,
-  "phases": "boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:duck > boar:hidden > boar:duck > boar:hidden > boar:walk > boar:stand > boar:walk > boar:stand > boar:exit"
+  "hash": 2947151197,
+  "phases": "boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:duck > boar:hidden > boar:duck > boar:hidden > boar:walk > boar:stand > boar:duck > boar:hidden > boar:walk > boar:stand > boar:exit"
  },
  "easy / JET PACK": {
   "end": "JET PACK – done!",
@@ -649,11 +649,11 @@
  },
  "medium / WILD BOAR": {
   "end": "WILD BOAR – done!",
-  "sec": 55.85,
+  "sec": 45.55,
   "hits": 0,
   "score": 1,
-  "hash": 2165183791,
-  "phases": "boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:duck > boar:hidden > boar:duck > boar:hidden > boar:walk > boar:stand > boar:walk > boar:stand > boar:exit"
+  "hash": 3474985917,
+  "phases": "boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:walk > boar:stand > boar:walk > boar:stand > boar:exit"
  },
  "medium / JET PACK": {
   "end": "JET PACK – done!",
@@ -993,11 +993,11 @@
  },
  "hard / WILD BOAR": {
   "end": "WILD BOAR – done!",
-  "sec": 52.4,
+  "sec": 52.97,
   "hits": 0,
   "score": 1,
-  "hash": 56510035,
-  "phases": "boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:duck > boar:hidden > boar:duck > boar:hidden > boar:walk > boar:stand > boar:walk > boar:stand > boar:exit"
+  "hash": 809656476,
+  "phases": "boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:walk > boar:stand > boar:duck > boar:hidden > boar:walk > boar:stand > boar:exit"
  },
  "hard / JET PACK": {
   "end": "JET PACK – done!",
@@ -1117,9 +1117,9 @@
   "station": 33,
   "sec": 360,
   "hits": 0,
-  "score": 332,
-  "hash": 1568191422,
-  "phases": "mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:land > gust:storm > gust:calm > gust:back > gust:done > bike:rideWait > bike:mount > bike:ride > bike:duckWait > bike:duckGo > bike:ride > bike:rampWait > bike:rampGo > bike:ride > bike:down > bike:liftOver > bike:ride > bike:stopWait > bike:stopping > bike:offWait > bike:off > bike:cheer > rope:wait > rope:hang > rope:land > rope:done > merchant:ask > merchant:choose > merchant:give > merchant:walk > merchant:open > merchant:done > lift:atRock > lift:lifting > duel:enter > duel:face > duel:win > boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:walk > boar:stand > boar:walk > boar:stand > boar:exit > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row"
+  "score": 319,
+  "hash": 2337756825,
+  "phases": "mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:land > gust:storm > gust:calm > gust:back > gust:done > bike:rideWait > bike:mount > bike:ride > bike:duckWait > bike:duckGo > bike:ride > bike:rampWait > bike:rampGo > bike:ride > bike:down > bike:liftOver > bike:ride > bike:stopWait > bike:stopping > bike:offWait > bike:off > bike:cheer > rope:wait > rope:hang > rope:land > rope:done > merchant:ask > merchant:choose > merchant:give > merchant:walk > merchant:open > merchant:done > lift:atRock > lift:lifting > duel:enter > duel:face > duel:win > boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:walk > boar:stand > boar:walk > boar:stand > boar:exit > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK"
  },
  "journey last / hard": {
   "state": "play",
@@ -1127,8 +1127,8 @@
   "sec": 360,
   "hits": 0,
   "score": 399,
-  "hash": 2695648823,
-  "phases": "mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:land > gust:storm > gust:calm > gust:back > gust:done > bike:rideWait > bike:mount > bike:ride > bike:duckWait > bike:duckGo > bike:ride > bike:rampWait > bike:rampGo > bike:ride > bike:down > bike:liftOver > bike:ride > bike:stopWait > bike:stopping > bike:offWait > bike:off > bike:cheer > rope:wait > rope:hang > rope:land > rope:done > merchant:ask > merchant:choose > merchant:give > merchant:walk > merchant:open > merchant:done > lift:atRock > lift:lifting > duel:enter > duel:face > duel:win > boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:duck > boar:hidden > boar:duck > boar:hidden > boar:walk > boar:stand > boar:walk > boar:stand > boar:exit > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > ride:mount > ride:takeoff > ride:fly"
+  "hash": 844712898,
+  "phases": "mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:land > gust:storm > gust:calm > gust:back > gust:done > bike:rideWait > bike:mount > bike:ride > bike:duckWait > bike:duckGo > bike:ride > bike:rampWait > bike:rampGo > bike:ride > bike:down > bike:liftOver > bike:ride > bike:stopWait > bike:stopping > bike:offWait > bike:off > bike:cheer > rope:wait > rope:hang > rope:land > rope:done > merchant:ask > merchant:choose > merchant:give > merchant:walk > merchant:open > merchant:done > lift:atRock > lift:lifting > duel:enter > duel:face > duel:win > boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:walk > boar:stand > boar:walk > boar:stand > boar:exit > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > ride:mount > ride:takeoff > ride:fly"
  },
  "listen / JUMP": {
   "words": "jump, shield"
@@ -1248,7 +1248,7 @@
   "words": "jump, jump in, pull, shield, swim, throw"
  },
  "listen / WILD BOAR": {
-  "words": "climb, hide, shield, sneak, stop"
+  "words": "climb, hide, shield, sneak"
  },
  "listen / JET PACK": {
   "words": "crawl, down, fast, fly, pick up, put on, shield, up"
@@ -1651,13 +1651,13 @@
   "err": null
  },
  "pixels intro / WILD BOAR": {
-  "frames": 28,
-  "pix": 1011793835,
+  "frames": 32,
+  "pix": 2374011460,
   "err": null
  },
  "pixels / WILD BOAR": {
-  "frames": 119,
-  "pix": 61373668,
+  "frames": 120,
+  "pix": 4247395553,
   "err": null
  },
  "pixels intro / JET PACK": {
@@ -1702,7 +1702,7 @@
  },
  "pixels / journey last": {
   "frames": 720,
-  "pix": 1576561136,
+  "pix": 881303180,
   "err": null
  },
  "intro / JUMP": {
@@ -2283,19 +2283,19 @@
   "phases": "boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:fight > boat:reel > boat:caught > boat:row > boat:land > boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:throwWait > boat:cast > boat:float > boat:fight > boat:reel > boat:caught > boat:row > boat:land"
  },
  "intro / WILD BOAR": {
-  "sec": 14,
-  "hash": 3420917799,
-  "banners": "SNEAK · STOP at a tree · HIDE! | Ready? Press START",
-  "said": "sneak | stop | hide | sneak",
-  "phases": "boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:walk"
+  "sec": 16,
+  "hash": 3743340328,
+  "banners": "SNEAK to your friend · HIDE! | Ready? Press START",
+  "said": "sneak | hide | sneak",
+  "phases": "boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:walk > boar:stand"
  },
  "tap / WILD BOAR": {
   "end": "WILD BOAR – done!",
-  "sec": 38.57,
+  "sec": 28.07,
   "hits": 0,
   "score": 1,
-  "hash": 4217140060,
-  "phases": "boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:duck > boar:hidden > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:exit"
+  "hash": 2801400702,
+  "phases": "boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:walk > boar:stand > boar:exit"
  },
  "intro / JET PACK": {
   "sec": 14,

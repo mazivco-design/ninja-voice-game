@@ -2445,6 +2445,30 @@
    "voice_id": "wSqOdjeNqDrHcoK0zorF",
    "file": "friend9-lukas-pullup",
    "text": "[encouraging] Pull me up!"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend9-lukas-comeonsneak",
+   "text": "[whispering] Come on, sneak!"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend9-lukas-sneaknow",
+   "text": "[whispering] Sneak now!"
   }
  ]
 }
