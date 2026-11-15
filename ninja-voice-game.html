@@ -285,6 +285,8 @@
 <script>
 // 🎬 פותח ישר את עורך האנימציה (animator.html). סטודיו הציורים (Design) נפתח מהעורך: ninja-voice-game.html#design
 $('labBtn').onclick = () => { location.href = 'animator.html'; };
+// ניסוי דמות מסרטון: רק עם ?sprite=1 בכתובת
+if (/[?&]sprite=1/.test(location.search)) { const sc = document.createElement('script'); sc.src = 'sprite-test/game-sprite.js'; document.body.appendChild(sc); }
 if (location.hash === '#design') window.addEventListener('load', () => setTimeout(() => { history.replaceState(null, '', location.pathname); openStudio(); }, 300));
 </script>
 <!-- סנכרון בין מכשירים (משותף לכל הפרויקטים) -->
