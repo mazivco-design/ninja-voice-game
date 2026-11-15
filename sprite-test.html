@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>ניסוי דמות מסרטון</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0f172a; color: #e2e8f0; font-family: system-ui, sans-serif; overflow: hidden; }
+  #wrap { display: flex; flex-direction: column; height: 100%; }
+  .bar { padding: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .bar b { margin-inline-end: 6px; font-size: 14px; }
+  button { font: 700 15px system-ui; padding: 9px 13px; border: 0; border-radius: 10px; background: #1e293b; color: #e2e8f0; }
+  button.on { background: #4f46e5; color: #fff; }
+  #stage { flex: 1; min-height: 0; position: relative; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #note { padding: 6px 10px; font-size: 12px; color: #94a3b8; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div class="bar"><b>גודל</b><span id="sizes"></span><span style="flex:1"></span><b>מהירות</b><span id="speeds"></span></div>
+  <div id="stage"><canvas id="c"></canvas></div>
+  <div id="note">דף ניסוי נפרד, לא חלק מהמשחק. הרקע הוא צילום של השלב הראשון במשחק (לא זז). הדמות נחתכה מסרטון הריצה ששלחת, אחרי הסרת הרקע הירוק.</div>
+</div>
+<script>
+// דף ניסוי: דמות הריצה מהסרטון (שורת תמונות אחרי הסרת הרקע הירוק) על צילום של רקע המשחק.
+const BG = { w: 1366, h: 1024, ninjaX: 247.6, groundY: 742.4, ninjaH: 120 };     // איפה ובאיזה גובה הנינג'ה עומד בצילום
+const SHEET = { fw: 236, fh: 300, n: 20, ground: 296, fps: 24 };                  // 20 תמונות = מחזור ריצה מלא
+const bg = new Image(), sheet = new Image(); bg.src = 'sprite-test/bg.jpg'; sheet.src = 'sprite-test/ninja-run-sheet.png';
+let size = 1.35, speed = 1, clock = 0, last = 0;
+const cv = document.getElementById('c'), g = cv.getContext('2d');
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; clock += dt * speed;
+  const r = cv.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2);
+  if (cv.width !== Math.round(r.width * d) || cv.height !== Math.round(r.height * d)) { cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d); }
+  if (!bg.complete || !bg.naturalWidth) return;
+  // הרקע ממלא את המסך (כמו במשחק): נצמד לקרקע, ונחתך מהצדדים או מלמעלה לפי הצורך
+  const k = Math.max(cv.width / BG.w, cv.height / BG.h), ox = 0, oy = (cv.height - BG.h * k) * 0.72;
+  g.drawImage(bg, ox, oy, BG.w * k, BG.h * k);
+  if (!sheet.complete || !sheet.naturalWidth) return;
+  const i = Math.floor(clock * SHEET.fps) % SHEET.n, hpx = BG.ninjaH * size * k * (SHEET.fh / SHEET.ground), wpx = hpx * SHEET.fw / SHEET.fh;
+  const x = ox + BG.ninjaX * k, gy = oy + BG.groundY * k;
+  g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.ellipse(x, gy + 2 * k, wpx * 0.2, 5 * k * size, 0, 0, 7); g.fill();   // צל
+  g.drawImage(sheet, i * SHEET.fw, 0, SHEET.fw, SHEET.fh, x - wpx * 0.56, gy - hpx * (SHEET.ground / SHEET.fh) + 3 * k, wpx, hpx);
+}
+function btns(id, items, isOn, pick) { const box = document.getElementById(id); box.innerHTML = '';
+  items.forEach(([val, t]) => { const b = document.createElement('button'); b.textContent = t; b.className = isOn(val) ? 'on' : ''; b.onclick = () => { pick(val); bars(); }; box.appendChild(b); box.append(' '); }); }
+function bars() { btns('sizes', [[1, 'כמו הנינג\'ה היום'], [1.35, 'גדול יותר'], [1.7, 'גדול מאוד']], x => x === size, x => { size = x; });
+  btns('speeds', [[0, 'עצור'], [0.3, 'איטי'], [1, 'רגיל']], x => x === speed, x => { speed = x; }); }
+bars(); last = performance.now(); requestAnimationFrame(frame); window.READY = true;
+</script>
+</body>
+</html>
