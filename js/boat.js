@@ -30,7 +30,21 @@ let boat = null;   // { o, phase, t, idle, hinted, n }
 // החבר צועק "Swim!" – SWIM ושוחים חזרה לסירה (swimBack → climbIn). לא שוחים – שוקעים, לב אחד, והחבר מושה אותו (sink → rescue → climbIn).
 const FISH = { spots: 2, first: 70, gap: 150, tail: 90, askT: 1.3, castT: 0.75, floatMin: 2.6, floatMax: 4.2, biteT: 4.5, earlyOk: 1.2, reelT: 1.0, caughtT: 1.5, goneT: 1.2, cast: 36, coins: 2,
                hookD: 11, pulls: 3, drag0: 0.2, dragT: 4.0, pullBack: 0.5, fightHint: 2.0, lean: 7, fallT: 0.9, swimWaitT: 6, swimT: 1.8, sinkT: 1.3, rescueT: 1.5, climbT: 0.7 };
-const FISHING = ['fishAsk', 'throwWait', 'cast', 'float', 'bite', 'fight', 'reel', 'caught', 'gone', 'fall', 'swimWait', 'swimBack', 'sink', 'rescue', 'climbIn'];
+const FISHING = ['fishAsk', 'fCast', 'throwWait', 'cast', 'float', 'bite', 'fight', 'reel', 'caught', 'gone', 'fall', 'swimWait', 'swimBack', 'sink', 'rescue', 'climbIn'];
+// החבר דג גם הוא: זורק ("Throw!"), ואחרי שהנינג'ה זרק – דג נושך אצלו קודם, והוא מושך שלוש פעמים ("Pull!") ו-"I got one!"
+const FF = { castT: 0.75, bite: 0.8, biteT: 0.5, pullT: 0.65, pulls: 3, reelT: 0.9, cast: 38 };
+FF.done = FF.bite + FF.biteT + FF.pulls * FF.pullT + FF.reelT;
+function fishFriendBobX(o) { return boatStern(o) + BOAT.len * 0.72 + FF.cast; }
+function fishFriendStep(B, o, dt) {
+  const f = B.ff; f.t += dt;
+  const bob = fishFriendBobX(o), wy = waterY();
+  if (f.p === 'cast' && f.t >= FF.castT) { f.p = 'float'; f.t = 0; sfx('splash'); burst(bob, wy, '#e0f2fe', 6, 12); }
+  else if (f.p === 'float' && f.go && f.t >= FF.bite) { f.p = 'bite'; f.t = 0; sfx('splash'); burst(bob, wy, '#e0f2fe', 8, 16); }
+  else if (f.p === 'bite' && f.t >= FF.biteT) { f.p = 'pull'; f.t = 0; f.n = 0; speak('friend: pull!'); burst(bob, wy, '#e0f2fe', 6, 16); }
+  else if (f.p === 'pull' && f.t >= FF.pullT) { f.n++; f.t = 0; if (f.n >= FF.pulls) { f.p = 'reel'; sfx('swish'); } else { speak('friend: pull!'); burst(bob, wy, '#e0f2fe', 4, 12); } }
+  else if (f.p === 'reel' && f.t >= FF.reelT) { f.p = 'done'; f.t = 0; o.fish = (o.fish || 0) + 1; sfx('coin'); speak('friend: i got one!'); }
+  if (f.p === 'bite' && Math.random() < dt * 5) burst(bob, wy, '#e0f2fe', 3, 10);
+}
 const FISH_WET = ['swimWait', 'swimBack', 'sink', 'rescue'];                         // הנינג'ה בתוך המים
 // phase: ask → step → wait ⇄ push → friendIn → jumpWait → board → row → wave → stuck → out → hi → wait … → row → land
 
@@ -119,6 +133,7 @@ function boatUpdate(dt, pb) {
     }
     else if (B.idle >= BOAT.hint + B.hinted * BOAT.hintEvery) { B.hinted++; sayWords([sw], 1.6, B); }
   }
+  if (B.ff) fishFriendStep(B, o, dt);                                              // החבר דג לידנו (ומדבר את הפעולות שלו)
   switch (B.phase) {
     case 'notice': if (B.t >= BOAT.noticeT) { go('greet'); speak('friend: hey! over here!'); } break;   // שם לב: מפסיק לדחוף, מנגב את המצח, מסתובב אל הנינג'ה
     case 'greet':                                                                  // מסמן: מנופף "Hey! Over here!", ואז מצביע על הסירה "My boat is stuck!"
@@ -162,8 +177,11 @@ function boatUpdate(dt, pb) {
       break;
     case 'stuck': if (B.t >= BOAT.stuckT) go('out'); break;                        // הסירה על האי – יוצאים
     // ---------- דייג ----------
-    case 'fishAsk': if (B.t >= FISH.askT) go('throwWait'); break;                   // החבר: "Let's fish!"
-    case 'cast': if (B.t >= FISH.castT) { go('float'); B.col = '#1e3a8a'; B.wait = FISH.floatMin + Math.random() * (FISH.floatMax - FISH.floatMin); sfx('splash'); burst(fishBobX(), waterY(), '#e0f2fe', 6, 12); } break;   // הדג שנושך – כחול כהה, בולט על המים הבהירים
+    case 'fishAsk': if (B.t >= FISH.askT) { go('fCast'); B.ff = { p: 'cast', t: 0, n: 0 }; speak('friend: throw!'); sfx('jump'); } break;   // החבר: "Lots of fish!" – וזורק ראשון
+    case 'fCast': if (B.t >= 1.5 && !B.yt) { B.yt = 1; speak('friend: your turn!'); } if (B.t >= 2.3) { B.yt = 0; go('throwWait'); } break;   // "Throw!" ... "Your turn!"
+    case 'cast': if (B.t >= FISH.castT) { go('float'); B.col = '#1e3a8a'; B.wait = FISH.floatMin + Math.random() * (FISH.floatMax - FISH.floatMin);
+        if (B.ff && !B.ff.go) { B.ff.go = 1; B.ff.t = 0; B.wait = Math.max(B.wait, FF.done + 0.8 + Math.random() * 1.2); }   // קודם החבר מעלה דג, ורק אחריו הנשיכה אצל הנינג'ה
+        sfx('splash'); burst(fishBobX(), waterY(), '#e0f2fe', 6, 12); } break;   // הדג שנושך – כחול כהה, בולט על המים הבהירים
     case 'float': if (B.early > 0) B.early -= dt; if (B.t >= B.wait) { const held = B.pullHeld; B.pullHeld = 0; go('bite'); sfx('splash'); burst(fishBobX(), waterY(), '#e0f2fe', 8, 16); if (held) boatPull(); } break;   // PULL שנאמר רגע לפני הנשיכה – מושכים מיד כשהיא מגיעה   // המצוף צף ... עד שהדג נושך
     case 'bite':
       if (Math.random() < dt * 5) burst(fishBobX(), waterY(), '#e0f2fe', 3, 10);    // המצוף קופץ ושוקע
@@ -192,7 +210,7 @@ function boatUpdate(dt, pb) {
     case 'reel': if (B.t >= FISH.reelT) { go('caught'); o.fish++; sfx('coin');
         if (state === 'play') { picked += FISH.coins; coinsFlying++; flyCoinToHud({ x: PLAYER.x + 6 }, boatDeck(o) - 10); floatText(PLAYER.x + 8, boatDeck(o) - 16, '+' + FISH.coins + ' 🟡', '#ca8a04'); } }
       break;
-    case 'caught': if (B.t >= FISH.caughtT) { o.c++; go('row'); } break;              // דג בסירה – ממשיכים לשוט
+    case 'caught': if (B.t >= FISH.caughtT) { o.c++; B.ff = null; go('row'); } break;              // דג בסירה – ממשיכים לשוט
     case 'gone': if (B.t >= FISH.goneT) go('throwWait'); break;                       // זורקים שוב
     case 'out': if (B.t >= BOAT.outT) { py = 0; vy = 0; o.c++; go('hi'); speak('friend: stuck again!'); burst(PLAYER.x + 4, GROUND - 0.5, '#e7cf9a', 6, 12); } break;
     case 'land':
@@ -225,7 +243,7 @@ function boatSink() {
   if (!boat) return 0;
   const B = boat, p = B.phase, d = boatDeck(B.o) - GROUND;
   if (p === 'board') return d * Math.min(1, B.t / BOAT.boardT);
-  if (FISHING.includes(p) && !['fight', 'reel', 'caught', 'gone', 'fishAsk', 'throwWait', 'cast', 'float', 'bite'].includes(p)) return fishWetY() - GROUND;
+  if (FISHING.includes(p) && !['fight', 'reel', 'caught', 'gone', 'fishAsk', 'fCast', 'throwWait', 'cast', 'float', 'bite'].includes(p)) return fishWetY() - GROUND;
   if (['row', 'wave', 'stuck'].includes(p) || FISHING.includes(p)) return d;
   if (p === 'out') return d * (1 - Math.min(1, B.t / BOAT.outT));
   if (p === 'land') return d * (1 - Math.min(1, B.t / BOAT.landT));
@@ -378,6 +396,14 @@ function friendSpot(o) {                                                        
   const ease = q => q * q * (3 - 2 * q);
   if (o.mode === 'fish' && p !== 'row') {                                         // דייג: החבר יושב בסירה מההתחלה
     const P = sitLegs(poseIdle(now));
+    const ff = B && B.ff && B.ff.p !== 'done' ? B.ff : null;
+    if (ff) {                                                                        // מחזיק חכה
+      P.arms = [[1.15, 0.85], [1.3, 0.95]];
+      if (ff.p === 'cast' && ff.t < FF.castT * 0.45) { P.arms = [[2.0, 2.6], [1.9, 2.5]]; P.lean = -0.2; }
+      if (ff.p === 'pull' && ff.t < 0.3) { P.arms = [[1.7, 2.0], [1.8, 2.1]]; P.lean = -0.3; }   // מושך אחורה
+      if (ff.p === 'bite') P.lean = 0.15;
+      return { x: seat, y: deck, P, scale: sc, inBoat: true };
+    }
     if (p === 'alone' || p === 'jumpWait' || p === 'bye' || p === 'land' || p === 'fishAsk') P.arms[1] = [2.7, 3.2 + Math.sin(now * 10) * 0.35];   // מנופף / קורא
     if (p === 'caught') P.arms = [[-2.4, -2.9], [2.4, 2.9]];
     if (p === 'bite') { P.lean = 0.2; P.arms[1] = [1.6, 1.4]; }                     // מצביע על המצוף
@@ -658,6 +684,8 @@ function drawFishing(o) {
   for (let i = 0; i < (o.fish || 0); i++) { const x = boatStern(o) + BOAT.len * 0.5 + i * 2.6, y = boatKeelY(o) - BOAT.h - 0.6; ctx.fillStyle = ['#fb923c', '#facc15', '#38bdf8', '#f472b6'][i % 4]; ctx.beginPath(); ctx.moveTo(x, y + 1); ctx.lineTo(x - 1.2, y - 1.4 + Math.sin(now * 6 + i) * 0.3); ctx.lineTo(x + 1.2, y - 1.4 - Math.sin(now * 6 + i) * 0.3); ctx.closePath(); ctx.fill(); }
   if (!B || !FISHING.includes(B.phase)) return;                                    // החכה רק בזמן הדייג
   if (['fall', 'swimWait', 'swimBack', 'sink', 'rescue', 'climbIn'].includes(B.phase)) { drawWetCover(o); return; }   // נפל למים – בלי חכה
+  if (B.ff && B.ff.p !== 'done') drawFriendRod(o, B.ff, now, wy);
+  if (B.phase === 'fishAsk' || B.phase === 'fCast') return;                       // החבר דג; הנינג'ה עוד לא הוציא חכה
   const R = fishRod(o); drawRod(R);
   const p = B.phase, bx = fishBobX();
   if (p === 'fight') {                                                             // חוט מתוח מקצה החכה אל המים
@@ -682,6 +710,32 @@ function drawFishing(o) {
   }
   if (p === 'caught' && B.t < 0.9) drawBigFish(boatStern(o) + BOAT.len * 0.5, boatKeelY(o) - BOAT.h - 2 - Math.abs(Math.sin(B.t * 14)) * 1.5, Math.sin(B.t * 20) * 0.6, B.col || '#fb923c');   // מקפץ בסירה
   if (p === 'caught' && B.t >= 0.9) B.col = null;
+}
+function drawFriendRod(o, f, now, wy) {                                          // החכה של החבר, החוט, המצוף והדג שלו
+  const F = friendSpot(o), h = figHand(F.x, F.y, 1, F.scale, F.P, 1), bx = fishFriendBobX(o);
+  let a = -0.75;
+  if (f.p === 'cast') { const k = Math.min(1, f.t / FF.castT); a = k < 0.45 ? lerp(-0.95, -2.2, k / 0.45) : lerp(-2.2, -0.75, Math.min(1, (k - 0.45) / 0.3)); }
+  if (f.p === 'bite') a = -0.62 + Math.sin(now * 18) * 0.05;
+  if (f.p === 'pull') a = f.t < 0.3 ? lerp(-0.45, -1.4, f.t / 0.3) : lerp(-1.4, -0.5, (f.t - 0.3) / (FF.pullT - 0.3));
+  if (f.p === 'reel') a = lerp(-0.7, -1.7, Math.min(1, f.t / 0.4));
+  const R = { bx: h[0], by: h[1], tx: h[0] + Math.cos(a) * 13, ty: h[1] + Math.sin(a) * 13 };
+  drawRod(R);
+  let by = null;
+  if (f.p === 'cast') { const k = Math.min(1, f.t / FF.castT); if (k > 0.45) { const q = (k - 0.45) / 0.55; by = { x: lerp(R.tx, bx, q), y: lerp(R.ty, wy, q) - Math.sin(Math.PI * q) * 8 }; } }
+  if (f.p === 'float') by = { x: bx, y: wy + 0.2 + Math.sin(now * 2.3 + 1) * 0.25 };
+  if (f.p === 'bite') by = { x: bx + Math.sin(now * 22) * 0.3, y: wy + 0.6 + Math.abs(Math.sin(now * 9)) * 1.2 };
+  if (f.p === 'pull') { ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 0.2; ctx.beginPath(); ctx.moveTo(R.tx, R.ty); ctx.lineTo(bx - f.n * 3, wy + 0.3); ctx.stroke(); }
+  if (by) {
+    ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 0.18;
+    ctx.beginPath(); ctx.moveTo(R.tx, R.ty); ctx.quadraticCurveTo((R.tx + by.x) / 2, Math.max(R.ty, by.y) + (f.p === 'bite' ? 0 : 2), by.x, by.y - 0.6); ctx.stroke();
+    ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.arc(by.x, by.y - 0.7, 0.75, Math.PI, 0); ctx.fill();   // מצוף כתום – שונה מהמצוף של הנינג'ה
+    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(by.x, by.y - 0.7, 0.75, 0, Math.PI); ctx.fill();
+  }
+  if (f.p === 'reel') {                                                            // הדג של החבר עף אל הסירה
+    const k = Math.min(1, f.t / FF.reelT), fx = lerp(bx - 9, F.x - 2, k), fy = lerp(wy, boatKeelY(o) - BOAT.h - 2, k) - Math.sin(Math.PI * k) * 10;
+    ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 0.18; ctx.beginPath(); ctx.moveTo(R.tx, R.ty); ctx.lineTo(fx, fy - 1.2); ctx.stroke();
+    drawBigFish(fx, fy, Math.sin(now * 25) * 0.5 - 1.2 + k * 1.4, '#a855f7');
+  }
 }
 function drawFightMeter() {                                                     // כמה משיכות נשארו (דגים קטנים) ומד המתח
   const B = boat, cx = PLAYER.x + 6, cy = GROUND - 34;
@@ -817,7 +871,11 @@ function drawBoatTalk(o) {
   if (o.mode === 'fish') {                                                         // דייג
     if (p === 'jumpWait') say("Jump in! Let's go fishing!", { age: B.t, size: 3.6 });
     if (p === 'row' && B.t < 1.6) say(o.c === 0 ? 'Row, row! 🚣' : 'Nice! More fish ahead!', { age: B.t, size: 3.6, color: '#111827' });
-    if (p === 'fishAsk' || p === 'throwWait' && B.t < 1.5) say("Lots of fish! Throw the line!", { age: p === 'fishAsk' ? B.t : B.t + FISH.askT, size: 3.6 });
+    if (p === 'fishAsk') say('Lots of fish!', { age: B.t, size: 3.6 });
+    if (p === 'fCast') say(B.t < 1.5 ? 'Throw! 🎣' : 'Your turn!', { age: B.t < 1.5 ? B.t : B.t - 1.5, size: 3.8 });
+    const ff = B.ff;
+    if (ff && (ff.p === 'pull' || ff.p === 'bite')) say(ff.p === 'bite' ? 'Oh! A bite!' : 'Pull!', { age: ff.p === 'pull' ? ff.t + 0.4 : ff.t, size: 3.8 });
+    if (ff && ff.p === 'done' && ff.t < 1.6 && p === 'float') say('I got one! 🐟', { age: ff.t, size: 3.8, color: '#15803d' });
     if (p === 'float' && B.early > 0) say('Wait for the bite!', { age: 1.4 - B.early, size: 3.6, color: '#b91c1c' });
     if (p === 'bite') { say('A bite! Pull!', { age: B.t, size: 3.8, color: '#b91c1c' }); drawBubble('!', fishBobX(), waterY() - 6, { age: B.t, size: 4.5, color: '#b91c1c' }); }
     if (p === 'caught') say('Nice catch! 🐟', { age: B.t, size: 3.8, color: '#15803d' });

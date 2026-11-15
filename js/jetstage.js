@@ -7,16 +7,16 @@
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
 const JS = { boostT: 2.5, boostMul: 2.3, crawlD: 40, crawlT: 5.4, fuelT: 30, refuel: 0.45, stop: 4, pack: 9, edge: 26, gap: 640, cave: false, left: 0.15, lowAt: 0.4, after: 40, lanes: [9, 19, 29], start: 1, flyV: 10, birdV: 6,
-             pickT: 0.8, putT: 1.1, can0: 12, takeT: 1.0, landT: 1.0, dropT: 0.9, hitR: 4.2, getR: 4.2, coins: 3 };
+             pickT: 0.8, putT: 1.1, can0: 12, takeT: 1.0, landT: 1.0, dropT: 0.9, hitR: 4.2, getR: 5, coins: 3 };
 // מה יש בדרך מעל התהום: מרחק מתחילת התהום, נתיב (0 נמוך, 1 אמצע, 2 גבוה), סוג
 const JS_ITEMS = [                                                                   // רק מטבעות באוויר (היהלומים – בתיבות על הצוקים)
   { dx: 30, lane: 1, k: 'coin' }, { dx: 48, lane: 2, k: 'coin' }, { dx: 66, lane: 1, k: 'coin' },
-  { dx: 160, lane: 2, k: 'coin' }, { dx: 178, lane: 2, k: 'coin' }, { dx: 200, lane: 1, k: 'coin' },
-  { dx: 300, lane: 0, k: 'coin' }, { dx: 318, lane: 1, k: 'coin' }, { dx: 336, lane: 2, k: 'coin' },
+  { dx: 160, lane: 1, k: 'coin' }, { dx: 178, lane: 2, k: 'coin' }, { dx: 200, lane: 1, k: 'coin' },   // אחרי כל צוק – המטבע הראשון בגובה ההמראה (האמצעי)
+  { dx: 300, lane: 1, k: 'coin' }, { dx: 318, lane: 1, k: 'coin' }, { dx: 336, lane: 2, k: 'coin' },
   { dx: 440, lane: 1, k: 'coin' }, { dx: 458, lane: 2, k: 'coin' }, { dx: 560, lane: 1, k: 'coin' }, { dx: 578, lane: 0, k: 'coin' }
 ];
 // צוקים קטנים בתוך התהום: מרכז (מתחילת התהום), רוחב, גובה הראש מעל הקרקע (שלילי = נמוך יותר) – על כל אחד תיבת אוצר
-const JS_PILLARS = [{ dx: 120, w: 15, top: -2 }, { dx: 250, w: 14, top: 18 }, { dx: 380, w: 15, top: 7 }, { dx: 510, w: 13, top: 24 }];   // תחנות דלק רחוקות זו מזו: נמוכה, גבוהה, בינונית, גבוהה מאוד
+const JS_PILLARS = [{ dx: 120, w: 22, top: -2 }, { dx: 250, w: 21, top: 18 }, { dx: 380, w: 22, top: 7 }, { dx: 510, w: 20, top: 24 }];   // רחבים – קל לנחות עליהם   // תחנות דלק רחוקות זו מזו: נמוכה, גבוהה, בינונית, גבוהה מאוד
 // אי סלע באמצע התהום: כאן הדלק נגמר. מולו קיר גבוה עם מעבר נמוך בתחתית: CRAWL פנימה – PICK UP מיכל דלק – זוחל החוצה – FLY מעל הקיר
 // צוק ענק בתהום: מגיע כמעט לראש המסך. נמוך על הפן שלו בולטת "שן" (מדף) – שם עוצרים. משם מעבר צר לתוך הצוק שנפתח לחלל פנימי עם מיכל הדלק
 const JS_ISLE = { face: 230, cliffW: 52, cliffTop: 47.5, ledge: -10, can: 36 };   // לפי הסקיצה השנייה: צוק בצורת כיפה, מדף בבסיס בולט שמאלה, מערה נמוכה שנפתחת לחלל
@@ -34,7 +34,7 @@ function jsIsleX(o, dx) { return jsEdge(o) + dx; }
 function jsPillarX(o, k) { return jsEdge(o) + JS_PILLARS[k].dx; }
 function jsPillarUnder(o) {                                                         // מעל איזה צוק הנינג'ה עכשיו (או -1)
   const nx = PLAYER.x + PLAYER.w / 2;
-  return JS_PILLARS.findIndex((P, k) => Math.abs(nx - jsPillarX(o, k)) < P.w / 2 - 1.5);
+  return JS_PILLARS.findIndex((P, k) => { const d = nx - jsPillarX(o, k); return d > -P.w / 2 - 8 && d < P.w / 2 - 1; });   // גם DOWN קצת לפני הצוק נחשב
 }
 
 function jsSpeed() {
@@ -108,7 +108,7 @@ function jsUpdate(dt, pb) {
         if (it.done) continue;
         if (it.k === 'bird') it.x -= JS.birdV * dt;
         const ix = jsEdge(o) + it.x, iy = JS.lanes[it.lane];
-        if (Math.abs(ix - nx) < (it.k === 'bird' ? JS.hitR : JS.getR) && Math.abs(iy - S.alt) < 5) {
+        if (Math.abs(ix - nx) < (it.k === 'bird' ? JS.hitR : JS.getR) && Math.abs(iy - S.alt) < (it.k === 'bird' ? 5 : 7)) {   // מטבע נאסף גם קצת מעליו / מתחתיו
           it.done = true;
           if (it.k === 'bird') {                                                // (כרגע אין ציפורים בשלב)
             S.hit++; sfx('hit'); shakeT = 0.2; burst(ix, GROUND - iy - 4, '#e2e8f0', 8, 12);
@@ -135,14 +135,15 @@ function jsUpdate(dt, pb) {
     }
     case 'perchDown':                                                            // יורד אל הצוק הקטן
       S.alt = Math.max(JS_PILLARS[S.pi].top, S.alt - dt * 22);
-      if (S.alt <= JS_PILLARS[S.pi].top) { S.lastK = S.pi; go('perch'); sfx('thud'); burst(PLAYER.x + 4, GROUND - S.alt - 1, '#e7c39a', 6, 10); }
+      { const d = jsPillarX(o, S.pi) - (PLAYER.x + PLAYER.w / 2); if (Math.abs(d) > 0.01) ropeShiftBy(Math.sign(d) * Math.min(Math.abs(d), dt * 16)); }   // מחליק בעדינות אל מרכז הצוק
+      if (S.alt <= JS_PILLARS[S.pi].top && Math.abs(jsPillarX(o, S.pi) - (PLAYER.x + PLAYER.w / 2)) < 0.05) { S.lastK = S.pi; go('perch'); sfx('thud'); burst(PLAYER.x + 4, GROUND - S.alt - 1, '#e7c39a', 6, 10); }
       break;
     case 'perch': break;                                                         // עומד על התחנה – מחכה ל-PICK UP
     case 'pFuel': if (S.t >= JS.pickT) { go('pPour'); sfxFile('jet-refuel'); } break;                       // מרים את המיכל מהסלע
     case 'pPour': {                                                              // שופך לתרמיל – המד מתמלא
       const f0 = S.f0 === undefined ? (S.f0 = S.fuel) : S.f0;
       S.fuel = Math.min(1, f0 + (1 - f0) * Math.max(0, Math.min(1, (S.t - 0.4) / 1.0)));
-      if (S.t >= 1.6) { S.fuel = 1; S.f0 = undefined; S.pill[S.pi] = true; go('pReady'); sfx('coin'); flash = { text: '🚀 Full! UP', t: 1.4, size: 7 }; }
+      if (S.t >= 1.6) { S.fuel = 1; S.f0 = undefined; S.pill[S.pi] = true; go('pReady'); sfx('coin'); flash = { text: '🚀 Full! FLY', t: 1.4, size: 7 }; }
       break;
     }
     case 'fall': {                                                               // נגמר הדלק באוויר: גולש ונופל לתהום, ואז חוזר לתחנה האחרונה
@@ -228,10 +229,10 @@ function jsCmd(word) {
   if (word === 'fly' && S.p === 'atWall') { S.p = 'rise'; S.t = 0; sfxFile('jet-takeoff'); flash = { text: '🚀 Full!', t: 1.2, size: 7 }; return true; }
   if (word === 'put on') { if (S.p === 'hold') { S.p = 'put'; S.t = 0; sfx('swish'); } return true; }
   if (word === 'fly' && S.p === 'wear') { S.base = 0; S.p = 'take'; S.t = 0; sfxFile('jet-takeoff'); return true; }
-  if (word === 'fly') return true;
+  if (word === 'fly' && S.p !== 'pReady') return true;
   if (word === 'fast') { if (S.p === 'fly' && S.fuel > 0) { S.boost = JS.boostT; sfx('swish'); } return true; }   // FAST – מאיצים קדימה
-  if (word === 'up' || (word === 'fly' && S.p === 'pReady')) {
-    if (S.p === 'pReady') { S.base = S.alt; S.lane = Math.max(1, S.lane); S.p = 'take'; S.t = 0; sfxFile('jet-takeoff'); }   // ממריאים מהצוק
+  if (word === 'up' || (word === 'fly' && S.p === 'pReady')) {   // המראה מצוק – FLY, כמו בהתחלה (גם UP עובד)
+    if (S.p === 'pReady') { S.base = S.alt; S.lane = 1; S.p = 'take'; S.t = 0; sfxFile('jet-takeoff'); }   // ממריאים מהצוק
     else if ((S.p === 'fly' || S.p === 'hover') && S.fuel > 0) S.lane = Math.min(2, S.lane + 1);
     return true;
   }
@@ -245,7 +246,7 @@ function jsCmd(word) {
 }
 function jsExpected() {
   const S = jetS; if (!S) return null;
-  return { find: ['pick up'], hold: ['put on'], empty: ['pick up'], wear: ['fly'], fly: ['up', 'down', 'fast'], hover: ['down'], perch: ['pick up'], pReady: ['up'], atCave: ['crawl'], inCave: ['pick up'], atWall: ['fly'] }[S.p] || [];
+  return { find: ['pick up'], hold: ['put on'], empty: ['pick up'], wear: ['fly'], fly: ['up', 'down', 'fast'], hover: ['down'], perch: ['pick up'], pReady: ['fly'], atCave: ['crawl'], inCave: ['pick up'], atWall: ['fly'] }[S.p] || [];
 }
 // טייס אוטומטי (בודק / הדגמה): מתחמק מציפורים ופונה אל המטבעות
 function jsAuto(src) {
@@ -259,7 +260,7 @@ function jsAuto(src) {
   const isleW = { atCave: 'crawl', inCave: 'pick up', atWall: 'fly' }[S.p];
   if (isleW && S.t > 0.6) return command(isleW, src);
   if (S.p === 'perch' && S.t > 0.8) return command('pick up', src);
-  if (S.p === 'pReady' && S.t > 0.6) return command('up', src);
+  if (S.p === 'pReady' && S.t > 0.6) return command('fly', src);
   if (S.p === 'fly' && jsPillarUnder(S.o) >= 0 && !S.pill[jsPillarUnder(S.o)]) return command('down', src);
   if (S.p !== 'fly') return;
   if ((S.autoCd = (S.autoCd || 0) - 1 / 60) > 0) return;
@@ -547,7 +548,7 @@ function drawJetStage(o) {
 }
 // שורת השלבים בראש המסך: המילה של כל פעולה, השלב הנוכחי מודגש, מה שנעשה – ✓
 const JS_STEPS_A = [['PICK UP', '🎒'], ['PUT ON', '🎒'], ['PICK UP', '⛽'], ['FLY', '🚀']];
-const JS_STEPS_C = [['DOWN', '⬇️'], ['PICK UP', '⛽'], ['UP', '⬆️']];
+const JS_STEPS_C = [['DOWN', '⬇️'], ['PICK UP', '⛽'], ['FLY', '🚀']];
 const JS_STEPS_B = [['CRAWL', '🕳️'], ['PICK UP', '⛽'], ['FLY', '🚀']];
 function jsStepNow() {
   const p = jetS.p;

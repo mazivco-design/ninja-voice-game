@@ -2469,6 +2469,54 @@
    "voice_id": "wSqOdjeNqDrHcoK0zorF",
    "file": "friend9-lukas-sneaknow",
    "text": "[whispering] Sneak now!"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend9-lukas-throw",
+   "text": "[excited] Throw!"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend9-lukas-yourturn2",
+   "text": "[cheerful] Your turn!"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend9-lukas-pull",
+   "text": "[excited] Pull!"
+  },
+  {
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF",
+   "file": "friend9-lukas-gotone",
+   "text": "[laughing] Yes! I got one!"
   }
  ]
 }
