@@ -1131,139 +1131,139 @@
   "phases": "mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:fCast > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:fCast > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:land > gust:storm > gust:calm > gust:back > gust:done > bike:rideWait > bike:mount > bike:ride > bike:duckWait > bike:duckGo > bike:ride > bike:rampWait > bike:rampGo > bike:ride > bike:down > bike:liftOver > bike:ride > bike:stopWait > bike:stopping > bike:offWait > bike:off > bike:cheer > rope:wait > rope:hang > rope:land > rope:done > merchant:ask > merchant:choose > merchant:give > merchant:walk > merchant:open > merchant:done > lift:atRock > lift:lifting > duel:enter > duel:face > duel:win > boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:walk > boar:stand > boar:walk > boar:stand > boar:exit > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > ride:mount > ride:takeoff > ride:fly"
  },
  "listen / JUMP": {
-  "words": "jump, shield"
+  "words": "jump"
  },
  "listen / DOWN": {
-  "words": "down, shield"
+  "words": "down"
  },
  "listen / JUMP + DOWN": {
-  "words": "down, jump, shield"
+  "words": "down, jump"
  },
  "listen / KICK": {
-  "words": "kick, shield"
+  "words": "kick"
  },
  "listen / THROW": {
-  "words": "shield, throw"
+  "words": "throw"
  },
  "listen / KICK + THROW": {
-  "words": "kick, shield, throw"
+  "words": "kick, throw"
  },
  "listen / CATCH": {
-  "words": "catch, shield"
+  "words": "catch"
  },
  "listen / JUMP + FLY": {
-  "words": "fly, jump, shield"
+  "words": "fly, jump"
  },
  "listen / CATCH + FLY": {
-  "words": "catch, fly, jump, shield"
+  "words": "catch, fly, jump"
  },
  "listen / STOP": {
-  "words": "shield, stop"
+  "words": "stop"
  },
  "listen / RUN": {
-  "words": "run, shield"
+  "words": "run"
  },
  "listen / STOP + RUN": {
-  "words": "run, shield, stop"
+  "words": "run, stop"
  },
  "listen / SWIM": {
-  "words": "shield, swim"
+  "words": "swim"
  },
  "listen / CLIMB": {
-  "words": "climb, shield"
+  "words": "climb"
  },
  "listen / SWIM + CLIMB": {
-  "words": "climb, shield, swim"
+  "words": "climb, swim"
  },
  "listen / PUSH": {
-  "words": "push, shield"
+  "words": "push"
  },
  "listen / PULL": {
-  "words": "pull, shield"
+  "words": "pull"
  },
  "listen / PUSH + PULL": {
-  "words": "pull, push, shield"
+  "words": "pull, push"
  },
  "listen / HIDE": {
-  "words": "hide, shield"
+  "words": "hide"
  },
  "listen / BLOCK": {
-  "words": "block, shield"
+  "words": "block"
  },
  "listen / HIDE + BLOCK": {
-  "words": "block, hide, shield"
+  "words": "block, hide"
  },
  "listen / LEAP": {
-  "words": "leap, shield"
+  "words": "leap"
  },
  "listen / DIVE": {
-  "words": "dive, shield"
+  "words": "dive"
  },
  "listen / LEAP + DIVE": {
-  "words": "dive, leap, shield"
+  "words": "dive, leap"
  },
  "listen / CRAWL": {
-  "words": "crawl, shield"
+  "words": "crawl"
  },
  "listen / FIRE": {
-  "words": "fire, shield"
+  "words": "fire"
  },
  "listen / CRAWL + FIRE": {
-  "words": "crawl, fire, shield"
+  "words": "crawl, fire"
  },
  "listen / I WANT": {
-  "words": "i, key, rope, shield, torch, want"
+  "words": "i, key, rope, torch, want"
  },
  "listen / LET GO": {
-  "words": "catch, let go, shield"
+  "words": "catch, let go"
  },
  "listen / RIDE": {
-  "words": "down, fire, ride, shield, up"
+  "words": "down, fire, ride, up"
  },
  "listen / FIGHT": {
-  "words": "fight, shield"
+  "words": "fight"
  },
  "listen / HOLD": {
-  "words": "hold, shield"
+  "words": "hold"
  },
  "listen / PICK UP": {
-  "words": "jump, pick up, pull, put down, shield, throw"
+  "words": "jump, pick up, pull, put down, throw"
  },
  "listen / PICK UP + PUT DOWN": {
-  "words": "jump, pick up, pull, put down, shield, throw"
+  "words": "jump, pick up, pull, put down, throw"
  },
  "listen / PICK UP + THROW": {
-  "words": "jump, pick up, pull, put down, shield, throw"
+  "words": "jump, pick up, pull, put down, throw"
  },
  "listen / HELP": {
-  "words": "catch, hold, shield"
+  "words": "catch, hold"
  },
  "listen / PUSH TOGETHER": {
-  "words": "jump, jump in, push, shield, yes"
+  "words": "jump, jump in, push, yes"
  },
  "listen / PUSH ON THREE": {
-  "words": "jump, jump in, push, shield, yes"
+  "words": "jump, jump in, push, yes"
  },
  "listen / FISHING": {
-  "words": "jump, jump in, pull, shield, swim, throw"
+  "words": "jump, jump in, pull, swim, throw"
  },
  "listen / WILD BOAR": {
-  "words": "climb, hide, shield, sneak"
+  "words": "climb, hide, sneak"
  },
  "listen / JET PACK": {
-  "words": "crawl, down, fast, fly, pick up, put on, shield, up"
+  "words": "crawl, down, fast, fly, pick up, put on, up"
  },
  "listen / WOLVES": {
-  "words": "catch, climb, hold, jump, shield"
+  "words": "catch, climb, hold, jump"
  },
  "listen / BIKE": {
-  "words": "brake, get off, jump, ride, ring, shield, stop"
+  "words": "brake, get off, jump, ride, ring, stop"
  },
  "listen / HIGH WALL": {
-  "words": "catch, climb, jump, pull, shield, throw"
+  "words": "catch, climb, jump, pull, throw"
  },
  "listen / journey": {
-  "words": "block, brake, catch, climb, crawl, dive, down, fast, fight, fire, fly, get off, hide, hold, i, jump, jump in, key, kick, leap, let go, pick up, pull, push, put down, put on, ride, ring, rope, run, shield, sneak, stop, swim, throw, torch, up, want, yes"
+  "words": "block, brake, catch, climb, crawl, dive, down, fast, fight, fire, fly, get off, hide, hold, i, jump, jump in, key, kick, leap, let go, pick up, pull, push, put down, put on, ride, ring, rope, run, sneak, stop, swim, throw, torch, up, want, yes"
  },
  "pixels intro / JUMP": {
   "frames": 5,

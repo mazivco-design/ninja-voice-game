@@ -22,6 +22,7 @@ const SHOP_CATS = [['suit', '🥷 Suits'], ['weapon', '⚔️ Weapons'], ['pet',
 
 function coinsNow() { return pLoad('coins', 0); }
 function getOwned() { return isTester() ? SHOP.map(i => i.id) : pLoad('owned', ['suit_night']); }
+const SHIELD_OFF = true;   // בועת המגן חסומה (2026-11-16): לא בחנות ולא במשחק (SHIELD לא נשמע). מנות שנקנו נשמרות, וחוזרות כשמבטלים את החסימה
 const PETS_OFF = true;   // הינשוף והדרקון חסומים כרגע (2026-11-13): לא בחנות, לא עפים ולא משפיעים. מי שקנה – הקנייה נשמרת, וחוזרת כשמבטלים את החסימה
 function getEquip() { const e = Object.assign({ suit: 'suit_night', weapon: null, pet: null }, pLoad('equip', {})); if (PETS_OFF) e.pet = null; return e; }
 function equipped(id) { const e = getEquip(); return e.suit === id || e.weapon === id || e.pet === id; }
@@ -76,7 +77,8 @@ function openShop() {
 function renderShop() {
   $('shopCoins').textContent = isTester() ? '∞' : coinsNow();
   if (PETS_OFF && shopCat === 'pet') shopCat = 'suit';
-  $('shopTabs').innerHTML = SHOP_CATS.filter(([c]) => !(PETS_OFF && c === 'pet')).map(([c, t]) => '<button class="sbTab' + (c === shopCat ? ' sel' : '') + '" data-c="' + c + '">' + t + '</button>').join('');
+  if (SHIELD_OFF && shopCat === 'power') shopCat = 'suit';
+  $('shopTabs').innerHTML = SHOP_CATS.filter(([c]) => !(PETS_OFF && c === 'pet') && !(SHIELD_OFF && c === 'power')).map(([c, t]) => '<button class="sbTab' + (c === shopCat ? ' sel' : '') + '" data-c="' + c + '">' + t + '</button>').join('');
   $('shopTabs').querySelectorAll('button').forEach(b => b.onclick = () => { shopCat = b.dataset.c; $('shopMsg').textContent = ''; renderShop(); });
   const owned = getOwned(), grid = $('shopGrid'), col = player ? player.color : '#dc2626';
   grid.innerHTML = '';

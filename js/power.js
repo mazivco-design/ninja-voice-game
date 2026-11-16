@@ -5,7 +5,7 @@
             ליד שלב מיוחד (חבל, דרקון, שלד, טורנדו, סוחר) הוא נוחת לבד, ואי אפשר להפעיל אותו שם.
    כל קבצי js/ נטענים לפי הסדר ב-ninja-voice-game.html וחולקים את אותם משתנים גלובליים. */
 
-const POWER_WORDS = ['shield'];   // JET הוצא מהחנות – יחזור כאביזר בתוך שלב (jetCmd / jetPhysics נשארים לשימוש אז)
+const POWER_WORDS = SHIELD_OFF ? [] : ['shield'];   // בועת המגן חסומה כרגע (SHIELD_OFF ב-shop.js)   // JET הוצא מהחנות – יחזור כאביזר בתוך שלב (jetCmd / jetPhysics נשארים לשימוש אז)
 const JET = { time: 5, alt: 30, rise: 3.5, land: 0.45, guard: 75 };
 const SPECIAL_TYPES = ['chasm', 'dragon', 'duel', 'gust', 'door', 'lift', 'bramble', 'mud', 'boat', 'cart'];
 let shieldOn = false, shieldPop = 0, jetT = 0, jetGrace = 0, jetPh = 0;
@@ -28,7 +28,7 @@ function specialNear(range) {                                                   
 
 // SHIELD: מפעילים את הבועה (אם יש מנה ואין כבר בועה)
 function shieldCmd() {
-  if (shieldOn) return;
+  if (SHIELD_OFF || shieldOn) return;
   if (!usePower('shield')) { flash = { text: '🫧 0 – Shop!', t: 1 }; return; }
   shieldOn = true; sfx('coin'); renderPowerHud();
   for (let i = 0; i < 14; i++) particles.push({ x: PLAYER.x + 4 + Math.cos(i) * 9, y: GROUND - py - 7 + Math.sin(i) * 9, vx: -Math.cos(i) * 12, vy: -Math.sin(i) * 12, g: 0, life: 0.35, color: '#bae6fd', size: 1 });
