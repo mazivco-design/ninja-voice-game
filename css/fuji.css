@@ -82,6 +82,8 @@
 #menu.fuji .stage .name { font-size: 11px; font-weight: 900; letter-spacing: .02em; }
 #menu.fuji .stage .stars { color: #c9944a; font-size: 12px; }
 #menu.fuji .stage:disabled { opacity: 1; }
+#menu.fuji .stage.dev { background: repeating-linear-gradient(-45deg, #f3ecdc 0 8px, #ece2c8 8px 16px) !important; border: 2px dashed #a8956a !important; color: #6b5d3f !important; }   /* שלב בפיתוח */
+#menu.fuji .stage .devTag { font-size: 9px; font-weight: 800; color: #8a6d2a; white-space: nowrap; }
 #menu.fuji .stage.locked .num { opacity: .6; }
 
 #menu.fuji .free { flex: 1; min-width: max-content; height: 52px; padding: 0 8px; border-radius: 12px; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 15px; font-weight: 900;

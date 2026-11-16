@@ -1088,47 +1088,47 @@
  "journey 30+1 / easy": {
   "state": "play",
   "station": 31,
-  "sec": 311.67,
+  "sec": 278.92,
   "hits": 0,
-  "score": 370,
-  "hash": 2431665253,
-  "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:hover > jet:land > jet:drop > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > rope:wait > rope:hang > rope:land > rope:done > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > duel:enter > duel:face > duel:win > lift:atRock > lift:lifting > gust:storm > gust:calm > gust:back > gust:done"
+  "score": 357,
+  "hash": 2488201316,
+  "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > rope:wait > rope:hang > rope:land > rope:done > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:hover > jet:land > jet:drop > lift:atRock > lift:lifting > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > gust:storm > gust:calm > gust:back > gust:done > duel:enter > duel:face > duel:win"
  },
  "journey 30+1 / medium": {
   "state": "play",
   "station": 31,
-  "sec": 274.8,
+  "sec": 242.28,
   "hits": 0,
-  "score": 337,
-  "hash": 2104878442,
-  "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:hover > jet:land > jet:drop > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > rope:wait > rope:hang > rope:land > rope:done > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > duel:enter > duel:face > duel:win > lift:atRock > lift:lifting > gust:storm > gust:calm > gust:back > gust:done"
+  "score": 324,
+  "hash": 2532687506,
+  "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > rope:wait > rope:hang > rope:land > rope:done > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:hover > jet:land > jet:drop > lift:atRock > lift:lifting > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > gust:storm > gust:calm > gust:back > gust:done > duel:enter > duel:face > duel:win"
  },
  "journey 30+1 / hard": {
   "state": "play",
   "station": 31,
-  "sec": 265.7,
+  "sec": 233.17,
   "hits": 0,
-  "score": 337,
-  "hash": 3344911791,
-  "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:hover > jet:land > jet:drop > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > rope:wait > rope:hang > rope:land > rope:done > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > duel:enter > duel:face > duel:win > lift:atRock > lift:lifting > gust:storm > gust:calm > gust:back > gust:done"
+  "score": 335,
+  "hash": 2215031273,
+  "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > rope:wait > rope:hang > rope:land > rope:done > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:hover > jet:land > jet:drop > lift:atRock > lift:lifting > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > gust:storm > gust:calm > gust:back > gust:done > duel:enter > duel:face > duel:win"
  },
  "journey last / easy": {
   "state": "play",
   "station": 33,
   "sec": 360,
   "hits": 0,
-  "score": 305,
-  "hash": 801066047,
-  "phases": "mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:fCast > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:fCast > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:land > gust:storm > gust:calm > gust:back > gust:done > bike:rideWait > bike:mount > bike:ride > bike:duckWait > bike:duckGo > bike:ride > bike:rampWait > bike:rampGo > bike:ride > bike:down > bike:liftOver > bike:ride > bike:stopWait > bike:stopping > bike:offWait > bike:off > bike:cheer > rope:wait > rope:hang > rope:land > rope:done > merchant:ask > merchant:choose > merchant:give > merchant:walk > merchant:open > merchant:done > lift:atRock > lift:lifting > duel:enter > duel:face > duel:win > boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:walk > boar:stand > boar:walk > boar:stand > boar:exit > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five"
+  "score": 415,
+  "hash": 1067683040,
+  "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > rope:wait > rope:hang > rope:land > rope:done > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > duel:enter > duel:face > duel:win > lift:atRock > lift:lifting > gust:storm > gust:calm > gust:back > gust:done > jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly"
  },
  "journey last / hard": {
   "state": "play",
   "station": 33,
   "sec": 360,
   "hits": 0,
-  "score": 399,
-  "hash": 965131900,
-  "phases": "mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:fCast > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:fishAsk > boat:fCast > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row > boat:land > gust:storm > gust:calm > gust:back > gust:done > bike:rideWait > bike:mount > bike:ride > bike:duckWait > bike:duckGo > bike:ride > bike:rampWait > bike:rampGo > bike:ride > bike:down > bike:liftOver > bike:ride > bike:stopWait > bike:stopping > bike:offWait > bike:off > bike:cheer > rope:wait > rope:hang > rope:land > rope:done > merchant:ask > merchant:choose > merchant:give > merchant:walk > merchant:open > merchant:done > lift:atRock > lift:lifting > duel:enter > duel:face > duel:win > boar:stand > boar:walk > boar:stand > boar:duck > boar:hidden > boar:walk > boar:stand > boar:walk > boar:stand > boar:exit > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > ride:mount > ride:takeoff > ride:fly"
+  "score": 434,
+  "hash": 2689373900,
+  "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > rope:wait > rope:hang > rope:land > rope:done > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > duel:enter > duel:face > duel:win > lift:atRock > lift:lifting > gust:storm > gust:calm > gust:back > gust:done > jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:hover > jet:land > jet:drop > merchant:ask > merchant:choose > merchant:give > merchant:walk > merchant:open > merchant:done > boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:fCast > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row"
  },
  "listen / JUMP": {
   "words": "jump"
@@ -1263,7 +1263,7 @@
   "words": "catch, climb, jump, pull, throw"
  },
  "listen / journey": {
-  "words": "block, brake, catch, climb, crawl, dive, down, fast, fight, fire, fly, get off, hide, hold, i, jump, jump in, key, kick, leap, let go, pick up, pull, push, put down, put on, ride, ring, rope, run, sneak, stop, swim, throw, torch, up, want, yes"
+  "words": "block, catch, climb, crawl, dive, down, fast, fight, fire, fly, hide, hold, i, jump, jump in, key, kick, leap, let go, pick up, pull, push, put down, put on, ride, rope, run, stop, swim, throw, torch, up, want, yes"
  },
  "pixels intro / JUMP": {
   "frames": 5,
@@ -1702,7 +1702,7 @@
  },
  "pixels / journey last": {
   "frames": 720,
-  "pix": 2851886314,
+  "pix": 474260703,
   "err": null
  },
  "intro / JUMP": {

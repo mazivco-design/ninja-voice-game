@@ -19,7 +19,7 @@ function getLearned() {
   }
   return l;
 }
-function isLearned(w) { return !w || getLearned().includes(w); }
+function isLearned(w) { return !w || isDev(w) || getLearned().includes(w); }   // שלב בפיתוח – לא מחכים לו (DEV_WORDS)
 function setLearned(w) { const l = getLearned(); if (!l.includes(w)) { l.push(w); pStore('learned', l); } }
 
 // התחנה הרחוקה ביותר שהשחקן הגיע אליה. בתחנה s פתוחות המילים WORDS[0..s]
@@ -40,7 +40,7 @@ function pendingWord() { const w = WORDS[getStation()]; return isLearned(w) ? nu
 function journeyBest(p, d) { return p ? load('p' + p.id + '_jbest_' + d, 0) : pLoad('jbest_' + d, 0); }
 
 // מילים במסע שיוצא מתחנה st – כל המילים עד התחנה (כולן כבר נלמדו)
-function journeyWords(st) { return WORDS.slice(0, Math.min(WORDS.length, st + 1)).filter(w => isLearned(w)); }
+function journeyWords(st) { return WORDS.slice(0, Math.min(WORDS.length, st + 1)).filter(w => isLearned(w) && !isDev(w)); }   // בלי שלבים בפיתוח
 
 let jStation = 0;          // התחנה שממנה יצאנו לקטע הנוכחי
 const J_ONCE = ['boat', 'seesaw'];   // מפגש עם חבר הוא אירוע, לא מכשול: לכל היותר פעם אחת בקטע מסע (פיילוט: הסירה)

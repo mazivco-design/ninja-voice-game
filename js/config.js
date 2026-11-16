@@ -11,6 +11,10 @@ const MODEL_URL = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-sm
 const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive', 'crawl', 'fire', 'let go', 'ride', 'fight', 'hold', 'pick up', 'put down', 'help', 'push together', 'push on three', 'want', 'fishing', 'boar', 'jetpack', 'wolves', 'bike', 'seesaw'];   // WANT עבר לסוף · FISHING – עולם השייט
 // סדר התחנות במסע – אפשר לשנות בעורך (tester → 🧭). נשמר ב-ninjaVoice_wordOrder (ומסתנכרן בין מכשירים)
 const WORDS_DEFAULT = WORDS.slice();
+// שלבים בפיתוח (2026-11-16, לבקשת זיו): פתוחים תמיד באימון ומסומנים 🚧, אבל לא מופיעים במסע.
+// התחנה שלהם במסע נשארת (המספרים לא זזים וההתקדמות השמורה לא נפגעת) – פשוט עוברים בה בלי שיעור. מוכן? מוציאים מהרשימה
+const DEV_WORDS = ['boar', 'bike', 'wolves'];
+function isDev(w) { return DEV_WORDS.includes(w); }
 (function applyWordOrder() {
   try {
     const ord = JSON.parse(localStorage.getItem('ninjaVoice_wordOrder') || 'null');

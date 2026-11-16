@@ -112,7 +112,7 @@ function isUnlocked(i, stars) { return isTester() || i === 0 || (stars[i - 1] ||
 
 // ב-Free Play משתמשים בכל המילים מהשלבים שכבר נפתחו
 // מילה נפתחת כשהשלב הראשון שמלמד אותה נפתח
-function unlockedWords() { return WORDS.filter(w => isLearned(w)); }   // מיקס חופשי: רק מילים שכבר נלמדו
+function unlockedWords() { return WORDS.filter(w => isLearned(w) && !isDev(w)); }   // מיקס חופשי: רק מילים שכבר נלמדו
 // המילים שהשחקן בחר ל-Free Play (נשמר לכל שחקן). ברירת מחדל: כל המילים הפתוחות
 function freeWords() {
   const open = unlockedWords();

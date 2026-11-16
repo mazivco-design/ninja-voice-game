@@ -31,7 +31,8 @@ function renderMenu() {
   placeSideBoard();
   requestAnimationFrame(() => { renderFujiScene(); placeSideBoard(); });      // שוב אחרי שהמסך מוצג – במידות האמיתיות
   $('jSt').textContent = 'Station ' + st + ' of ' + (WORDS.length - 1) + ' · Record ' + pLoad('jbest_' + diffKey, 0);
-  $('jMsg').textContent = pend ? '🔓 ' + pend.toUpperCase() + ' is waiting for you in training!' : st >= WORDS.length - 1 ? 'All words unlocked – how far can you go?' : 'Next station unlocks ' + WORDS[st + 1].toUpperCase();
+  const nextW = WORDS.slice(st + 1).find(w => !isDev(w));                       // שלבים בפיתוח לא נפתחים במסע
+  $('jMsg').textContent = pend ? '🔓 ' + pend.toUpperCase() + ' is waiting for you in training!' : !nextW ? 'All words unlocked – how far can you go?' : 'Next new word: ' + nextW.toUpperCase();
   $('jGo').textContent = pend ? 'Learn ' + pend.toUpperCase() : st >= WORDS.length - 1 ? 'Climb again' : st > 0 ? 'Climb to station ' + (st + 1) : 'Start the climb';
   $('jGo').disabled = !model;
   $('jRestart').classList.toggle('hide', st === 0 || !!pend);
@@ -42,14 +43,14 @@ function renderMenu() {
   box.innerHTML = '';
   WORDS.map(w => lessonIdx(w)).filter(i => i >= 0).forEach(i => {                // לפי סדר המסע (השלבים עצמם לא זזים – הכוכבים נשמרים)
     const s = STAGES[i];
-    const w = s.words[0], unlocked = open.includes(w), got = stars[i] || 0;
+    const w = s.words[0], dev = isDev(w), unlocked = dev || open.includes(w), got = stars[i] || 0;   // שלב בפיתוח – תמיד פתוח, ומסומן
     const b = document.createElement('button');
-    b.className = 'stage' + (unlocked ? '' : ' locked') + (w === pend ? ' pend' : '');
+    b.className = 'stage' + (unlocked ? '' : ' locked') + (w === pend ? ' pend' : '') + (dev ? ' dev' : '');
     b.disabled = !model || !unlocked;
     b.innerHTML = '<span class="stNo">' + WORDS.indexOf(w) + '</span>' +                // מספר התחנה במסלול על ההר
                   '<div class="num">' + (unlocked ? WORD_ICON[w] : '🔒') + '</div>' +
                   '<div class="info"><div class="name">' + w.toUpperCase() + '</div>' +
-                  '<div class="stars">' + (unlocked ? '★'.repeat(got) + '☆'.repeat(3 - got) : '&nbsp;') + '</div></div>';
+                  (dev ? '<div class="devTag">🚧 In progress</div>' : '<div class="stars">' + (unlocked ? '★'.repeat(got) + '☆'.repeat(3 - got) : '&nbsp;') + '</div>') + '</div>';
     b.onclick = () => play('stage', i);
     box.appendChild(b);
   });
