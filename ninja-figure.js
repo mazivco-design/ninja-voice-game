@@ -60,7 +60,9 @@ const RIG_DEFAULT = {
   },
   // [קדימה, למעלה] ביחידות, יחסית לגוף (מסתובב עם הטיית הגוף)
   attach: { shB: [0, 0], shF: [0, 0], hipB: [0, 0], hipF: [0, 0], head: [0, 0] },
-  keys: {},     // תמונות מפתח: { kick: { on, dur, loop, smooth, frames: [{ t, lean, hipY, headTilt, legB:[,], legF, armB, armF }] } }
+  // הריצה בנויה מתמונות מפתח (2026-11-17): מגע → ירידה → מעבר → ריחוף, ושוב עם הרגל השנייה. curve: 'spline' – מעבר חלק דרך התמונות.
+  // ver – כשמשנים את ברירת המחדל מעלים אותו, והריצה השמורה ב-iPad (אם לא נערכה אחרי השינוי) מוחלפת בחדשה
+  keys: { run: { on: true, ver: 2, dur: 1, loop: true, smooth: true, curve: 'spline', frames: [{"t": 0.0, "lean": 0.2, "hipY": -4.36, "headTilt": 0, "spine": 0.12, "legB": [-0.5, -1.35], "legF": [0.55, 0.38], "armB": [0.75, 2.15], "armF": [-0.65, 0.35], "feet": [-0.6, 0.25]}, {"t": 0.125, "lean": 0.24, "hipY": -4.743, "headTilt": 0, "spine": 0.12, "legB": [-0.15, -1.95], "legF": [0.2, -0.3], "armB": [0.45, 1.95], "armF": [-0.4, 0.75], "feet": [-0.9, 0.0]}, {"t": 0.25, "lean": 0.22, "hipY": -4.76, "headTilt": 0, "spine": 0.12, "legB": [0.45, -1.05], "legF": [-0.12, -0.32], "armB": [0.0, 1.4], "armF": [0.0, 1.3], "feet": [-0.5, 0.0]}, {"t": 0.375, "lean": 0.2, "hipY": -4.648, "headTilt": 0, "spine": 0.12, "legB": [1.0, 0.05], "legF": [-0.6, -0.95], "armB": [-0.6, 0.35], "armF": [0.65, 2.05], "feet": [0.1, -0.85]}, {"t": 0.5, "lean": 0.2, "hipY": -4.36, "headTilt": 0, "spine": 0.12, "legB": [0.55, 0.38], "legF": [-0.5, -1.35], "armB": [-0.65, 0.35], "armF": [0.75, 2.15], "feet": [0.25, -0.6]}, {"t": 0.625, "lean": 0.24, "hipY": -4.743, "headTilt": 0, "spine": 0.12, "legB": [0.2, -0.3], "legF": [-0.15, -1.95], "armB": [-0.4, 0.75], "armF": [0.45, 1.95], "feet": [0.0, -0.9]}, {"t": 0.75, "lean": 0.22, "hipY": -4.76, "headTilt": 0, "spine": 0.12, "legB": [-0.12, -0.32], "legF": [0.45, -1.05], "armB": [0.0, 1.3], "armF": [0.0, 1.4], "feet": [0.0, -0.5]}, {"t": 0.875, "lean": 0.2, "hipY": -4.648, "headTilt": 0, "spine": 0.12, "legB": [-0.6, -0.95], "legF": [1.0, 0.05], "armB": [0.65, 2.05], "armF": [-0.6, 0.35], "feet": [-0.85, 0.1]}] } },     // תמונות מפתח: { kick: { on, dur, loop, smooth, frames: [{ t, lean, hipY, headTilt, legB:[,], legF, armB, armF }] } }
   offsets: {}   // { run: { lean, hipY, head, legB:[ירך,ברך], legF:[...], armB:[כתף,מרפק], armF:[...] }, kick: {...}, ... }
 };
 
@@ -79,7 +81,13 @@ function rigMerge(def, val) {
   return val === undefined || val === null ? def : val;
 }
 function loadRig() {
-  try { const v = localStorage.getItem(RIG_KEY); return rigMerge(RIG_DEFAULT, v ? JSON.parse(v) : {}); }
+  try {
+    const v = localStorage.getItem(RIG_KEY), saved = v ? JSON.parse(v) : {};
+    const dk = RIG_DEFAULT.keys || {};
+    if (saved.keys) for (const m of Object.keys(dk))                      // תמונות מפתח ישנות מגרסה קודמת של ברירת המחדל – מוחלפות בחדשות
+      if (saved.keys[m] && (saved.keys[m].ver || 0) < (dk[m].ver || 0)) delete saved.keys[m];
+    return rigMerge(RIG_DEFAULT, saved);
+  }
   catch (e) { return rigClone(RIG_DEFAULT); }
 }
 // סדר השכבות לתנועה מסוימת – תמיד מכיל את כל החלקים בדיוק פעם אחת
@@ -142,6 +150,13 @@ function sampleKeys(name, ph) {
     let i = 0; while (F[i + 1].t < x) i++;
     a = F[i]; b = F[i + 1]; u = (x - a.t) / Math.max(1e-6, b.t - a.t);
   }
+  if (K.curve === 'spline' && K.loop && F.length >= 4) {                 // מעבר חלק דרך התמונות (Catmull-Rom) – בלי עצירה בכל תמונה
+    const n = F.length, ia = F.indexOf(a), p0 = F[(ia - 1 + n) % n], p3 = F[(ia + 2) % n];
+    const C = (w, x, y, z) => 0.5 * (2 * x + (-w + y) * u + (2 * w - 5 * x + 4 * y - z) * u * u + (-w + 3 * x - 3 * y + z) * u * u * u);
+    const S = f => C(f(p0), f(a), f(b), f(p3)), S2 = g => [S(f => g(f)[0]), S(f => g(f)[1])];
+    return { lean: S(f => f.lean), hipY: S(f => f.hipY), headTilt: S(f => f.headTilt || 0), spine: S(f => f.spine || 0),
+             legB: S2(f => f.legB), legF: S2(f => f.legF), armB: S2(f => f.armB), armF: S2(f => f.armF), feet: S2(f => f.feet || [0, 0]) };
+  }
   if (K.smooth !== false) u = (1 - Math.cos(Math.PI * u)) / 2;
   const L = (p, q) => p + (q - p) * u, L2 = (p, q) => [L(p[0], q[0]), L(p[1], q[1])];
   return { lean: L(a.lean, b.lean), hipY: L(a.hipY, b.hipY), headTilt: L(a.headTilt || 0, b.headTilt || 0), spine: L(a.spine || 0, b.spine || 0),
@@ -191,8 +206,10 @@ function poseRun(p) {
   const leg = q => { const s = Math.sin(q), t = R.legSwing * s; return [t, t - R.kneeBend * Math.max(0, Math.sin(q - 1.3))]; };
   const arm = q => { const u = -R.armSwing * Math.sin(q); return [u, u + R.elbowBend]; };   // מרפק כפוף, אמה קדימה
   const foot = q => -0.75 * Math.max(0, Math.sin(q - 0.9));   // כף הרגל: שטוחה כשדורכים, אצבעות למטה כשהרגל מאחור ובאוויר
-  return tune('run', { hipY: -4.6, torso: RIG.shape.torso, lean: R.lean, bob: -Math.abs(Math.cos(p)) * R.bob, spine: 0.12,
+  const P = tune('run', { hipY: -4.6, torso: RIG.shape.torso, lean: R.lean, bob: -Math.abs(Math.cos(p)) * R.bob, spine: 0.12,
                        legs: [leg(p + Math.PI), leg(p)], arms: [arm(p), arm(p + Math.PI)], feet: [foot(p + Math.PI), foot(p)] }, frac(p / (2 * Math.PI)));
+  if (P.keyed) P.bob = 0;                                            // בתמונות המפתח הגובה כבר בתוך hipY
+  return P;
 }
 function poseAir(rising, ph) {      // ph = 0 בהמראה → 1 בנחיתה (אם ידוע)
   return tune('jump', { hipY: -4.6, torso: RIG.shape.torso, lean: 0.12, bob: 0, legs: [[0.5, -0.8], [1.35, 0.15]],

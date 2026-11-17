@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Ninja Animator</title>
-<script src="ninja-figure.js?v=20261110p"></script>
+<script src="ninja-figure.js?v=20261117b"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { position: fixed; inset: 0; height: 100%; overflow: hidden; overscroll-behavior: none; background: #0f172a; color: #e2e8f0; font-family: -apple-system, system-ui, Arial, sans-serif; }
@@ -847,7 +847,7 @@ function renderTL() {
       if (k && k.frames && k.frames.length) k.on = true;
       else {
         const n = move === 'run' ? 4 : STATIC_MOVES.includes(move) ? 1 : KEY_DRIVEN[move] ? 3 : 4;
-        RIG.keys[move] = { on: true, dur: DEFAULT_DUR[move] || 1, loop: !KEY_DRIVEN[move] || move === 'run', smooth: true, frames: captureKeys(move, n) };
+        RIG.keys[move] = { on: true, ver: (RIG_DEFAULT.keys[move] || {}).ver, curve: move === 'run' ? 'spline' : undefined, dur: DEFAULT_DUR[move] || 1, loop: !KEY_DRIVEN[move] || move === 'run', smooth: true, frames: captureKeys(move, n) };
       }
       selKey = 0;
     } else if (k) k.on = false;
