@@ -37,7 +37,7 @@ function startGame(m, idx) {
   speed = cfg.speed; score = 0; lives = m === 'journey' ? cfg.lives : Infinity; hits = 0; done = 0; spawned = 0; caught = 0; coins = 0; picked = 0;   // באימון אין פסילה
   resetScenes(); learnT = 0; learnWait = null; missCount = {}; resetPowers(); liftKindNext = null; liftIdx = 0; ptIdx = 0; merchNext = 'key'; particles = []; flag = null;
   distSinceSpawn = 0; nextType = pickType(); nextGap = speed * 2.4;   // המכשול הראשון אחרי ~2 שניות
-  earlyWord = null; py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
+  earlyWord = null; py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; catchA = null; throwT = 0; throwCd = 0; resetAct();
   flash = null; heard = null; seenWords = [];
   if (mode === 'journey') { jStation = stageIdx; startJourneySegment(true); }
   banner = mode === 'stage' ? { text: '🥋 ' + STAGES[stageIdx].name, sub: STAGES[stageIdx].hint, t: 3 }
@@ -409,8 +409,24 @@ function catchCoin(s) {
   burst(s.x + 3, COIN.y, '#fde047', 16, 40);
   picked += PICKUP.catchBonus;                      // מטבע גדול שתפסו ב-CATCH שווה 5
   floatText(s.x + 3, COIN.y - 6, '+' + (1 + PICKUP.catchBonus) + ' 🟡', '#ca8a04');
-  if (py <= 0 && act.climb <= 0) { vy = cfg.jumpV * 0.45; py = 0.001; }   // קפיצה קטנה עם הידיים למעלה – רואים שהוא תפס
-  flyCoinToHud(s);
+  const up = catchA && catchA.reachA > 2.2;
+  if (py <= 0 && act.climb <= 0) { vy = cfg.jumpV * (up ? 0.5 : 0.32); py = 0.001; }   // קפיצה לקראת המטבע – גבוהה יותר כשהיד למעלה
+  if (!catchA || catchA.o !== s) flyCoinToHud(s);                // בלי אנימציית תפיסה – ישר למונה
+}
+// התפיסה: המטבע ביד – עף למונה (מהיד)
+function catchSend() {
+  if (!catchA || !catchA.o || catchA.sent) return;
+  catchA.sent = true;
+  const h = playerHand || [PLAYER.x + 6, GROUND - 14];
+  flyCoinToHud({ x: h[0] - 3 }, h[1]);
+}
+function catchStep(dt) {
+  if (!catchA) return;
+  catchA.t += dt;
+  const k = catchA.t / CATCH_ANIM.T;
+  if (catchA.o && !catchA.hit && k >= CATCH_ANIM.fly) { catchA.hit = true; const h = playerHand || [PLAYER.x + 6, GROUND - 14]; burst(h[0], h[1], '#fde047', 10, 22); }   // נחת ביד
+  if (k >= CATCH_ANIM.toHud) catchSend();
+  if (k >= 1) catchA = null;
 }
 // המטבע עף אל המונה למעלה – רואים שהוא נאסף ונכנס לקופה
 let coinsFlying = 0;
@@ -501,6 +517,7 @@ function update(dt) {
   if (invulnT > 0) invulnT -= dt;
   if (kickT > 0) kickT -= dt;
   if (catchT > 0) catchT -= dt;
+  catchStep(dt);
   if (throwT > 0) throwT -= dt;
   if (throwCd > 0) throwCd -= dt;
   if (act.fireCd > 0) act.fireCd -= dt;

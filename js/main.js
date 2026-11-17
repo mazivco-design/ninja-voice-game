@@ -42,7 +42,7 @@ function toMenu() {
   $('catchHud').classList.add('hide');
   $('lives').textContent = '';
   resetScenes(); particles = []; flag = null;
-  py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; resetAct();
+  py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; catchA = null; throwT = 0; resetAct();
   renderMenu();
   if (model) setStatus('Ready!');
   $('menu').classList.add('show');

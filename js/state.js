@@ -17,6 +17,7 @@ let pickups = [], picked = 0;   // מטבעות קטנים לאורך המסע �
 let obstacles = [], shurikens = [], particles = [], fireballs = [];
 let distSinceSpawn = 0, nextGap = 0, nextType = null, flag = null;
 let py = 0, vy = 0, duckT = 0, invulnT = 0, kickT = 0, flyT = 0, catchT = 0, throwT = 0, throwCd = 0;
+let catchA = null;      // תפיסה ביד אחת: { o: המטבע (או null), t, reachA: כיוון היד, sent: המטבע כבר עף למונה } – game.js / draw.js
 let flash = null, heard = null, banner = null;
 // טיימרים של הפעולות החדשות
 const act = { fireCd: 0, stop: 0, run: 0, swim: 0, climb: 0, climbWant: 0, push: 0, pull: 0, pullWant: 0, pulling: 0, hide: 0, block: 0,

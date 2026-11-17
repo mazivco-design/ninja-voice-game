@@ -473,7 +473,7 @@ function playerPose() {
   if (act.run > 0 && py <= 0 && duckT <= 0) P.lean = 0.38;
   if (kickT > 0) applyKick(P, 1 - kickT / KICK.time);
   if (throwT > 0) applyThrow(P, 1 - throwT / 0.25);
-  if (catchT > 0) applyCatch(P);
+  if (catchA) applyCatchMove(P, now);
   if (act.block > 0) applyBlock(P);
   if (act.stop > STOP_TIME - 0.8) applyStop(P);
   P = gustPlayerPose(P, now);                     // רוח: נצמד לבמבוק / עף אחורה
@@ -798,11 +798,7 @@ function drawObstacle(o, top) {
       ctx.strokeStyle = 'rgba(34,197,94,.9)'; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.arc(cx, cy, pr, 0, Math.PI * 2); ctx.stroke();
       ctx.strokeStyle = 'rgba(34,197,94,.35)'; ctx.setLineDash([1, 1.2]); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(PLAYER.x + 6, GROUND - 12); ctx.stroke(); ctx.setLineDash([]);
     }
-    if (o.caught) {
-      const k = Math.min(1, o.ct / 0.35), pb = playerBox();
-      cx = cx + (PLAYER.x + 4 - cx) * k; cy = cy + (pb.t - cy) * k;
-      ctx.globalAlpha = 1 - k * 0.7;
-    }
+    if (o.caught) { ctx.globalAlpha = 1; return; }                                // נתפס – מצויר ביד (drawCatchCoin)
     const glow = ctx.createRadialGradient(cx, cy, 1, cx, cy, 7);
     glow.addColorStop(0, 'rgba(253,224,71,.65)'); glow.addColorStop(1, 'rgba(253,224,71,0)');
     ctx.fillStyle = glow; circle(cx, cy, 7);
@@ -1376,6 +1372,53 @@ function drawBush(x, y, grow, t, now) {         // שיח מעלים מצויר�
   ctx.restore();
 }
 
+// ---------- תפיסה ביד אחת (CATCH_ANIM) ----------
+function drawCoinAt(x, y, r) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(r, r);
+  ctx.fillStyle = '#b45309'; circle(0, 0, 3.4);
+  ctx.fillStyle = '#facc15'; circle(0, 0, 2.9);
+  ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 0.4; ctx.beginPath(); ctx.arc(0, 0, 2.1, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = '#fef9c3'; ctx.fillRect(-1.6, -1.8, 0.9, 1.6);
+  ctx.restore();
+}
+function catchCoinPos() {                                          // איפה המטבע עכשיו (בזמן שהוא עף אל היד)
+  const A = catchA, k = A.t / CATCH_ANIM.T, q = Math.min(1, k / CATCH_ANIM.fly), h = playerHand || [PLAYER.x + 6, GROUND - 14];
+  if (!A.from || obstacles.includes(A.o)) A.from = [A.o.x + 3, COIN.y];
+  const e = q * q * (3 - 2 * q);
+  return [A.from[0] + (h[0] - A.from[0]) * e, A.from[1] + (h[1] - A.from[1]) * q - Math.sin(Math.PI * q) * 3];
+}
+function drawCatchCoin(held) {
+  const A = catchA; if (!A || !A.o || A.sent) return;
+  const k = A.t / CATCH_ANIM.T, h = playerHand;
+  if (k < CATCH_ANIM.fly) { if (held) return; const p = catchCoinPos(); drawCoinAt(p[0], p[1], 1 - 0.3 * k / CATCH_ANIM.fly); }
+  else if (held && h) drawCoinAt(h[0] + 0.5, h[1] - 0.3, 0.7);
+}
+// התנוחה: היד הקדמית נשלחת אל המטבע (למעלה או קדימה), השנייה לאחור לאיזון → נסגרת → מושכת אל הצד → חוזרת
+function applyCatchMove(P, now) {
+  const A = catchA, C = CATCH_ANIM, k = A.t / C.T, up = A.reachA > 2.2;
+  const L = (a, b, q) => a + (b - a) * Math.max(0, Math.min(1, q)), E = q => { q = Math.max(0, Math.min(1, q)); return q * q * (3 - 2 * q); };
+  let aim = A.reachA;
+  if (A.o && k < C.fly) {                                          // עוקבת אחרי המטבע שמתקרב
+    const J = figureJoints(P), sx = PLAYER.x + 4 + J.shF[0], sy = GROUND - py + J.shF[1], p = catchCoinPos();
+    aim = Math.max(1.3, Math.min(2.9, Math.atan2(p[0] - sx, p[1] - sy)));
+    A.aim = aim;
+  } else if (A.aim) aim = A.aim;
+  const run = P.arms.map(a => a.slice()), r = E(k / 0.14), back = [up ? -1.2 : -1.0, up ? -0.7 : -0.5], lean0 = P.lean || 0;
+  if (k < C.close) {
+    P.arms = [[L(run[0][0], back[0], r), L(run[0][1], back[1], r)], [L(run[1][0], aim, r), L(run[1][1], aim + 0.04, r)]];
+    P.openHand = true; P.lean = L(lean0, up ? 0.02 : 0.25, r); P.headTilt = (up ? -0.5 : -0.25) * r;
+  } else if (k < C.absorb) {
+    const q = E((k - C.close) / (C.absorb - C.close)), dip = Math.sin(Math.PI * q) * 0.8;
+    P.arms = [[L(back[0], -0.4, q), L(back[1], 0.1, q)], [L(aim, 0.35, q), L(aim + 0.04, 1.9, q)]];   // חוטפת למטה אל הצד
+    P.openHand = false; P.lean = L(up ? 0.02 : 0.25, -0.1, q); P.headTilt = L(up ? -0.5 : -0.25, 0.1, q);
+    if (py <= 0) { P.hipY = (P.hipY || -4.6) + dip; P.bob = (P.bob || 0) + dip * 0.6; }   // נוחת רך
+  } else {
+    const q = E((k - C.absorb) / (1 - C.absorb));
+    P.arms = [[L(-0.4, run[0][0], q), L(0.1, run[0][1], q)], [L(0.35, run[1][0], q), L(1.9, run[1][1], q)]];
+    P.lean = L(-0.1, lean0, q);
+  }
+  return P;
+}
 function drawNinja() {                                           // הנינג'ה מורם לפי גובה הקרקע (גבעה לפני תהום)
   const off = (rope && rope.phase === 'land' ? rope.drawOff || 0 : 0) + gustOff();   // נוחת מהחבל / הרוח זרקה אותו אחורה   // נוחת מהחבל – מצויר במקום שבו נחת
   const L = terrainLift(PLAYER.x + PLAYER.w / 2 + off);
@@ -1459,8 +1502,10 @@ function drawNinjaBody() {
   if (hasGear('katana') && P.swordA === undefined && jetT <= 0) drawKatana(fx, fy, P);   // קטאנה על הגב – מאחורי הגוף (בקרב היא ביד)
   if (P.backView) playerHand = drawNinjaBack({ fx: fx + 1, fy, scale: 1, accent: playerColor(), suit: playerSuit(), s: P.backS, hang: P.backHang, tilt: P.backTilt });   // מבט מאחור (טיפוס בחבל)
   else {
+    drawCatchCoin(true);                                           // מטבע בתוך היד – מאחורי האצבעות
     drawFigure({ fx, fy, facing: playerFacing(), scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
     playerHand = figHand(fx, fy, playerFacing(), 1, P, 1);         // איפה כף היד הקדמית – לחפצים שמחזיקים
+    drawCatchCoin(false);                                          // מטבע שעף אל היד – לפני הנינג'ה
   }
   drawMerchHeld();
   drawJetHeld();

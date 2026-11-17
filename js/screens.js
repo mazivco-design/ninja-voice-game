@@ -167,7 +167,7 @@ function renderDict() {
 
 function resetDemo() {
   resetScenes(); particles = []; flag = null; banner = null; flash = null; heard = null;
-  py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; throwT = 0; throwCd = 0; resetAct();
+  py = 0; vy = 0; duckT = 0; invulnT = 0; kickT = 0; flyT = 0; catchT = 0; catchA = null; throwT = 0; throwCd = 0; resetAct();
   demoSteps = []; demoClock = 0;
 }
 
@@ -308,7 +308,7 @@ let introWords = [], introT = 0, runSpeed = 0;
 // מציב חפץ קטן ליד הנינג'ה ומתזמן את הפעולה (משותף למילון ולהדגמה)
 function setupDemo(w) {
   resetScenes(); flash = null; invulnT = 0;
-  py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0; resetAct();
+  py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; catchA = null; throwT = 0; resetAct();
   demoSteps = []; demoClock = 0;
   const near = PLAYER.x + PLAYER.w;
   if (w === 'kick')  obstacles.push({ type: 'wall',  x: near + 6 });
@@ -360,7 +360,7 @@ function introNext() {
 function finishIntro() {
   if (state !== 'intro') return;
   resetScenes(); demoSteps = []; flash = null; invulnT = 0;
-  py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; throwT = 0; resetAct();
+  py = 0; vy = 0; duckT = 0; flyT = 0; kickT = 0; catchT = 0; catchA = null; throwT = 0; resetAct();
   speed = runSpeed; distSinceSpawn = 0; nextGap = speed * 2.4; liftKindNext = null; liftIdx = 0; ptIdx = 0; merchNext = 'key';   // PICK UP: הסצנות מתחילות מההתחלה
   seenWords = [];
   banner = { text: 'Go!', sub: '', t: 1.2 };
