@@ -4,9 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Ninja Animator</title>
-<script src="ninja-figure.js?v=20261119a"></script>
+<script src="ninja-figure.js?v=20261124q"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body, button, input, label, select { touch-action: manipulation; }
+textarea { font-size: 16px; }
+#guideCol { width: 30px; height: 30px; border: 0; padding: 0; background: none; }
 html, body { position: fixed; inset: 0; height: 100%; overflow: hidden; overscroll-behavior: none; background: #0f172a; color: #e2e8f0; font-family: -apple-system, system-ui, Arial, sans-serif; }
 #app { position: fixed; top: 0; left: 0; width: 100%; height: 100%; height: 100dvh; display: flex; flex-direction: row-reverse; overflow: hidden; }
 @media (max-aspect-ratio: 1/1) { #app { flex-direction: column; } }
@@ -107,6 +110,7 @@ h3 { font-size: 14px; color: #94a3b8; margin: 12px 0 6px; font-weight: 800; }
         <button class="b" id="smart">🎯 גרירה חכמה</button>
         <button class="b" id="stepBack">↶ צעד אחורה</button>
         <button class="b" id="onion">👻 צללית</button>
+        <button class="b" id="guide">✏️ קו עזר</button><input type="color" id="guideCol">
         <button class="b" id="refBtn">📖 עזר</button>
         <span class="grp" id="refPick"></span>
         <button class="b" id="zoomOut">−</button><button class="b" id="zoomIn">+</button>
@@ -172,6 +176,11 @@ let char = 'ninja', move = 'run', tab = 'colors';
 let playing = true, speedMul = 0.5, skeleton = true, zoom = 1, t = 0, lastT = 0;
 let smartDrag = true;                     // גרירה חכמה: גוררים כף יד/רגל והמרפק/הברך מתכופפים לבד
 const undoStack = [];                       // צעדים אחורה – תמונת מצב לפני כל גרירה
+// קו עזר: קו בצבע לבחירה סביב כל חלק, רק בעורך (לא נשמר בדמות ולא מגיע למשחק)
+const GUIDE_KEY = 'ninjaVoice_animGuide';
+let guide = { on: false, color: '#fde047' };
+try { Object.assign(guide, JSON.parse(localStorage.getItem(GUIDE_KEY) || '{}')); } catch (e) {}
+const saveGuide = () => { try { localStorage.setItem(GUIDE_KEY, JSON.stringify(guide)); } catch (e) {} };
 let onion = false;                         // צללית (onion skin): תמונת המפתח הקודמת (אדום) והבאה (ירוק), חצי שקופות
 let refOn = false, refSet = 'run';         // תמונות עזר: שורת תנוחות מפתח קלאסיות בראש המסך
 let dragMode = 'off';                     // off | pose (מסובבים מפרקים) | attach (מזיזים נקודות חיבור)
@@ -233,7 +242,7 @@ function renderBar() {
   $('play').textContent = playing ? '⏸' : '▶';
   $('skel').classList.toggle('on', skeleton);
   $('smart').classList.toggle('on', smartDrag);
-  $('onion').classList.toggle('on', onion); $('refBtn').classList.toggle('on', refOn);
+  $('onion').classList.toggle('on', onion); $('guide').classList.toggle('on', guide.on); $('guideCol').value = guide.color; $('refBtn').classList.toggle('on', refOn);
   const rp = $('refPick'); rp.innerHTML = '';
   if (refOn) Object.keys(REF).forEach(k => { const b = document.createElement('button'); b.className = 'b' + (k === refSet ? ' on' : ''); b.textContent = REF[k].label;
     b.onclick = () => { refSet = k; renderBar(); }; rp.appendChild(b); });
@@ -246,6 +255,11 @@ document.querySelectorAll('#bar a.b').forEach(l => l.onclick = e => {      // י
   if (JSON.stringify(RIG) !== saved && !confirm('יש שינויים שלא נשמרו בטיוטה. לצאת בלי לשמור?')) e.preventDefault();
 });
 $('onion').onclick = () => { onion = !onion; renderBar(); showTip(); };
+$('guide').onclick = () => { guide.on = !guide.on; saveGuide(); renderBar(); };
+$('guideCol').oninput = () => { guide.color = $('guideCol').value; guide.on = true; saveGuide(); renderBar(); };
+// ספארי באייפד מתעלם מ-user-scalable=no: חוסמים הגדלה בצביטה ובהקשה כפולה, כדי שהמסך לא יקפוץ
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('dblclick', e => e.preventDefault());
 $('refBtn').onclick = () => { refOn = !refOn; renderBar(); };
 $('smart').onclick = () => { smartDrag = !smartDrag; renderBar(); showTip(); };
 $('stepBack').onclick = () => {
@@ -625,7 +639,9 @@ function frame(ts) {
     });
   }
   const out = {};
+  FIG_GUIDE = guide.on ? { color: guide.color, w: 0.5 } : null;   // קו העזר – רק על הדמות שעורכים
   drawFigure({ fx: 0, fy: -lift, facing: 1, scale: 1, kind: char, accent: PREVIEW_PLAYER_COLOR, pose: P, skeleton, out });
+  FIG_GUIDE = null;
   ctx.restore();
   if (refOn) drawRefStrip();
   view = { fx, fy, u, lift, out };

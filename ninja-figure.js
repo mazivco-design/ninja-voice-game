@@ -16,6 +16,9 @@
 
 const RIG_KEY = 'ninjaVoice_rig';
 
+// קו עזר לעבודה בעורך האנימציה בלבד: { color, w } – קו סביב כל חלק בנפרד. המשחק לא נוגע בו (תמיד null שם)
+let FIG_GUIDE = null;
+
 // החלקים של הדמות, לפי סדר הציור הרגיל (הראשון מאחור, האחרון מקדימה)
 const ELEMENTS = ['legB', 'armB', 'handB', 'torso', 'head', 'face', 'band', 'legF', 'belt', 'armF', 'handF'];
 const ELEMENT_LABEL = { legB: 'רגל אחורית', armB: 'יד אחורית', handB: 'כפפה אחורית', torso: 'גוף', belt: 'חגורה', head: 'ראש',
@@ -536,7 +539,8 @@ function drawFigure(F) {
   if (S.outlineW > 0 && C.outlineAlpha > 0) order.forEach(n => { if (EL[n] && EL[n].halo) DRAW[n](S.outlineW, halo); });
   // 2) החלקים עצמם, לפי סדר השכבות. חלק עם "קו כהה" מקבל קודם צללית כהה קצת יותר גדולה
   order.forEach(n => {
-    if (EL[n] && EL[n].edge && S.edgeW > 0) DRAW[n](S.edgeW, C.edge);
+    if (FIG_GUIDE && n !== 'face') DRAW[n](FIG_GUIDE.w, FIG_GUIDE.color);   // קו עזר של העורך
+    else if (EL[n] && EL[n].edge && S.edgeW > 0) DRAW[n](S.edgeW, C.edge);
     else if (ink > 0 && n !== 'face') DRAW[n](ink * 2, C.edge);     // קו מתאר דק לכל חלק
     DRAW[n](0, null);
   });
