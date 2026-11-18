@@ -1397,22 +1397,22 @@
  },
  "pixels intro / CLIMB": {
   "frames": 5,
-  "pix": 4092803349,
+  "pix": 3339915757,
   "err": null
  },
  "pixels / CLIMB": {
   "frames": 71,
-  "pix": 2556352823,
+  "pix": 1663189748,
   "err": null
  },
  "pixels intro / SWIM + CLIMB": {
   "frames": 11,
-  "pix": 2112019773,
+  "pix": 2107077061,
   "err": null
  },
  "pixels / SWIM + CLIMB": {
   "frames": 153,
-  "pix": 3748341846,
+  "pix": 1238333313,
   "err": null
  },
  "pixels intro / PUSH": {
@@ -1692,17 +1692,17 @@
  },
  "pixels intro / HIGH WALL": {
   "frames": 92,
-  "pix": 443517390,
+  "pix": 3093829094,
   "err": null
  },
  "pixels / HIGH WALL": {
   "frames": 118,
-  "pix": 125114014,
+  "pix": 3510136053,
   "err": null
  },
  "pixels / journey last": {
   "frames": 720,
-  "pix": 307811450,
+  "pix": 399509204,
   "err": null
  },
  "intro / JUMP": {
