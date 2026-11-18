@@ -259,7 +259,7 @@ function friendPose(o) {
 /* ---------- ציור ---------- */
 function figHand(fx, fy, facing, sc, P, i) {                                     // איפה כף היד של דמות (i: 0 אחורית, 1 קדמית) – לפי השלד של ninja-figure.js
   const S = RIG.shape, J = figureJoints(P), sh = i ? J.shF : J.shB, a = P.arms[i];
-  const k = endOf(sh[0], sh[1], a[0], S.upper), e = endOf(k[0], k[1], a[1], S.fore);
+  const st = i ? 1 : (P.stretchB || 1), k = endOf(sh[0], sh[1], a[0], S.upper * st), e = endOf(k[0], k[1], a[1], S.fore * st);
   return [fx + facing * sc * e[0], fy + (P.bob || 0) * sc + sc * e[1]];
 }
 function friendHand(o) { return o._fh || [friendX(o) - 3.4, GROUND - 8.2]; }      // נקבע בכל פריים ב-drawMudBack – החבל צמוד ליד

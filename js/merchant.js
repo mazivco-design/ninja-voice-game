@@ -282,7 +282,8 @@ function merchSpeed() {                                          // null = לא 
   if (m.phase === 'done') return null;
   return 0;
 }
-let playerHand = [PLAYER.x + 6, GROUND - 9];                     // כף היד הקדמית של הנינג'ה (מתעדכן בכל פריים בציור הנינג'ה)
+let playerHandB = null;   // כף היד האחורית (לתפיסה מאחור)
+let playerHand = [PLAYER.x + 6, GROUND - 9];                   // כף היד הקדמית של הנינג'ה (מתעדכן בכל פריים בציור הנינג'ה)
 // לפיד אחוז ביד: היד סוגרת על המקל, הלהבה למעלה
 function heldTorch(hx, hy, t) {
   const fl = Math.sin(t * 14) * 0.4;

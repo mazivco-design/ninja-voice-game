@@ -334,7 +334,7 @@ function drawFigure(F) {
   const seg = (o, a, l1, l2) => { const k = endOf(o[0], o[1], a[0], l1); return [o, k, endOf(k[0], k[1], a[1], l2)]; };
   const pts = {
     legB: seg(J.hipB, P.legs[0], S.thigh, S.shin), legF: seg(J.hipF, P.legs[1], S.thigh, S.shin),
-    armB: seg(J.shB, P.arms[0], S.upper, S.fore),  armF: seg(J.shF, P.arms[1], S.upper, S.fore)
+    armB: seg(J.shB, P.arms[0], S.upper * (P.stretchB || 1), S.fore * (P.stretchB || 1)),  armF: seg(J.shF, P.arms[1], S.upper, S.fore)
   };
   const line = (q, w, col) => {
     ctx.strokeStyle = col; ctx.lineWidth = w;

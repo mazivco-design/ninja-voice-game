@@ -413,6 +413,7 @@ function catchCoin(s) {
   if (py <= 0 && act.climb <= 0) { vy = cfg.jumpV * (up ? 0.5 : 0.32); py = 0.001; }   // קפיצה לקראת המטבע – גבוהה יותר כשהיד למעלה
   if (!catchA || catchA.o !== s) flyCoinToHud(s);                // בלי אנימציית תפיסה – ישר למונה
 }
+function catchHand() { return (catchA && catchA.back ? playerHandB : playerHand) || playerHand || [PLAYER.x + 6, GROUND - 14]; }   // היד שתופסת
 // CATCH: המטבע הקרוב בטווח (או null)
 function coinInReach() {
   return obstacles.find(o => o.type === 'coin' && !o.caught && !o.passed &&
@@ -420,7 +421,7 @@ function coinInReach() {
 }
 function catchStart(s) {
   const d = s ? s.x + 3 - (PLAYER.x + 4) : 99;                  // מטבע קרוב – יד למעלה, רחוק – יד קדימה
-  catchA = { o: s, t: 0, sent: false, reachA: lerp(CATCH_ANIM.up, CATCH_ANIM.fwd, Math.max(0, Math.min(1, (d - 6) / 24))) };
+  catchA = { o: s, t: 0, sent: false, back: !!s && d < CATCH_ANIM.backAt, reachA: lerp(CATCH_ANIM.up, CATCH_ANIM.fwd, Math.max(0, Math.min(1, (d - 6) / 24))) };
   catchT = CATCH_ANIM.T;
   if (s) catchCoin(s);
 }
@@ -428,7 +429,7 @@ function catchStart(s) {
 function catchSend() {
   if (!catchA || !catchA.o || catchA.sent) return;
   catchA.sent = true;
-  const h = playerHand || [PLAYER.x + 6, GROUND - 14];
+  const h = catchHand();
   flyCoinToHud({ x: h[0] - 3 }, h[1]);
 }
 function catchStep(dt) {
@@ -436,7 +437,7 @@ function catchStep(dt) {
   catchA.t += dt;
   if (!catchA.o && catchA.t < COIN.hold) { const s = coinInReach(); if (s) { catchStart(s); return; } }   // CATCH מוקדם – המטבע נכנס לטווח עכשיו
   const k = catchA.t / CATCH_ANIM.T;
-  if (catchA.o && !catchA.hit && k >= CATCH_ANIM.fly) { catchA.hit = true; const h = playerHand || [PLAYER.x + 6, GROUND - 14]; burst(h[0], h[1], '#fde047', 10, 22); }   // נחת ביד
+  if (catchA.o && !catchA.hit && k >= CATCH_ANIM.fly) { catchA.hit = true; const h = catchHand(); burst(h[0], h[1], '#fde047', 10, 22); }   // נחת ביד
   if (k >= CATCH_ANIM.toHud) catchSend();
   if (k >= 1) catchA = null;
 }

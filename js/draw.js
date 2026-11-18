@@ -1382,14 +1382,14 @@ function drawCoinAt(x, y, r) {
   ctx.restore();
 }
 function catchCoinPos() {                                          // איפה המטבע עכשיו (בזמן שהוא עף אל היד)
-  const A = catchA, k = A.t / CATCH_ANIM.T, q = Math.min(1, k / CATCH_ANIM.fly), h = playerHand || [PLAYER.x + 6, GROUND - 14];
+  const A = catchA, k = A.t / CATCH_ANIM.T, q = Math.min(1, k / CATCH_ANIM.fly), h = catchHand();
   if (!A.from || obstacles.includes(A.o)) A.from = [A.o.x + 3, COIN.y];
   const e = q * q * (3 - 2 * q);
   return [A.from[0] + (h[0] - A.from[0]) * e, A.from[1] + (h[1] - A.from[1]) * q - Math.sin(Math.PI * q) * 3];
 }
 function drawCatchCoin(held) {
   const A = catchA; if (!A || !A.o || A.sent) return;
-  const k = A.t / CATCH_ANIM.T, h = playerHand;
+  const k = A.t / CATCH_ANIM.T, h = catchHand();
   if (k < CATCH_ANIM.fly) { if (held) return; const p = catchCoinPos(); drawCoinAt(p[0], p[1], 1 - 0.3 * k / CATCH_ANIM.fly); }
   else if (held && h) drawCoinAt(h[0] + 0.5, h[1] - 0.3, 0.7);
 }
@@ -1397,6 +1397,27 @@ function drawCatchCoin(held) {
 function applyCatchMove(P, now) {
   const A = catchA, C = CATCH_ANIM, k = A.t / C.T, up = A.reachA > 2.2;
   const L = (a, b, q) => a + (b - a) * Math.max(0, Math.min(1, q)), E = q => { q = Math.max(0, Math.min(1, q)); return q * q * (3 - 2 * q); };
+  if (A.back) {                                                    // המטבע כמעט עבר: היד האחורית נשלחת למעלה-אחורה, הקדמית קדימה לאיזון
+    let aim = A.aim || 3.38;                                        // תמיד מעל הראש ומאחור – שיראו שזו היד האחורית
+    if (k < C.fly) { const J = figureJoints(P), sx = PLAYER.x + 4 + J.shB[0], sy = GROUND - py + J.shB[1], p = catchCoinPos(); aim = A.aim = Math.max(3.25, Math.min(3.5, Math.atan2(p[0] - sx, p[1] - sy))); }
+    const run = P.arms.map(a => a.slice()), r = E(k / 0.14), lean0 = P.lean || 0, bal = [1.1, 1.6];
+    if (k < C.close) {
+      P.arms = [[L(run[0][0], aim, r), L(run[0][1], aim - 0.04, r)], [L(run[1][0], bal[0], r), L(run[1][1], bal[1], r)]];
+      P.openHand = true; P.lean = L(lean0, -0.18, r); P.headTilt = -0.55 * r;
+      P.stretchB = 1 + 0.5 * r;                                    // נמתחת למעלה – הכף יוצאת מעל הראש, היד עצמה מאחוריו
+    } else if (k < C.absorb) {
+      const q = E((k - C.close) / (C.absorb - C.close)), dip = Math.sin(Math.PI * q) * 0.8;
+      P.arms = [[L(aim, -0.35, q), L(aim - 0.04, 1.3, q)], [L(bal[0], 0.6, q), L(bal[1], 1.5, q)]];   // מוריד את המטבע אל הצד
+      P.openHand = false; P.lean = L(-0.18, 0.05, q); P.headTilt = L(-0.55, 0.1, q);
+      P.stretchB = L(1.5, 1, q);
+      if (py <= 0) { P.hipY = (P.hipY || -4.6) + dip; P.bob = (P.bob || 0) + dip * 0.6; }
+    } else {
+      const q = E((k - C.absorb) / (1 - C.absorb));
+      P.arms = [[L(-0.35, run[0][0], q), L(1.3, run[0][1], q)], [L(0.6, run[1][0], q), L(1.5, run[1][1], q)]];
+      P.lean = L(0.05, lean0, q);
+    }
+    return P;
+  }
   let aim = A.reachA;
   if (A.o && k < C.fly) {                                          // עוקבת אחרי המטבע שמתקרב
     const J = figureJoints(P), sx = PLAYER.x + 4 + J.shF[0], sy = GROUND - py + J.shF[1], p = catchCoinPos();
@@ -1505,6 +1526,7 @@ function drawNinjaBody() {
     drawCatchCoin(true);                                           // מטבע בתוך היד – מאחורי האצבעות
     drawFigure({ fx, fy, facing: playerFacing(), scale: 1, kind: 'ninja', accent: playerColor(), pose: P, suit: playerSuit() });
     playerHand = figHand(fx, fy, playerFacing(), 1, P, 1);         // איפה כף היד הקדמית – לחפצים שמחזיקים
+    playerHandB = figHand(fx, fy, playerFacing(), 1, P, 0);        // ...והאחורית
     drawCatchCoin(false);                                          // מטבע שעף אל היד – לפני הנינג'ה
   }
   drawMerchHeld();
