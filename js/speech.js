@@ -305,13 +305,8 @@ function command(word, source) {
     }
   } else if (word === 'catch') {
     if (ropeCatch()) return;               // תופס את החבל מעל התהום
-    const s = obstacles.find(o => o.type === 'coin' && !o.caught && !o.passed &&
-                                  o.x + 3 >= PLAYER.x - COIN.reachBack && o.x <= PLAYER.x + COIN.reachFwd * reachMul());
     catchSend();                           // תפיסה קודמת שעוד לא נגמרה – המטבע שלה עף למונה עכשיו
-    const d = s ? s.x + 3 - (PLAYER.x + 4) : 99;                 // מטבע קרוב – יד למעלה, רחוק – יד קדימה
-    catchA = { o: s || null, t: 0, sent: false, reachA: lerp(CATCH_ANIM.up, CATCH_ANIM.fwd, Math.max(0, Math.min(1, (d - 6) / 20))) };
-    catchT = CATCH_ANIM.T;
-    if (s) catchCoin(s);
+    catchStart(coinInReach());
   } else if (word === 'fly') {
     if (py > 0 && flyT <= 0) {             // FLY עובד רק באוויר – אחרי קפיצה
       flyT = FLY.time; duckT = 0;

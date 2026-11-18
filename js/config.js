@@ -143,7 +143,7 @@ const WALL = { w: 5, h: 30 };          // KICK – גבוה מדי לקפיצה
 const KICK = { time: 0.5, range: 14 }; // בעיטה פעילה חצי שנייה, מגיעה 14 יחידות קדימה
 const ENEMY = { w: 9, h: 22, extra: 0.3 }; // THROW – אויב גבוה, רץ מהר יותר מהמסך
 const SHURIKEN = { speed: 110, cooldown: 0.35 };
-const COIN = { y: GROUND - 24, reachBack: 4, reachFwd: 34 }; // CATCH – מטבע זהב באוויר
+const COIN = { y: GROUND - 24, reachBack: 4, reachFwd: 56, hold: 0.7 }; // CATCH – מטבע זהב באוויר. reachFwd הוגדל (2026-11-18) – הרבה פספוסים אחרי שהינשוף (שהגדיל את הטווח) ירד. hold – CATCH מוקדם מדי מחכה רגע למטבע
 // תפיסה ביד אחת (2026-11-17, לבקשת זיו): היד נשלחת אל המטבע – למעלה כשהוא קרוב, קדימה כשהוא רחוק. המטבע עף אל היד,
 // היד נסגרת ומושכת אותו אל הצד, ואז הוא עף למונה. החלקים – מתוך T (שניות)
 const CATCH_ANIM = { T: 1.0, fly: 0.32, close: 0.42, absorb: 0.68, toHud: 0.72, up: 2.65, fwd: 1.8 };

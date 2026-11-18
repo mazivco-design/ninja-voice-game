@@ -1332,7 +1332,7 @@
  },
  "pixels / CATCH": {
   "frames": 38,
-  "pix": 1446649222,
+  "pix": 1592542180,
   "err": null
  },
  "pixels intro / JUMP + FLY": {
@@ -1352,7 +1352,7 @@
  },
  "pixels / CATCH + FLY": {
   "frames": 120,
-  "pix": 2570876661,
+  "pix": 844533079,
   "err": null
  },
  "pixels intro / STOP": {
@@ -1702,7 +1702,7 @@
  },
  "pixels / journey last": {
   "frames": 720,
-  "pix": 3727873429,
+  "pix": 307811450,
   "err": null
  },
  "intro / JUMP": {
@@ -1804,10 +1804,10 @@
  },
  "tap / CATCH": {
   "end": "CATCH – done!",
-  "sec": 18.28,
+  "sec": 19.25,
   "hits": 0,
   "score": 4,
-  "hash": 959586632,
+  "hash": 2301167084,
   "phases": ""
  },
  "intro / JUMP + FLY": {
@@ -1834,10 +1834,10 @@
  },
  "tap / CATCH + FLY": {
   "end": "CATCH + FLY – done!",
-  "sec": 68.45,
-  "hits": 3,
-  "score": 7,
-  "hash": 1714373215,
+  "sec": 59.48,
+  "hits": 0,
+  "score": 10,
+  "hash": 3077358173,
   "phases": ""
  },
  "intro / STOP": {
