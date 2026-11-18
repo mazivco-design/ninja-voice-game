@@ -450,6 +450,16 @@ function drawSnow(left, right, top, bottom) {
   }
 }
 
+// בטיפוס על הסולם: כמה להזיז את הדמות קדימה כדי שתהיה על הסולם (כמו בדף הניסוי – הסולם 2.2 לפני הדמות בגובה הרגליים)
+function climbShift(fx) {
+  if (!(act.climb > 0)) return 0;
+  let best = null, bd = 1e9;
+  for (const o of obstacles) if (o.type === 'cliff' && o.climbed) { const lx = o.x - CLIFF.ladder + (CLIFF.ladder + 0.6) * py / (CLIFF.h + 1), d = Math.abs(lx - fx); if (d < bd) { bd = d; best = lx; } }
+  if (best === null || bd > 15) return 0;
+  const k = Math.min(1, climbK / 0.12, (1 - climbK) / 0.12);             // נכנס ויוצא בהדרגה – בלי קפיצה בתחילת ובסוף הטיפוס
+  return (best - 2.2 - fx) * Math.max(0, k);
+}
+
 /* ---------- דמות הנינג'ה: התנוחות והציור עצמו נמצאים ב-ninja-figure.js ---------- */
 function playerPose() {
   const now = performance.now() / 1000;
@@ -1462,7 +1472,8 @@ function drawNinjaBody() {
   const wading = swimmingNow() && !swim && !dive && py <= 0;
   const tunO = crawl ? tunnelHere() : null;                                     // זוחל בתוך המחילה – על הרצפה שלה                     // בשפה של הבריכה: הולך בתוך המים הרדודים, על השיפוע
   const riding = rideCtl() && ride.phase !== 'mount';
-  const duck = duckT > 0, fx = riding ? PLAYER.x + 4 : rope && rope.phase === 'fall' && rope.fallX !== undefined ? rope.fallX : leap || dive || crawl ? PLAYER.x + 3 : pb.l + (duck ? 5.5 : swim ? 3 : 4) + boatDX();   // boatDX – בדייג: נגרר לחרטום / נופל למים
+  const duck = duckT > 0, fx0 = riding ? PLAYER.x + 4 : rope && rope.phase === 'fall' && rope.fallX !== undefined ? rope.fallX : leap || dive || crawl ? PLAYER.x + 3 : pb.l + (duck ? 5.5 : swim ? 3 : 4) + boatDX();   // boatDX – בדייג: נגרר לחרטום / נופל למים
+  const fx = fx0 + climbShift(fx0);                                // על הסולם – הדמות צמודה לסולם ומסתירה אותו
   const fy = riding ? GROUND - py : dive ? diveFit(fx).y : leap ? GROUND - py : swim ? GROUND + 1.5 : drowning ? GROUND + drownK * 10 : wading ? wadeY(fx) : tunO ? tunnelFloor(tunO, fx) : pb.b + mudSink(fx) + boatSink() + boarFrontDY();   // בבוץ – שקוע עד המותניים. ביער – קרוב יותר אלינו (boarFrontDY)
   const now = performance.now() / 1000;
   if (sinkT > 0 && sinkType === 'burn') {                                       // נשרף בשדה האש – מושחר ועשן עולה
