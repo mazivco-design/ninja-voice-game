@@ -452,12 +452,24 @@ function drawSnow(left, right, top, bottom) {
 
 // בטיפוס על הסולם: כמה להזיז את הדמות קדימה כדי שתהיה על הסולם (כמו בדף הניסוי – הסולם 2.2 לפני הדמות בגובה הרגליים)
 function climbShift(fx) {
-  if (!(act.climb > 0)) return 0;
-  let best = null, bd = 1e9;
-  for (const o of obstacles) if (o.type === 'cliff' && o.climbed) { const lx = o.x - CLIFF.ladder + (CLIFF.ladder + 0.6) * py / (CLIFF.h + 1), d = Math.abs(lx - fx); if (d < bd) { bd = d; best = lx; } }
-  if (best === null || bd > 15) return 0;
-  const k = Math.min(1, climbK / 0.12, (1 - climbK) / 0.12);             // נכנס ויוצא בהדרגה – בלי קפיצה בתחילת ובסוף הטיפוס
-  return (best - 2.2 - fx) * Math.max(0, k);
+  if (!(act.climb > 0) || climbS !== 'up' || !climbO) return 0;
+  return climbFoot() + (CLIFF.ladder + 0.6) * py / (CLIFF.h + 1) - CLIFF.onX - fx;
+}
+const CLIMB_DV = 3.4 / Math.hypot(1, (CLIFF.ladder + 0.6) / (CLIFF.h + 1));   // גובה בין שלבים
+function climbPose(now) {
+  if (climbS === 'walk') return poseWalk(bgX * 0.42 * RIG.run.cadence * 1.6);
+  const ph = (py / CLIMB_DV + 0.7) / 2;                                 // שלב התנועה לפי הגובה – הידיים והרגליים נשארות על השלבים
+  if (climbS === 'up') return poseClimb(now, ph);
+  // top: מהסולם – ברך למעלה על השפה, ידיים דוחפות – ונעמד
+  const u = Math.min(1, climbT / CLIFF.top), A = poseClimb(now, ((CLIFF.h - CLIFF.lift) / CLIMB_DV + 0.7) / 2);
+  const S = { lean: 0.45, hipY: -4.0, spine: 0.15, legs: [[-0.15, -0.5], [1.55, -0.1]], arms: [[0.55, 0.85], [0.75, 1.0]], feet: [0.1, 0] };
+  const B = poseIdle(now), mix = (X, Y, k) => {
+    const L = (a, b) => a + (b - a) * k, L2 = (a, b) => [L(a[0], b[0]), L(a[1], b[1])];
+    return Object.assign({}, X, { lean: L(X.lean, Y.lean), hipY: L(X.hipY, Y.hipY), spine: L(X.spine || 0, Y.spine || 0), bob: L(X.bob || 0, Y.bob || 0),
+      legs: [L2(X.legs[0], Y.legs[0]), L2(X.legs[1], Y.legs[1])], arms: [L2(X.arms[0], Y.arms[0]), L2(X.arms[1], Y.arms[1])], feet: L2(X.feet || [0, 0], Y.feet || [0, 0]) });
+  };
+  const sm = q => q * q * (3 - 2 * q);
+  return u < 0.5 ? mix(A, Object.assign({}, A, S), sm(u / 0.5)) : mix(Object.assign({}, A, S), B, sm((u - 0.5) / 0.5));
 }
 
 /* ---------- דמות הנינג'ה: התנוחות והציור עצמו נמצאים ב-ninja-figure.js ---------- */
@@ -466,7 +478,7 @@ function playerPose() {
   let P;
   if (rideCtl() && ride.phase !== 'mount') P = poseRide();          // יושב על הדרקון
   else if (act.hiding > 0) P = poseHide(now);                 // כורע מכווץ מאחורי הסלעים
-  else if (act.climb > 0) P = poseClimb(now);
+  else if (act.climb > 0) P = climbPose(now);
   else if (act.leap > 0) P = poseLeap();
   else if (diveShown()) { P = poseDive(now); P.lean += diveFit(PLAYER.x + 3).tilt; }
   else if (crawling()) { P = poseCrawl(now); const tn = tunnelHere(); if (tn) P.lean += tunnelSlope(tn, PLAYER.x + 3); }

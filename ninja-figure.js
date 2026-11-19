@@ -227,9 +227,9 @@ function poseSwim(t) {          // שוחה: גוף אופקי, ידיים בת�
   return tune('swim', { hipY: -2.4, torso: RIG.shape.torso, lean: 1.45, bob: Math.sin(t * 7) * 0.3, headTilt: -1.1,
                         legs: [[-1.55 + f, -1.6 + f], [-1.55 - f, -1.6 - f]], arms: [[a, a + 0.4], [a + Math.PI, a + Math.PI + 0.4]] }, timePhase('swim', t));
 }
-function poseClimb(t) {         // מטפס: ידיים למעלה לסירוגין, ברכיים מתכופפות
+function poseClimb(t, ph) {    // ph – שלב התנועה (אם המשחק קובע אותו לפי הגובה)         // מטפס: ידיים למעלה לסירוגין, ברכיים מתכופפות
   const s = Math.sin(t * 10);
-  const P = tune('climb', { hipY: -4.6, torso: RIG.shape.torso, lean: 0.3, bob: 0, legs: [[0.9 + 0.45 * s, -0.3], [0.9 - 0.45 * s, -0.3]], arms: [[2.7 + 0.35 * s, 2.95], [2.7 - 0.35 * s, 2.95]] }, timePhase('climb', t));
+  const P = tune('climb', { hipY: -4.6, torso: RIG.shape.torso, lean: 0.3, bob: 0, legs: [[0.9 + 0.45 * s, -0.3], [0.9 - 0.45 * s, -0.3]], arms: [[2.7 + 0.35 * s, 2.95], [2.7 - 0.35 * s, 2.95]] }, ph === undefined ? timePhase('climb', t) : ph);
   if (P.keyed) P.bob = 0;                                            // תמונות מפתח (טיפוס על סולם): הגובה בתוך hipY
   return P;
 }

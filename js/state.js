@@ -26,12 +26,16 @@ let hidingFrom = null;       // השומרים שמתחבאים מהם עכשי�
 const HIDE_RANGE = 70;       // מתחבאים כשהשומרים במרחק הזה
 const GUARD_PASS = 34;       // כמה מהר השומרים עוברים כשהנינג'ה מתחבא
 let climbK = 0;              // התקדמות בטיפוס על הסולם 0→1
-function resetAct() { for (const k in act) act[k] = 0; climbK = 0; leapWin = null; hidingFrom = null; hideT = 0; }
+let climbS = '', climbT = 0, climbO = null;   // שלב הטיפוס: walk – הולך עד תחתית הסולם · up – מטפס · top – עולה מעל השפה אל הצוק
+function resetAct() { for (const k in act) act[k] = 0; climbK = 0; climbS = ''; climbT = 0; climbO = null; leapWin = null; hidingFrom = null; hideT = 0; }
 let hideT = 0;               // כמה זמן הנינג'ה כבר בשיח (לאנימציה)
 // מהירות העולם בפועל: STOP ו-CLIMB עוצרים אותו, RUN מאיץ
+function climbSpeed() { return (CLIFF.ladder + 0.6) / (CLIFF.h + 1) * CLIFF.h / CLIFF.time; }
+function climbFoot() { return climbO ? climbO.x - CLIFF.ladder : -1e9; }   // תחתית הסולם
 function curSpeed() {
   const scs = scenesSpeed(); if (scs !== null) return scs;                 // סצנות רשומות (scenes.js)
-  if (act.climb > 0) return CLIFF.ladder / CLIFF.time;         // על הסולם – מתקדמים לאט באלכסון
+  if (act.climb > 0 && climbS !== 'walk') return climbSpeed();   // על הסולם – העולם זז בדיוק בשיפוע הסולם, כך שהדמות נשארת עליו
+  if (act.climb > 0) return Math.min(speed, APPROACH.walk);     // הולך עד תחתית הסולם
   if (act.stop > 0 || act.pulling > 0 || act.hiding > 0 || (merchant && merchant.phase !== 'done' && merchant.phase !== 'walk') || (rope && rope.phase !== 'done') || rideHolds() || duelHolds() || gustHolds() || learnT > 0) return 0;   // learnT: עצירה קצרה אחרי פגיעה   // …או עומדים ליד הסוחר   // עוצרים / מושכים בחבל / מתחבאים בשיח
   return speed * (act.run > 0 ? RUN_BOOST.mult : 1) * (crawling() ? BRAMBLE.slow : 1) * gustSlow() * approachSlow();   // approachSlow: מאט ומתקרב בהליכה לחבר בסירה / לילד בעגלה   // gustSlow: הרוח מאטה לפני הטורנדו
 }

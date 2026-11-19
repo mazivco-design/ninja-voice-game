@@ -501,9 +501,17 @@ function update(dt) {
   else if (scenesPhysics(dt)) {}                       // סצנות רשומות (scenes.js)
   else if (rideCtl()) { py = ride.py; vy = 0; flyT = 0; }   // על הדרקון – הגובה נקבע ב-dragon.js
   else if (act.climb > 0) {                     // מטפס על הסולם – עולה ומתקדם באלכסון
-    climbK = Math.min(1, climbK + dt / CLIFF.time);
-    py = CLIFF.h * climbK; vy = 0;
-    if (climbK >= 1) { act.climb = 0; py = CLIFF.h; vy = 0; }           // למעלה – הולך על הצוק ואז קופץ למטה
+    vy = 0;
+    if (climbS === 'walk') { py = 0; if (climbFoot() <= PLAYER.x + 4 + CLIFF.onX) climbS = 'up'; }   // הגיע לתחתית הסולם – מתחיל לטפס
+    else if (climbS === 'up') {
+      const kTop = 1 - CLIFF.lift / CLIFF.h;                       // הידיים הגיעו לשפה – משם עולים מעליה
+      climbK = Math.min(kTop, climbK + dt / CLIFF.time); py = CLIFF.h * climbK;
+      if (climbK >= kTop) { climbS = 'top'; climbT = 0; }
+    } else {                                                      // עולה מעל השפה ונעמד על הצוק
+      climbT += dt; const u = Math.min(1, climbT / CLIFF.top);
+      py = CLIFF.h - CLIFF.lift * (1 - u * u * (3 - 2 * u));
+      if (u >= 1) { act.climb = 0; climbS = ''; climbK = 1; py = CLIFF.h; }
+    }
   } else if (act.leap > 0) {               // זינוק אופקי: מרחף בגובה החלון עד שעבר אותו
     act.leap -= dt; vy = 0;
     let u = leapWin ? (leapWin.leapFrom - leapWin.x) / Math.max(1, leapWin.leapFrom - (PLAYER.x - 2.5 - WINDOW.w)) : 1 - act.leap / LEAP.free;   // 0 → 1 לאורך הזינוק
@@ -669,7 +677,9 @@ function update(dt) {
     if (o.type === 'cliff' && !o.climbed && act.climbWant > 0 && act.climb <= 0) {
       const foot = o.x - CLIFF.ladder;                 // תחתית הסולם
       if (pb.r >= foot - CLIFF.range && pb.r <= o.x + 1 && py <= 0) {
-        o.climbed = true; act.climb = 1; climbK = Math.max(0, Math.min(0.9, (pb.r - foot) / CLIFF.ladder));
+        const late = foot - (PLAYER.x + 4 + CLIFF.onX);              // שלילי – כבר עבר את תחתית הסולם (אמר מאוחר)
+        o.climbed = true; act.climb = 1; climbO = o; climbS = late > 0 ? 'walk' : 'up';
+        climbK = late > 0 ? 0 : Math.min(0.8, -late * (CLIFF.h + 1) / (CLIFF.ladder + 0.6) / CLIFF.h);
         act.climbWant = 0; duckT = 0; flyT = 0; py = CLIFF.h * climbK; vy = 0;
         cleared(o);
       }

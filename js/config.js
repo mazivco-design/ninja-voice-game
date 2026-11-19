@@ -157,7 +157,7 @@ const RUN_BOOST = { mult: 2.2, time: 2.0 };                          // RUN – 
 const BRIDGE = { factor: 4.0, delay: 0.3, chase: 1.7 };            // שדה אש ארוך: האש מתחילה בכניסה ורודפת – מהירה מהליכה (1), איטית מריצה (2.2)
 const LAKE = { factor: 3.0 }, SWIM_TIME = 1.2;                       // SWIM – אגם ארוך. שוחים עד הסוף
 const DROWN = { easy: 1.1, other: 0.8 };                              // כמה זמן שוקעים במים לפני שנכשלים – אפשר עוד להציל עם SWIM
-const CLIFF = { w: 14, h: 40, range: 2.5, time: 1.3, ladder: 12 };  // CLIMB – צוק גבוה עם סולם נשען. מטפסים כשמגיעים לסולם
+const CLIFF = { w: 14, h: 40, range: 2.5, time: 2.6, ladder: 12, top: 0.5, lift: 6, onX: 2.2 };   // time – משך הטיפוס מלמטה עד למעלה · top – העלייה מעל שפת הצוק (lift – כמה עולים בה) · onX – הסולם לפני הדמות (בגובה הרגליים)  // CLIMB – צוק גבוה עם סולם נשען. מטפסים כשמגיעים לסולם
 const BOULDER = { r: 10, range: 25 };                                // PUSH – סלע עגול גדול, אפשר לדחוף מרחוק
 const GATE = { w: 5, rope: 4, lift: 38, time: 1.4, want: 2.5 };   // want ארוך – מתקרבים לאט (approachSlow), שה-PULL לא יפוג בדרך     // PULL – עוצרים ליד החבל ומושכים עד שהסורג עולה למעלה
 const GUARD = { w: 9, h: 18, walk: 14, gap: 5 }, HIDE_TIME = 1.8;    // HIDE – שני שומרים עם פנסים
