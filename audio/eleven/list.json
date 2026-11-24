@@ -2539,6 +2539,17 @@
    },
    "text": "[warm] Eat!",
    "voice": "Sarah"
+  },
+  {
+   "file": "sarah-duck",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Duck!",
+   "voice": "Sarah"
   }
  ]
 }
