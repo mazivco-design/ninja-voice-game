@@ -2714,6 +2714,75 @@
    },
    "text": "[warm] Open!",
    "voice": "Sarah"
+  },
+  {
+   "file": "sarah-apple",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Apple!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-fish",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Fish!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-cake",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Cake!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "friend-pw-pillow-fight",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[excited] Pillow fight!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend-pw-oof",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[playful] Oof!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend-pw-you-win",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[laughing] Okay, okay! You win!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
   }
  ]
 }
