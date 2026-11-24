@@ -33,11 +33,18 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 #tl input[type=checkbox] { width: 18px; height: 18px; accent-color: #6366f1; }
 #tl input[type=range] { width: 110px; accent-color: #6366f1; }
 #tl .note { font-size: 12px; color: #64748b; direction: rtl; }
-#track { position: relative; height: 34px; background: #0b1220; border-radius: 8px; touch-action: none; margin: 0 18px 2px; }
+#track { position: relative; height: 40px; background: #0b1220; border-radius: 8px; touch-action: none; margin: 0 18px 2px; }
 #track .ph { position: absolute; top: 0; bottom: 0; width: 2px; background: #f43f5e; pointer-events: none; }
-#track .kf { position: absolute; top: 7px; width: 20px; height: 20px; margin-left: -10px; transform: rotate(45deg); background: #f59e0b;
+#track .kf { position: absolute; top: 8px; width: 24px; height: 24px; margin-left: -12px; transform: rotate(45deg); background: #f59e0b;
              border: 2px solid #fff; border-radius: 3px; }
 #track .kf.sel { background: #22c55e; }
+#tl .nav { font-size: 22px; padding: 6px 22px; }
+#thumbs { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 4px; scrollbar-width: none; touch-action: pan-x; }
+#thumbs .th { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; border: 3px solid transparent; border-radius: 10px; background: #0b1220; padding: 2px; }
+#thumbs .th.sel { border-color: #22c55e; }
+#thumbs canvas { width: 64px; height: 84px; border-radius: 7px; display: block; }
+#thumbs .th span { font: 700 11px system-ui; color: #94a3b8; }
+#app.full #panel { display: none; }
 #track .tick { position: absolute; bottom: 0; width: 1px; height: 6px; background: #334155; }
 #tip { position: absolute; right: 10px; top: 8px; max-width: 60%; font-size: 13px; font-weight: 700; color: #1e293b;
        background: rgba(255,255,255,.85); border-radius: 10px; padding: 6px 10px; pointer-events: none; display: none; }
@@ -110,6 +117,8 @@ h3 { font-size: 14px; color: #94a3b8; margin: 12px 0 6px; font-weight: 800; }
         <button class="b" id="smart">🎯 גרירה חכמה</button>
         <button class="b" id="stepBack">↶ צעד אחורה</button>
         <button class="b" id="onion">👻 צללית</button>
+        <button class="b" id="pathBtn">〰 מסלול</button>
+        <button class="b" id="fullBtn">⛶ מסך מלא</button>
         <button class="b" id="guide">✏️ קו עזר</button><input type="color" id="guideCol">
         <button class="b" id="refBtn">📖 עזר</button>
         <span class="grp" id="refPick"></span>
@@ -181,6 +190,8 @@ const GUIDE_KEY = 'ninjaVoice_animGuide';
 let guide = { on: false, color: '#fde047' };
 try { Object.assign(guide, JSON.parse(localStorage.getItem(GUIDE_KEY) || '{}')); } catch (e) {}
 const saveGuide = () => { try { localStorage.setItem(GUIDE_KEY, JSON.stringify(guide)); } catch (e) {} };
+let showPath = false;                     // מסלול התנועה: הדרך של כפות הרגליים, הידיים והאגן לאורך כל המחזור
+let thumbsDirty = true, thumbsAt = 0;      // התמונות הממוזערות בציר הזמן – מציירים מחדש כשמשהו משתנה
 let onion = false;                         // צללית (onion skin): תמונת המפתח הקודמת (אדום) והבאה (ירוק), חצי שקופות
 let refOn = false, refSet = 'run';         // תמונות עזר: שורת תנוחות מפתח קלאסיות בראש המסך
 let dragMode = 'off';                     // off | pose (מסובבים מפרקים) | attach (מזיזים נקודות חיבור)
@@ -242,7 +253,7 @@ function renderBar() {
   $('play').textContent = playing ? '⏸' : '▶';
   $('skel').classList.toggle('on', skeleton);
   $('smart').classList.toggle('on', smartDrag);
-  $('onion').classList.toggle('on', onion); $('guide').classList.toggle('on', guide.on); $('guideCol').value = guide.color; $('refBtn').classList.toggle('on', refOn);
+  $('onion').classList.toggle('on', onion); $('pathBtn').classList.toggle('on', showPath); $('fullBtn').classList.toggle('on', $('app').classList.contains('full')); $('guide').classList.toggle('on', guide.on); $('guideCol').value = guide.color; $('refBtn').classList.toggle('on', refOn);
   const rp = $('refPick'); rp.innerHTML = '';
   if (refOn) Object.keys(REF).forEach(k => { const b = document.createElement('button'); b.className = 'b' + (k === refSet ? ' on' : ''); b.textContent = REF[k].label;
     b.onclick = () => { refSet = k; renderBar(); }; rp.appendChild(b); });
@@ -255,6 +266,8 @@ document.querySelectorAll('#bar a.b').forEach(l => l.onclick = e => {      // י
   if (JSON.stringify(RIG) !== saved && !confirm('יש שינויים שלא נשמרו בטיוטה. לצאת בלי לשמור?')) e.preventDefault();
 });
 $('onion').onclick = () => { onion = !onion; renderBar(); showTip(); };
+$('pathBtn').onclick = () => { showPath = !showPath; renderBar(); };
+$('fullBtn').onclick = () => { $('app').classList.toggle('full'); renderBar(); setTimeout(resize, 0); };
 $('guide').onclick = () => { guide.on = !guide.on; saveGuide(); renderBar(); };
 $('guideCol').oninput = () => { guide.color = $('guideCol').value; guide.on = true; saveGuide(); renderBar(); };
 // ספארי באייפד מתעלם מ-user-scalable=no: חוסמים הגדלה בצביטה ובהקשה כפולה, כדי שהמסך לא יקפוץ
@@ -498,6 +511,7 @@ function renderKeyPose(box) {
    שמירה, ביטול, העתקה
    ============================================================ */
 function markDirty() {
+  thumbsDirty = true;
   const cur = JSON.stringify(RIG), dirty = cur !== saved;
   $('dirty').textContent = dirty ? '● יש שינויים שלא נשמרו בטיוטה' : cur !== gameJSON ? 'הטיוטה שמורה · שונה ממה שבמשחק' : 'הטיוטה זהה למשחק';
 }
@@ -602,11 +616,87 @@ function drawRefStrip() {
   ctx.textAlign = 'start';
 }
 
+// שלד של תמונת מפתח (צללית): קווים צבעוניים מעל הדמות, וקווי גובה של האגן וכפות הרגליים
+function drawGhostBones(g, dy) {
+  const { J, pts, bobY } = g.o; if (!J) return;
+  const y = dy + (bobY || 0), S = RIG.shape;
+  ctx.save(); ctx.translate(0, y);
+  ctx.strokeStyle = g.col; ctx.fillStyle = g.col; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.globalAlpha = 0.9; ctx.lineWidth = 0.3;
+  if (!g.prev) ctx.setLineDash([0.7, 0.5]);
+  const poly = q => { ctx.beginPath(); ctx.moveTo(q[0][0], q[0][1]); q.slice(1).forEach(p => ctx.lineTo(p[0], p[1])); ctx.stroke(); };
+  poly([J.hip, J.waist, J.neck]);
+  Object.values(pts).forEach(poly);
+  poly([J.neck, J.head]);
+  ctx.setLineDash([]);
+  Object.values(pts).forEach(q => circle(q[2][0], q[2][1], 0.38));
+  if (g.prev) {                                          // קווי גובה של התמונה הקודמת: אגן וכפות רגליים
+    ctx.globalAlpha = 0.55; ctx.lineWidth = 0.1; ctx.setLineDash([0.5, 0.4]);
+    [J.hip, pts.legB[2], pts.legF[2]].forEach(q => { ctx.beginPath(); ctx.moveTo(q[0] - 7, q[1]); ctx.lineTo(q[0] + 7, q[1]); ctx.stroke(); });
+    ctx.setLineDash([]);
+  }
+  ctx.restore();
+}
+// מסלול התנועה: דוגמים את כל המחזור ומציירים את הדרך של כל כף רגל, כף יד והאגן. נקודה גדולה = תמונת מפתח
+let pathCache = { sig: '', tracks: null };
+function samplePath() {
+  const sig = move + char + JSON.stringify([RIG.keys[move] || null, RIG.offsets[move] || null, RIG.shape, RIG.run, RIG.attach]);
+  if (sig === pathCache.sig) return pathCache.tracks;
+  const N = 48, tr = { legF: [], legB: [], armF: [], armB: [], hip: [] }, keyT = keysOn(move) ? RIG.keys[move].frames.map(f => f.t) : [];
+  const at = ph => {
+    const { P, lift } = movePose(move, timeForPhase(move, ph)); if (P.move !== move) return null;
+    const o = {}; ctx.save(); ctx.globalAlpha = 0;
+    drawFigure({ fx: 0, fy: 0, facing: 1, scale: 1, kind: char, pose: P, out: o }); ctx.restore();
+    const dy = -lift + (o.bobY || 0), m = q => [q[0], q[1] + dy];
+    return { legF: m(o.pts.legF[2]), legB: m(o.pts.legB[2]), armF: m(o.pts.armF[2]), armB: m(o.pts.armB[2]), hip: m(o.J.hip) };
+  };
+  const tSave = POSE_CLOCK;
+  for (let i = 0; i <= N; i++) { const p = at(i / N * 0.9999); if (p) for (const k in tr) tr[k].push(p[k]); }
+  tr.keys = keyT.map(at).filter(Boolean);
+  POSE_CLOCK = tSave;
+  pathCache = { sig, tracks: tr };
+  return tr;
+}
+function drawMotionPath() {
+  const tr = samplePath(); if (!tr) return;
+  const col = { legB: '#ea580c', armB: '#ea580c', legF: '#16a34a', armF: '#16a34a', hip: '#dc2626' };   // הקדמיים אחרונים – מעל
+  ctx.save(); ctx.lineWidth = 0.14; ctx.globalAlpha = 0.85; ctx.lineJoin = 'round';
+  for (const k in col) {
+    const q = tr[k]; if (!q || q.length < 2) continue;
+    ctx.strokeStyle = col[k]; ctx.fillStyle = col[k];
+    if (k.startsWith('arm')) ctx.setLineDash([0.45, 0.3]); else ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(q[0][0], q[0][1]); q.slice(1).forEach(p => ctx.lineTo(p[0], p[1])); ctx.stroke();
+    q.forEach(p => circle(p[0], p[1], 0.1));
+    (tr.keys || []).forEach(K => circle(K[k][0], K[k][1], 0.32));
+  }
+  ctx.restore();
+}
+// תמונות ממוזערות של תמונות המפתח: מציירים על הקנבס הראשי (לפני ציור הפריים) ומעתיקים לכל כרטיס
+function paintThumbs() {
+  const cards = document.querySelectorAll('#thumbs canvas'), k = RIG.keys[move];
+  if (!cards.length || !k) return;
+  const like = { move, torso: RIG.shape.torso };
+  cards.forEach(c => {
+    const f = k.frames[+c.dataset.i]; if (!f) return;
+    const w = c.width, h = c.height;
+    if (w > canvas.width || h > canvas.height) return;
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = '#e0f2fe'; ctx.fillRect(0, 0, w, h);
+    const u = h / 23, gy = h * 0.9;
+    ctx.fillStyle = '#4ade80'; ctx.fillRect(0, gy, w, h - gy);
+    ctx.translate(w / 2, gy); ctx.scale(u, u);
+    drawFigure({ fx: 0, fy: 0, facing: 1, scale: 1, kind: char, accent: PREVIEW_PLAYER_COLOR, pose: keyToPose(f, like), out: {} });
+    ctx.restore();
+    const tc = c.getContext('2d'); tc.clearRect(0, 0, w, h); tc.drawImage(canvas, 0, 0, w, h, 0, 0, w, h);
+  });
+}
+
 function frame(ts) {
   const now = ts / 1000, dt = Math.min(0.05, lastT ? now - lastT : 0); lastT = now;
   if (playing) t += dt * speedMul;
   liveRig = RIG;
   if (!cw) resize();
+  if (thumbsDirty && now - thumbsAt > 0.25 && !kfDrag) { thumbsDirty = false; thumbsAt = now; paintThumbs(); }
   // גודל יחידה: מספיק מקום גם לקפיצה ולתעופה, כדי שהדמות לא תצא מהמסך
   const need = 21 + (move === 'jump' ? 21 : move === 'fly' ? 15 : 0);
   const u = Math.min(cw / 34, ch * 0.84 / need) * zoom;
@@ -625,23 +715,28 @@ function frame(ts) {
     ctx.fillStyle = C.accent || PREVIEW_PLAYER_COLOR;
     ctx.beginPath(); ctx.moveTo(-12, -lift - 15); ctx.lineTo(0.5, -lift - 21); ctx.lineTo(13, -lift - 15); ctx.lineTo(0.5, -lift - 17); ctx.closePath(); ctx.fill();
   }
+  let ghosts = [];
   if (onion && keysOn(move) && P.move === move) {       // צללית: התמונה הקודמת באדום, הבאה בירוק
     const K = RIG.keys[move], F = K.frames.slice().sort((a, b) => a.t - b.t), ph = P.phase;
     let pv = null, nx = null;
     F.forEach(f => { if (f.t < ph - 0.012) pv = f; }); nx = F.find(f => f.t > ph + 0.012) || null;
     if (K.loop && F.length > 1) { pv = pv || F[F.length - 1]; nx = nx || F[0]; }
     const here = F.find(f => Math.abs(f.t - ph) < 0.012);
-    [[pv, '#ef4444'], [nx, '#22c55e']].forEach(([f, col], i) => {
+    [[pv, '#ef4444'], [nx, '#16a34a']].forEach(([f, col], i) => {
       if (!f || f === here || (i === 1 && f === pv)) return;
-      ctx.save(); ctx.globalAlpha = 0.5;
-      drawFigure({ fx: 0, fy: -lift, facing: 1, scale: 1, kind: char, accent: col, suit: { body: col, back: col, front: col, edge: col, accent: col, skin: col, eyes: col, outlineAlpha: 0 }, pose: keyToPose(f, P), out: {} });
+      const o = {};
+      ctx.save(); ctx.globalAlpha = 0.22;
+      drawFigure({ fx: 0, fy: -lift, facing: 1, scale: 1, kind: char, accent: col, suit: { body: col, back: col, front: col, edge: col, accent: col, skin: col, eyes: col, outlineAlpha: 0 }, pose: keyToPose(f, P), out: o });
       ctx.restore();
+      ghosts.push({ o, col, prev: i === 0 });
     });
   }
   const out = {};
   FIG_GUIDE = guide.on ? { color: guide.color, w: 0.5 } : null;   // קו העזר – רק על הדמות שעורכים
   drawFigure({ fx: 0, fy: -lift, facing: 1, scale: 1, kind: char, accent: PREVIEW_PLAYER_COLOR, pose: P, skeleton, out });
   FIG_GUIDE = null;
+  ghosts.forEach(g => drawGhostBones(g, -lift));          // השלד של התמונה הקודמת/הבאה – מעל הדמות, כדי שתמיד יראו אותו
+  if (showPath) drawMotionPath();
   ctx.restore();
   if (refOn) drawRefStrip();
   view = { fx, fy, u, lift, out };
@@ -882,13 +977,13 @@ function renderTL() {
     r.oninput = () => { k.dur = parseFloat(r.value); sp.textContent = k.dur.toFixed(2) + 's'; markDirty(); };
     top.appendChild(l);
   }
-  tlBtn(top, '◀', () => { const ph = currentPhase() ?? 0, F = k.frames; let i = -1; F.forEach((f, j) => { if (f.t < ph - 0.012) i = j; }); gotoKey(i < 0 ? F.length - 1 : i); });
+  tlBtn(top, '◀', () => { const ph = currentPhase() ?? 0, F = k.frames; let i = -1; F.forEach((f, j) => { if (f.t < ph - 0.012) i = j; }); gotoKey(i < 0 ? F.length - 1 : i); }, 'nav');
   tlBtn(top, '+ Key', () => { playing = false; renderBar(); keyAtPlayhead(true); renderTL(); if (tab === 'pose') renderPanel(); }, 'go');
   tlBtn(top, '🗑', () => {
     if (selKey < 0 || k.frames.length <= 1) return;
     k.frames.splice(selKey, 1); selKey = Math.min(selKey, k.frames.length - 1); markDirty(); renderTL(); if (tab === 'pose') renderPanel();
   }, 'warn');
-  tlBtn(top, '▶', () => { const ph = currentPhase() ?? 0, F = k.frames; const i = F.findIndex(f => f.t > ph + 0.012); gotoKey(i < 0 ? 0 : i); });
+  tlBtn(top, '▶', () => { const ph = currentPhase() ?? 0, F = k.frames; const i = F.findIndex(f => f.t > ph + 0.012); gotoKey(i < 0 ? 0 : i); }, 'nav');
   if (KEY_DRIVEN[move]) { const n = document.createElement('span'); n.className = 'note'; n.textContent = 'הקצב נקבע במשחק לפי ' + KEY_DRIVEN[move]; top.appendChild(n); }
 
   const tr = document.createElement('div'); tr.id = 'track'; box.appendChild(tr);
@@ -898,6 +993,16 @@ function renderTL() {
     tr.appendChild(d);
   });
   const ph = document.createElement('div'); ph.className = 'ph'; ph.id = 'ph'; tr.appendChild(ph);
+  // שורת תמונות ממוזערות – נוגעים בתמונה כדי לעבור אליה
+  const strip = document.createElement('div'); strip.id = 'thumbs'; box.appendChild(strip);
+  const dpr = window.devicePixelRatio || 1;
+  k.frames.forEach((f, i) => {
+    const d = document.createElement('div'); d.className = 'th' + (i === selKey ? ' sel' : '');
+    const c = document.createElement('canvas'); c.width = Math.round(64 * dpr); c.height = Math.round(84 * dpr); c.dataset.i = i;
+    const lb = document.createElement('span'); lb.textContent = (i + 1);
+    d.appendChild(c); d.appendChild(lb); d.onclick = () => gotoKey(i); strip.appendChild(d);
+  });
+  thumbsDirty = true;
   const phaseAt = e => { const r = tr.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); };
   tr.onpointerdown = e => {
     e.preventDefault(); tr.setPointerCapture(e.pointerId);
