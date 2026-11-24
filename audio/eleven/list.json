@@ -2550,6 +2550,54 @@
    },
    "text": "[warm] Duck!",
    "voice": "Sarah"
+  },
+  {
+   "file": "friend-kite-oh-no",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[sad] Oh no! My kite!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend-kite-climb-on-me",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[happy] Climb on me!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend-kite-pull-it",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[excited] Pull it!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend-kite-again",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[excited] Again!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
   }
  ]
 }
