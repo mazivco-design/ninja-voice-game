@@ -2622,6 +2622,76 @@
    "text": "[excited] Push it!",
    "voice": "lib-lukas",
    "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend-hs-hide-and-seek",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[excited] Hide and seek! You hide!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend-hs-count",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[playful] One... two... three...",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend-hs-ready",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[playful] Ready or not, here I come!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend-hs-where",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[curious] Hmm... where is he?",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "friend-hs-got-me",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[laughing] You got me! Ha ha!",
+   "voice": "lib-lukas",
+   "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "ninja-boo",
+   "type": "tts",
+   "model": "eleven_v3",
+   "text": "[playful] [shouting] Boo!",
+   "voice": "Liam",
+   "settings": {
+    "stability": 0.5
+   }
   }
  ]
 }
