@@ -2517,6 +2517,28 @@
    "voice_id": "wSqOdjeNqDrHcoK0zorF",
    "file": "friend9-lukas-gotone",
    "text": "[laughing] Yes! I got one!"
+  },
+  {
+   "file": "sarah-shake",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Shake!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-eat",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Eat!",
+   "voice": "Sarah"
   }
  ]
 }

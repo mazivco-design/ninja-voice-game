@@ -351,6 +351,14 @@
   "hash": 2858873193,
   "phases": ""
  },
+ "easy / APPLE TREE": {
+  "end": "APPLE TREE – done!",
+  "sec": 25.75,
+  "hits": 0,
+  "score": 1,
+  "hash": 3447615579,
+  "phases": ""
+ },
  "medium / JUMP": {
   "end": "JUMP – done!",
   "sec": 14.72,
@@ -701,6 +709,14 @@
   "hits": 0,
   "score": 1,
   "hash": 964080413,
+  "phases": ""
+ },
+ "medium / APPLE TREE": {
+  "end": "APPLE TREE – done!",
+  "sec": 23.38,
+  "hits": 0,
+  "score": 1,
+  "hash": 423796307,
   "phases": ""
  },
  "hard / JUMP": {
@@ -1055,6 +1071,14 @@
   "hash": 1183583427,
   "phases": ""
  },
+ "hard / APPLE TREE": {
+  "end": "APPLE TREE – done!",
+  "sec": 22.37,
+  "hits": 0,
+  "score": 1,
+  "hash": 926764555,
+  "phases": ""
+ },
  "journey 0+3 / easy": {
   "state": "play",
   "station": 3,
@@ -1109,27 +1133,27 @@
   "hash": 2793863853,
   "phases": "rope:wait > rope:hang > rope:land > rope:done"
  },
- "journey 31+1 / easy": {
+ "journey 32+1 / easy": {
   "state": "play",
-  "station": 32,
+  "station": 33,
   "sec": 278.48,
   "hits": 0,
   "score": 357,
   "hash": 2942983791,
   "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > rope:wait > rope:hang > rope:land > rope:done > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:hover > jet:land > jet:drop > lift:atRock > lift:lifting > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > gust:storm > gust:calm > gust:back > gust:done > duel:enter > duel:face > duel:win"
  },
- "journey 31+1 / medium": {
+ "journey 32+1 / medium": {
   "state": "play",
-  "station": 32,
+  "station": 33,
   "sec": 244.28,
   "hits": 0,
   "score": 324,
   "hash": 143190981,
   "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > rope:wait > rope:hang > rope:land > rope:done > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:hover > jet:land > jet:drop > lift:atRock > lift:lifting > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > gust:storm > gust:calm > gust:back > gust:done > duel:enter > duel:face > duel:win"
  },
- "journey 31+1 / hard": {
+ "journey 32+1 / hard": {
   "state": "play",
-  "station": 32,
+  "station": 33,
   "sec": 235,
   "hits": 0,
   "score": 335,
@@ -1138,7 +1162,7 @@
  },
  "journey last / easy": {
   "state": "play",
-  "station": 34,
+  "station": 35,
   "sec": 360,
   "hits": 0,
   "score": 415,
@@ -1147,7 +1171,7 @@
  },
  "journey last / hard": {
   "state": "play",
-  "station": 34,
+  "station": 35,
   "sec": 360,
   "hits": 0,
   "score": 434,
@@ -1289,6 +1313,9 @@
  "listen / TROLL": {
   "words": "pick up, roll, throw"
  },
+ "listen / APPLE TREE": {
+  "words": "eat, shake"
+ },
  "listen / journey": {
   "words": "block, catch, climb, crawl, dive, down, fast, fight, fire, fly, hide, hold, i, jump, jump in, key, kick, leap, let go, pick up, pull, push, put down, put on, ride, rope, run, stop, swim, throw, torch, up, want, yes"
  },
@@ -1334,12 +1361,12 @@
  },
  "pixels intro / THROW": {
   "frames": 5,
-  "pix": 847793528,
+  "pix": 2733577027,
   "err": null
  },
  "pixels / THROW": {
   "frames": 46,
-  "pix": 3523404320,
+  "pix": 3162049266,
   "err": null
  },
  "pixels intro / KICK + THROW": {
@@ -1349,7 +1376,7 @@
  },
  "pixels / KICK + THROW": {
   "frames": 91,
-  "pix": 668309072,
+  "pix": 3409604793,
   "err": null
  },
  "pixels intro / CATCH": {
@@ -1359,7 +1386,7 @@
  },
  "pixels / CATCH": {
   "frames": 38,
-  "pix": 1592542180,
+  "pix": 2618516828,
   "err": null
  },
  "pixels intro / JUMP + FLY": {
@@ -1369,7 +1396,7 @@
  },
  "pixels / JUMP + FLY": {
   "frames": 67,
-  "pix": 1523301011,
+  "pix": 3612754074,
   "err": null
  },
  "pixels intro / CATCH + FLY": {
@@ -1379,7 +1406,7 @@
  },
  "pixels / CATCH + FLY": {
   "frames": 120,
-  "pix": 844533079,
+  "pix": 857545595,
   "err": null
  },
  "pixels intro / STOP": {
@@ -1399,7 +1426,7 @@
  },
  "pixels / RUN": {
   "frames": 55,
-  "pix": 177094369,
+  "pix": 3525123772,
   "err": null
  },
  "pixels intro / STOP + RUN": {
@@ -1409,7 +1436,7 @@
  },
  "pixels / STOP + RUN": {
   "frames": 113,
-  "pix": 2912529938,
+  "pix": 481990209,
   "err": null
  },
  "pixels intro / SWIM": {
@@ -1449,7 +1476,7 @@
  },
  "pixels / PUSH": {
   "frames": 36,
-  "pix": 1964652263,
+  "pix": 1935933101,
   "err": null
  },
  "pixels intro / PULL": {
@@ -1459,7 +1486,7 @@
  },
  "pixels / PULL": {
   "frames": 61,
-  "pix": 4252612821,
+  "pix": 1949284565,
   "err": null
  },
  "pixels intro / PUSH + PULL": {
@@ -1469,7 +1496,7 @@
  },
  "pixels / PUSH + PULL": {
   "frames": 103,
-  "pix": 941119435,
+  "pix": 481646491,
   "err": null
  },
  "pixels intro / HIDE": {
@@ -1499,7 +1526,7 @@
  },
  "pixels / HIDE + BLOCK": {
   "frames": 103,
-  "pix": 1975287607,
+  "pix": 4228210280,
   "err": null
  },
  "pixels intro / LEAP": {
@@ -1509,7 +1536,7 @@
  },
  "pixels / LEAP": {
   "frames": 39,
-  "pix": 3893153511,
+  "pix": 3530624126,
   "err": null
  },
  "pixels intro / DIVE": {
@@ -1519,7 +1546,7 @@
  },
  "pixels / DIVE": {
   "frames": 55,
-  "pix": 3998284814,
+  "pix": 1019900857,
   "err": null
  },
  "pixels intro / LEAP + DIVE": {
@@ -1529,7 +1556,7 @@
  },
  "pixels / LEAP + DIVE": {
   "frames": 107,
-  "pix": 2912622795,
+  "pix": 3511002829,
   "err": null
  },
  "pixels intro / CRAWL": {
@@ -1539,7 +1566,7 @@
  },
  "pixels / CRAWL": {
   "frames": 69,
-  "pix": 3997612954,
+  "pix": 26610126,
   "err": null
  },
  "pixels intro / FIRE": {
@@ -1549,7 +1576,7 @@
  },
  "pixels / FIRE": {
   "frames": 37,
-  "pix": 2492050428,
+  "pix": 833004878,
   "err": null
  },
  "pixels intro / CRAWL + FIRE": {
@@ -1574,7 +1601,7 @@
  },
  "pixels / LET GO": {
   "frames": 81,
-  "pix": 3994945294,
+  "pix": 2211765202,
   "err": null
  },
  "pixels intro / RIDE": {
@@ -1584,27 +1611,27 @@
  },
  "pixels / RIDE": {
   "frames": 96,
-  "pix": 1448702782,
+  "pix": 827714757,
   "err": null
  },
  "pixels intro / FIGHT": {
   "frames": 10,
-  "pix": 2411906941,
+  "pix": 25064923,
   "err": null
  },
  "pixels / FIGHT": {
   "frames": 60,
-  "pix": 2797358335,
+  "pix": 1486344872,
   "err": null
  },
  "pixels intro / HOLD": {
   "frames": 10,
-  "pix": 293901211,
+  "pix": 2391423975,
   "err": null
  },
  "pixels / HOLD": {
   "frames": 102,
-  "pix": 246904210,
+  "pix": 32372940,
   "err": null
  },
  "pixels intro / PICK UP": {
@@ -1614,7 +1641,7 @@
  },
  "pixels / PICK UP": {
   "frames": 52,
-  "pix": 2448220344,
+  "pix": 4176198293,
   "err": null
  },
  "pixels intro / PICK UP + PUT DOWN": {
@@ -1624,7 +1651,7 @@
  },
  "pixels / PICK UP + PUT DOWN": {
   "frames": 85,
-  "pix": 3288797313,
+  "pix": 2401200424,
   "err": null
  },
  "pixels intro / PICK UP + THROW": {
@@ -1634,7 +1661,7 @@
  },
  "pixels / PICK UP + THROW": {
   "frames": 128,
-  "pix": 2185537002,
+  "pix": 3861712985,
   "err": null
  },
  "pixels intro / HELP": {
@@ -1644,47 +1671,47 @@
  },
  "pixels / HELP": {
   "frames": 202,
-  "pix": 2318026898,
+  "pix": 1869833828,
   "err": null
  },
  "pixels intro / PUSH TOGETHER": {
   "frames": 28,
-  "pix": 3459262443,
+  "pix": 1478023426,
   "err": null
  },
  "pixels / PUSH TOGETHER": {
   "frames": 76,
-  "pix": 3643768051,
+  "pix": 3273518860,
   "err": null
  },
  "pixels intro / PUSH ON THREE": {
   "frames": 62,
-  "pix": 352368826,
+  "pix": 147485442,
   "err": null
  },
  "pixels / PUSH ON THREE": {
   "frames": 209,
-  "pix": 3493210573,
+  "pix": 4153179725,
   "err": null
  },
  "pixels intro / FISHING": {
   "frames": 32,
-  "pix": 2245214354,
+  "pix": 820262204,
   "err": null
  },
  "pixels / FISHING": {
   "frames": 230,
-  "pix": 3533376728,
+  "pix": 3537466166,
   "err": null
  },
  "pixels intro / WILD BOAR": {
   "frames": 32,
-  "pix": 2374011460,
+  "pix": 2176258945,
   "err": null
  },
  "pixels / WILD BOAR": {
   "frames": 120,
-  "pix": 2166151423,
+  "pix": 1155063336,
   "err": null
  },
  "pixels intro / JET PACK": {
@@ -1694,27 +1721,27 @@
  },
  "pixels / JET PACK": {
   "frames": 205,
-  "pix": 2153778943,
+  "pix": 448419998,
   "err": null
  },
  "pixels intro / WOLVES": {
   "frames": 64,
-  "pix": 2930396398,
+  "pix": 3401586164,
   "err": null
  },
  "pixels / WOLVES": {
   "frames": 82,
-  "pix": 898903931,
+  "pix": 1715734367,
   "err": null
  },
  "pixels intro / BIKE": {
   "frames": 66,
-  "pix": 1245363338,
+  "pix": 598639257,
   "err": null
  },
  "pixels / BIKE": {
   "frames": 89,
-  "pix": 2322950031,
+  "pix": 1071168916,
   "err": null
  },
  "pixels intro / HIGH WALL": {
@@ -1724,22 +1751,32 @@
  },
  "pixels / HIGH WALL": {
   "frames": 118,
-  "pix": 3510136053,
+  "pix": 267356860,
   "err": null
  },
  "pixels intro / TROLL": {
   "frames": 68,
-  "pix": 799728681,
+  "pix": 22250007,
   "err": null
  },
  "pixels / TROLL": {
   "frames": 115,
-  "pix": 2896929826,
+  "pix": 2438321243,
+  "err": null
+ },
+ "pixels intro / APPLE TREE": {
+  "frames": 26,
+  "pix": 3051268476,
+  "err": null
+ },
+ "pixels / APPLE TREE": {
+  "frames": 51,
+  "pix": 4041301334,
   "err": null
  },
  "pixels / journey last": {
   "frames": 720,
-  "pix": 2586114937,
+  "pix": 3455201165,
   "err": null
  },
  "intro / JUMP": {
@@ -2407,6 +2444,21 @@
   "hits": 0,
   "score": 1,
   "hash": 3731329927,
+  "phases": ""
+ },
+ "intro / APPLE TREE": {
+  "sec": 13,
+  "hash": 3930457527,
+  "banners": "SHAKE · EAT! | Ready? Press START",
+  "said": "shake | shake | eat",
+  "phases": ""
+ },
+ "tap / APPLE TREE": {
+  "end": "APPLE TREE – done!",
+  "sec": 24.7,
+  "hits": 0,
+  "score": 1,
+  "hash": 761230705,
   "phases": ""
  }
 }
