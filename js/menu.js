@@ -39,11 +39,13 @@ function renderMenu() {
   $('jRestart').disabled = !model;
   renderSideBoard($('jBoard')); renderMyBoard($('meBoard')); showSbTab();
   // אימון: שיעור לכל מילה שנפתחה במסע
-  const stars = getStars(), box = $('stages'), open = openWords();
-  box.innerHTML = '';
+  const stars = getStars(), open = openWords(), showDev = isTester(), devCards = [];
+  $('stages').innerHTML = '';
   WORDS.map(w => lessonIdx(w)).filter(i => i >= 0).forEach(i => {                // לפי סדר המסע (השלבים עצמם לא זזים – הכוכבים נשמרים)
     const s = STAGES[i];
     const w = s.words[0], dev = isDev(w), unlocked = dev || open.includes(w), got = stars[i] || 0;   // שלב בפיתוח – תמיד פתוח, ומסומן
+    if (dev && !showDev) return;                                                  // שלבים בפיתוח – רק לבודק, באזור נפרד
+
     const b = document.createElement('button');
     b.className = 'stage' + (unlocked ? '' : ' locked') + (w === pend ? ' pend' : '') + (dev ? ' dev' : '');
     b.disabled = !model || !unlocked;
@@ -52,8 +54,12 @@ function renderMenu() {
                   '<div class="info"><div class="name">' + w.toUpperCase() + '</div>' +
                   (dev ? '<div class="devTag">🚧 In progress</div>' : '<div class="stars">' + (unlocked ? '★'.repeat(got) + '☆'.repeat(3 - got) : '&nbsp;') + '</div>') + '</div>';
     b.onclick = () => play('stage', i);
-    box.appendChild(b);
+    if (dev) devCards.push(b); else $('stages').appendChild(b);
   });
+  if (devCards.length) {                                                          // אזור נפרד בסוף רשימת האימון
+    const h = document.createElement('div'); h.className = 'devLbl'; h.innerHTML = '🚧 In progress <span class="devNote">(tester only)</span>';
+    $('stages').appendChild(h); devCards.forEach(b => $('stages').appendChild(b));
+  }
   $('hintTgl').textContent = hintsOn() ? 'Hints: ON' : 'Hints: OFF';
   $('hintTgl').classList.toggle('off', !hintsOn());
   $('freeBtn').disabled = !model;

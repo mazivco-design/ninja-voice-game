@@ -486,8 +486,10 @@ function drawFigure(F) {
           ctx.strokeStyle = '#450a0a'; ctx.lineWidth = 0.3; ctx.beginPath(); ctx.moveTo(0.8, 1.25); ctx.quadraticCurveTo(1.7, 0.75, 2.6, 1.25); ctx.stroke();   // שיניים חשוקות
         }
       } else {
+        const tn = P.headTurn || 0, fx = tn > 0 ? tn * 2.6 : tn * 1.3, sq = 1 - Math.abs(tn) * 0.2;   // סיבוב הראש: פס העיניים זז על הכדור (פלוס = מסתובב הצידה/אחורה, מינוס = אל הצופה)
+        if (tn) { ctx.beginPath(); ctx.arc(0, 0, 3 + e, 0, Math.PI * 2); ctx.clip(); ctx.translate(fx, 0); ctx.scale(sq, 1); }
         ctx.fillStyle = col || C.skin; roundRect(-1.7 - e, -0.85 - e, 4.6 + 2 * e, 1.8 + 2 * e, 0.6 + e); ctx.fill();
-        if (!col) { ctx.fillStyle = C.eyes; const h = 0.9 * eyeH, w = eyeW; ctx.fillRect(0.8 - w / 2, -h / 2, w, h); ctx.fillRect(2.3 - w / 2, -h / 2, w, h); }
+        if (!col) { ctx.fillStyle = C.eyes; const h = 0.9 * eyeH, w = eyeW, ex2 = tn < 0 ? tn * 0.95 : 0; ctx.fillRect(0.8 + ex2 - w / 2, -h / 2, w, h); ctx.fillRect(2.3 + ex2 - w / 2, -h / 2, w, h); }   // אל הצופה: העיניים באמצע הפס
       }
       ctx.restore();
     },
@@ -518,10 +520,13 @@ function drawFigure(F) {
         ctx.beginPath(); ctx.moveTo(0, -1.1); ctx.quadraticCurveTo(0.9 + wv * 0.4, 1.2, 1.3 + wv * 0.6, 3.2); ctx.stroke();
         ctx.restore(); return;
       }
+      const tn = P.headTurn || 0, kx = tn > 0 ? -2.8 + tn * 2.8 : -2.8 + tn * 0.3, tk = tn > 0 ? tn : 0;   // הקשר זז עם סיבוב הראש; כשמסתובבים אחורה הזנבות נופלים למטה
       ctx.fillStyle = col || accent; ctx.fillRect(-2.9 - e, -2.3 - e, 5.7 + 2 * e, 0.95 + 2 * e);
+      if (tk > 0.15) circle(kx, -1.8, (0.75 + e) * tk);
       ctx.strokeStyle = col || accent; ctx.lineWidth = 0.8 + 2 * e;
-      ctx.beginPath(); ctx.moveTo(-2.8, -1.8); ctx.quadraticCurveTo(-4.8, -2.1 + wv, -6.8, -1.3 - wv); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(-2.8, -1.8); ctx.quadraticCurveTo(-4.4, -0.9 + wv, -6.1, 0.3 + wv * 0.6); ctx.stroke();
+      if (tn < 0) { ctx.translate(kx, -1.8); ctx.scale(Math.max(0.001, 1 + tn), 1); ctx.translate(-kx, 1.8); if (tn < -0.9) ctx.globalAlpha *= (1 + tn) * 10; }   // אל הצופה: הזנבות מסתתרים מאחורי הראש
+      ctx.beginPath(); ctx.moveTo(kx, -1.8); ctx.quadraticCurveTo(kx - 2.0 + tk * 1.1, -2.1 + wv + tk * 2.6, kx - 4.0 + tk * 2.4 + wv * 0.4 * tk, -1.3 - wv + tk * 4.4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(kx, -1.8); ctx.quadraticCurveTo(kx - 1.6 + tk * 2.2, -0.9 + wv + tk * 1.6, kx - 3.3 + tk * 4.4 + wv * 0.4 * tk, 0.3 + wv * 0.6 + tk * 2.6); ctx.stroke();
       ctx.restore();
     }
   };

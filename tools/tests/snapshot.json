@@ -343,6 +343,14 @@
   "hash": 239873148,
   "phases": ""
  },
+ "easy / TROLL": {
+  "end": "TROLL – done!",
+  "sec": 57.72,
+  "hits": 0,
+  "score": 1,
+  "hash": 2858873193,
+  "phases": ""
+ },
  "medium / JUMP": {
   "end": "JUMP – done!",
   "sec": 14.72,
@@ -685,6 +693,14 @@
   "hits": 0,
   "score": 1,
   "hash": 3288987210,
+  "phases": ""
+ },
+ "medium / TROLL": {
+  "end": "TROLL – done!",
+  "sec": 55.52,
+  "hits": 0,
+  "score": 1,
+  "hash": 964080413,
   "phases": ""
  },
  "hard / JUMP": {
@@ -1031,6 +1047,14 @@
   "hash": 1902972766,
   "phases": ""
  },
+ "hard / TROLL": {
+  "end": "TROLL – done!",
+  "sec": 54.38,
+  "hits": 0,
+  "score": 1,
+  "hash": 1183583427,
+  "phases": ""
+ },
  "journey 0+3 / easy": {
   "state": "play",
   "station": 3,
@@ -1058,54 +1082,54 @@
   "hash": 1347167892,
   "phases": ""
  },
- "journey 16+2 / easy": {
+ "journey 17+2 / easy": {
   "state": "play",
-  "station": 18,
-  "sec": 181.08,
+  "station": 19,
+  "sec": 191.05,
   "hits": 0,
-  "score": 262,
-  "hash": 139978918,
-  "phases": ""
+  "score": 298,
+  "hash": 1454271018,
+  "phases": "rope:wait > rope:hang > rope:land > rope:done"
  },
- "journey 16+2 / medium": {
+ "journey 17+2 / medium": {
   "state": "play",
-  "station": 18,
-  "sec": 144.58,
+  "station": 19,
+  "sec": 151.73,
   "hits": 0,
-  "score": 262,
-  "hash": 2687118030,
-  "phases": ""
+  "score": 298,
+  "hash": 184402415,
+  "phases": "rope:wait > rope:hang > rope:land > rope:done"
  },
- "journey 16+2 / hard": {
+ "journey 17+2 / hard": {
   "state": "play",
-  "station": 18,
-  "sec": 134.28,
-  "hits": 1,
-  "score": 261,
-  "hash": 3329573992,
-  "phases": ""
+  "station": 19,
+  "sec": 137.53,
+  "hits": 0,
+  "score": 298,
+  "hash": 2793863853,
+  "phases": "rope:wait > rope:hang > rope:land > rope:done"
  },
- "journey 30+1 / easy": {
+ "journey 31+1 / easy": {
   "state": "play",
-  "station": 31,
+  "station": 32,
   "sec": 278.48,
   "hits": 0,
   "score": 357,
   "hash": 2942983791,
   "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > rope:wait > rope:hang > rope:land > rope:done > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:hover > jet:land > jet:drop > lift:atRock > lift:lifting > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > gust:storm > gust:calm > gust:back > gust:done > duel:enter > duel:face > duel:win"
  },
- "journey 30+1 / medium": {
+ "journey 31+1 / medium": {
   "state": "play",
-  "station": 31,
+  "station": 32,
   "sec": 244.28,
   "hits": 0,
   "score": 324,
   "hash": 143190981,
   "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > rope:wait > rope:hang > rope:land > rope:done > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:hover > jet:land > jet:drop > lift:atRock > lift:lifting > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > gust:storm > gust:calm > gust:back > gust:done > duel:enter > duel:face > duel:win"
  },
- "journey 30+1 / hard": {
+ "journey 31+1 / hard": {
   "state": "play",
-  "station": 31,
+  "station": 32,
   "sec": 235,
   "hits": 0,
   "score": 335,
@@ -1114,7 +1138,7 @@
  },
  "journey last / easy": {
   "state": "play",
-  "station": 33,
+  "station": 34,
   "sec": 360,
   "hits": 0,
   "score": 415,
@@ -1123,7 +1147,7 @@
  },
  "journey last / hard": {
   "state": "play",
-  "station": 33,
+  "station": 34,
   "sec": 360,
   "hits": 0,
   "score": 434,
@@ -1261,6 +1285,9 @@
  },
  "listen / HIGH WALL": {
   "words": "catch, climb, jump, pull, throw"
+ },
+ "listen / TROLL": {
+  "words": "pick up, roll, throw"
  },
  "listen / journey": {
   "words": "block, catch, climb, crawl, dive, down, fast, fight, fire, fly, hide, hold, i, jump, jump in, key, kick, leap, let go, pick up, pull, push, put down, put on, ride, rope, run, stop, swim, throw, torch, up, want, yes"
@@ -1700,9 +1727,19 @@
   "pix": 3510136053,
   "err": null
  },
+ "pixels intro / TROLL": {
+  "frames": 68,
+  "pix": 799728681,
+  "err": null
+ },
+ "pixels / TROLL": {
+  "frames": 115,
+  "pix": 2896929826,
+  "err": null
+ },
  "pixels / journey last": {
   "frames": 720,
-  "pix": 4132623025,
+  "pix": 2586114937,
   "err": null
  },
  "intro / JUMP": {
@@ -2355,6 +2392,21 @@
   "hits": 0,
   "score": 1,
   "hash": 3808354624,
+  "phases": ""
+ },
+ "intro / TROLL": {
+  "sec": 34.02,
+  "hash": 1856499045,
+  "banners": "ROLL · PICK UP · THROW! | Ready? Press START",
+  "said": "roll | pick up | throw | roll | pick up | throw | roll",
+  "phases": ""
+ },
+ "tap / TROLL": {
+  "end": "TROLL – done!",
+  "sec": 40.07,
+  "hits": 0,
+  "score": 1,
+  "hash": 3731329927,
   "phases": ""
  }
 }

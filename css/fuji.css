@@ -166,3 +166,5 @@
 #menu.fuji .stage.locked .stNo { background: #b9a97f; }
 /* בודק: אפשר ללחוץ על תחנה בהר */
 #menu.fuji.tester .fujiScene .stTile { cursor: pointer; }
+#menu.fuji .devLbl { grid-column: 1 / -1; margin: 10px 0 2px; font: 800 15px Georgia, serif; color: #1e293b; }   /* אזור השלבים בפיתוח – לבודק בלבד */
+#menu.fuji .devLbl .devNote { font-size: 10px; font-weight: 700; opacity: .6; }
