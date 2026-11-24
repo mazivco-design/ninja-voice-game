@@ -514,7 +514,7 @@ function draw() {
   ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
 
   let camT = typeof wfCamLift === 'function' ? wfCamLift() : 0;              // שלב הזאבים: הקרקע יורדת – מקום לכדור הפורח
-  for (const o of obstacles) { const sc = SCENE_BY_TYPE[o.type]; if (sc && sc.camLift) camT = Math.max(camT, sc.camLift(o) || 0); }   // סצנות רשומות עם גובה (heights.js): המצלמה עולה אחרי הנינג'ה
+  for (const o of obstacles) { const sc = SCENE_BY_TYPE[o.type]; if (sc && sc.camLift) { const v = sc.camLift(o) || 0; camT = sc.camFree ? v : Math.max(camT, v); } }   // camFree: גם מתחת לקרקע (skyroad.js)   // סצנות רשומות עם גובה (heights.js): המצלמה עולה אחרי הנינג'ה
   camDY += (camT - camDY) * 0.05; if (Math.abs(camT - camDY) < 0.01) camDY = camT;
   const oyIn = oy; oy += camDY * scale;                                       // רק בזמן הציור (מוחזר בסוף)
   ctx.save();
@@ -533,6 +533,7 @@ function draw() {
     ctx.restore();
     drawSkyClouds(left, right, top, sk);
   } else drawWorld(left, right, top, bottom);
+  for (const o of obstacles) { const sc = SCENE_BY_TYPE[o.type]; if (sc && sc.drawSky) sc.drawSky(o, left, right, top, bottom); }   // סצנה עם שמיים משלה – מעל הרקע (skyroad.js: עולם בלי קרקע)
 
   // מכאן – רק בתוך שטח העולם
   ctx.save();

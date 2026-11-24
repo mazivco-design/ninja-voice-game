@@ -407,6 +407,14 @@
   "hash": 1520935340,
   "phases": ""
  },
+ "easy / SKY ROAD": {
+  "end": "SKY ROAD – done!",
+  "sec": 64.13,
+  "hits": 0,
+  "score": 1,
+  "hash": 3117412142,
+  "phases": ""
+ },
  "medium / JUMP": {
   "end": "JUMP – done!",
   "sec": 14.72,
@@ -813,6 +821,14 @@
   "hits": 0,
   "score": 1,
   "hash": 2173187172,
+  "phases": ""
+ },
+ "medium / SKY ROAD": {
+  "end": "SKY ROAD – done!",
+  "sec": 61.82,
+  "hits": 0,
+  "score": 1,
+  "hash": 3688458422,
   "phases": ""
  },
  "hard / JUMP": {
@@ -1223,6 +1239,14 @@
   "hash": 2239682086,
   "phases": ""
  },
+ "hard / SKY ROAD": {
+  "end": "SKY ROAD – done!",
+  "sec": 60.72,
+  "hits": 0,
+  "score": 1,
+  "hash": 1753426484,
+  "phases": ""
+ },
  "journey 0+3 / easy": {
   "state": "play",
   "station": 3,
@@ -1250,76 +1274,76 @@
   "hash": 1347167892,
   "phases": ""
  },
- "journey 20+2 / easy": {
+ "journey 21+2 / easy": {
   "state": "play",
-  "station": 22,
-  "sec": 221.53,
+  "station": 23,
+  "sec": 278.45,
   "hits": 0,
-  "score": 381,
-  "hash": 659037154,
-  "phases": "duel:enter > duel:face > duel:win > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > duel:enter > duel:face > duel:win"
+  "score": 461,
+  "hash": 2450888186,
+  "phases": "gust:storm > gust:calm > gust:back > gust:done > duel:enter > duel:face > duel:win > rope:wait > rope:hang > rope:land > rope:done > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > duel:enter > duel:face > duel:win > gust:storm > gust:calm > gust:back > gust:done"
  },
- "journey 20+2 / medium": {
+ "journey 21+2 / medium": {
   "state": "play",
-  "station": 22,
-  "sec": 204.27,
+  "station": 23,
+  "sec": 216.88,
   "hits": 0,
-  "score": 388,
-  "hash": 2178029770,
-  "phases": "duel:enter > duel:face > duel:win > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > gust:storm > gust:calm > gust:back > gust:done > duel:enter > duel:face > duel:win > rope:wait > rope:hang > rope:land > rope:done > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave"
+  "score": 428,
+  "hash": 1934184870,
+  "phases": "gust:storm > gust:calm > gust:back > gust:done > duel:enter > duel:face > duel:win > rope:wait > rope:hang > rope:land > rope:done > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > lift:atRock > lift:lifting > gust:storm > gust:calm > gust:back > gust:done > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > duel:enter > duel:face > duel:win"
  },
- "journey 20+2 / hard": {
+ "journey 21+2 / hard": {
   "state": "play",
-  "station": 22,
-  "sec": 159.83,
-  "hits": 1,
-  "score": 336,
-  "hash": 333433848,
-  "phases": "ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > duel:enter > duel:face > duel:win"
+  "station": 23,
+  "sec": 202.83,
+  "hits": 0,
+  "score": 451,
+  "hash": 393875285,
+  "phases": "gust:storm > gust:calm > gust:back > gust:done > duel:enter > duel:face > duel:win > rope:wait > rope:hang > rope:land > rope:done > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > duel:enter > duel:face > duel:win > rope:wait > rope:hang > rope:land > rope:done > gust:storm > gust:calm > gust:back > gust:done > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave"
  },
- "journey 38+1 / easy": {
+ "journey 39+1 / easy": {
   "state": "play",
-  "station": 39,
+  "station": 40,
   "sec": 269.32,
   "hits": 0,
-  "score": 431,
-  "hash": 3171421128,
+  "score": 461,
+  "hash": 2497750588,
   "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > rope:wait > rope:hang > rope:land > rope:done > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > duel:enter > duel:face > duel:win > lift:atRock > lift:lifting > gust:storm > gust:calm > gust:back > gust:done"
  },
- "journey 38+1 / medium": {
+ "journey 39+1 / medium": {
   "state": "play",
-  "station": 39,
+  "station": 40,
   "sec": 234.27,
   "hits": 0,
-  "score": 392,
-  "hash": 1974071500,
+  "score": 419,
+  "hash": 2766385984,
   "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > rope:wait > rope:hang > rope:land > rope:done > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > duel:enter > duel:face > duel:win > lift:atRock > lift:lifting > gust:storm > gust:calm > gust:back > gust:done"
  },
- "journey 38+1 / hard": {
+ "journey 39+1 / hard": {
   "state": "play",
-  "station": 39,
+  "station": 40,
   "sec": 223.17,
   "hits": 0,
-  "score": 392,
-  "hash": 2730270767,
+  "score": 419,
+  "hash": 3093418259,
   "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > rope:wait > rope:hang > rope:land > rope:done > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > duel:enter > duel:face > duel:win > lift:atRock > lift:lifting > gust:storm > gust:calm > gust:back > gust:done"
  },
  "journey last / easy": {
   "state": "play",
-  "station": 41,
+  "station": 42,
   "sec": 360,
   "hits": 0,
-  "score": 477,
-  "hash": 468717300,
+  "score": 508,
+  "hash": 4064909992,
   "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > rope:wait > rope:hang > rope:land > rope:done > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > duel:enter > duel:face > duel:win > lift:atRock > lift:lifting > gust:storm > gust:calm > gust:back > gust:done > jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly"
  },
  "journey last / hard": {
   "state": "play",
-  "station": 41,
+  "station": 42,
   "sec": 360,
   "hits": 0,
-  "score": 498,
-  "hash": 4227235684,
+  "score": 530,
+  "hash": 1685944880,
   "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > rope:wait > rope:hang > rope:land > rope:done > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > duel:enter > duel:face > duel:win > lift:atRock > lift:lifting > gust:storm > gust:calm > gust:back > gust:done > jet:find > jet:pick > jet:hold > jet:put > jet:empty > jet:fuelPick > jet:fuelPour > jet:wear > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:perchDown > jet:perch > jet:pFuel > jet:pPour > jet:pReady > jet:take > jet:fly > jet:hover > jet:land > jet:drop > merchant:ask > merchant:choose > merchant:give > merchant:walk > merchant:open > merchant:done > boat:jumpWait > boat:board > boat:row > boat:fishAsk > boat:fCast > boat:throwWait > boat:cast > boat:float > boat:bite > boat:fight > boat:reel > boat:caught > boat:row"
  },
  "listen / JUMP": {
@@ -1477,6 +1501,9 @@
  },
  "listen / SKY PATH": {
   "words": "climb, jump, open, swing"
+ },
+ "listen / SKY ROAD": {
+  "words": "climb, down, jump, open, ride, swing"
  },
  "listen / journey": {
   "words": "block, catch, climb, crawl, dive, down, fast, fight, fire, fly, hide, hold, i, jump, jump in, key, kick, leap, let go, pick up, pull, push, put down, put on, ride, rope, run, stop, swim, throw, torch, up, want, yes"
@@ -1996,9 +2023,19 @@
   "pix": 657281199,
   "err": null
  },
+ "pixels intro / SKY ROAD": {
+  "frames": 120,
+  "pix": 2259533013,
+  "err": null
+ },
+ "pixels / SKY ROAD": {
+  "frames": 128,
+  "pix": 695034027,
+  "err": null
+ },
  "pixels / journey last": {
   "frames": 720,
-  "pix": 3235329643,
+  "pix": 4208309494,
   "err": null
  },
  "intro / JUMP": {
@@ -2771,6 +2808,21 @@
   "hits": 0,
   "score": 1,
   "hash": 2853154375,
+  "phases": ""
+ },
+ "intro / SKY ROAD": {
+  "sec": 60.02,
+  "hash": 927650594,
+  "banners": "JUMP · DOWN · OPEN · CLIMB · SWING · RIDE! | Ready? Press START",
+  "said": "jump | jump | down | jump | open | jump | climb | swing | ride | climb | open",
+  "phases": ""
+ },
+ "tap / SKY ROAD": {
+  "end": "SKY ROAD – done!",
+  "sec": 58.78,
+  "hits": 0,
+  "score": 1,
+  "hash": 3257643275,
   "phases": ""
  }
 }
