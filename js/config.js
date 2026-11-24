@@ -111,7 +111,7 @@ const STAGES = [
   { name: 'TROLL', words: ['troll'], count: 1, hint: 'ROLL between his legs · PICK UP a stone · THROW it at the troll', world: 0 },
   { name: 'APPLE TREE', words: ['apples'], count: 1, hint: 'SHAKE the tree · EAT an apple', world: 0 },
   { name: 'SNOWBALL FIGHT', words: ['snowball'], count: 1, hint: 'DUCK when the yeti throws · THROW when he laughs', world: 2 },
-  { name: 'KITE RESCUE', words: ['kite'], count: 1, hint: 'CLIMB on your friend · PULL the kite', world: 0 }   // קיר גבוה עם מקפצה, עם חבר (seesaw.js)
+  { name: 'KITE RESCUE', words: ['kite'], count: 1, hint: 'PICK UP the stick · CLIMB on your friend · PUSH the kite', world: 0 }   // קיר גבוה עם מקפצה, עם חבר (seesaw.js)
 ];
 // איזה עולם לכל זוג מילים (0 במבוק, 1 כפר בלילה, 2 שלג, 3 קניון, 4 מקדש)
 const PAIR_WORLD = [0, 1, 2, 3, 0, 4, 1, 2, 3, 0, 3];
