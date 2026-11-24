@@ -513,7 +513,8 @@ function draw() {
   g.addColorStop(0, wd.sky[0]); g.addColorStop(1, wd.sky[1]);
   ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
 
-  const camT = typeof wfCamLift === 'function' ? wfCamLift() : 0;            // שלב הזאבים: הקרקע יורדת – מקום לכדור הפורח
+  let camT = typeof wfCamLift === 'function' ? wfCamLift() : 0;              // שלב הזאבים: הקרקע יורדת – מקום לכדור הפורח
+  for (const o of obstacles) { const sc = SCENE_BY_TYPE[o.type]; if (sc && sc.camLift) camT = Math.max(camT, sc.camLift(o) || 0); }   // סצנות רשומות עם גובה (heights.js): המצלמה עולה אחרי הנינג'ה
   camDY += (camT - camDY) * 0.05; if (Math.abs(camT - camDY) < 0.01) camDY = camT;
   const oyIn = oy; oy += camDY * scale;                                       // רק בזמן הציור (מוחזר בסוף)
   ctx.save();

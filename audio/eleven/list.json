@@ -2692,6 +2692,28 @@
    "settings": {
     "stability": 0.5
    }
+  },
+  {
+   "file": "sarah-swing",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Swing!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-open",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Open!",
+   "voice": "Sarah"
   }
  ]
 }

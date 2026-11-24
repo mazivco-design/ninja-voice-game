@@ -17,7 +17,7 @@ function clP(p) { const S = clS; S.p = p; S.t = 0; S.idle = 0; S.hinted = 0; }
 /* ---------- העדכון ---------- */
 function clUpdate(dt, pb) {
   if (!clS) {
-    const o = obstacles.find(o => o.type === 'cliff' && !o.passed && clNX() >= o.x + CL.e0 - 0.3 && pb.l < o.x + o.w);
+    const o = obstacles.find(o => o.type === 'cliffdive' && !o.passed && clNX() >= o.x + CL.e0 - 0.3 && pb.l < o.x + o.w);
     if (!o) return;
     py = 0; vy = 0; duckT = 0; flyT = 0; act.run = 0;
     clStart(o); return;
@@ -205,7 +205,7 @@ function clDrawNinja() {
 }
 
 sceneAdd({
-  type: 'cliff', word: 'cliff', label: true,
+  type: 'cliffdive', word: 'cliffdive', label: true,
   listen: ['climb', 'dive'],
   active: () => !!clS,
   reset: () => { clS = null; },
@@ -216,5 +216,5 @@ sceneAdd({
   update: clUpdate, physics: clPhysics, speed: clSpeed,
   expected: clExpected, cmd: clCmd, auto: clAuto, tap: clTap,
   intro: { banner: 'CLIMB · DIVE!', time: 20,
-           demo: () => { const o = { type: 'cliff' }; clSetup(o); o.x = clNX() - CL.e0; obstacles.push(o); } }
+           demo: () => { const o = { type: 'cliffdive' }; clSetup(o); o.x = clNX() - CL.e0; obstacles.push(o); } }
 });
