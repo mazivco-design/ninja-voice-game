@@ -118,7 +118,7 @@ const STAGES = [
   { name: 'SKY PATH', words: ['heights'], count: 1, hint: 'CLIMB · JUMP · SWING · OPEN the parachute – up and down!', world: 0 },
   { name: 'SKY ROAD', words: ['skyroad'], count: 1, hint: 'No ground! JUMP · DOWN · OPEN · CLIMB · SWING · RIDE – down deep and up high', world: 0 },
   { name: 'DARUMA', words: ['daruma'], count: 1, hint: 'RUN when she turns away · STOP when she turns back · RING the bell', world: 0 },
-  { name: 'DUCK SHOT', words: ['fair'], count: 1, hint: 'THROW when a duck is in the red circle', world: 1 },
+  { name: 'FUN FAIR', words: ['fair'], count: 1, hint: 'Over the shoulder! THROW at the right moment – hoop, targets, cans', world: 1 },
   { name: 'PILLOW FIGHT', words: ['pillow'], count: 1, hint: 'DUCK when the pillow is high · JUMP when it is low · SWING back!', world: 0 },
   { name: 'FEED THE DRAGON', words: ['dragonfeed'], count: 1, hint: 'Look at the bubble – say APPLE, FISH or CAKE', world: 0 }
 ];
