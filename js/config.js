@@ -8,12 +8,12 @@
 const MODEL_URL = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz';
 
 // כל המילים שהמשחק מכיר
-const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive', 'crawl', 'fire', 'let go', 'ride', 'fight', 'hold', 'pick up', 'put down', 'help', 'push together', 'push on three', 'want', 'fishing', 'boar', 'jetpack', 'wolves', 'bike', 'seesaw', 'troll', 'apples', 'snowball', 'kite', 'hideseek'];   // WANT עבר לסוף · FISHING – עולם השייט
+const WORDS = ['jump', 'down', 'kick', 'throw', 'catch', 'fly', 'stop', 'run', 'swim', 'climb', 'push', 'pull', 'hide', 'block', 'leap', 'dive', 'crawl', 'fire', 'let go', 'ride', 'fight', 'hold', 'pick up', 'put down', 'help', 'push together', 'push on three', 'want', 'fishing', 'boar', 'jetpack', 'wolves', 'bike', 'seesaw', 'troll', 'apples', 'snowball', 'kite', 'hideseek', 'bandit'];   // WANT עבר לסוף · FISHING – עולם השייט
 // סדר התחנות במסע – אפשר לשנות בעורך (tester → 🧭). נשמר ב-ninjaVoice_wordOrder (ומסתנכרן בין מכשירים)
 const WORDS_DEFAULT = WORDS.slice();
 // שלבים בפיתוח (2026-11-16, לבקשת זיו): פתוחים תמיד באימון ומסומנים 🚧, אבל לא מופיעים במסע.
 // התחנה שלהם במסע נשארת (המספרים לא זזים וההתקדמות השמורה לא נפגעת) – פשוט עוברים בה בלי שיעור. מוכן? מוציאים מהרשימה
-const DEV_WORDS = ['boar', 'bike', 'wolves', 'troll', 'apples', 'snowball', 'kite', 'hideseek'];
+const DEV_WORDS = ['boar', 'bike', 'wolves', 'troll', 'apples', 'snowball', 'kite', 'hideseek', 'bandit'];
 function isDev(w) { return DEV_WORDS.includes(w); }
 (function applyWordOrder() {
   try {
@@ -49,7 +49,7 @@ function isDev(w) { return DEV_WORDS.includes(w); }
   } catch (e) {}
 })();
 const WORD_ICON = { jump: '⬆️', down: '⬇️', kick: '🦶', throw: '✴️', catch: '🟡', fly: '🪁',
-                    stop: '✋', run: '💨', swim: '🌊', climb: '🧗', push: '🪨', pull: '🪢', hide: '🌿', block: '🛡️', leap: '🤸', dive: '🤿', crawl: '🐛', fire: '🔥', want: '🙋', 'let go': '🪢', ride: '🐉', fight: '⚔️', hold: '🎋', 'pick up': '🏋️', 'put down': '🫳', help: '🆘', 'push together': '🚣', 'push on three': '🎃', fishing: '🎣', boar: '🐗', jetpack: '🚀', wolves: '🐺', bike: '🚲', seesaw: '🤝', troll: '👹', apples: '🍎', snowball: '⛄', kite: '🪁', hideseek: '🙈', duck: '🙇', shake: '🌳', eat: '😋', roll: '🌀', ring: '🔔', brake: '🛑', 'get off': '🛬', yes: '👍' };
+                    stop: '✋', run: '💨', swim: '🌊', climb: '🧗', push: '🪨', pull: '🪢', hide: '🌿', block: '🛡️', leap: '🤸', dive: '🤿', crawl: '🐛', fire: '🔥', want: '🙋', 'let go': '🪢', ride: '🐉', fight: '⚔️', hold: '🎋', 'pick up': '🏋️', 'put down': '🫳', help: '🆘', 'push together': '🚣', 'push on three': '🎃', fishing: '🎣', boar: '🐗', jetpack: '🚀', wolves: '🐺', bike: '🚲', seesaw: '🤝', troll: '👹', apples: '🍎', snowball: '⛄', kite: '🪁', hideseek: '🙈', bandit: '🥷', duck: '🙇', shake: '🌳', eat: '😋', roll: '🌀', ring: '🔔', brake: '🛑', 'get off': '🛬', yes: '👍' };
 
 // רמות קושי – קובעות מהירות, לבבות וקפיצה.
 // gapT = הזמן (בשניות) בין מכשול למכשול. מוגדר בזמן ולא במרחק,
@@ -112,7 +112,8 @@ const STAGES = [
   { name: 'APPLE TREE', words: ['apples'], count: 1, hint: 'SHAKE the tree · EAT an apple', world: 0 },
   { name: 'SNOWBALL FIGHT', words: ['snowball'], count: 1, hint: 'DUCK when the yeti throws · THROW when he laughs', world: 2 },
   { name: 'KITE RESCUE', words: ['kite'], count: 1, hint: 'PICK UP the stick · CLIMB on your friend · PUSH the kite', world: 0 },
-  { name: 'HIDE AND SEEK', words: ['hideseek'], count: 1, hint: 'HIDE behind the bush · JUMP out when he turns around', world: 0 }
+  { name: 'HIDE AND SEEK', words: ['hideseek'], count: 1, hint: 'HIDE behind the bush · JUMP out when he turns around', world: 0 },
+  { name: 'SAMURAI DUEL', words: ['bandit'], count: 1, hint: 'BLOCK his sword · KICK when he is dizzy', world: 1 }
 ];
 // איזה עולם לכל זוג מילים (0 במבוק, 1 כפר בלילה, 2 שלג, 3 קניון, 4 מקדש)
 const PAIR_WORLD = [0, 1, 2, 3, 0, 4, 1, 2, 3, 0, 3];
@@ -120,7 +121,7 @@ const PAIR_WORLD = [0, 1, 2, 3, 0, 4, 1, 2, 3, 0, 3];
 // איזה מכשול מתאים לכל מילה
 const WORD_OBSTACLE = { jump: 'box', down: 'beam', kick: 'wall', throw: 'enemy', catch: 'coin', fly: 'river',
                         stop: 'rock', run: 'bridge', swim: 'lake', climb: 'cliff', push: 'boulder', pull: 'gate', hide: 'guard', block: 'arrows',
-                        leap: 'window', dive: 'pond', crawl: 'bramble', fire: 'ice', want: 'door', 'let go': 'chasm', ride: 'dragon', fight: 'duel', hold: 'gust', 'pick up': 'lift', 'put down': 'lift', help: 'mud', 'push together': 'boat', 'push on three': 'cart', fishing: 'fishboat', boar: 'boar', jetpack: 'jetgap', wolves: 'wolfden', bike: 'bikeway', seesaw: 'seesaw', troll: 'troll', apples: 'apples', snowball: 'snowfight', kite: 'kite', hideseek: 'hideseek' };
+                        leap: 'window', dive: 'pond', crawl: 'bramble', fire: 'ice', want: 'door', 'let go': 'chasm', ride: 'dragon', fight: 'duel', hold: 'gust', 'pick up': 'lift', 'put down': 'lift', help: 'mud', 'push together': 'boat', 'push on three': 'cart', fishing: 'fishboat', boar: 'boar', jetpack: 'jetgap', wolves: 'wolfden', bike: 'bikeway', seesaw: 'seesaw', troll: 'troll', apples: 'apples', snowball: 'snowfight', kite: 'kite', hideseek: 'hideseek', bandit: 'bandit' };
 // זיהוי קולי: מילה שמתאימה למכשול שעל המסך מופעלת מיד. מילה אחרת מחכה לתוצאה הסופית, ומופעלת רק בביטחון גבוה
 const VOICE = { confMin: 0.8, waitMs: 350, logMax: 600, echoRefire: 1500 };   // echoRefire: מילה שנחסמה כהד ועדיין שם אחרי כך הרבה זמן מסוף הקול – היא של הילד   // waitMs: מילה שלא מתאימה למכשול הקרוב מחכה לכל היותר כך לציון, ואז מופעלת בכל מקרה
 // אילו מילים "מצופות" ליד כל מכשול (ההפך של WORD_OBSTACLE, ועוד מילים שעובדות יחד)
@@ -133,7 +134,7 @@ OBSTACLE_WORDS.lift = ['pick up', 'put down', 'jump'];
 OBSTACLE_WORDS.mud = ['catch', 'hold'];
 OBSTACLE_WORDS.boat = ['push', 'jump'];
 OBSTACLE_WORDS.cart = ['push', 'jump'];
-const HIT_WORD = { hideseek: 'HIDE!', kite: 'CLIMB!', snowfight: 'DUCK!', apples: 'SHAKE!', troll: 'ROLL!', box: 'JUMP!', beam: 'DOWN!', wall: 'KICK!', enemy: 'THROW!', river: 'JUMP + FLY!',
+const HIT_WORD = { bandit: 'BLOCK!', hideseek: 'HIDE!', kite: 'CLIMB!', snowfight: 'DUCK!', apples: 'SHAKE!', troll: 'ROLL!', box: 'JUMP!', beam: 'DOWN!', wall: 'KICK!', enemy: 'THROW!', river: 'JUMP + FLY!',
                    rock: 'STOP!', bridge: 'RUN!', lake: 'SWIM!', cliff: 'CLIMB!', boulder: 'PUSH!', gate: 'PULL!', guard: 'HIDE!', arrows: 'BLOCK!',
                    window: 'LEAP!', pond: 'DIVE!', coin: 'CATCH!', bramble: 'CRAWL!', ice: 'FIRE!', door: 'I WANT A KEY!', chasm: 'CATCH… LET GO!', dragon: 'RIDE!', duel: 'FIGHT!', gust: 'HOLD!', lift: 'PICK UP!', mud: 'CATCH… HOLD!', boat: 'PUSH… JUMP!', cart: 'PUSH on THREE!', skyrock: 'UP or DOWN!', bat: 'FIRE!' };
 
@@ -175,7 +176,7 @@ const POND = { factor: 2.2, net: 3, deep: 8 }, DIVE_TIME = 1.2;        // DIVE �
 let CAVE_STYLE = 'cave';       // מראה המערה: 'cave' = גוש סלע אחד עם קיר פנימי כהה, 'boulders' = סלעים גדולים, 'chunks' = הגושים הישנים
 const BRAMBLE = { factor: 1.3, gap: 6.5, want: 1.0, slow: 0.6, ramp: 46, exit: 14, mouth: 34 };   // CRAWL – מערה שהתקרה שלה יורדת בהדרגה עד שחייבים לזחוליה
 // ניקוד במסע: ערך בסיס לפי קושי הפעולה, ועוד נקודה כל 3 תחנות. המספר מופיע על המכשול
-const WORD_POINTS = { hideseek: 4, kite: 4, snowball: 4, apples: 3, troll: 5, seesaw: 4, jetpack: 3, wolves: 3, bike: 3, boar: 3, help: 4, 'push together': 3, 'push on three': 3, fishing: 3, 'pick up': 2, 'put down': 4, 'let go': 4, ride: 4, fight: 3, hold: 3, jump: 1, down: 1, catch: 1, kick: 2, throw: 2, stop: 2, push: 2, hide: 2,
+const WORD_POINTS = { bandit: 5, hideseek: 4, kite: 4, snowball: 4, apples: 3, troll: 5, seesaw: 4, jetpack: 3, wolves: 3, bike: 3, boar: 3, help: 4, 'push together': 3, 'push on three': 3, fishing: 3, 'pick up': 2, 'put down': 4, 'let go': 4, ride: 4, fight: 3, hold: 3, jump: 1, down: 1, catch: 1, kick: 2, throw: 2, stop: 2, push: 2, hide: 2,
                       fly: 3, run: 3, swim: 3, climb: 3, pull: 3, block: 3, crawl: 3, fire: 3, leap: 4, dive: 4, want: 4 };
 // I WANT: סוחר עם עגלה לפני דלת נעולה. אומרים I WANT ואז את שם החפץ
 const ITEMS = { key: { icon: '🔑', say: 'a key' }, rope: { icon: '🪢', say: 'a rope' }, torch: { icon: '🔦', say: 'a torch' } };
