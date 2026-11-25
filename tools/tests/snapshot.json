@@ -463,20 +463,20 @@
   "hash": 466418335,
   "phases": ""
  },
- "easy / BACK RUN": {
-  "end": "BACK RUN – done!",
-  "sec": 41.48,
+ "easy / PORTAL · RUN": {
+  "end": "PORTAL · RUN – done!",
+  "sec": 44.47,
   "hits": 0,
   "score": 1,
-  "hash": 1955613414,
+  "hash": 931649765,
   "phases": ""
  },
  "easy / TUG OF WAR": {
   "end": "TUG OF WAR – done!",
-  "sec": 29.52,
+  "sec": 35.7,
   "hits": 0,
   "score": 1,
-  "hash": 2795501607,
+  "hash": 1388444173,
   "phases": ""
  },
  "easy / JUMP ROPE": {
@@ -485,6 +485,22 @@
   "hits": 0,
   "score": 1,
   "hash": 4265149387,
+  "phases": ""
+ },
+ "easy / PORTAL · DRAGON": {
+  "end": "PORTAL · DRAGON – done!",
+  "sec": 41.25,
+  "hits": 0,
+  "score": 1,
+  "hash": 1168246999,
+  "phases": ""
+ },
+ "easy / PORTAL · RIVER": {
+  "end": "PORTAL · RIVER – done!",
+  "sec": 41.25,
+  "hits": 0,
+  "score": 1,
+  "hash": 1168246999,
   "phases": ""
  },
  "medium / JUMP": {
@@ -951,20 +967,20 @@
   "hash": 2980957040,
   "phases": ""
  },
- "medium / BACK RUN": {
-  "end": "BACK RUN – done!",
-  "sec": 39.17,
+ "medium / PORTAL · RUN": {
+  "end": "PORTAL · RUN – done!",
+  "sec": 42.15,
   "hits": 0,
   "score": 1,
-  "hash": 3958173264,
+  "hash": 1724296912,
   "phases": ""
  },
  "medium / TUG OF WAR": {
   "end": "TUG OF WAR – done!",
-  "sec": 27.2,
+  "sec": 33.38,
   "hits": 0,
   "score": 1,
-  "hash": 645025857,
+  "hash": 3140147700,
   "phases": ""
  },
  "medium / JUMP ROPE": {
@@ -973,6 +989,22 @@
   "hits": 0,
   "score": 1,
   "hash": 4078294499,
+  "phases": ""
+ },
+ "medium / PORTAL · DRAGON": {
+  "end": "PORTAL · DRAGON – done!",
+  "sec": 38.93,
+  "hits": 0,
+  "score": 1,
+  "hash": 3233138706,
+  "phases": ""
+ },
+ "medium / PORTAL · RIVER": {
+  "end": "PORTAL · RIVER – done!",
+  "sec": 38.93,
+  "hits": 0,
+  "score": 1,
+  "hash": 3233138706,
   "phases": ""
  },
  "hard / JUMP": {
@@ -1439,20 +1471,20 @@
   "hash": 4058241670,
   "phases": ""
  },
- "hard / BACK RUN": {
-  "end": "BACK RUN – done!",
-  "sec": 38.05,
+ "hard / PORTAL · RUN": {
+  "end": "PORTAL · RUN – done!",
+  "sec": 41.03,
   "hits": 0,
   "score": 1,
-  "hash": 3882018339,
+  "hash": 2581442454,
   "phases": ""
  },
  "hard / TUG OF WAR": {
   "end": "TUG OF WAR – done!",
-  "sec": 26.15,
+  "sec": 32.28,
   "hits": 0,
   "score": 1,
-  "hash": 4051356289,
+  "hash": 2898817553,
   "phases": ""
  },
  "hard / JUMP ROPE": {
@@ -1461,6 +1493,22 @@
   "hits": 0,
   "score": 1,
   "hash": 2598178877,
+  "phases": ""
+ },
+ "hard / PORTAL · DRAGON": {
+  "end": "PORTAL · DRAGON – done!",
+  "sec": 37.82,
+  "hits": 0,
+  "score": 1,
+  "hash": 2094648579,
+  "phases": ""
+ },
+ "hard / PORTAL · RIVER": {
+  "end": "PORTAL · RIVER – done!",
+  "sec": 37.82,
+  "hits": 0,
+  "score": 1,
+  "hash": 2094648579,
   "phases": ""
  },
  "journey 0+3 / easy": {
@@ -1490,54 +1538,54 @@
   "hash": 1347167892,
   "phases": ""
  },
- "journey 25+2 / easy": {
+ "journey 26+2 / easy": {
   "state": "play",
-  "station": 27,
-  "sec": 337.4,
+  "station": 28,
+  "sec": 388.12,
   "hits": 0,
-  "score": 547,
-  "hash": 2391235256,
-  "phases": "ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > rope:wait > rope:hang > rope:land > rope:done > duel:enter > duel:face > duel:win > gust:storm > gust:calm > gust:back > gust:done > lift:atRock > lift:lifting > rope:wait > rope:hang > rope:land > rope:done > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave"
+  "score": 573,
+  "hash": 3926818651,
+  "phases": "rope:wait > rope:hang > rope:land > rope:done > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > gust:storm > gust:calm > gust:back > gust:done > duel:enter > duel:face > duel:win > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > rope:wait > rope:hang > rope:land > rope:done > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > lift:atRock > lift:lifting > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > gust:storm > gust:calm > gust:back > gust:done"
  },
- "journey 25+2 / medium": {
+ "journey 26+2 / medium": {
   "state": "play",
-  "station": 27,
-  "sec": 272.5,
+  "station": 28,
+  "sec": 309.6,
   "hits": 0,
-  "score": 491,
-  "hash": 1316267607,
-  "phases": "ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > rope:wait > rope:hang > rope:land > rope:done > duel:enter > duel:face > duel:win > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > lift:atRock > lift:lifting > rope:wait > rope:hang > rope:land > rope:done > duel:enter > duel:face > duel:win > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave"
+  "score": 546,
+  "hash": 167204331,
+  "phases": "rope:wait > rope:hang > rope:land > rope:done > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > gust:storm > gust:calm > gust:back > gust:done > duel:enter > duel:face > duel:win > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > lift:atRock > lift:lifting > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > rope:wait > rope:hang > rope:land > rope:done > duel:enter > duel:face > duel:win > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave"
  },
- "journey 25+2 / hard": {
+ "journey 26+2 / hard": {
   "state": "play",
-  "station": 27,
-  "sec": 244.95,
+  "station": 28,
+  "sec": 306.45,
   "hits": 0,
-  "score": 462,
-  "hash": 3276777751,
-  "phases": "ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > rope:wait > rope:hang > rope:land > rope:done > duel:enter > duel:face > duel:win > gust:storm > gust:calm > gust:back > gust:done > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > lift:atRock > lift:lifting > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > rope:wait > rope:hang > rope:land > rope:done > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK"
+  "score": 558,
+  "hash": 3280377963,
+  "phases": "rope:wait > rope:hang > rope:land > rope:done > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > gust:storm > gust:calm > gust:back > gust:done > duel:enter > duel:face > duel:win > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > merchant:ask > merchant:choose > merchant:give > merchant:walk > merchant:open > merchant:done > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > gust:storm > gust:calm > gust:back > gust:done > lift:atRock > lift:lifting > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > rope:wait > rope:hang > rope:land > rope:done > duel:enter > duel:face > duel:win"
  },
- "journey 48+1 / easy": {
+ "journey 50+1 / easy": {
   "state": "play",
-  "station": 49,
+  "station": 51,
   "sec": 269.32,
   "hits": 0,
   "score": 551,
   "hash": 3266416600,
   "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > rope:wait > rope:hang > rope:land > rope:done > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > duel:enter > duel:face > duel:win > lift:atRock > lift:lifting > gust:storm > gust:calm > gust:back > gust:done"
  },
- "journey 48+1 / medium": {
+ "journey 50+1 / medium": {
   "state": "play",
-  "station": 49,
+  "station": 51,
   "sec": 234.27,
   "hits": 0,
   "score": 500,
   "hash": 1278194236,
   "phases": "boat:step > boat:wait > boat:push > boat:friendIn > boat:jumpWait > boat:board > boat:row > boat:land > boat:farewell > ride:mount > ride:takeoff > ride:fly > ride:land > ride:leave > mud:sink > mud:helpWait > mud:help > mud:come > mud:ready > mud:throw > mud:fly > mud:dangle > mud:caught > mud:tug > mud:pull > mud:thanks > rope:wait > rope:hang > rope:land > rope:done > cart:watch > cart:ask > cart:yesWait > cart:nod > cart:step > cart:count > cart:push > cart:count > cart:push > cart:count > cart:push > cart:kidIn > cart:jumpWait > cart:board > cart:ride > cart:roll > cart:out > cart:kidOut > cart:five > cart:thanks > cart:byeK > duel:enter > duel:face > duel:win > lift:atRock > lift:lifting > gust:storm > gust:calm > gust:back > gust:done"
  },
- "journey 48+1 / hard": {
+ "journey 50+1 / hard": {
   "state": "play",
-  "station": 49,
+  "station": 51,
   "sec": 223.17,
   "hits": 0,
   "score": 500,
@@ -1546,7 +1594,7 @@
  },
  "journey last / easy": {
   "state": "play",
-  "station": 51,
+  "station": 53,
   "sec": 360,
   "hits": 0,
   "score": 601,
@@ -1555,7 +1603,7 @@
  },
  "journey last / hard": {
   "state": "play",
-  "station": 51,
+  "station": 53,
   "sec": 360,
   "hits": 0,
   "score": 626,
@@ -1739,14 +1787,20 @@
  "listen / FRUIT NINJA": {
   "words": "cut"
  },
- "listen / BACK RUN": {
-  "words": "left, right"
+ "listen / PORTAL · RUN": {
+  "words": "down, jump, left, right"
  },
  "listen / TUG OF WAR": {
   "words": "hold, pull"
  },
  "listen / JUMP ROPE": {
   "words": "jump"
+ },
+ "listen / PORTAL · DRAGON": {
+  "words": "down, up"
+ },
+ "listen / PORTAL · RIVER": {
+  "words": "jump, left, right"
  },
  "listen / journey": {
   "words": "block, catch, climb, crawl, dive, down, fast, fight, fire, fly, hide, hold, i, jump, jump in, key, kick, leap, let go, pick up, pull, push, put down, put on, ride, rope, run, stop, swim, throw, torch, up, want, yes"
@@ -2336,24 +2390,24 @@
   "pix": 3706969315,
   "err": null
  },
- "pixels intro / BACK RUN": {
-  "frames": 70,
-  "pix": 1752690258,
+ "pixels intro / PORTAL · RUN": {
+  "frames": 88,
+  "pix": 3136816352,
   "err": null
  },
- "pixels / BACK RUN": {
-  "frames": 82,
-  "pix": 2552442041,
+ "pixels / PORTAL · RUN": {
+  "frames": 88,
+  "pix": 2453861271,
   "err": null
  },
  "pixels intro / TUG OF WAR": {
-  "frames": 60,
-  "pix": 2884658991,
+  "frames": 68,
+  "pix": 97117620,
   "err": null
  },
  "pixels / TUG OF WAR": {
-  "frames": 59,
-  "pix": 216562678,
+  "frames": 71,
+  "pix": 2755567891,
   "err": null
  },
  "pixels intro / JUMP ROPE": {
@@ -2366,9 +2420,29 @@
   "pix": 3962065450,
   "err": null
  },
+ "pixels intro / PORTAL · DRAGON": {
+  "frames": 88,
+  "pix": 2132855662,
+  "err": null
+ },
+ "pixels / PORTAL · DRAGON": {
+  "frames": 82,
+  "pix": 3678886423,
+  "err": null
+ },
+ "pixels intro / PORTAL · RIVER": {
+  "frames": 88,
+  "pix": 3090847533,
+  "err": null
+ },
+ "pixels / PORTAL · RIVER": {
+  "frames": 82,
+  "pix": 2150008128,
+  "err": null
+ },
  "pixels / journey last": {
   "frames": 720,
-  "pix": 227292025,
+  "pix": 3242696743,
   "err": null
  },
  "intro / JUMP": {
@@ -3248,34 +3322,34 @@
   "hash": 2080696305,
   "phases": ""
  },
- "intro / BACK RUN": {
-  "sec": 35.02,
-  "hash": 1828849415,
-  "banners": "LEFT · RIGHT – dodge the rocks! | Ready? Press START",
-  "said": "left | right | right | left | left | right | right | left",
+ "intro / PORTAL · RUN": {
+  "sec": 44.02,
+  "hash": 355328334,
+  "banners": "LEFT · RIGHT · JUMP · DOWN! | Ready? Press START",
+  "said": "left | jump | right | down | left | right | jump",
   "phases": ""
  },
- "tap / BACK RUN": {
-  "end": "BACK RUN – done!",
-  "sec": 41.48,
+ "tap / PORTAL · RUN": {
+  "end": "PORTAL · RUN – done!",
+  "sec": 44.47,
   "hits": 0,
   "score": 1,
-  "hash": 212001314,
+  "hash": 3276399769,
   "phases": ""
  },
  "intro / TUG OF WAR": {
-  "sec": 30.02,
-  "hash": 3264103159,
+  "sec": 34.02,
+  "hash": 1947452034,
   "banners": "HOLD when he pulls · PULL when he is tired! | Ready? Press START",
-  "said": "hold | pull | pull | hold | pull | pull",
+  "said": "hold | pull | pull | hold | pull | pull | hold | pull | pull",
   "phases": ""
  },
  "tap / TUG OF WAR": {
   "end": "TUG OF WAR – done!",
-  "sec": 29.78,
+  "sec": 35.68,
   "hits": 0,
   "score": 1,
-  "hash": 1375199861,
+  "hash": 3076931179,
   "phases": ""
  },
  "intro / JUMP ROPE": {
@@ -3291,6 +3365,36 @@
   "hits": 0,
   "score": 1,
   "hash": 2498421739,
+  "phases": ""
+ },
+ "intro / PORTAL · DRAGON": {
+  "sec": 44.02,
+  "hash": 153494267,
+  "banners": "UP · DOWN – fly the dragon! | Ready? Press START",
+  "said": "up | down | up | down | down | up",
+  "phases": ""
+ },
+ "tap / PORTAL · DRAGON": {
+  "end": "PORTAL · DRAGON – done!",
+  "sec": 41.25,
+  "hits": 0,
+  "score": 1,
+  "hash": 1185958830,
+  "phases": ""
+ },
+ "intro / PORTAL · RIVER": {
+  "sec": 44.02,
+  "hash": 153494267,
+  "banners": "LEFT · RIGHT · JUMP – ride the river! | Ready? Press START",
+  "said": "right | left | jump | right | left | jump",
+  "phases": ""
+ },
+ "tap / PORTAL · RIVER": {
+  "end": "PORTAL · RIVER – done!",
+  "sec": 41.25,
+  "hits": 0,
+  "score": 1,
+  "hash": 1185958830,
   "phases": ""
  }
 }
