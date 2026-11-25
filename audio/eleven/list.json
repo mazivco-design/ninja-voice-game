@@ -2783,6 +2783,72 @@
    "text": "[laughing] Okay, okay! You win!",
    "voice": "lib-lukas",
    "voice_id": "wSqOdjeNqDrHcoK0zorF"
+  },
+  {
+   "file": "sarah-red",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Red!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-blue",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Blue!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-green",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Green!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-cut",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Cut!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-left",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Left!",
+   "voice": "Sarah"
+  },
+  {
+   "file": "sarah-right",
+   "type": "tts",
+   "model": "eleven_v3",
+   "seed": 42,
+   "settings": {
+    "stability": 1.0
+   },
+   "text": "[warm] Right!",
+   "voice": "Sarah"
   }
  ]
 }

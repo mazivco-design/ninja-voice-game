@@ -3,7 +3,7 @@
    הערכה עושה את כל מה שחוזר על עצמו: כניסה לסצנה כשהנינג'ה מגיע, עצירת הריצה, רמז קולי אחרי שתיקה,
    השחקן האוטומטי וההדגמה, צ'יפ המילה (אפור – מחכים, ירוק – נקלטה), יציאה, מטבעות ורישום ב-sceneAdd.
    שדות של kxScene:
-     type, listen[], w (רוחב), e0 (איפה הנינג'ה נעצר), banner, time (אורך ההדגמה), coins, hint (שניות שתיקה עד רמז)
+     type, listen[], w (רוחב), e0 (איפה הנינג'ה נעצר), banner, time (אורך ההדגמה), coins, hint (שניות של שתיקה, מצטברות בזמן שיש מה לומר, עד רמז קולי)
      start(o) → שדות התחלתיים למצב S.   update(S, dt, demo) → מחזיר 'done' כשנגמר.
      expected(S) → [מילה] שהשחקן האוטומטי יגיד עכשיו (חלון התזמון הטוב), או [].
      hintWord(S) → המילה לרמז קולי אחרי שתיקה (ברירת מחדל: expected).   cmd(S, word).
@@ -76,7 +76,7 @@ function kxScene(d) {
     if (demo) { if (w && S.autoT > (d.autoGap || 0.5)) { S.autoT = 0; command(w, 'demo'); speak(w); } }
     else if (state === 'play') {                                                  // רמז קולי אחרי שתיקה
       const hw = d.hintWord ? d.hintWord(S) : w;
-      if (hw) { S.quiet += dt; if (S.quiet > (d.hint || 4)) { S.quiet = 0; speak(hw); } } else S.quiet = 0;
+      if (hw) { S.quiet += dt; if (S.quiet > (d.hint || 4)) { S.quiet = 0; speak(hw); } }   // השתיקה נצברת רק כשיש מה לומר, ומתאפסת כשהילד אומר מילה
     }
   }
   sceneAdd({

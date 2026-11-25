@@ -25,7 +25,7 @@ function fcFruit(kind, x, y, r, rot, half) {                                    
   ctx.restore();
 }
 kxScene({
-  type: 'fruitcut', listen: ['cut'], w: 78, e0: 14, banner: 'CUT the fruit – not the bombs!', time: 28, coins: 5, hint: 6, autoGap: 0.5,
+  type: 'fruitcut', listen: ['cut'], w: 78, e0: 14, banner: 'CUT the fruit – not the bombs!', time: 28, coins: 5, hint: 1.3, autoGap: 0.5,
   start: () => ({ p: 'play', items: [], n: 0, next: 0.6, cuts: 0, slash: 9, halves: [], drops: [], soot: 0, launch: 9 }),
   update(S, dt) {
     S.slash += dt; S.launch += dt; if (S.soot > 0) S.soot -= dt;
