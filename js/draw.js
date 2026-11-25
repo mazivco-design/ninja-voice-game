@@ -5,7 +5,12 @@
 /* ============================================================
    ציור
    ============================================================ */
-let cw = 0, ch = 0, scale = 1, ox = 0, oy = 0, camDY = 0;   // camDY – הורדת המצלמה (יותר שמיים) בשלבים שצריכים מקום למעלה
+let cw = 0, ch = 0, scale = 1, ox = 0, oy = 0, camDY = 0;
+// מצלמה נמוכה בכל השלבים: פחות אדמה ויותר שמיים ורקע (זיו, 2026-11-25). בשלבים שקורה בהם משהו עמוק מתחת לקרקע
+// (רשימת CAM_DEEP) המצלמה חוזרת לגובה הרגיל כל עוד המכשול על המסך
+let CAM_BASE = 18;
+let CAM_DEEP = ['pond', 'bramble', 'lift', 'mud', 'boat', 'boar', 'cliffdive', 'fair'];   // צלילה, זחילה, הבור עם הגור, בוץ, סירה (הדג מתחת למים), חזיר (נתיב קדמי), צלילה מצוק, יריד
+let camSnap = false;   // בתחילת שלב: המצלמה קופצת ישר לגובה הנכון, בלי החלקה   // camDY – הורדת המצלמה (יותר שמיים) בשלבים שצריכים מקום למעלה
 
 // מצמידים את המשחק בדיוק לשטח שרואים (Safari מזיז אותו לפעמים מתחת לשורת הכתובת)
 function fitApp() {
@@ -513,8 +518,10 @@ function draw() {
   g.addColorStop(0, wd.sky[0]); g.addColorStop(1, wd.sky[1]);
   ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
 
-  let camT = typeof wfCamLift === 'function' ? wfCamLift() : 0;              // שלב הזאבים: הקרקע יורדת – מקום לכדור הפורח
+  const deep = obstacles.some(o => CAM_DEEP.includes(o.type) && o.x < viewR() + 20 && o.x + (o.w || 0) > viewL() - 20);
+  let camT = Math.max(deep ? 0 : CAM_BASE, typeof wfCamLift === 'function' ? wfCamLift() : 0);              // שלב הזאבים: הקרקע יורדת – מקום לכדור הפורח
   for (const o of obstacles) { const sc = SCENE_BY_TYPE[o.type]; if (sc && sc.camLift) { const v = sc.camLift(o) || 0; camT = sc.camFree ? v : Math.max(camT, v); } }   // camFree: גם מתחת לקרקע (skyroad.js)   // סצנות רשומות עם גובה (heights.js): המצלמה עולה אחרי הנינג'ה
+  if (camSnap) { camDY = camT; camSnap = false; }
   camDY += (camT - camDY) * 0.05; if (Math.abs(camT - camDY) < 0.01) camDY = camT;
   const oyIn = oy; oy += camDY * scale;                                       // רק בזמן הציור (מוחזר בסוף)
   ctx.save();

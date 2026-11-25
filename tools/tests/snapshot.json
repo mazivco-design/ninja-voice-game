@@ -1753,222 +1753,222 @@
  },
  "pixels intro / JUMP": {
   "frames": 5,
-  "pix": 2475536930,
+  "pix": 3104825358,
   "err": null
  },
  "pixels / JUMP": {
   "frames": 39,
-  "pix": 2511038178,
+  "pix": 4118306103,
   "err": null
  },
  "pixels intro / DOWN": {
   "frames": 5,
-  "pix": 1630043489,
+  "pix": 3068090312,
   "err": null
  },
  "pixels / DOWN": {
   "frames": 38,
-  "pix": 3863390177,
+  "pix": 1980034803,
   "err": null
  },
  "pixels intro / JUMP + DOWN": {
   "frames": 11,
-  "pix": 2607889158,
+  "pix": 2655807500,
   "err": null
  },
  "pixels / JUMP + DOWN": {
   "frames": 76,
-  "pix": 1873084062,
+  "pix": 3023182999,
   "err": null
  },
  "pixels intro / KICK": {
   "frames": 5,
-  "pix": 822045072,
+  "pix": 2335449882,
   "err": null
  },
  "pixels / KICK": {
   "frames": 37,
-  "pix": 577556209,
+  "pix": 3962830180,
   "err": null
  },
  "pixels intro / THROW": {
   "frames": 5,
-  "pix": 2733577027,
+  "pix": 1182491160,
   "err": null
  },
  "pixels / THROW": {
   "frames": 46,
-  "pix": 3162049266,
+  "pix": 1028918031,
   "err": null
  },
  "pixels intro / KICK + THROW": {
   "frames": 11,
-  "pix": 3478056496,
+  "pix": 808071031,
   "err": null
  },
  "pixels / KICK + THROW": {
   "frames": 91,
-  "pix": 3409604793,
+  "pix": 3146239885,
   "err": null
  },
  "pixels intro / CATCH": {
   "frames": 5,
-  "pix": 1702963386,
+  "pix": 79717730,
   "err": null
  },
  "pixels / CATCH": {
   "frames": 38,
-  "pix": 2618516828,
+  "pix": 2706171883,
   "err": null
  },
  "pixels intro / JUMP + FLY": {
   "frames": 9,
-  "pix": 2678214098,
+  "pix": 2877559889,
   "err": null
  },
  "pixels / JUMP + FLY": {
   "frames": 67,
-  "pix": 3612754074,
+  "pix": 1340148633,
   "err": null
  },
  "pixels intro / CATCH + FLY": {
   "frames": 14,
-  "pix": 1629587455,
+  "pix": 2473757671,
   "err": null
  },
  "pixels / CATCH + FLY": {
   "frames": 120,
-  "pix": 857545595,
+  "pix": 1765800695,
   "err": null
  },
  "pixels intro / STOP": {
   "frames": 5,
-  "pix": 796979693,
+  "pix": 689468929,
   "err": null
  },
  "pixels / STOP": {
   "frames": 50,
-  "pix": 873506372,
+  "pix": 3931823267,
   "err": null
  },
  "pixels intro / RUN": {
   "frames": 5,
-  "pix": 2405280827,
+  "pix": 1736448514,
   "err": null
  },
  "pixels / RUN": {
   "frames": 55,
-  "pix": 3525123772,
+  "pix": 4210314204,
   "err": null
  },
  "pixels intro / STOP + RUN": {
   "frames": 11,
-  "pix": 2953541750,
+  "pix": 3670383898,
   "err": null
  },
  "pixels / STOP + RUN": {
   "frames": 113,
-  "pix": 481990209,
+  "pix": 1952150924,
   "err": null
  },
  "pixels intro / SWIM": {
   "frames": 5,
-  "pix": 38964535,
+  "pix": 4055959954,
   "err": null
  },
  "pixels / SWIM": {
   "frames": 60,
-  "pix": 2784282618,
+  "pix": 2852212487,
   "err": null
  },
  "pixels intro / CLIMB": {
   "frames": 5,
-  "pix": 2485269791,
+  "pix": 2099995693,
   "err": null
  },
  "pixels / CLIMB": {
   "frames": 85,
-  "pix": 1410288260,
+  "pix": 248580161,
   "err": null
  },
  "pixels intro / SWIM + CLIMB": {
   "frames": 11,
-  "pix": 3642130129,
+  "pix": 1219290978,
   "err": null
  },
  "pixels / SWIM + CLIMB": {
   "frames": 181,
-  "pix": 572740574,
+  "pix": 1303696157,
   "err": null
  },
  "pixels intro / PUSH": {
   "frames": 5,
-  "pix": 1162866370,
+  "pix": 75651036,
   "err": null
  },
  "pixels / PUSH": {
   "frames": 36,
-  "pix": 1935933101,
+  "pix": 3070188085,
   "err": null
  },
  "pixels intro / PULL": {
   "frames": 5,
-  "pix": 1658944506,
+  "pix": 760354253,
   "err": null
  },
  "pixels / PULL": {
   "frames": 61,
-  "pix": 1949284565,
+  "pix": 202062716,
   "err": null
  },
  "pixels intro / PUSH + PULL": {
   "frames": 11,
-  "pix": 1962657332,
+  "pix": 681210689,
   "err": null
  },
  "pixels / PUSH + PULL": {
   "frames": 103,
-  "pix": 481646491,
+  "pix": 280067107,
   "err": null
  },
  "pixels intro / HIDE": {
   "frames": 5,
-  "pix": 3949444941,
+  "pix": 2466497321,
   "err": null
  },
  "pixels / HIDE": {
   "frames": 54,
-  "pix": 4278616210,
+  "pix": 3489601791,
   "err": null
  },
  "pixels intro / BLOCK": {
   "frames": 5,
-  "pix": 4186622585,
+  "pix": 4063505665,
   "err": null
  },
  "pixels / BLOCK": {
   "frames": 47,
-  "pix": 3902038572,
+  "pix": 1420345888,
   "err": null
  },
  "pixels intro / HIDE + BLOCK": {
   "frames": 11,
-  "pix": 2427722722,
+  "pix": 1240595282,
   "err": null
  },
  "pixels / HIDE + BLOCK": {
   "frames": 103,
-  "pix": 4228210280,
+  "pix": 1290792339,
   "err": null
  },
  "pixels intro / LEAP": {
   "frames": 5,
-  "pix": 1829832312,
+  "pix": 408187342,
   "err": null
  },
  "pixels / LEAP": {
   "frames": 39,
-  "pix": 3530624126,
+  "pix": 3382000332,
   "err": null
  },
  "pixels intro / DIVE": {
@@ -1978,17 +1978,17 @@
  },
  "pixels / DIVE": {
   "frames": 55,
-  "pix": 1019900857,
+  "pix": 898362098,
   "err": null
  },
  "pixels intro / LEAP + DIVE": {
   "frames": 11,
-  "pix": 3168453587,
+  "pix": 3339398405,
   "err": null
  },
  "pixels / LEAP + DIVE": {
   "frames": 107,
-  "pix": 3511002829,
+  "pix": 4006910957,
   "err": null
  },
  "pixels intro / CRAWL": {
@@ -1998,72 +1998,72 @@
  },
  "pixels / CRAWL": {
   "frames": 69,
-  "pix": 26610126,
+  "pix": 946403440,
   "err": null
  },
  "pixels intro / FIRE": {
   "frames": 5,
-  "pix": 974756985,
+  "pix": 3511715920,
   "err": null
  },
  "pixels / FIRE": {
   "frames": 37,
-  "pix": 833004878,
+  "pix": 814171112,
   "err": null
  },
  "pixels intro / CRAWL + FIRE": {
   "frames": 16,
-  "pix": 2195154374,
+  "pix": 1828203817,
   "err": null
  },
  "pixels / CRAWL + FIRE": {
   "frames": 123,
-  "pix": 2607514767,
+  "pix": 2531858425,
   "err": null
  },
  "pixels intro / I WANT": {
   "frames": 25,
-  "pix": 3121233073,
+  "pix": 3702065466,
   "err": null
  },
  "pixels intro / LET GO": {
   "frames": 10,
-  "pix": 4195455290,
+  "pix": 3587561976,
   "err": null
  },
  "pixels / LET GO": {
   "frames": 81,
-  "pix": 2211765202,
+  "pix": 465718008,
   "err": null
  },
  "pixels intro / RIDE": {
   "frames": 12,
-  "pix": 2513738803,
+  "pix": 1685541797,
   "err": null
  },
  "pixels / RIDE": {
   "frames": 96,
-  "pix": 827714757,
+  "pix": 4177070448,
   "err": null
  },
  "pixels intro / FIGHT": {
   "frames": 10,
-  "pix": 25064923,
+  "pix": 1303399134,
   "err": null
  },
  "pixels / FIGHT": {
   "frames": 60,
-  "pix": 1486344872,
+  "pix": 430116302,
   "err": null
  },
  "pixels intro / HOLD": {
   "frames": 10,
-  "pix": 2391423975,
+  "pix": 789460309,
   "err": null
  },
  "pixels / HOLD": {
   "frames": 102,
-  "pix": 32372940,
+  "pix": 1979030513,
   "err": null
  },
  "pixels intro / PICK UP": {
@@ -2073,7 +2073,7 @@
  },
  "pixels / PICK UP": {
   "frames": 52,
-  "pix": 4176198293,
+  "pix": 2624988031,
   "err": null
  },
  "pixels intro / PICK UP + PUT DOWN": {
@@ -2083,17 +2083,17 @@
  },
  "pixels / PICK UP + PUT DOWN": {
   "frames": 85,
-  "pix": 2401200424,
+  "pix": 607632824,
   "err": null
  },
  "pixels intro / PICK UP + THROW": {
   "frames": 11,
-  "pix": 2901257328,
+  "pix": 1156781697,
   "err": null
  },
  "pixels / PICK UP + THROW": {
   "frames": 128,
-  "pix": 3861712985,
+  "pix": 15515568,
   "err": null
  },
  "pixels intro / HELP": {
@@ -2103,187 +2103,187 @@
  },
  "pixels / HELP": {
   "frames": 202,
-  "pix": 1869833828,
+  "pix": 649396473,
   "err": null
  },
  "pixels intro / PUSH TOGETHER": {
   "frames": 28,
-  "pix": 1478023426,
+  "pix": 450097429,
   "err": null
  },
  "pixels / PUSH TOGETHER": {
   "frames": 76,
-  "pix": 3273518860,
+  "pix": 1991151655,
   "err": null
  },
  "pixels intro / PUSH ON THREE": {
   "frames": 62,
-  "pix": 147485442,
+  "pix": 894021143,
   "err": null
  },
  "pixels / PUSH ON THREE": {
   "frames": 209,
-  "pix": 4153179725,
+  "pix": 2556777689,
   "err": null
  },
  "pixels intro / FISHING": {
   "frames": 32,
-  "pix": 820262204,
+  "pix": 2923381657,
   "err": null
  },
  "pixels / FISHING": {
   "frames": 230,
-  "pix": 3537466166,
+  "pix": 1232331742,
   "err": null
  },
  "pixels intro / WILD BOAR": {
   "frames": 32,
-  "pix": 2176258945,
+  "pix": 3045953891,
   "err": null
  },
  "pixels / WILD BOAR": {
   "frames": 120,
-  "pix": 1155063336,
+  "pix": 359907953,
   "err": null
  },
  "pixels intro / JET PACK": {
   "frames": 28,
-  "pix": 2726888067,
+  "pix": 1666000266,
   "err": null
  },
  "pixels / JET PACK": {
   "frames": 205,
-  "pix": 448419998,
+  "pix": 3066573940,
   "err": null
  },
  "pixels intro / WOLVES": {
   "frames": 64,
-  "pix": 3401586164,
+  "pix": 1719664663,
   "err": null
  },
  "pixels / WOLVES": {
   "frames": 82,
-  "pix": 1715734367,
+  "pix": 1054325455,
   "err": null
  },
  "pixels intro / BIKE": {
   "frames": 66,
-  "pix": 598639257,
+  "pix": 42633482,
   "err": null
  },
  "pixels / BIKE": {
   "frames": 89,
-  "pix": 1071168916,
+  "pix": 909455902,
   "err": null
  },
  "pixels intro / HIGH WALL": {
   "frames": 92,
-  "pix": 3093829094,
+  "pix": 3243587208,
   "err": null
  },
  "pixels / HIGH WALL": {
   "frames": 118,
-  "pix": 267356860,
+  "pix": 1767034531,
   "err": null
  },
  "pixels intro / TROLL": {
   "frames": 68,
-  "pix": 22250007,
+  "pix": 1462024835,
   "err": null
  },
  "pixels / TROLL": {
   "frames": 115,
-  "pix": 2438321243,
+  "pix": 1378725943,
   "err": null
  },
  "pixels intro / APPLE TREE": {
   "frames": 26,
-  "pix": 3051268476,
+  "pix": 2403030734,
   "err": null
  },
  "pixels / APPLE TREE": {
   "frames": 51,
-  "pix": 4041301334,
+  "pix": 1555907244,
   "err": null
  },
  "pixels intro / SNOWBALL FIGHT": {
   "frames": 40,
-  "pix": 4245243517,
+  "pix": 2559117571,
   "err": null
  },
  "pixels / SNOWBALL FIGHT": {
   "frames": 75,
-  "pix": 2234472323,
+  "pix": 1680903503,
   "err": null
  },
  "pixels intro / KITE RESCUE": {
   "frames": 36,
-  "pix": 4269073552,
+  "pix": 1731632945,
   "err": null
  },
  "pixels / KITE RESCUE": {
   "frames": 55,
-  "pix": 3209302270,
+  "pix": 3381121712,
   "err": null
  },
  "pixels intro / HIDE AND SEEK": {
   "frames": 40,
-  "pix": 1468405259,
+  "pix": 3535794850,
   "err": null
  },
  "pixels / HIDE AND SEEK": {
   "frames": 64,
-  "pix": 3810089436,
+  "pix": 1698397763,
   "err": null
  },
  "pixels intro / SAMURAI DUEL": {
   "frames": 40,
-  "pix": 2799698377,
+  "pix": 3620498234,
   "err": null
  },
  "pixels / SAMURAI DUEL": {
   "frames": 65,
-  "pix": 3171440962,
+  "pix": 198299088,
   "err": null
  },
  "pixels intro / CLIFF DIVE": {
   "frames": 40,
-  "pix": 3038993716,
+  "pix": 2571795458,
   "err": null
  },
  "pixels / CLIFF DIVE": {
   "frames": 54,
-  "pix": 476749619,
+  "pix": 3518192284,
   "err": null
  },
  "pixels intro / SKY PATH": {
   "frames": 80,
-  "pix": 3812872043,
+  "pix": 4447302,
   "err": null
  },
  "pixels / SKY PATH": {
   "frames": 84,
-  "pix": 657281199,
+  "pix": 2969767395,
   "err": null
  },
  "pixels intro / SKY ROAD": {
   "frames": 120,
-  "pix": 2259533013,
+  "pix": 3568120780,
   "err": null
  },
  "pixels / SKY ROAD": {
   "frames": 128,
-  "pix": 695034027,
+  "pix": 2155832128,
   "err": null
  },
  "pixels intro / DARUMA": {
   "frames": 50,
-  "pix": 1452668227,
+  "pix": 1494263833,
   "err": null
  },
  "pixels / DARUMA": {
   "frames": 59,
-  "pix": 187840370,
+  "pix": 2533305602,
   "err": null
  },
  "pixels intro / FUN FAIR": {
@@ -2293,82 +2293,82 @@
  },
  "pixels / FUN FAIR": {
   "frames": 91,
-  "pix": 1969361182,
+  "pix": 3815449432,
   "err": null
  },
  "pixels intro / PILLOW FIGHT": {
   "frames": 50,
-  "pix": 2921196388,
+  "pix": 2767160450,
   "err": null
  },
  "pixels / PILLOW FIGHT": {
   "frames": 66,
-  "pix": 4187552283,
+  "pix": 1627291453,
   "err": null
  },
  "pixels intro / FEED THE DRAGON": {
   "frames": 44,
-  "pix": 94781760,
+  "pix": 724113908,
   "err": null
  },
  "pixels / FEED THE DRAGON": {
   "frames": 58,
-  "pix": 3795023700,
+  "pix": 1821140970,
   "err": null
  },
  "pixels intro / COLOR DRUMS": {
   "frames": 80,
-  "pix": 2892539273,
+  "pix": 164943652,
   "err": null
  },
  "pixels / COLOR DRUMS": {
   "frames": 77,
-  "pix": 2137905139,
+  "pix": 3227478392,
   "err": null
  },
  "pixels intro / FRUIT NINJA": {
   "frames": 56,
-  "pix": 3027837427,
+  "pix": 4171956453,
   "err": null
  },
  "pixels / FRUIT NINJA": {
   "frames": 71,
-  "pix": 744941912,
+  "pix": 3706969315,
   "err": null
  },
  "pixels intro / BACK RUN": {
   "frames": 70,
-  "pix": 1292643307,
+  "pix": 1752690258,
   "err": null
  },
  "pixels / BACK RUN": {
   "frames": 82,
-  "pix": 1024158905,
+  "pix": 2552442041,
   "err": null
  },
  "pixels intro / TUG OF WAR": {
   "frames": 60,
-  "pix": 369540720,
+  "pix": 2884658991,
   "err": null
  },
  "pixels / TUG OF WAR": {
   "frames": 59,
-  "pix": 2425477585,
+  "pix": 216562678,
   "err": null
  },
  "pixels intro / JUMP ROPE": {
   "frames": 52,
-  "pix": 2508076932,
+  "pix": 1464276699,
   "err": null
  },
  "pixels / JUMP ROPE": {
   "frames": 55,
-  "pix": 3106775228,
+  "pix": 3962065450,
   "err": null
  },
  "pixels / journey last": {
   "frames": 720,
-  "pix": 1936023719,
+  "pix": 227292025,
   "err": null
  },
  "intro / JUMP": {
